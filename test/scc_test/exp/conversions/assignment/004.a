@@ -1,0 +1,9 @@
+void foo(char c, float d, int e)
+{
+}
+
+void test()
+{
+	double a, b, c;
+	((void(*)(char, float, int))foo)((char)a, (float)b, (int)c);
+}

@@ -1,0 +1,1 @@
+char *(*(***)(int, char))(int, char);

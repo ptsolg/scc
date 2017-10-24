@@ -1,0 +1,1 @@
+cmds = ['%test', '-lex-only', '-log', '%output']

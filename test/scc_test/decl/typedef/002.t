@@ -1,0 +1,1 @@
+typedef int(*callback)(void*);

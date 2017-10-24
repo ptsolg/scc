@@ -1,0 +1,1 @@
+int*(*( *foo(int a, int b) )[10])(int**, int*(*)(int, char));

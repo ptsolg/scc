@@ -1,0 +1,6 @@
+add_subdirectory('lex')
+add_subdirectory('pp')
+add_subdirectory('exp')
+add_subdirectory('type')
+add_subdirectory('decl')
+add_subdirectory('stmt')

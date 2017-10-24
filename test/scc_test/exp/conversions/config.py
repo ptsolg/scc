@@ -1,0 +1,7 @@
+add_subdirectory('lvalue')
+add_subdirectory('assignment')
+add_subdirectory('array-to-pointer')
+add_subdirectory('function-to-pointer')
+add_subdirectory('pointer')
+add_subdirectory('integer-promotion')
+add_subdirectory('arithmetic')

@@ -1,0 +1,1 @@
+This directory contains source for SOLG C Compiller.

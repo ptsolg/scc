@@ -1,0 +1,1 @@
+cmds = ['%test', '-syntax-only', '-o', '%output']

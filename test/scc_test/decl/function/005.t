@@ -1,0 +1,1 @@
+int*(*foo(int a, int v))(int, char);

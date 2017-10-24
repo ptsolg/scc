@@ -1,0 +1,7 @@
+void test()
+{
+	char a;
+	int b;
+	float c;
+	a = (char)(b = (int)c);
+}

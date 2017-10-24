@@ -1,0 +1,6 @@
+add_subdirectory('labeled')
+add_subdirectory('jump')
+add_subdirectory('decl')
+add_subdirectory('selection')
+add_subdirectory('iteration')
+add_subdirectory('block')
