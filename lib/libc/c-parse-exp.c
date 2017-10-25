@@ -148,10 +148,20 @@ extern tree_exp* cparse_unary_exp(cparser* self)
                 csizeof_rhs rhs;
 
                 if (cparser_at(self, CTK_LBRACKET))
-                        csizeof_type_init(&rhs, cparse_paren_type_name(self),
-                                cparser_get_loc(self));
+                {
+                        tree_type* t = cparse_paren_type_name(self);
+                        if (!t)
+                                return NULL;
+                        csizeof_type_init(&rhs, t, cparser_get_loc(self));
+                }
                 else
-                        csizeof_exp_init(&rhs, cparse_unary_exp(self));
+                {
+                        tree_exp* u = cparse_unary_exp(self);
+                        if (!u)
+                                return NULL;
+
+                        csizeof_exp_init(&rhs, u);
+                }
 
                 return cprog_build_sizeof(self->prog, loc, &rhs);
         }
