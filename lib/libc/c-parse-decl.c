@@ -240,8 +240,14 @@ extern tree_type* cparse_type_specifier(cparser* self)
                         res = cbuiltin_type_info_set_short(&info);
                 else if (k == CTK_LONG)
                         res = cbuiltin_type_info_set_long(&info);
-                else
-                        break; // not a type specifier
+                else if (info.base == TBTK_INVALID)
+                {
+                        cerror(self->error_manager, CES_ERROR, cparser_get_loc(self),
+                                "expected type specifier");
+                        return NULL;
+                }
+                else         
+                        break;
 
                 if (!res)
                 {
@@ -646,6 +652,9 @@ extern tree_type* cparse_paren_type_name(cparser* self)
                 return NULL;
 
         tree_type* t = cparse_type_name(self);
+        if (!t)
+                return NULL;
+
         return cparser_require(self, CTK_RBRACKET)
                 ? t : NULL;
 }
