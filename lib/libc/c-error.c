@@ -46,7 +46,7 @@ extern void cerror(
         va_start(args, description);
         vsprintf(buffer, description, args);
 
-        fprintf(self->err, "%s:%d:%d: %s: %s",
+        fprintf(self->err, "%s:%d:%d: %s: %s\n",
                 path_get_cfile(l.file),
                 l.line,
                 l.column,
