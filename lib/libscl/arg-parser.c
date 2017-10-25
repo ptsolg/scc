@@ -1,5 +1,4 @@
 #include "arg-parser.h"
-#include "hash.h"
 #include "sstring.h"
 #include <stdlib.h> // strtoi
 
@@ -72,7 +71,7 @@ extern serrcode aparser_get_int(aparser* self, int* pint)
         return S_NO_ERROR;
 }
 
-extern void aparser_cb_init(aparser_cb* self, void(*fn)(void*, aparser*))
+extern void aparser_cb_init(aparser_cb* self, void* callback)
 {
-        self->_fn = fn;
+        self->_fn = callback;
 }

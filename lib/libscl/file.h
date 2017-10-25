@@ -28,6 +28,7 @@ extern const char* path_get_cfile(const char* path);
 extern ssize       path_get_size(const char* path);
 extern bool        path_is_abs(const char* path);
 extern void        path_get_abs(char* abs, const char* loc);
+extern void        path_fix_delimeter(char* path);
 
 typedef struct _fread_cb
 {

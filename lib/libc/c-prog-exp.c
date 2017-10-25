@@ -1,7 +1,6 @@
 #include "c-prog-exp.h"
 #include "c-prog-type.h"
 #include "c-prog-conversions.h"
-#include "c-info.h"
 
 extern bool cprog_require_object_pointer_exp_type(
         const cprog* self, const tree_type* t, tree_location l)
@@ -765,10 +764,10 @@ extern tree_exp* cprog_build_binop(
         // pointer to an object type and the other shall have integer type.
         // (Incrementing is equivalent to adding 1.)
         // For subtraction, one of the following shall hold :
-        // — both operands have arithmetic type;
-        // — both operands are pointers to qualified or unqualified versions of compatible object
+        // ï¿½ both operands have arithmetic type;
+        // ï¿½ both operands are pointers to qualified or unqualified versions of compatible object
         // types; or
-        // — the left operand is a pointer to an object type and the right operand has integer type.
+        // ï¿½ the left operand is a pointer to an object type and the right operand has integer type.
         // (Decrementing is equivalent to subtracting 1.)
 
         // 6.5.7 shift
@@ -776,19 +775,19 @@ extern tree_exp* cprog_build_binop(
 
         // 6.5.8 Relational operators
         // One of the following shall hold:
-        // — both operands have real type;
-        // — both operands are pointers to qualified or unqualified versions of compatible object
+        // ï¿½ both operands have real type;
+        // ï¿½ both operands are pointers to qualified or unqualified versions of compatible object
         // types; or
-        // — both operands are pointers to qualified or unqualified versions of compatible
+        // ï¿½ both operands are pointers to qualified or unqualified versions of compatible
         // incomplete types
 
         // 6.5.9 Equality operators
         // One of the following shall hold:
-        // — both operands have arithmetic type;
-        // — both operands are pointers to qualified or unqualified versions of compatible types;
-        // — one operand is a pointer to an object or incomplete type and the other is a pointer to a
+        // ï¿½ both operands have arithmetic type;
+        // ï¿½ both operands are pointers to qualified or unqualified versions of compatible types;
+        // ï¿½ one operand is a pointer to an object or incomplete type and the other is a pointer to a
         // qualified or unqualified version of void; or
-        // — one operand is a pointer and the other is a null pointer constant.
+        // ï¿½ one operand is a pointer and the other is a null pointer constant.
 
         // 6.5.10 Bitwise AND operator
         // Each of the operands shall have integer type.
@@ -810,18 +809,18 @@ extern tree_exp* cprog_build_binop(
 
         // 6.5.16.1 Simple assignment
         // One of the following shall hold:
-        // — the left operand has qualified or unqualified arithmetic type and the right has
+        // ï¿½ the left operand has qualified or unqualified arithmetic type and the right has
         // arithmetic type;
-        // — the left operand has a qualified or unqualified version of a structure or union type
+        // ï¿½ the left operand has a qualified or unqualified version of a structure or union type
         // compatible with the type of the right;
-        // — both operands are pointers to qualified or unqualified versions of compatible types,
+        // ï¿½ both operands are pointers to qualified or unqualified versions of compatible types,
         // and the type pointed to by the left has all the qualifiers of the type pointed to by the
         // right;
-        // — one operand is a pointer to an object or incomplete type and the other is a pointer to a
+        // ï¿½ one operand is a pointer to an object or incomplete type and the other is a pointer to a
         // qualified or unqualified version of void, and the type pointed to by the left has all
         // the qualifiers of the type pointed to by the right;
-        // — the left operand is a pointer and the right is a null pointer constant; or
-        // — the left operand has type _Bool and the right is a pointer.
+        // ï¿½ the left operand is a pointer and the right is a null pointer constant; or
+        // ï¿½ the left operand has type _Bool and the right is a pointer.
 
         // 6.5.16.2 Compound assignment
         // For the operators += and -= only, either the left operand shall be a pointer to an object
@@ -929,12 +928,12 @@ extern tree_exp* cprog_build_conditional(
         // 6.5.15 Conditional operator
         // The first operand shall have scalar type.
         // One of the following shall hold for the second and third operands:
-        // — both operands have arithmetic type;
-        // — both operands have the same structure or union type;
-        // — both operands have void type;
-        // — both operands are pointers to qualified or unqualified versions of compatible types;
-        // — one operand is a pointer and the other is a null pointer constant; or
-        // — one operand is a pointer to an object or incomplete type and the other is a pointer to a
+        // ï¿½ both operands have arithmetic type;
+        // ï¿½ both operands have the same structure or union type;
+        // ï¿½ both operands have void type;
+        // ï¿½ both operands are pointers to qualified or unqualified versions of compatible types;
+        // ï¿½ one operand is a pointer and the other is a null pointer constant; or
+        // ï¿½ one operand is a pointer to an object or incomplete type and the other is a pointer to a
         //   qualified or unqualified version of void.
         tree_type* ct = tree_get_exp_type(condition);
         if (!cprog_require_scalar_exp_type(self, ct, tree_get_exp_loc(condition)))

@@ -399,8 +399,7 @@ static inline tree_decl** tree_get_decl_group_end(const tree_decl* self);
 
 #define TREE_FOREACH_DECL_GROUP(PGROUP, ITNAME)                      \
         for (tree_decl** ITNAME = tree_get_decl_group_begin(PGROUP); \
-                ITNAME != tree_get_decl_group_end(PGROUP);           \
-                ITNAME = ITNAME++)
+                ITNAME != tree_get_decl_group_end(PGROUP); ITNAME++)
 
 typedef struct _tree_decl
 {

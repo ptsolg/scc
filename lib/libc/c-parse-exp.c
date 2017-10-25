@@ -2,9 +2,8 @@
 #include "c-parse-decl.h"
 #include "c-info.h"
 #include "c-prog-exp.h"
-#include "c-error.h"
 
-extern const ctoken_kind ctk_rbracket_or_comma[] =
+const ctoken_kind ctk_rbracket_or_comma[] =
 {
         CTK_RBRACKET,
         CTK_COMMA,
@@ -62,7 +61,7 @@ static bool cparse_argument_exp_list_opt(cparser* self, objgroup* args)
                 return true;
 
         tree_exp* e;
-        while (e = cparse_assignment_exp(self))
+        while ((e = cparse_assignment_exp(self)))
         {
                 objgroup_push_back(args, e);
 

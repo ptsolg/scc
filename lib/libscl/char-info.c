@@ -1,6 +1,6 @@
 #include "char-info.h"
 
-extern const int _ascii_char_info[256] =
+const int _ascii_char_info[256] =
 {
         ACK_UNKNOWN, ACK_UNKNOWN, ACK_UNKNOWN, ACK_UNKNOWN,
         ACK_UNKNOWN, ACK_UNKNOWN, ACK_UNKNOWN, ACK_UNKNOWN,

@@ -42,8 +42,7 @@ static inline void*  objgroup_nth(const objgroup* self, ssize n);
 
 #define OBJGROUP_FOREACH(PGROUP, ITTYPE, ITNAME)                          \
         for (ITTYPE ITNAME = (ITTYPE)objgroup_begin(((objgroup*)PGROUP)); \
-                ITNAME != (ITTYPE)objgroup_end(((objgroup*)PGROUP));      \
-                ITNAME = ITNAME++)
+                ITNAME != (ITTYPE)objgroup_end(((objgroup*)PGROUP)); ITNAME++)
 
 static inline membuf* objgroup_base(objgroup* self)
 {
@@ -57,12 +56,12 @@ static inline const membuf* objgroup_cbase(const objgroup* self)
 
 static inline ssize objgroup_size(const objgroup* self)
 {
-        return self->_last - (const void**)membuf_begin(objgroup_cbase(self));
+        return self->_last - (void**)membuf_begin(objgroup_cbase(self));
 }
 
 static inline ssize objgroup_available(const objgroup* self)
 {
-        return (const void**)membuf_end(objgroup_cbase(self)) - self->_last;
+        return (void**)membuf_end(objgroup_cbase(self)) - self->_last;
 }
 
 static inline ssize objgroup_total(const objgroup* self)

@@ -15,6 +15,8 @@
 
 #elif S_OSX
 #include <sys/stat.h>
+#include <unistd.h>
+#include <stdlib.h> // realpath
 #else
 #error todo
 #endif
@@ -23,6 +25,8 @@ extern void path_get_cd(char* path)
 {
 #if S_WIN
         GetCurrentDirectory(S_MAX_PATH_LEN, path);
+#elif S_OSX
+        getcwd(path, S_MAX_PATH_LEN);
 #else
 #error todo
 #endif
@@ -71,9 +75,13 @@ extern bool path_is_dir(const char* path)
 {
 #if S_WIN
         return PathIsDirectory(path);
+#elif S_OSX
+        struct stat s;
+        if (stat(path, &s) != 0)
+                return false;
+        return S_ISDIR(s.st_mode);
 #else
 #error
-        return false;
 #endif
 }
 
@@ -85,10 +93,13 @@ extern bool path_is_file(const char* path)
                 return false;
 
         return !(att & FILE_ATTRIBUTE_DIRECTORY);
-
+#elif S_OSX
+        struct stat s;
+        if (stat(path, &s) != 0)
+                return false;
+        return S_ISREG(s.st_mode);
 #else
 #error
-        return false;
 #endif
 }
 
@@ -150,10 +161,25 @@ extern bool path_is_abs(const char* path)
 {
 #if S_WIN
         return !PathIsRelative(path);
+#elif S_OSX
+        return false;
 #else
 #error todo
-        return false;
 #endif
+}
+
+extern void path_fix_delimeter(char* path)
+{
+        while(1)
+        {
+               int c = *path;
+               if (!c)
+                       return;
+
+               if (c == '\\' || c == '/')
+                       *path = S_PATH_DELIMETER;
+               path++;
+        }
 }
 
 extern void path_get_abs(char* abs, const char* loc)
@@ -164,7 +190,13 @@ extern void path_get_abs(char* abs, const char* loc)
                 return;
         }
 
+#if S_WIN
         GetFullPathName(loc, S_MAX_PATH_LEN, abs, NULL);
+#elif S_OSX
+        realpath(loc, abs);
+#else
+#error todo
+#endif
 }
 
 static ssize fread_cb_read(fread_cb* self, void* buf, ssize bytes)

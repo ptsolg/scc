@@ -6,6 +6,8 @@
 #pragma once
 #endif
 
+#include <stdint.h>
+
 #if defined(_MSC_VER)
         #define S_MSVC 1
 #elif defined(__GNUC__) || defined(__GNUG__)
@@ -20,19 +22,18 @@
         #define S_WIN 1
         #define S_MAX_PATH_LEN 256
         #define S_PATH_DELIMETER '\\'
-
-        #ifdef _WIN64
-                #define S_X64 1
-        #else
-                #define S_X32 1
-        #endif
 #elif defined(__APPLE__)
         #define S_OSX 1
         #define S_MAX_PATH_LEN 256
         #define S_PATH_DELIMETER '/'
-#error todo S_X32/S_X64
 #else
         #error Unknown OS.
+#endif
+
+#if INTPTR_MAX == INT32_MAX
+#define S_X32 1
+#else
+#define S_X64 1
 #endif
 
 #endif // !STARGET_H

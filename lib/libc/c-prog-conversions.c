@@ -121,12 +121,12 @@ static tree_type* cprog_perform_integer_conversion(cprog* self, tree_exp** lhs, 
                         common = rt;
                 }
         }
-        else if (!lsigned && lrank >= rrank || lsigned && lrank > rrank)
+        else if ((!lsigned && lrank >= rrank) || (lsigned && lrank > rrank))
         {
                 *rhs = cprog_build_impl_cast(self, *rhs, lt);
                 common = lt;
         }
-        else if (!rsigned && rrank >= lrank || rsigned && rrank > lrank)
+        else if ((!rsigned && rrank >= lrank) || (rsigned && rrank > lrank))
         {
                 *lhs = cprog_build_impl_cast(self, *lhs, rt);
                 common = rt;

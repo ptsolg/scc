@@ -1,0 +1,22 @@
+*
+!*/
+
+!.gitignore
+!*.txt
+!*.c
+!*.t
+!*.a
+!*.h
+!*.inc
+!*.py
+
+# bin
+bin/*
+!bin/.empty
+
+# cmake
+CMakeCache.txt
+CMakeFiles/
+
+# tests
+test/scc_test/*.txt

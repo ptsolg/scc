@@ -37,7 +37,7 @@ static tree_decl* cparse_function_or_init_declarator(
         else if (cparser_at(self, CTK_LBRACE))
         {
                 cprog_enter_function(self->prog, decl);
-                tree_stmt* body = cparse_block_stmt(self, TSK_UNKNOWN);
+                tree_stmt* body = cparse_block_stmt(self, CSC_NONE);
                 cprog_exit_function(self->prog);
 
                 if (!body)
@@ -509,7 +509,7 @@ static bool cparse_parameter_type_list_opt(cparser* self, cdeclarator* result)
         }
 
         cparam* p;
-        while (p = cparse_param_declaration(self))
+        while ((p = cparse_param_declaration(self)))
         {
                 if (!cprog_add_declarator_param(self->prog, result, p))
                         return false;

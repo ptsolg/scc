@@ -100,11 +100,11 @@ static inline hiter htab_find_existing_or_empty_entry(const htab* self, hval key
         hiter end   = membuf_end(&self->_entries);
         hiter sep   = (hentry*)begin + key % primes[self->_prime_lvl];
 
-        for (hiter it = sep; it != end; it = ++(hentry*)it)
+        for (hiter it = sep; it != end; it = (hentry*)it + 1)
                 if (!hiter_get_val(it) || hiter_get_key(it) == key)
                         return it;
 
-        for (hiter it = begin; it != sep; it = ++(hentry*)it)
+        for (hiter it = begin; it != sep; it = (hentry*)it + 1)
                 if (!hiter_get_val(it) || hiter_get_key(it) == key)
                         return it;
 
@@ -179,7 +179,7 @@ extern hiter htab_begin(const htab* self)
         hiter begin = membuf_begin(&self->_entries);
         hiter end   = htab_end(self);
 
-        for (hiter it = begin; it != end; it = ++(hentry*)it)
+        for (hiter it = begin; it != end; it = (hentry*)it + 1)
                 if (hiter_get_val(it))
                         return it;
 
@@ -195,7 +195,7 @@ extern hiter hiter_get_next(hiter self, const htab* tab)
 {
         hiter next = (hentry*)self + 1;
         hiter end  = htab_end(tab);
-        for (hiter it = next; it != end; it = ++(hentry*)it)
+        for (hiter it = next; it != end; it = (hentry*)it + 1)
                 if (hiter_get_val(it))
                         return it;
         return end;

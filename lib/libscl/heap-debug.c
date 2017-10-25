@@ -25,7 +25,19 @@ extern void __cdecl hd_free(void* block)
 }
 
 #else
-#error todo
+
+#include "malloc.h"
+
+extern void* __cdecl hd_malloc(size_t size)
+{
+        return smalloc(size);
+}
+
+extern void __cdecl hd_free(void* block)
+{
+        sfree(block);
+}
+
 #endif
 
 extern void scl_enable_heap_debug()

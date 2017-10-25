@@ -3,7 +3,11 @@ import utils, os, subprocess, sys, time, re
 class SCC:
 
 	def __init__(self):
-		self.path = os.path.join(os.getcwd(), '..', '..', 'bin', 'scc.exe')
+		name = 'scc'
+		if os.name == 'nt':
+			name = 'scc.exe'
+
+		self.path = os.path.join(os.getcwd(), '..', '..', 'bin', name)
 
 	def call(self, args):
 		return subprocess.call([self.path] + args)

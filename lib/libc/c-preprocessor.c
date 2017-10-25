@@ -1,12 +1,8 @@
 #include "c-preprocessor.h"
 #include "c-token.h"
 #include "c-error.h"
-#include "c-source.h"
 #include "c-tree.h"
-#include "c-info.h"
-#include "c-limits.h"
 #include <libscl/char-info.h>
-#include <libscl/hash.h>
 
 extern void creswords_init(creswords* self)
 {
@@ -121,7 +117,7 @@ extern void cpplexer_init(
         self->chars[0]       = RB_ENDC;
         self->chars[1]       = RB_ENDC;
         self->chars[2]       = RB_ENDC;
-        self->loc            = -1;
+        self->loc            = TREE_INVALID_LOC;
 }
 
 extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source)
@@ -175,7 +171,7 @@ static inline bool csequence_append(csequence* self, const cpplexer* lexer, int 
                 return false;
         }
 
-        self->val[self->size++] = c;
+        self->val[self->size++] = (char)c;
         return true;
 }
 
@@ -263,7 +259,7 @@ extern ctoken* cpplex_const_char(cpplexer* self)
                 cerror(self->error_manager, CES_ERROR, cchar.loc, "empty character constant");
                 return NULL;
         }
-        else if (escape && cchar.size > 2 || !escape && cchar.size > 1)
+        else if ((escape && cchar.size > 2) || (!escape && cchar.size > 1))
         {
                 cerror(self->error_manager, CES_ERROR, cchar.loc, "invalid character constant");
                 return NULL;
@@ -541,7 +537,7 @@ static ctoken* cpplex_symbols(cpplexer* self)
 static ctoken* cpplex_wspace(cpplexer* self)
 {
         tree_location loc = cpplexer_loc(self);
-        ssize spaces      = 0;
+        int spaces        = 0;
         int c             = cpplexer_getc(self);
         while (char_is_wspace(c) && !cpplexer_at_eof(self))
         {
@@ -654,7 +650,7 @@ static ctoken* cpproc_lex_wspace(cpproc* self, bool skip_eol)
                         return NULL;
 
                 ctoken_kind k = ctoken_get_kind(t);
-                if (k == CTK_WSPACE || k == CTK_COMMENT || k == CTK_EOL && skip_eol)
+                if (k == CTK_WSPACE || k == CTK_COMMENT || (k == CTK_EOL && skip_eol))
                         continue;
                 else if (k == CTK_EOF && self->state != self->files)
                 {

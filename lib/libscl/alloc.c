@@ -108,17 +108,17 @@ extern serrcode _obj_allocator_grow(obj_allocator* self)
         return S_NO_ERROR;
 }
 
-static void* std_allocate(allocator* self, ssize bytes)
+static void* std_allocate(void* p, ssize bytes)
 {
         return smalloc(bytes);
 }
 
-static void* std_allocate_ex(allocator* self, ssize bytes, ssize align)
+static void* std_allocate_ex(void* p, ssize bytes, ssize align)
 {
         return smalloc(bytes);
 }
 
-static void std_deallocate(allocator* self, void* block)
+static void std_deallocate(void* p, void* block)
 {
         sfree(block);
 }

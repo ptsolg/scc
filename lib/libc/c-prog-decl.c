@@ -96,7 +96,7 @@ extern bool cprog_finish_declarator(
 
         if (declarator->type.tail)
         {
-                bool res = cprog_set_declarator_type(self, declarator, pointer_chain->head);
+                bool res = (bool)cprog_set_declarator_type(self, declarator, pointer_chain->head);
                 declarator->type.tail = pointer_chain->tail;
                 return res;
         }

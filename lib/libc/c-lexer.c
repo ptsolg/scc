@@ -4,8 +4,7 @@
 #include "c-error.h"
 #include "c-reswords.h"
 #include <stdlib.h> // strtoll, strtod, ...
-#include <ctype.h>  // toupper
-#include <libscl/hash.h>
+#include <ctype.h> // toupper
 
 extern void clexer_init(
         clexer*          self,
@@ -151,7 +150,7 @@ static inline ctoken* clex_floating_constant(clexer* self, ctoken* pp)
                 d = strtod(num, &suffix);
 
         ssize suffix_len = strlen(suffix);
-        if (is_float && suffix_len > 1 || !is_float && suffix_len)
+        if ((is_float && suffix_len > 1) || (!is_float && suffix_len))
         {
                 cerror(self->pp.error_manager, CES_ERROR, ctoken_get_loc(pp),
                         "invalid floating literal '%s'", num);

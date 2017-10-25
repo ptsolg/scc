@@ -17,15 +17,14 @@ extern "C" {
 // an allocator for 'heavy' allocations that is used by various data structures
 typedef struct _allocator
 {
+        // passes itself as first argument
         void*(*_allocate)(void*, ssize);
         void*(*_allocate_ex)(void*, ssize, ssize);
         void (*_deallocate)(void*, void*);
 } allocator;
 
 static inline void allocator_init(
-        allocator* self,
-        void*(alloc)(void*, ssize),
-        void (dealloc)(void*, void*))
+        allocator* self, void* alloc, void* dealloc)
 {
         self->_allocate    = alloc;
         self->_allocate_ex = NULL;
@@ -33,10 +32,7 @@ static inline void allocator_init(
 }
 
 static inline void allocator_init_ex(
-        allocator* self,
-        void*(alloc)(void*, ssize),
-        void*(alloc_ex)(void*, ssize, ssize),
-        void (dealloc)(void*, void*))
+        allocator*  self, void* alloc, void* alloc_ex, void* dealloc)
 {
         self->_allocate    = alloc;
         self->_allocate_ex = alloc_ex;

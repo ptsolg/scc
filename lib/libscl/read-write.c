@@ -1,9 +1,9 @@
 #include "read-write.h"
 #include "sstring.h"
 
-extern void write_cb_init(write_cb* self, ssize(*fn)(void*, const void*, ssize))
+extern void write_cb_init(write_cb* self, void* write_fn)
 {
-        self->_write = fn;
+        self->_write = write_fn;
 }
 
 extern void writebuf_init(writebuf* self, write_cb* cb)
@@ -36,7 +36,7 @@ extern ssize writebuf_flush(writebuf* self)
         return bytes;
 }
 
-static inline writebuf_fill(writebuf* self, const void* b, ssize len)
+static inline void writebuf_fill(writebuf* self, const void* b, ssize len)
 {
         ssize free = WB_SIZE - (self->_pos - self->_data);
         S_ASSERT(len <= free);
@@ -80,13 +80,13 @@ extern ssize writebuf_writec(writebuf* self, int c)
         if (self->_pos - self->_data + 1 == WB_SIZE)
                 bytes = writebuf_flush(self);
 
-        *self->_pos++ = c;
+        *self->_pos++ = (char)c;
         return bytes;
 }
 
-extern void read_cb_init(read_cb* self, ssize(*read)(void*, void*, ssize))
+extern void read_cb_init(read_cb* self, void* read_fn)
 {
-        self->_read = read;
+        self->_read = read_fn;
 }
 
 extern void readbuf_init(readbuf* self, read_cb* cb)

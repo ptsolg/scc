@@ -80,7 +80,6 @@ extern serrcode scc_init(scc_env* self, FILE* err, int argc, const char** argv)
 static void scc_print_help(scc_env* self)
 {
         fprintf(self->err, "Options:\n");
-
         ssize max_len = 0;
         OBJGROUP_FOREACH(&self->handlers, scc_arg_handler**, it)
         {
@@ -88,7 +87,7 @@ static void scc_print_help(scc_env* self)
                 if (len > max_len)
                         max_len = len;
         }
-
+        
         OBJGROUP_FOREACH(&self->handlers, scc_arg_handler**, it)
         {
                 char spaces[100];

@@ -1,9 +1,5 @@
 #include "c-info.h"
 #include "c-reswords.h"
-#include "c-token-kind.h"
-#include <libscl/hash.h>
-#include <libtree/tree-type.h>
-#include <libtree/tree-decl.h>
 
 #define ASSERT_ENUM_RANGE(V, MAX) S_ASSERT((V) > -1 && (V) < (MAX))
 

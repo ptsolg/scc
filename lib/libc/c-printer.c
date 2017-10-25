@@ -4,9 +4,7 @@
 #include "c-reswords.h"
 #include "c-tree.h"
 #include "c-source.h"
-#include <libtree/tree.h>
 #include <libscl/char-info.h>
-#include <stdio.h> // sprintf
 #include <stdarg.h>
 
 extern void cprinter_opts_init(cprinter_opts* self)
@@ -128,7 +126,7 @@ static void cprint_token_value(cprinter* self, const ctoken* token)
         else if (k == CTK_CONST_FLOAT)
                 cprintf(self, "%ff", ctoken_get_float(token));
         else if (k == CTK_CONST_DOUBLE)
-                cprintf(self, "%lf", ctoken_get_double(token));
+                cprintf(self, "%f", (double)ctoken_get_double(token));
         else if (k == CTK_CONST_STRING)
         {
                 cprintc(self, '"');
@@ -389,8 +387,7 @@ static void cprint_cast_exp(cprinter* self, const tree_exp* exp)
         bool brackets = false;
         if (k == TEK_IMPLICIT_CAST)
         {
-                brackets = self->opts.print_impl_casts
-                        && tree_get_exp_kind(e) == TEK_BINARY
+                brackets = (self->opts.print_impl_casts && tree_get_exp_kind(e) == TEK_BINARY)
                         || self->opts.force_brackets;
         }
         _cprint_exp(self, e, brackets);

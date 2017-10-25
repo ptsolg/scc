@@ -242,8 +242,7 @@ static inline void tree_set_call_lhs(tree_exp* self, tree_exp* lhs);
 
 #define TREE_FOREACH_CALL(PEXP, ITNAME)                     \
         for (tree_exp** ITNAME = tree_get_call_begin(PEXP); \
-                ITNAME != tree_get_call_end(PEXP);          \
-                ITNAME = ITNAME++)
+                ITNAME != tree_get_call_end(PEXP); ITNAME++)
 
 struct _tree_subscript_exp
 {

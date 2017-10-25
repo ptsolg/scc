@@ -1,12 +1,8 @@
 #include "c-parser.h"
 #include "c-error.h"
-#include "c-lexer.h"
 #include "c-info.h"
 #include "c-reswords.h"
 #include <setjmp.h>
-#include <libtree/tree-module.h> // tree_scope
-#include <libtree/tree-stmt.h> // tree_scope
-
 
 extern void cparser_init(cparser* self, clexer* lexer, cprog* prog, cerror_manager* error_manager)
 {

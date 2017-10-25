@@ -1,5 +1,4 @@
 #include "c-env.h"
-#include "c-error.h"
 #include "c-info.h"
 #include "c-lexer.h"
 #include "c-parse-module.h"

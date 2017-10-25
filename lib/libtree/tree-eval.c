@@ -237,7 +237,7 @@ static bool tree_eval_invalid(const tree_exp* e, const tree_platform_info* i, tr
         return false;
 }
 
-static const bool(*const tree_eval_table[])(
+static bool(*const tree_eval_table[])(
         const tree_exp*,
         const tree_platform_info*,
         tree_eval_result*) =

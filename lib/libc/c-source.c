@@ -1,6 +1,5 @@
 #include "c-source.h"
 #include "c-tree.h"
-#include <libscl/hash.h>
 
 extern bool csource_has(const csource* self, tree_location loc)
 {
@@ -10,11 +9,11 @@ extern bool csource_has(const csource* self, tree_location loc)
 extern int csource_get_line(const csource* self, tree_location loc)
 {
         // todo: log(n) search
-        int nlines = (int)objgroup_size(&self->_lines);
+        ssize nlines = objgroup_size(&self->_lines);
         if (!nlines)
                 return 0;
 
-        for (int i = 0; i < nlines; i++)
+        for (ssize i = 0; i < nlines; i++)
         {
                 tree_location cur  = (tree_location)objgroup_nth(&self->_lines, i);
                 tree_location next = csource_end(self);
@@ -22,7 +21,7 @@ extern int csource_get_line(const csource* self, tree_location loc)
                         next = (tree_location)objgroup_nth(&self->_lines, i + 1);
 
                 if (loc >= cur && loc < next)
-                        return i + 1;
+                        return (int)(i + 1);
         }
 
         return 0;
@@ -34,7 +33,9 @@ extern int csource_get_col(const csource* self, tree_location loc)
         if (line == 0)
                 return 0;
 
-        tree_location line_loc = (tree_location)objgroup_nth(&self->_lines, line - 1);
+        tree_location line_loc = (tree_location)objgroup_nth(
+                &self->_lines, (ssize)(line - 1));
+
         return loc - line_loc + 1;
 }
 
@@ -170,7 +171,7 @@ static csource* csource_new(
         else
         {
                 S_ASSERT(path_is_file(path));
-                source->_end = source->_begin + path_get_size(path) + 1;
+                source->_end = source->_begin + (tree_location)path_get_size(path) + 1;
         }
 
         if (S_FAILED(objgroup_push_back(sources, source)))
@@ -187,7 +188,7 @@ extern csource* csource_find(csource_manager* self, const char* path)
         path_get_abs(abs, path);
 
         csource* source;
-        if (source = htab_find(&self->source_lookup, STRREF(abs)))
+        if ((source = htab_find(&self->source_lookup, STRREF(abs))))
                 return source;
 
         if (path_is_file(abs))
@@ -197,6 +198,8 @@ extern csource* csource_find(csource_manager* self, const char* path)
         {
                 path_get_abs(abs, *it);
                 path_join(abs, path);
+                path_fix_delimeter(abs);
+
                 if (path_is_file(abs))
                         return csource_new(self, abs, NULL);
         }

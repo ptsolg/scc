@@ -11,7 +11,7 @@ extern "C" {
 
 #include "common.h"
 
-typedef void*(*malloc_fn)(ssize);
+typedef void*(*malloc_fn)(size_t);
 typedef void (*free_fn)(void*);
 
 extern malloc_fn smalloc;

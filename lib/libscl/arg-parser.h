@@ -40,7 +40,7 @@ typedef struct _aparser_cb
         void(*_fn)(void*, aparser*);
 } aparser_cb;
 
-extern void aparser_cb_init(aparser_cb* self, void(*fn)(void*, aparser*));
+extern void aparser_cb_init(aparser_cb* self, void* callback);
 
 #ifdef __cplusplus
 }

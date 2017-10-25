@@ -13,11 +13,6 @@ extern "C" {
 #include <libscl/hash.h>
 #include <libscl/sstring.h>
 
-#ifndef CHASHL
-#define _CHASH_SEED 391585969
-#define CHASHL(S, L) ((hval)murmurhash3_86_32((s), _CHASH_SEED, (int)(L))
-#endif
-
 #define CHASH(S) CHASHL(S, strlen(S))
 
 #ifdef __cplusplus

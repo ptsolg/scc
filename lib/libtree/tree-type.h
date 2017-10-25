@@ -116,8 +116,7 @@ static inline void tree_set_function_restype(tree_type* self, tree_type* restype
 
 #define TREE_FOREACH_FUNC_PARAM(PFUNC, ITNAME)                         \
         for (tree_type** ITNAME = tree_get_function_type_begin(PFUNC); \
-                ITNAME != tree_get_function_type_end(PFUNC);           \
-                ITNAME = ITNAME++)
+                ITNAME != tree_get_function_type_end(PFUNC); ITNAME++)
 
 struct _tree_array_type
 {
@@ -513,7 +512,7 @@ static inline bool tree_type_is(const tree_type* self, tree_type_kind k)
 
 static inline bool tree_type_is_qualified(const tree_type* self)
 {
-        return ((const ssize)self) & _TREE_QUAL_FLAG;
+        return (bool)(((const ssize)self) & _TREE_QUAL_FLAG);
 }
 
 static inline const tree_type* tree_get_unqualified_ctype(const tree_type* self)

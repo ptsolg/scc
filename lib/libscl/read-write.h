@@ -17,7 +17,7 @@ typedef struct _write_cb
         ssize(*_write)(void*, const void*, ssize);
 } write_cb;
 
-extern void write_cb_init(write_cb* self, ssize(*fn)(void*, const void*, ssize));
+extern void write_cb_init(write_cb* self, void* write_fn);
 
 #ifndef WB_SIZE
 #define WB_SIZE 4095
@@ -60,7 +60,7 @@ typedef struct _read_cb
         ssize(*_read)(void*, void*, ssize);
 } read_cb;
 
-extern void read_cb_init(read_cb* self, ssize(*read)(void*, void*, ssize));
+extern void read_cb_init(read_cb* self, void* read_fn);
 
 typedef struct _readbuf
 {

@@ -1,5 +1,4 @@
 #include "sstring.h"
-#include "hash.h"
 #include <stdarg.h>
 
 extern void strpool_init(strpool* self)
