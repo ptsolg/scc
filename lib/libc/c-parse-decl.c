@@ -240,12 +240,6 @@ extern tree_type* cparse_type_specifier(cparser* self)
                         res = cbuiltin_type_info_set_short(&info);
                 else if (k == CTK_LONG)
                         res = cbuiltin_type_info_set_long(&info);
-                else if (info.base == TBTK_INVALID)
-                {
-                        cerror(self->error_manager, CES_ERROR, cparser_get_loc(self),
-                                "expected type specifier");
-                        return NULL;
-                }
                 else         
                         break;
 
@@ -257,8 +251,15 @@ extern tree_type* cparse_type_specifier(cparser* self)
                 }
                 cparser_consume_token(self);
         }
-        return cprog_build_builtin_type(self->prog, TTQ_UNQUALIFIED,
-                cbuiltin_type_info_get_type(&info));
+
+        tree_builtin_type_kind btk = cbuiltin_type_info_get_type(&info);
+        if (btk == TBTK_INVALID)
+        {
+                cerror(self->error_manager, CES_ERROR, cparser_get_loc(self),
+                        "expected type specifier");
+                return NULL;
+        }
+        return cprog_build_builtin_type(self->prog, TTQ_UNQUALIFIED, btk);
 }
 
 extern tree_type_quals cparse_type_qualifier_list_opt(cparser* self)
