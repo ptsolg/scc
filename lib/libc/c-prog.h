@@ -76,6 +76,8 @@ extern bool cprog_require_complete_type(
 extern void cprog_init_objgroup(cprog* self, objgroup* group);
 extern tree_module* cparser_act_on_finish_module(cprog* self);
 
+extern const char* cprog_get_id(const cprog* self, tree_id id);
+
 #ifdef __cplusplus
 }
 #endif

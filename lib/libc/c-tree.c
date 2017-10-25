@@ -258,6 +258,11 @@ extern void cdecl_specs_set_end_loc(cdecl_specs* self, tree_location end_loc)
         self->loc = tree_set_xloc_end(self->loc, end_loc);
 }
 
+extern tree_location cdecl_specs_get_start_loc(const cdecl_specs* self)
+{
+        return tree_get_xloc_begin(self->loc);
+}
+
 extern void ctype_chain_init(ctype_chain* self)
 {
         self->head = NULL;

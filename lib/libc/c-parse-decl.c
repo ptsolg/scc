@@ -178,9 +178,20 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
                 else
                         break;
         }
+
         if (!result->typespec)
         {
-                cerror(self->error_manager, CES_ERROR, 0, "expected type specifier");
+                if (cparser_at(self, CTK_ID))
+                {
+                        ctoken* id_tok = cparser_get_token(self);
+                        tree_id id     = ctoken_get_string(id_tok);
+                        cerror(self->error_manager, CES_ERROR, ctoken_get_loc(id_tok),
+                                "unknown type name '%s'", cprog_get_id(self->prog, id));
+                        return false;
+                }
+
+                cerror(self->error_manager, CES_ERROR,
+                        cdecl_specs_get_start_loc(result), "expected type specifier");
                 return false;
         }
 

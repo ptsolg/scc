@@ -108,6 +108,8 @@ extern void cdecl_specs_init(cdecl_specs* self);
 extern void cdecl_specs_set_start_loc(cdecl_specs* self, tree_location start_loc);
 extern void cdecl_specs_set_end_loc(cdecl_specs* self, tree_location end_loc);
 
+extern tree_location cdecl_specs_get_start_loc(const cdecl_specs* self);
+
 typedef enum
 {
         CDK_UNKNOWN,

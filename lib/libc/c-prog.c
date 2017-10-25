@@ -154,3 +154,8 @@ extern tree_module* cparser_act_on_finish_module(cprog* self)
 {
         return self->module;
 }
+
+extern const char* cprog_get_id(const cprog* self, tree_id id)
+{
+        return tree_context_get_id(self->context, id);
+}
