@@ -275,9 +275,9 @@ static tree_designation* cparse_designation(cparser* self, tree_type* t)
                 ctoken_kind k = ctoken_get_kind(cparser_get_token(self));
                 tree_id loc   = cparser_get_loc(self);
 
-                cparser_consume_token(self);
                 if (k == CTK_DOT)
                 {
+                        cparser_consume_token(self);
                         tree_id member = cparse_identifier(self);
                         if (member == TREE_INVALID_ID)
                                 return NULL;
@@ -287,16 +287,17 @@ static tree_designation* cparse_designation(cparser* self, tree_type* t)
                 }
                 else if (k == CTK_LSBRACKET)
                 {
+                        cparser_consume_token(self);
                         tree_const_exp* index = cparse_const_exp(self);
                         if (!index || !cparser_require(self, CTK_RSBRACKET))
                                 return NULL;
 
                         designator = cprog_build_array_designator(self->prog, loc, t, index);
                 }
-                else if (k == CTK_EQ)
+                else if (cparser_require(self, CTK_EQ))
                         return designation;
                 else
-                        return NULL; // unexpected token
+                        return NULL;
 
                 if (!designator)
                         return NULL;
