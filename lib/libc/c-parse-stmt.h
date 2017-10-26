@@ -10,10 +10,11 @@ extern "C" {
 #endif
 
 #include "c-parser.h"
+#include "c-tree.h"
 
 typedef struct _tree_stmt      tree_stmt;
 typedef enum   _tree_stmt_kind tree_stmt_kind;
-typedef enum _cstmt_context    cstmt_context;
+typedef enum   _cstmt_context  cstmt_context;
 // c99 6.8 statement:
 //      labeled-statement
 //      compound-statement
