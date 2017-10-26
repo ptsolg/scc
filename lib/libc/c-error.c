@@ -1,4 +1,5 @@
 #include "c-error.h"
+#include "c-limits.h"
 #include <stdarg.h>
 
 extern void cerror_manager_init(
@@ -41,10 +42,10 @@ extern void cerror(
         clocation l;
         csource_find_loc(self->source_manager, &l, loc);
 
-        char buffer[1024];
+        char buffer[CMAX_LINE_LENGTH];
         va_list args;
         va_start(args, description);
-        vsprintf(buffer, description, args);
+        vsnprintf(buffer, CMAX_LINE_LENGTH, description, args);
 
         fprintf(self->err, "%s:%d:%d: %s: %s\n",
                 path_get_cfile(l.file),
