@@ -457,7 +457,11 @@ extern bool cprog_set_decl_storage_class(
         cprog* self, cdecl_specs* specs, tree_decl_storage_class class_)
 {
         if (specs->class_ != TDSC_NONE || specs->is_typedef)
-                return false; // storage class is already defined
+        {
+                cerror(self->error_manager, CES_ERROR, cdecl_specs_get_start_loc(specs),
+                        "multiple storage classes in declaration specifiers");
+                return false;
+        }
 
         specs->class_ = class_;
         return true;
