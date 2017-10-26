@@ -553,11 +553,6 @@ static bool cparse_parameter_type_list_opt(cparser* self, cdeclarator* result)
                 else if (!cparser_require_ex(self, CTK_COMMA, ctk_rbracket_or_comma))
                         return false;
         }
-
-        const ctoken* pos  = cparser_get_token(self);
-        const cresword_info* info = cget_token_info(pos);
-        cerror(self->error_manager, CES_ERROR, ctoken_get_loc(pos),
-                "expected parameter declaration or ')' before %s %s", info->desription, info->kind);
         return false;
 }
 
