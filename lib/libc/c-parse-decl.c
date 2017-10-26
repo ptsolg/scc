@@ -426,6 +426,13 @@ static tree_decl* cparse_enumerator(cparser* self, tree_decl* enum_)
                 : NULL;
 }
 
+static ctoken_kind ctk_rbrace_or_comma[] =
+{
+        CTK_RBRACE,
+        CTK_COMMA,
+        CTK_UNKNOWN,
+};
+
 static bool cparse_enumerator_list(cparser* self, tree_decl* enum_)
 {
         if (cparser_at(self, CTK_RBRACE))
@@ -444,9 +451,15 @@ static bool cparse_enumerator_list(cparser* self, tree_decl* enum_)
 
                 if (cparser_at(self, CTK_COMMA))
                         cparser_consume_token(self);
+
                 if (cparser_at(self, CTK_RBRACE))
                 {
                         res = true;
+                        break;
+                }
+                else if (!cparser_at(self, CTK_ID))
+                {
+                        cparser_require_ex(self, CTK_UNKNOWN, ctk_rbrace_or_comma);
                         break;
                 }
         }
