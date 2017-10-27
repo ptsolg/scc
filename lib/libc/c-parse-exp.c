@@ -12,12 +12,13 @@ const ctoken_kind ctk_rbracket_or_comma[] =
 
 extern tree_exp* cparse_paren_exp(cparser* self)
 {
+        tree_location lbracket_loc = cparser_get_loc(self);
         if (!cparser_require(self, CTK_LBRACKET))
                 return NULL;
 
         tree_exp* e = cparse_exp(self);
         return e && cparser_require(self, CTK_RBRACKET)
-                ? cprog_build_paren_exp(self->prog, cparser_get_loc(self), e)
+                ? cprog_build_paren_exp(self->prog, lbracket_loc, e)
                 : NULL;
 }
 
@@ -154,10 +155,13 @@ extern tree_exp* cparse_unary_exp(cparser* self)
 
                 if (cparser_at(self, CTK_LBRACKET))
                 {
-                        tree_type* t = cparse_paren_type_name(self);
-                        if (!t)
+                        cparser_consume_token(self);
+                        tree_location type_loc = cparser_get_loc(self);
+                        tree_type* t = cparse_type_name(self);
+                        if (!t || !cparser_require(self, CTK_RBRACKET))
                                 return NULL;
-                        csizeof_type_init(&rhs, t, cparser_get_loc(self));
+
+                        csizeof_type_init(&rhs, t, type_loc);
                 }
                 else
                 {
