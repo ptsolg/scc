@@ -1,6 +1,7 @@
 #include "c-prog-exp.h"
 #include "c-prog-type.h"
 #include "c-prog-conversions.h"
+#include "c-info.h"
 
 extern bool cprog_require_object_pointer_exp_type(
         const cprog* self, const tree_type* t, tree_location l)
@@ -569,7 +570,7 @@ static tree_type* cprog_check_relational_op(
         else
         {
                 cerror(self->error_manager, CES_ERROR, loc,
-                        "invalid operands to relational operator");
+                        "invalid operands to binary '%s'", cget_binop_string(opcode));
                 return NULL;
         }
 
@@ -611,7 +612,8 @@ static tree_type* cprog_check_compare_op(
                         return lt;
                 */
         }
-        cerror(self->error_manager, CES_ERROR, loc, "invalid operands to binary '=='");
+        cerror(self->error_manager, CES_ERROR, loc,
+                "invalid operands to binary '%s'", cget_binop_string(opcode));
         return NULL;
 }
 
