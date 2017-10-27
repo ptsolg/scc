@@ -548,22 +548,18 @@ static tree_type* cprog_check_add_op(
         return NULL;
 }
 
-static tree_type* cprog_check_sub_op(cprog* self, tree_exp** lhs, tree_exp** rhs)
+static tree_type* cprog_check_sub_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
         tree_type*    lt = cprog_perform_unary_conversion(self, lhs);
         tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
         tree_location rl = tree_get_exp_loc(*rhs);
 
-        if (tree_type_is_arithmetic(lt))
-        {
-                if (!cprog_require_arithmetic_exp_type(self, rt, rl))
-                        return NULL;
-
+        if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
                 return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
-        }
-        else if (tree_type_is_pointer(lt))
+        else if (tree_type_is_object_pointer(lt))
         {
-                if (tree_type_is_pointer(rt) && tree_types_are_compatible(lt, rt))
+                if (tree_type_is_object_pointer(rt) && tree_types_are_compatible(lt, rt))
                         return lt;
 
                 if (!cprog_require_integral_exp_type(self, rt, rl))
@@ -571,6 +567,7 @@ static tree_type* cprog_check_sub_op(cprog* self, tree_exp** lhs, tree_exp** rhs
 
                 return lt;
         }
+        cerror(self->error_manager, CES_ERROR, loc, "invalid operands to binary '-'");
         return NULL;
 }
 
@@ -858,7 +855,7 @@ extern tree_exp* cprog_build_binop(
                         break;
 
                 case TBK_SUB:
-                        t = cprog_check_sub_op(self, &lhs, &rhs);
+                        t = cprog_check_sub_op(self, &lhs, &rhs, loc);
                         break;
 
                 case TBK_SHL_ASSIGN:
