@@ -571,23 +571,6 @@ static tree_type* cprog_check_sub_op(
         return NULL;
 }
 
-static tree_type* cprog_check_shift_op(cprog* self, tree_exp** lhs, tree_exp** rhs)
-{
-        tree_type* lt = cprog_perform_unary_conversion(self, lhs);
-        tree_type* rt = cprog_perform_unary_conversion(self, rhs);
-
-        if (!cprog_require_integral_exp_type(self, rt, tree_get_exp_loc(*rhs)))
-                return NULL;
-        if (!cprog_require_integral_exp_type(self, lt, tree_get_exp_loc(*lhs)))
-                return NULL;
-
-        lt = cprog_perform_integer_promotion(self, lhs);
-        rt = cprog_perform_integer_promotion(self, rhs);
-        cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
-        return lt;
-
-}
-
 static tree_type* cprog_check_bitwise_op(cprog* self, tree_exp** lhs, tree_exp** rhs)
 {
         tree_type* lt = cprog_perform_unary_conversion(self, lhs);
@@ -860,18 +843,13 @@ extern tree_exp* cprog_build_binop(
 
                 case TBK_SHL_ASSIGN:
                 case TBK_SHR_ASSIGN:
-                        if (!cprog_require_modifiable_lvalue(self, lhs))
-                                return NULL;
-                case TBK_SHL:
-                case TBK_SHR:
-                        t = cprog_check_shift_op(self, &lhs, &rhs);
-                        break;
-
                 case TBK_AND_ASSIGN:
                 case TBK_XOR_ASSIGN:
                 case TBK_OR_ASSIGN:
                         if (!cprog_require_modifiable_lvalue(self, lhs))
                                 return NULL;
+                case TBK_SHL:
+                case TBK_SHR:
                 case TBK_AND:
                 case TBK_OR:
                 case TBK_XOR:
