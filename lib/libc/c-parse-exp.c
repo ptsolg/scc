@@ -110,11 +110,13 @@ static tree_exp* cparse_rhs_of_postfix_exp(cparser* self, tree_exp* lhs)
         else if (k == CTK_DOT || k == CTK_ARROW)
         {
                 cparser_consume_token(self);
+                tree_location id_loc = cparser_get_loc(self);
                 tree_id id = cparse_identifier(self);
                 if (id == TREE_INVALID_ID)
                         return NULL;
 
-                return cprog_build_member_exp(self->prog, loc, lhs, id, k == CTK_ARROW);
+                return cprog_build_member_exp(self->prog,
+                        loc, lhs, id, id_loc, k == CTK_ARROW);
         }
         else if (k == CTK_PLUS2)
         {

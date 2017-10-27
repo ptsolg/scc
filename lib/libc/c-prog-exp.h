@@ -63,7 +63,12 @@ extern tree_exp* cprog_build_call_exp(
         cprog* self, tree_location loc, tree_exp* lhs, objgroup* args);
 
 extern tree_exp* cprog_build_member_exp(
-        cprog* self, tree_location loc, tree_exp* lhs, tree_id member, bool is_arrow);
+        cprog*        self,
+        tree_location loc,
+        tree_exp*     lhs,
+        tree_id       id,
+        tree_location id_loc,
+        bool          is_arrow);
 
 extern tree_exp* cprog_build_unop(
         cprog* self, tree_location loc, tree_unop_kind opcode, tree_exp* exp);

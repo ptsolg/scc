@@ -282,7 +282,12 @@ extern tree_exp* cprog_build_call_exp(
 }
 
 extern tree_exp* cprog_build_member_exp(
-        cprog* self, tree_location loc, tree_exp* lhs, tree_id member, bool is_arrow)
+        cprog*        self,
+        tree_location loc,
+        tree_exp*     lhs,
+        tree_id       id,
+        tree_location id_loc,
+        bool          is_arrow)
 {
         if (!lhs)
                 return NULL;
@@ -303,7 +308,7 @@ extern tree_exp* cprog_build_member_exp(
                 return NULL;
         
         tree_decl* record = tree_get_decl_type_entity(t);
-        tree_decl* m      = cprog_require_member_decl(self, loc, record, member);
+        tree_decl* m      = cprog_require_member_decl(self, id_loc, record, id);
         if (!m)
                 return NULL;
 
