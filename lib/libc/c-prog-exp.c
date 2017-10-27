@@ -213,6 +213,9 @@ extern tree_exp* cprog_build_string_literal(cprog* self, tree_location loc, tree
         return tree_new_string_literal(self->context, t, loc, ref);
 }
 
+// c99 6.5.2.1 array subscripting
+// One of the expressions shall have type "pointer to object type",
+//    the other expression shall have integer type, and the result has type "type".
 extern tree_exp* cprog_build_subscript_exp(
         cprog* self, tree_location loc, tree_exp* lhs, tree_exp* rhs)
 {
@@ -224,9 +227,6 @@ extern tree_exp* cprog_build_subscript_exp(
         tree_location rl = tree_get_exp_loc(rhs);
         tree_type*    t  = NULL;
 
-        // c99 6.5.2.1 
-        // 1. One of the expressions shall have type "pointer to object type",
-        //    the other expression shall have integer type, and the result has type "type".
         if (tree_type_is_pointer(lt))
         {
                 if (!cprog_require_integral_exp_type(self, rt, rl))
@@ -247,19 +247,19 @@ extern tree_exp* cprog_build_subscript_exp(
         return tree_new_subscript_exp(self->context, TVK_LVALUE, t, loc, lhs, rhs);
 }
 
+// c99 6.5.2.2 function calls
+// The expression that denotes the called function shall have type pointer to function
+//    returning void or returning an object type other than an array type.
+// If the expression that denotes the called function has a type that includes a prototype,
+//    the number of arguments shall agree with the number of parameters. Each argument shall
+//    have a type such that its value may be assigned to an object with the unqualified version
+//    of the type of its corresponding parameter.
 extern tree_exp* cprog_build_call_exp(
         cprog* self, tree_location loc, tree_exp* lhs, objgroup* args)
 {
         if (!lhs || !args)
                 return NULL;
 
-        // c99 6.5.2.2
-        // 1. The expression that denotes the called function shall have type pointer to function
-        //    returning void or returning an object type other than an array type.
-        // 2. If the expression that denotes the called function has a type that includes a prototype,
-        //    the number of arguments shall agree with the number of parameters. Each argument shall
-        //    have a type such that its value may be assigned to an object with the unqualified version
-        //    of the type of its corresponding parameter.
         tree_type* t = cprog_perform_unary_conversion(self, &lhs);
         if (!cprog_require_function_pointer_exp_type(self, t, tree_get_exp_loc(lhs)))
                 return NULL;
@@ -281,6 +281,12 @@ extern tree_exp* cprog_build_call_exp(
         return call;
 }
 
+// c99 6.5.2.3 structure and union members
+// The first operand of the . operator shall have a qualified or unqualified
+//    structure or union type, and the second operand shall name a member of that type.
+// The first operand of the -> operator shall have type "pointer to qualified 
+//    or unqualified structure" or "pointer to qualified or unqualified union",
+//    and the second operand shall name a member of the type pointed to.
 extern tree_exp* cprog_build_member_exp(
         cprog*        self,
         tree_location loc,
@@ -312,17 +318,13 @@ extern tree_exp* cprog_build_member_exp(
         if (!m)
                 return NULL;
 
-        // c99 6.5.2.3
-        // 1. The first operand of the . operator shall have a qualified or unqualified
-        //    structure or union type, and the second operand shall name a member of that type.
-        // 2. The first operand of the -> operator shall have type "pointer to qualified 
-        //    or unqualified structure" or "pointer to qualified or unqualified union",
-        //    and the second operand shall name a member of the type pointed to.
-
         return tree_new_member_exp(self->context, 
                 TVK_LVALUE, tree_get_decl_type(m), loc, lhs, m, is_arrow);
 }
 
+// c99 6.5.2.4/6.5.3.1
+// The operand of the postfix (or prefix) increment or decrement operator shall have
+//    qualified or unqualified real or pointer type and shall be a modifiable lvalue.
 static tree_type* cprog_check_inc_dec_op(cprog* self, tree_exp** exp)
 {
         tree_type* t = cprog_perform_array_function_to_pointer_conversion(self, exp);
@@ -333,6 +335,10 @@ static tree_type* cprog_check_inc_dec_op(cprog* self, tree_exp** exp)
         return t;
 }
 
+// 6.5.3.2 address and inderection operators
+// The operand of the unary & operator shall be either a function designator, the result of a
+//    [] or unary * operator, or an lvalue that designates an object
+//    that is not a bit - field and is not declared with the register storage - class specifier.
 static tree_type* cprog_check_address_op(cprog* self, tree_exp** exp)
 {
         if (!cprog_require_lvalue_or_function_designator(self, *exp))
@@ -341,6 +347,8 @@ static tree_type* cprog_check_address_op(cprog* self, tree_exp** exp)
         return cprog_build_pointer(self, TTQ_UNQUALIFIED, tree_get_exp_type(*exp));
 }
 
+// 6.5.3.2 address and inderection operators
+// The operand of the unary * operator shall have pointer type.
 static tree_type* cprog_check_dereference_op(cprog* self, tree_exp** exp, tree_value_kind* vk)
 {
         tree_type* t      = tree_desugar_type(cprog_perform_unary_conversion(self, exp));
@@ -354,6 +362,8 @@ static tree_type* cprog_check_dereference_op(cprog* self, tree_exp** exp, tree_v
         return t;
 }
 
+// 6.5.3.3 unary arithmetic
+// The operand of the ~ operator shall have integer type
 static tree_type* cprog_check_log_not_op(cprog* self, tree_exp** exp)
 {
         tree_type* t = cprog_perform_unary_conversion(self, exp);
@@ -363,6 +373,8 @@ static tree_type* cprog_check_log_not_op(cprog* self, tree_exp** exp)
         return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
 }
 
+// 6.5.3.3 unary arithmetic
+// The operand of the unary + or - operator shall have arithmetic type
 static tree_type* cprog_check_plus_minus_op(cprog* self, tree_exp** exp)
 {
         tree_type* t = cprog_perform_unary_conversion(self, exp);
@@ -372,6 +384,8 @@ static tree_type* cprog_check_plus_minus_op(cprog* self, tree_exp** exp)
         return cprog_perform_integer_promotion(self, exp);
 }
 
+// 6.5.3.3 unary arithmetic
+// The operand of the ! operator shall have scalar type
 static tree_type* cprog_check_not_op(cprog* self, tree_exp** exp)
 {
         tree_type* t = cprog_perform_unary_conversion(self, exp);
@@ -386,20 +400,6 @@ extern tree_exp* cprog_build_unop(
 {
         if (!exp)
                 return NULL;
-
-        // c99 6.5.2.4/6.5.3.1
-        // 1. The operand of the postfix (or prefix) increment or decrement operator shall have qualified or
-        //    unqualified real or pointer type and shall be a modifiable lvalue.
-        //
-        // 6.5.3.2 address inderection
-        // 1. The operand of the unary & operator shall be either a function designator, the result of a
-        //    [] or unary * operator, or an lvalue that designates an object that is not a bit - field and is
-        //    not declared with the register storage - class specifier.
-        // 2. The operand of the unary * operator shall have pointer type.
-        //
-        // 6.5.3.3 unary arithmetic
-        // 1. The operand of the unary + or - operator shall have arithmetic type;
-        //    of the ~ operator, integer type; of the ! operator, scalar type.
 
         tree_type* t       = NULL;
         tree_value_kind vk = TVK_RVALUE;
@@ -444,15 +444,15 @@ extern tree_exp* cprog_build_unop(
         return tree_new_unop(self->context, vk, t, loc, opcode, exp);
 }
 
+// c99 6.5.3.4
+// The sizeof operator shall not be applied to an expression that has function type or an
+//    incomplete type, to the parenthesized name of such a type, or to an expression that
+//    designates a bit - field member.
 extern tree_exp* cprog_build_sizeof(cprog* self, tree_location loc, csizeof_rhs* rhs)
 {
         if (!rhs)
                 return NULL;
-        //sizeof(cprog_build_sizeof);
-        // c99 6.5.3.4
-        // 1. The sizeof operator shall not be applied to an expression that has function type or an
-        //    incomplete type, to the parenthesized name of such a type, or to an expression that
-        //    designates a bit - field member.
+
         tree_type* rt = rhs->unary ? tree_get_exp_type(rhs->exp) : rhs->type;
         if (tree_type_is(rt, TTK_FUNCTION))
         {
@@ -472,16 +472,17 @@ extern tree_exp* cprog_build_sizeof(cprog* self, tree_location loc, csizeof_rhs*
         return tree_new_sizeof_exp(self->context, t, loc, rhs->pointer, rhs->unary);
 }
 
+// c99 6.5.4 cast operators
+// Unless the type name specifies a void type, the type name shall specify qualified or
+//    unqualified scalar type and the operand shall have scalar type.
+// Conversions that involve pointers, other than where permitted by the constraints of
+//    6.5.16.1, shall be specified by means of an explicit cast.
 extern tree_exp* cprog_build_cast(
         cprog* self, tree_location loc, tree_type* type, tree_exp* exp)
 {
         if (!type || !exp)
                 return NULL;
-        // c99 6.5.4
-        // 2. Unless the type name specifies a void type, the type name shall specify qualified or
-        //    unqualified scalar type and the operand shall have scalar type.
-        // 3. Conversions that involve pointers, other than where permitted by the constraints of
-        //    6.5.16.1, shall be specified by means of an explicit cast.
+
         tree_type* et = tree_desugar_type(cprog_perform_unary_conversion(self, &exp));
         if (!tree_type_is_void(type))
         {
@@ -495,6 +496,9 @@ extern tree_exp* cprog_build_cast(
         return tree_new_explicit_cast_exp(self->context, vk, loc, type, exp);
 }
 
+// 6.5.5 multiplicative
+// Each of the operands shall have arithmetic type.
+//    The operands of the % operator shall have integer type
 static tree_type* cprog_check_mul_div_op(cprog* self, tree_exp** lhs, tree_exp** rhs)
 {
         tree_type* lt = cprog_perform_unary_conversion(self, lhs);
@@ -521,6 +525,10 @@ static tree_type* cprog_check_mod_op(cprog* self, tree_exp** lhs, tree_exp** rhs
         return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
 }
 
+// 6.5.6 additive
+// For addition, either both operands shall have arithmetic type, or one operand shall be a
+//    pointer to an object type and the other shall have integer type.
+//    (Incrementing is equivalent to adding 1.)
 static tree_type* cprog_check_add_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
@@ -548,6 +556,13 @@ static tree_type* cprog_check_add_op(
         return NULL;
 }
 
+// 6.5.6 additive
+// For subtraction, one of the following shall hold :
+//    - both operands have arithmetic type;
+//    - both operands are pointers to qualified or unqualified versions
+//      of compatible object types; or
+//    - the left operand is a pointer to an object type and the right operand has integer type.
+// (Decrementing is equivalent to subtracting 1.)
 static tree_type* cprog_check_sub_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
@@ -571,6 +586,8 @@ static tree_type* cprog_check_sub_op(
         return NULL;
 }
 
+// 6.5.7/6.5.10-13
+// Each of the operands shall have integer type.
 static tree_type* cprog_check_bitwise_op(cprog* self, tree_exp** lhs, tree_exp** rhs)
 {
         tree_type* lt = cprog_perform_unary_conversion(self, lhs);
@@ -597,6 +614,13 @@ static tree_type* cprog_check_log_op(cprog* self, tree_exp** lhs, tree_exp** rhs
         return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
 }
 
+// 6.5.8 Relational operators
+// One of the following shall hold:
+//    - both operands have real type;
+//    - both operands are pointers to qualified or unqualified versions of
+//      compatible object types; or
+//    - both operands are pointers to qualified or unqualified versions of
+//      compatible incomplete types
 static tree_type* cprog_check_relational_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
@@ -624,6 +648,13 @@ static tree_type* cprog_check_relational_op(
         return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
 }
 
+// 6.5.9 Equality operators
+// One of the following shall hold:
+//    - both operands have arithmetic type;
+//    - both operands are pointers to qualified or unqualified versions of compatible types;
+//    - one operand is a pointer to an object or incomplete type and the other is a pointer to a
+//      qualified or unqualified version of void; or
+//    - one operand is a pointer and the other is a null pointer constant.
 static tree_type* cprog_check_compare_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
@@ -656,6 +687,20 @@ static tree_type* cprog_check_compare_op(
         return NULL;
 }
 
+// 6.5.16.1 Simple assignment
+// One of the following shall hold:
+// - the left operand has qualified or unqualified arithmetic type and the right has
+//   arithmetic type;
+// - the left operand has a qualified or unqualified version of a structure or union type
+//   compatible with the type of the right;
+// - both operands are pointers to qualified or unqualified versions of compatible types,
+//   and the type pointed to by the left has all the qualifiers of the type pointed to by the
+//   right;
+// - one operand is a pointer to an object or incomplete type and the other is a pointer to a
+//   qualified or unqualified version of void, and the type pointed to by the left has all
+//   the qualifiers of the type pointed to by the right;
+// - the left operand is a pointer and the right is a null pointer constant; or
+// - the left operand has type _Bool and the right is a pointer.
 static tree_type* cprog_check_simple_assignment_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
@@ -700,6 +745,10 @@ static tree_type* cprog_check_simple_assignment_op(
         return NULL;
 }
 
+// 6.5.16.2 Compound assignment
+// For the operators += and -= only, either the left operand shall be a pointer to an object
+//    type and the right shall have integer type, or the left operand shall have qualified or
+//    unqualified arithmetic type and the right shall have arithmetic type.
 static tree_type* cprog_check_add_sub_assignment_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs)
 {
@@ -739,80 +788,6 @@ extern tree_exp* cprog_build_binop(
         if (!lhs || !rhs)
                 return NULL;
 
-        // 6.5.5 multiplicative
-        // Each of the operands shall have arithmetic type.
-        // The operands of the % operator shall have integer type
-
-        // 6.5.6 additive
-        // For addition, either both operands shall have arithmetic type, or one operand shall be a
-        // pointer to an object type and the other shall have integer type.
-        // (Incrementing is equivalent to adding 1.)
-        // For subtraction, one of the following shall hold :
-        // � both operands have arithmetic type;
-        // � both operands are pointers to qualified or unqualified versions of compatible object
-        // types; or
-        // � the left operand is a pointer to an object type and the right operand has integer type.
-        // (Decrementing is equivalent to subtracting 1.)
-
-        // 6.5.7 shift
-        // Each of the operands shall have integer type.
-
-        // 6.5.8 Relational operators
-        // One of the following shall hold:
-        // � both operands have real type;
-        // � both operands are pointers to qualified or unqualified versions of compatible object
-        // types; or
-        // � both operands are pointers to qualified or unqualified versions of compatible
-        // incomplete types
-
-        // 6.5.9 Equality operators
-        // One of the following shall hold:
-        // � both operands have arithmetic type;
-        // � both operands are pointers to qualified or unqualified versions of compatible types;
-        // � one operand is a pointer to an object or incomplete type and the other is a pointer to a
-        // qualified or unqualified version of void; or
-        // � one operand is a pointer and the other is a null pointer constant.
-
-        // 6.5.10 Bitwise AND operator
-        // Each of the operands shall have integer type.
-
-        // 6.5.11 Bitwise exclusive OR operator
-        // Each of the operands shall have integer type.
-
-        // 6.5.12 Bitwise inclusive OR operator
-        // Each of the operands shall have integer type.
-
-        // 6.5.13 Logical AND operator
-        // Each of the operands shall have scalar type.
-
-        // Logical OR operator
-        // Each of the operands shall have scalar type.
-
-        // 6.5.16 Assignment operators
-        // An assignment operator shall have a modifiable lvalue as its left operand.
-
-        // 6.5.16.1 Simple assignment
-        // One of the following shall hold:
-        // � the left operand has qualified or unqualified arithmetic type and the right has
-        // arithmetic type;
-        // � the left operand has a qualified or unqualified version of a structure or union type
-        // compatible with the type of the right;
-        // � both operands are pointers to qualified or unqualified versions of compatible types,
-        // and the type pointed to by the left has all the qualifiers of the type pointed to by the
-        // right;
-        // � one operand is a pointer to an object or incomplete type and the other is a pointer to a
-        // qualified or unqualified version of void, and the type pointed to by the left has all
-        // the qualifiers of the type pointed to by the right;
-        // � the left operand is a pointer and the right is a null pointer constant; or
-        // � the left operand has type _Bool and the right is a pointer.
-
-        // 6.5.16.2 Compound assignment
-        // For the operators += and -= only, either the left operand shall be a pointer to an object
-        // type and the right shall have integer type, or the left operand shall have qualified or
-        // unqualified arithmetic type and the right shall have arithmetic type.
-        //
-        // For the other operators, each operand shall have arithmetic type consistent with those
-        // allowed by the corresponding binary operator.
         tree_type* t = NULL;
         switch (opcode)
         {
@@ -894,6 +869,16 @@ extern tree_exp* cprog_build_binop(
         return tree_new_binop(self->context, TVK_RVALUE, t, loc, opcode, lhs, rhs);
 }
 
+// 6.5.15 Conditional operator
+// The first operand shall have scalar type.
+// One of the following shall hold for the second and third operands:
+// - both operands have arithmetic type;
+// - both operands have the same structure or union type;
+// - both operands have void type;
+// - both operands are pointers to qualified or unqualified versions of compatible types;
+// - one operand is a pointer and the other is a null pointer constant; or
+// - one operand is a pointer to an object or incomplete type and the other is a pointer to a
+//   qualified or unqualified version of void.
 extern tree_exp* cprog_build_conditional(
         cprog*        self,
         tree_location loc,
@@ -904,16 +889,6 @@ extern tree_exp* cprog_build_conditional(
         if (!condition || !lhs || !rhs)
                 return NULL;
 
-        // 6.5.15 Conditional operator
-        // The first operand shall have scalar type.
-        // One of the following shall hold for the second and third operands:
-        // � both operands have arithmetic type;
-        // � both operands have the same structure or union type;
-        // � both operands have void type;
-        // � both operands are pointers to qualified or unqualified versions of compatible types;
-        // � one operand is a pointer and the other is a null pointer constant; or
-        // � one operand is a pointer to an object or incomplete type and the other is a pointer to a
-        //   qualified or unqualified version of void.
         tree_type* ct = tree_get_exp_type(condition);
         if (!cprog_require_scalar_exp_type(self, ct, tree_get_exp_loc(condition)))
                 return NULL;
@@ -923,18 +898,17 @@ extern tree_exp* cprog_build_conditional(
         return tree_new_conditional_exp(self->context, TVK_RVALUE, t, loc, condition, lhs, rhs);
 }
 
+// 6.6 Constant expressions
+// Constant expressions shall not contain assignment, increment, decrement, function-call,
+//    or comma operators, except when they are contained within a subexpression that is not
+//    evaluated.
+// 
+// Each constant expression shall evaluate to a constant that is in the range of representable
+//    values for its type.
 extern tree_const_exp* cprog_build_const_exp(cprog* self, tree_exp* root)
 {
         if (!root)
                 return NULL;
-
-        // 6.6 Constant expressions
-        // Constant expressions shall not contain assignment, increment, decrement, function-call,
-        // or comma operators, except when they are contained within a subexpression that is not
-        // evaluated.
-        // 
-        // Each constant expression shall evaluate to a constant that is in the range of representable
-        // values for its type.
 
         return tree_new_const_exp(self->context, root);
 }
