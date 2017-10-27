@@ -498,8 +498,8 @@ extern tree_exp* cprog_build_cast(
 
 // 6.5.5 multiplicative
 // Each of the operands shall have arithmetic type.
-//    The operands of the % operator shall have integer type
-static tree_type* cprog_check_mul_div_op(cprog* self, tree_exp** lhs, tree_exp** rhs)
+static tree_type* cprog_check_mul_div_op(
+        cprog* self, tree_binop_kind opcode, tree_location loc, tree_exp** lhs, tree_exp** rhs)
 {
         tree_type* lt = cprog_perform_unary_conversion(self, lhs);
         tree_type* rt = cprog_perform_unary_conversion(self, rhs);
@@ -512,7 +512,155 @@ static tree_type* cprog_check_mul_div_op(cprog* self, tree_exp** lhs, tree_exp**
         return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
 }
 
-static tree_type* cprog_check_mod_op(cprog* self, tree_exp** lhs, tree_exp** rhs)
+// 6.5.7/6.5.10-13
+// Each of the operands shall have integer type.
+static tree_type* cprog_check_bitwise_op(
+        cprog* self, tree_binop_kind opcode, tree_location loc, tree_exp** lhs, tree_exp** rhs)
+{
+        tree_type* lt = cprog_perform_unary_conversion(self, lhs);
+        tree_type* rt = cprog_perform_unary_conversion(self, rhs);
+
+        if (!cprog_require_integral_exp_type(self, rt, tree_get_exp_loc(*rhs)))
+                return NULL;
+        if (!cprog_require_integral_exp_type(self, lt, tree_get_exp_loc(*lhs)))
+                return NULL;
+
+        return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
+}
+
+static tree_type* cprog_check_log_op(
+        cprog* self, tree_binop_kind opcode, tree_location loc, tree_exp** lhs, tree_exp** rhs)
+{
+        tree_type* lt = cprog_perform_unary_conversion(self, lhs);
+        tree_type* rt = cprog_perform_unary_conversion(self, rhs);
+
+        if (!cprog_require_scalar_exp_type(self, rt, tree_get_exp_loc(*rhs)))
+                return NULL;
+        if (!cprog_require_scalar_exp_type(self, lt, tree_get_exp_loc(*lhs)))
+                return NULL;
+
+        return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
+}
+
+// 6.5.8 Relational operators
+// One of the following shall hold:
+//    - both operands have real type;
+//    - both operands are pointers to qualified or unqualified versions of
+//      compatible object types; or
+//    - both operands are pointers to qualified or unqualified versions of
+//      compatible incomplete types
+static tree_type* cprog_check_relational_op(
+        cprog* self, tree_binop_kind opcode, tree_location loc, tree_exp** lhs, tree_exp** rhs)
+{
+        tree_type*    lt = cprog_perform_unary_conversion(self, lhs);
+        tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
+        tree_location rl = tree_get_exp_loc(*rhs);
+
+        if (tree_type_is_real(lt) && tree_type_is_real(rt))
+        {
+                if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
+                        cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
+        }
+        else if (tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt))
+        {
+                if (!cprog_require_compatible_exp_types(self, lt, rt, loc))
+                        return NULL;
+        }
+        else
+        {
+                cerror(self->error_manager, CES_ERROR, loc,
+                        "invalid operands to relational operator");
+                return NULL;
+        }
+
+        return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
+}
+
+// 6.5.9 Equality operators
+// One of the following shall hold:
+//    - both operands have arithmetic type;
+//    - both operands are pointers to qualified or unqualified versions of compatible types;
+//    - one operand is a pointer to an object or incomplete type and the other is a pointer to a
+//      qualified or unqualified version of void; or
+//    - one operand is a pointer and the other is a null pointer constant.
+static tree_type* cprog_check_compare_op(
+        cprog* self, tree_binop_kind opcode, tree_location loc, tree_exp** lhs, tree_exp** rhs)
+{
+        tree_type*    lt = cprog_perform_unary_conversion(self, lhs);
+        tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
+        tree_location rl = tree_get_exp_loc(*rhs);
+
+        if (tree_type_is_arithmetic(lt))
+        {
+                if (!cprog_require_arithmetic_exp_type(self, rt, rl))
+                        return NULL;
+
+                return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
+        }
+        else if (tree_type_is_pointer(lt) && tree_type_is_pointer(rt))
+        {
+                if (tree_types_are_compatible(lt, rt))
+                        return lt;
+
+                if (tree_type_is_void_pointer(lt) && tree_type_is_void_pointer(rt))
+                        return lt;
+
+                /*
+                todo:
+                if (nullptr(lhs) && nullptr(rhs)
+                        return lt;
+                */
+        }
+        cerror(self->error_manager, CES_ERROR, loc, "invalid operands to binary '=='");
+        return NULL;
+}
+
+// 6.5.16.2 Compound assignment
+// For the operators += and -= only, either the left operand shall be a pointer to an object
+//    type and the right shall have integer type, or the left operand shall have qualified or
+//    unqualified arithmetic type and the right shall have arithmetic type.
+static tree_type* cprog_check_add_sub_assign_op(
+        cprog* self, tree_binop_kind opcode, tree_location loc, tree_exp** lhs, tree_exp** rhs)
+{
+        tree_type*    lt = cprog_perform_array_function_to_pointer_conversion(self, lhs);
+        tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
+        tree_location rl = tree_get_exp_loc(*rhs);
+
+        if (!cprog_require_modifiable_lvalue(self, *lhs))
+                return NULL;
+
+        if (tree_type_is_object_pointer(lt))
+        {
+                if (!cprog_require_integral_exp_type(self, rt, rl))
+                        return NULL;
+        }
+        else if (tree_type_is_arithmetic(lt))
+        {
+                if (!cprog_require_arithmetic_exp_type(self, rt, rl))
+                        return NULL;
+        }
+        else
+                return NULL;
+
+        return lt;
+}
+
+static tree_type* cprog_check_mul_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_mul_div_op(self, TBK_MUL, loc, lhs, rhs);
+}
+
+static tree_type* cprog_check_div_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_mul_div_op(self, TBK_DIV, loc, lhs, rhs);
+}
+
+// 6.5.5 multiplicative
+// The operands of the % operator shall have integer type
+static tree_type* cprog_check_mod_op_ex(
+        cprog* self, tree_binop_kind opcode, tree_location loc, tree_exp** lhs, tree_exp** rhs)
 {
         tree_type* lt = cprog_perform_unary_conversion(self, lhs);
         tree_type* rt = cprog_perform_unary_conversion(self, rhs);
@@ -521,8 +669,14 @@ static tree_type* cprog_check_mod_op(cprog* self, tree_exp** lhs, tree_exp** rhs
                 return NULL;
         if (!cprog_require_integral_exp_type(self, rt, tree_get_exp_loc(*rhs)))
                 return NULL;
- 
+
         return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
+}
+
+static tree_type* cprog_check_mod_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_mod_op_ex(self, TBK_MOD, loc, lhs, rhs);
 }
 
 // 6.5.6 additive
@@ -586,105 +740,82 @@ static tree_type* cprog_check_sub_op(
         return NULL;
 }
 
-// 6.5.7/6.5.10-13
-// Each of the operands shall have integer type.
-static tree_type* cprog_check_bitwise_op(cprog* self, tree_exp** lhs, tree_exp** rhs)
-{
-        tree_type* lt = cprog_perform_unary_conversion(self, lhs);
-        tree_type* rt = cprog_perform_unary_conversion(self, rhs);
-
-        if (!cprog_require_integral_exp_type(self, rt, tree_get_exp_loc(*rhs)))
-                return NULL;
-        if (!cprog_require_integral_exp_type(self, lt, tree_get_exp_loc(*lhs)))
-                return NULL;
-
-        return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
-}
-
-static tree_type* cprog_check_log_op(cprog* self, tree_exp** lhs, tree_exp** rhs)
-{
-        tree_type* lt = cprog_perform_unary_conversion(self, lhs);
-        tree_type* rt = cprog_perform_unary_conversion(self, rhs);
-
-        if (!cprog_require_scalar_exp_type(self, rt, tree_get_exp_loc(*rhs)))
-                return NULL;
-        if (!cprog_require_scalar_exp_type(self, lt, tree_get_exp_loc(*lhs)))
-                return NULL;
-
-        return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
-}
-
-// 6.5.8 Relational operators
-// One of the following shall hold:
-//    - both operands have real type;
-//    - both operands are pointers to qualified or unqualified versions of
-//      compatible object types; or
-//    - both operands are pointers to qualified or unqualified versions of
-//      compatible incomplete types
-static tree_type* cprog_check_relational_op(
+static tree_type* cprog_check_shl_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
-        tree_type*    lt = cprog_perform_unary_conversion(self, lhs);
-        tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
-        tree_location rl = tree_get_exp_loc(*rhs);
-
-        if (tree_type_is_real(lt) && tree_type_is_real(rt))
-        {
-                if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
-                        cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
-        }
-        else if (tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt))
-        {
-                if (!cprog_require_compatible_exp_types(self, lt, rt, loc))
-                        return NULL;
-        }
-        else
-        {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "invalid operands to relational operator");
-                return NULL;
-        }
-
-        return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
+        return cprog_check_bitwise_op(self, TBK_SHL, loc, lhs, rhs);
 }
 
-// 6.5.9 Equality operators
-// One of the following shall hold:
-//    - both operands have arithmetic type;
-//    - both operands are pointers to qualified or unqualified versions of compatible types;
-//    - one operand is a pointer to an object or incomplete type and the other is a pointer to a
-//      qualified or unqualified version of void; or
-//    - one operand is a pointer and the other is a null pointer constant.
-static tree_type* cprog_check_compare_op(
+static tree_type* cprog_check_shr_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
-        tree_type*    lt = cprog_perform_unary_conversion(self, lhs);
-        tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
-        tree_location rl = tree_get_exp_loc(*rhs);
+        return cprog_check_bitwise_op(self, TBK_SHR, loc, lhs, rhs);
+}
 
-        if (tree_type_is_arithmetic(lt))
-        {
-                if (!cprog_require_arithmetic_exp_type(self, rt, rl))
-                        return NULL;
+static tree_type* cprog_check_le_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_relational_op(self, TBK_LE, loc, lhs, rhs);
+}
 
-                return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
-        }
-        else if (tree_type_is_pointer(lt) && tree_type_is_pointer(rt))
-        {
-                if (tree_types_are_compatible(lt, rt))
-                        return lt;
+static tree_type* cprog_check_gr_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_relational_op(self, TBK_GR, loc, lhs, rhs);
+}
 
-                if (tree_type_is_void_pointer(lt) && tree_type_is_void_pointer(rt))
-                        return lt;
+static tree_type* cprog_check_leq_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_relational_op(self, TBK_LEQ, loc, lhs, rhs);
+}
 
-                /*
-                todo:
-                if (nullptr(lhs) && nullptr(rhs)
-                        return lt;
-                */
-        }
-        cerror(self->error_manager, CES_ERROR, loc, "invalid operands to binary '=='");
-        return NULL;
+static tree_type* cprog_check_geq_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_relational_op(self, TBK_GEQ, loc, lhs, rhs);
+}
+
+static tree_type* cprog_check_eq_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_compare_op(self, TBK_EQ, loc, lhs, rhs);
+}
+
+static tree_type* cprog_check_neq_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_compare_op(self, TBK_NEQ, loc, lhs, rhs);
+}
+
+static tree_type* cprog_check_and_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_bitwise_op(self, TBK_AND, loc, lhs, rhs);
+}
+
+static tree_type* cprog_check_xor_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_bitwise_op(self, TBK_XOR, loc, lhs, rhs);
+}
+
+static tree_type* cprog_check_or_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_bitwise_op(self, TBK_OR, loc, lhs, rhs);
+}
+
+static tree_type* cprog_check_log_and_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_log_op(self, TBK_LOG_AND, loc, lhs, rhs);
+}
+
+static tree_type* cprog_check_log_or_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_log_op(self, TBK_LOG_OR, loc, lhs, rhs);
 }
 
 // 6.5.16.1 Simple assignment
@@ -701,7 +832,7 @@ static tree_type* cprog_check_compare_op(
 //   the qualifiers of the type pointed to by the right;
 // - the left operand is a pointer and the right is a null pointer constant; or
 // - the left operand has type _Bool and the right is a pointer.
-static tree_type* cprog_check_simple_assignment_op(
+static tree_type* cprog_check_assign_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
         tree_type*    lt = cprog_perform_array_function_to_pointer_conversion(self, lhs);
@@ -738,131 +869,150 @@ static tree_type* cprog_check_simple_assignment_op(
                 /*
                 todo:
                 if (nullptr(lhs) && nullptr(rhs)
-                        return lt;
+                return lt;
                 */
         }
         cerror(self->error_manager, CES_ERROR, loc, "invalid operands to binary '='");
         return NULL;
 }
 
-// 6.5.16.2 Compound assignment
-// For the operators += and -= only, either the left operand shall be a pointer to an object
-//    type and the right shall have integer type, or the left operand shall have qualified or
-//    unqualified arithmetic type and the right shall have arithmetic type.
-static tree_type* cprog_check_add_sub_assignment_op(
-        cprog* self, tree_exp** lhs, tree_exp** rhs)
+static tree_type* cprog_check_add_assign_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
-        tree_type*    lt = cprog_perform_array_function_to_pointer_conversion(self, lhs);
-        tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
-        tree_location rl = tree_get_exp_loc(*rhs);
-
-        if (!cprog_require_modifiable_lvalue(self, *lhs))
-                return NULL;
-
-        if (tree_type_is_object_pointer(lt))
-        {
-                if (!cprog_require_integral_exp_type(self, rt, rl))
-                        return NULL;
-        }
-        else if (tree_type_is_arithmetic(lt))
-        {
-                if (!cprog_require_arithmetic_exp_type(self, rt, rl))
-                        return NULL;
-        }
-        else
-                return NULL;
-
-        return lt;
+        return cprog_check_add_sub_assign_op(self, TBK_ADD_ASSIGN, loc, lhs, rhs);
 }
 
-static tree_type* cprog_check_comma_op(cprog* self, tree_exp** lhs, tree_exp** rhs)
+static tree_type* cprog_check_sub_assign_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_check_add_sub_assign_op(self, TBK_SUB_ASSIGN, loc, lhs, rhs);
+}
+
+static tree_type* cprog_check_mul_assign_op(
+        cprog* self, tree_exp**lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_require_modifiable_lvalue(self, *lhs)
+                ? cprog_check_mul_div_op(self, TBK_MUL_ASSIGN, loc, lhs, rhs)
+                : NULL;
+}
+
+static tree_type* cprog_check_div_assign_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_require_modifiable_lvalue(self, *lhs)
+                ? cprog_check_mul_div_op(self, TBK_DIV_ASSIGN, loc, lhs, rhs)
+                : NULL;
+}
+
+static tree_type* cprog_check_mod_assign_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_require_modifiable_lvalue(self, *lhs)
+                ? cprog_check_mod_op_ex(self, TBK_MOD_ASSIGN, loc, lhs, rhs)
+                : NULL;
+}
+
+static tree_type* cprog_check_shl_assign_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_require_modifiable_lvalue(self, *lhs)
+                ? cprog_check_bitwise_op(self, TBK_SHL_ASSIGN, loc, lhs, rhs)
+                : NULL;
+}
+
+static tree_type* cprog_check_shr_assign_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_require_modifiable_lvalue(self, *lhs)
+                ? cprog_check_bitwise_op(self, TBK_SHR_ASSIGN, loc, lhs, rhs)
+                : NULL;
+}
+
+static tree_type* cprog_check_and_assign_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_require_modifiable_lvalue(self, *lhs)
+                ? cprog_check_bitwise_op(self, TBK_AND_ASSIGN, loc, lhs, rhs)
+                : NULL;
+}
+
+static tree_type* cprog_check_xor_assign_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_require_modifiable_lvalue(self, *lhs)
+                ? cprog_check_bitwise_op(self, TBK_XOR_ASSIGN, loc, lhs, rhs)
+                : NULL;
+}
+
+static tree_type* cprog_check_or_assign_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
+{
+        return cprog_require_modifiable_lvalue(self, *lhs)
+                ? cprog_check_bitwise_op(self, TBK_OR_ASSIGN, loc, lhs, rhs)
+                : NULL;
+}
+
+static tree_type* cprog_check_comma_op(
+        cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
         cprog_perform_unary_conversion(self, lhs);
         cprog_perform_unary_conversion(self, rhs);
         return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_VOID);
 }
 
-extern tree_exp* cprog_build_binop(
-        cprog* self, tree_location loc, tree_binop_kind opcode, tree_exp* lhs, tree_exp* rhs)
+S_STATIC_ASSERT(TBK_SIZE == 31, "Binop table needs an update");
+
+static tree_type* (*ccheck_binop_table[TBK_SIZE])(
+        cprog*, tree_exp**, tree_exp**, tree_location) =
+{
+        NULL,                      // TBK_UNKNOWN
+        cprog_check_mul_op,        // TBK_MUL
+        cprog_check_div_op,        // TBK_DIV
+        cprog_check_mod_op,        // TBK_MOD
+        cprog_check_add_op,        // TBK_ADD
+        cprog_check_sub_op,        // TBK_SUB
+        cprog_check_shl_op,        // TBK_SHL
+        cprog_check_shr_op,        // TBK_SHR
+        cprog_check_le_op,         // TBK_LE
+        cprog_check_gr_op,         // TBK_GR
+        cprog_check_leq_op,        // TBK_LEQ
+        cprog_check_geq_op,        // TBK_GEQ
+        cprog_check_eq_op,         // TBK_EQ
+        cprog_check_neq_op,        // TBK_NEQ
+        cprog_check_and_op,        // TBK_AND
+        cprog_check_xor_op,        // TBK_XOR
+        cprog_check_or_op,         // TBK_OR
+        cprog_check_log_and_op,    // TBK_LOG_AND
+        cprog_check_log_or_op,     // TBK_LOG_OR
+        cprog_check_assign_op,     // TBK_ASSIGN
+        cprog_check_add_assign_op, // TBK_ADD_ASSIGN
+        cprog_check_sub_assign_op, // TBK_SUB_ASSIGN
+        cprog_check_mul_assign_op, // TBK_MUL_ASSIGN
+        cprog_check_div_assign_op, // TBK_DIV_ASSIGN
+        cprog_check_mod_assign_op, // TBK_MOD_ASSIGN
+        cprog_check_shl_assign_op, // TBK_SHL_ASSIGN
+        cprog_check_shr_assign_op, // TBK_SHR_ASSIGN
+        cprog_check_and_assign_op, // TBK_AND_ASSIGN
+        cprog_check_xor_assign_op, // TBK_XOR_ASSIGN
+        cprog_check_or_assign_op,  // TBK_OR_ASSIGN
+        cprog_check_comma_op,      // TBK_COMMA
+};
+
+// returns type of the binary operator
+static inline tree_type* cprog_check_binop(
+        cprog* self, tree_binop_kind opcode, tree_location loc, tree_exp** lhs, tree_exp** rhs)
 {
         if (!lhs || !rhs)
                 return NULL;
 
-        tree_type* t = NULL;
-        switch (opcode)
-        {
-                case TBK_MUL_ASSIGN:
-                case TBK_DIV_ASSIGN:
-                        if (!cprog_require_modifiable_lvalue(self, lhs))
-                                return NULL;
-                case TBK_MUL:
-                case TBK_DIV:
-                        t = cprog_check_mul_div_op(self, &lhs, &rhs);
-                        break;
+        S_ASSERT(opcode > 0 && opcode < TBK_SIZE && "invalid binop kind");
+        return ccheck_binop_table[opcode](self, lhs, rhs, loc);
+}
 
-                case TBK_MOD_ASSIGN:
-                        if (!cprog_require_modifiable_lvalue(self, lhs))
-                                return NULL;
-                case TBK_MOD:
-                        t = cprog_check_mod_op(self, &lhs, &rhs);
-                        break;
-
-                case TBK_ADD:
-                        t = cprog_check_add_op(self, &lhs, &rhs, loc);
-                        break;
-
-                case TBK_SUB:
-                        t = cprog_check_sub_op(self, &lhs, &rhs, loc);
-                        break;
-
-                case TBK_SHL_ASSIGN:
-                case TBK_SHR_ASSIGN:
-                case TBK_AND_ASSIGN:
-                case TBK_XOR_ASSIGN:
-                case TBK_OR_ASSIGN:
-                        if (!cprog_require_modifiable_lvalue(self, lhs))
-                                return NULL;
-                case TBK_SHL:
-                case TBK_SHR:
-                case TBK_AND:
-                case TBK_OR:
-                case TBK_XOR:
-                        t = cprog_check_bitwise_op(self, &lhs, &rhs);
-                        break;
-
-                case TBK_LOG_AND:
-                case TBK_LOG_OR:
-                        t = cprog_check_log_op(self, &lhs, &rhs);
-                        break;
-
-                case TBK_LE:
-                case TBK_GR:
-                case TBK_LEQ:
-                case TBK_GEQ:
-                        t = cprog_check_relational_op(self, &lhs, &rhs, loc);
-                        break;
-
-                case TBK_EQ:
-                case TBK_NEQ:
-                        t = cprog_check_compare_op(self, &lhs, &rhs, loc);
-                        break;
-
-                case TBK_ASSIGN:
-                        t = cprog_check_simple_assignment_op(self, &lhs, &rhs, loc);
-                        break;
-
-                case TBK_ADD_ASSIGN:
-                case TBK_SUB_ASSIGN:
-                        t = cprog_check_add_sub_assignment_op(self, &lhs, &rhs);
-                        break;
-
-                case TBK_COMMA:
-                        t = cprog_check_comma_op(self, &lhs, &rhs);
-                        break;
-
-                default:
-                        S_UNREACHABLE();
-        }
+extern tree_exp* cprog_build_binop(
+        cprog* self, tree_location loc, tree_binop_kind opcode, tree_exp* lhs, tree_exp* rhs)
+{
+        tree_type* t = cprog_check_binop(self, opcode, loc, &lhs, &rhs);
         if (!t)
                 return NULL;
 
@@ -892,7 +1042,6 @@ extern tree_exp* cprog_build_conditional(
         tree_type* ct = tree_get_exp_type(condition);
         if (!cprog_require_scalar_exp_type(self, ct, tree_get_exp_loc(condition)))
                 return NULL;
-
 
         tree_type* t = tree_get_exp_type(lhs);
         return tree_new_conditional_exp(self->context, TVK_RVALUE, t, loc, condition, lhs, rhs);
