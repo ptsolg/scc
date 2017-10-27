@@ -1,0 +1,4 @@
+void test()
+{
+    sizeof(void);
+}
