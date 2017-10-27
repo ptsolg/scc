@@ -219,27 +219,30 @@ extern tree_exp* cprog_build_subscript_exp(
         if (!lhs || !rhs)
                 return NULL;
 
-        tree_type* lt = tree_desugar_type(cprog_perform_unary_conversion(self, &lhs));
-        tree_type* rt = tree_desugar_type(tree_get_exp_type(rhs));
-        tree_type* t;
+        tree_type*    lt = tree_desugar_type(cprog_perform_unary_conversion(self, &lhs));
+        tree_type*    rt = tree_desugar_type(tree_get_exp_type(rhs));
+        tree_location rl = tree_get_exp_loc(rhs);
+        tree_type*    t  = NULL;
 
         // c99 6.5.2.1 
         // 1. One of the expressions shall have type "pointer to object type",
         //    the other expression shall have integer type, and the result has type "type".
         if (tree_type_is_pointer(lt))
         {
-                if (!cprog_require_integral_exp_type(self, rt, tree_get_exp_loc(rhs)))
+                if (!cprog_require_integral_exp_type(self, rt, rl))
                         return NULL;
 
                 t = tree_get_pointer_target(lt);
         }
-        else if (!tree_type_is_pointer(rt))
+        else if (cprog_require_object_pointer_exp_type(self, rt, rl))
         {
                 if (!cprog_require_integral_exp_type(self, lt, tree_get_exp_loc(lhs)))
                         return NULL;
 
                 t = tree_get_pointer_target(rt);
         }
+        else
+                return NULL;
 
         return tree_new_subscript_exp(self->context, TVK_LVALUE, t, loc, lhs, rhs);
 }
