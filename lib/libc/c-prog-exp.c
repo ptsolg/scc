@@ -529,6 +529,8 @@ static tree_type* cprog_check_bitwise_op(
         return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
 }
 
+// 6.5.13/6.5.14 logical and/or operator
+// Each of the operands shall have scalar type
 static tree_type* cprog_check_log_op(
         cprog* self, tree_binop_kind opcode, tree_location loc, tree_exp** lhs, tree_exp** rhs)
 {
