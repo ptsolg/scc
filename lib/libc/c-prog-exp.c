@@ -604,23 +604,22 @@ static tree_type* cprog_check_relational_op(
         tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
         tree_location rl = tree_get_exp_loc(*rhs);
 
-        if (tree_type_is_real(lt))
+        if (tree_type_is_real(lt) && tree_type_is_real(rt))
         {
-                if (!cprog_require_real_exp_type(self, rt, rl))
-                        return NULL;
-
                 if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
                         cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
         }
-        else if (tree_type_is_pointer(lt))
+        else if (tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt))
         {
-                if (!cprog_require_object_pointer_exp_type(self, rt, rl))
-                        return NULL;
                 if (!cprog_require_compatible_exp_types(self, lt, rt, loc))
                         return NULL;
         }
         else
+        {
+                cerror(self->error_manager, CES_ERROR, loc,
+                        "invalid operands to relational operator");
                 return NULL;
+        }
 
         return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
 }
