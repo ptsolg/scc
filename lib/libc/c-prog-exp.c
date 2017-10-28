@@ -593,30 +593,31 @@ static tree_type* cprog_check_compare_op(
         tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
         tree_location rl = tree_get_exp_loc(*rhs);
 
-        if (tree_type_is_arithmetic(lt))
-        {
-                if (!cprog_require_arithmetic_exp_type(self, rt, rl))
-                        return NULL;
-
+        if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
                 return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
-        }
         else if (tree_type_is_pointer(lt) && tree_type_is_pointer(rt))
         {
-                if (tree_types_are_compatible(lt, rt))
-                        return lt;
+                tree_type* ltarget = tree_desugar_type(tree_get_pointer_target(lt));
+                tree_type* rtarget = tree_desugar_type(tree_get_pointer_target(rt));
 
-                if (tree_type_is_void_pointer(lt) && tree_type_is_void_pointer(rt))
-                        return lt;
-
-                /*
-                todo:
-                if (nullptr(lhs) && nullptr(rhs)
-                        return lt;
-                */
+                if (tree_type_is_incomplete(ltarget) && !tree_type_is_void(rtarget)
+                 || tree_type_is_incomplete(rtarget) && !tree_type_is_void(ltarget))
+                {
+                        cerror(self->error_manager, CES_ERROR, loc,
+                                "comparison of distinct pointer types");
+                        return NULL;
+                }
+                else if (!cprog_require_compatible_exp_types(self, lt, rt, loc))
+                        return NULL;
+                // todo: null pointer constant
         }
-        cerror(self->error_manager, CES_ERROR, loc,
-                "invalid operands to binary '%s'", cget_binop_string(opcode));
-        return NULL;
+        else
+        {
+                cerror(self->error_manager, CES_ERROR, loc,
+                        "invalid operands to binary '%s'", cget_binop_string(opcode));
+                return NULL;
+        }
+        return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
 }
 
 // 6.5.16.2 Compound assignment
