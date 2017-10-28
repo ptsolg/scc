@@ -15,7 +15,6 @@ extern "C" {
 typedef struct _tree_exp         tree_exp;
 typedef struct _tree_type        tree_type;
 typedef struct _tree_decl        tree_decl;
-typedef struct _tree_const_exp   tree_const_exp;
 typedef struct _tree_designation tree_designation;
 typedef struct _tree_designator  tree_designator;
 
@@ -503,20 +502,20 @@ struct _tree_array_designator
 {
         struct _tree_designator_base _base;
         tree_type*                   _eltype;
-        tree_const_exp*              _index;
+        tree_exp*                    _index;
 };
 
 extern tree_designator* tree_new_array_designator(
-        tree_context* context, tree_type* eltype, tree_const_exp* index);
+        tree_context* context, tree_type* eltype, tree_exp* index);
 
 static inline struct _tree_array_designator*       _tree_get_array_designator(tree_designator* self);
 static inline const struct _tree_array_designator* _tree_get_array_cdesignator(const tree_designator* self);
 
-static inline tree_type*     tree_get_array_designator_type(const tree_designator* self);
-static inline tree_const_exp* tree_get_array_designator_index(const tree_designator* self);
+static inline tree_type* tree_get_array_designator_type(const tree_designator* self);
+static inline tree_exp*  tree_get_array_designator_index(const tree_designator* self);
 
 static inline void tree_set_array_designator_type(tree_designator* self, tree_type* t);
-static inline void tree_set_array_designator_index(tree_designator* self, tree_const_exp* i);
+static inline void tree_set_array_designator_index(tree_designator* self, tree_exp* i);
 
 struct _tree_member_designator
 {
@@ -598,16 +597,6 @@ extern const tree_exp* tree_desugar_cexp(const tree_exp* self);
 
 extern bool            tree_exp_is_null_pointer_constant(const tree_exp* self);
 extern bool            tree_exp_designates_bitfield(const tree_exp* self);
-
-typedef struct _tree_const_exp
-{
-        tree_exp*  _root;
-} tree_const_exp;
-
-extern tree_const_exp* tree_new_const_exp(tree_context* context, tree_exp* root);
-
-static inline tree_exp* tree_get_const_exp_root(const tree_const_exp* self);
-static inline void      tree_set_const_exp_root(tree_const_exp* self, tree_exp* root);
 
 #define TREE_ASSERT_EXP(E) S_ASSERT(E)
 
@@ -1199,7 +1188,7 @@ static inline tree_type* tree_get_array_designator_type(const tree_designator* s
         return _tree_get_array_cdesignator(self)->_eltype;
 }
 
-static inline tree_const_exp* tree_get_array_designator_index(const tree_designator* self)
+static inline tree_exp* tree_get_array_designator_index(const tree_designator* self)
 {
         return _tree_get_array_cdesignator(self)->_index;
 }
@@ -1209,7 +1198,7 @@ static inline void tree_set_array_designator_type(tree_designator* self, tree_ty
         _tree_get_array_designator(self)->_eltype = t;
 }
 
-static inline void tree_set_array_designator_index(tree_designator* self, tree_const_exp* i)
+static inline void tree_set_array_designator_index(tree_designator* self, tree_exp* i)
 {
         _tree_get_array_designator(self)->_index = i;
 }
@@ -1270,21 +1259,6 @@ static inline void tree_set_designation_initializer(tree_designation* self, tree
 static inline bool tree_exp_is(const tree_exp* self, tree_exp_kind k)
 {
         return tree_get_exp_kind(self) == k;
-}
-
-static inline tree_exp* tree_get_const_exp_root(const tree_const_exp* self)
-{
-        return self->_root;
-}
-
-static inline const tree_exp* tree_get_const_exp_croot(const tree_const_exp* self)
-{
-        return self->_root;
-}
-
-static inline void tree_set_const_exp_root(tree_const_exp* self, tree_exp* root)
-{
-        self->_root = root;
 }
 
 #ifdef __cplusplus

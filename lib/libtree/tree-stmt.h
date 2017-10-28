@@ -12,7 +12,6 @@ extern "C" {
 #include "tree-decl.h"
 
 typedef struct _tree_stmt      tree_stmt;
-typedef struct _tree_const_exp tree_const_exp;
 typedef struct _tree_decl      tree_decl;
 typedef struct _tree_exp       tree_exp;
 typedef struct _tree_scope     tree_scope;
@@ -121,20 +120,20 @@ static inline void       tree_set_label_stmt_decl(tree_stmt* self, tree_decl* la
 struct _tree_case_stmt
 {
         struct _tree_stmt_base _base;
-        tree_const_exp*        _value;
+        tree_exp*              _value;
         tree_stmt*             _body;
 };
 
 extern tree_stmt* tree_new_case_stmt(
-        tree_context* context, tree_xlocation  loc, tree_const_exp* value, tree_stmt* body);
+        tree_context* context, tree_xlocation  loc, tree_exp* value, tree_stmt* body);
 
 static inline struct _tree_case_stmt*       _tree_get_case(tree_stmt* self);
 static inline const struct _tree_case_stmt* _tree_get_ccase(const tree_stmt* self);
 
-static inline tree_const_exp* tree_get_case_value(const tree_stmt* self);
-static inline tree_stmt*      tree_get_case_body(const tree_stmt* self);
+static inline tree_exp*  tree_get_case_value(const tree_stmt* self);
+static inline tree_stmt* tree_get_case_body(const tree_stmt* self);
 
-static inline void tree_set_case_value(tree_stmt* self, tree_const_exp* value);
+static inline void tree_set_case_value(tree_stmt* self, tree_exp* value);
 static inline void tree_set_case_body(tree_stmt* self, tree_stmt* body);
 
 struct _tree_default_stmt
@@ -507,7 +506,7 @@ static inline const struct _tree_case_stmt* _tree_get_ccase(const tree_stmt* sel
         return (const struct _tree_case_stmt*)self;
 }
 
-static inline tree_const_exp* tree_get_case_value(const tree_stmt* self)
+static inline tree_exp* tree_get_case_value(const tree_stmt* self)
 {
         return _tree_get_ccase(self)->_value;
 }
@@ -517,7 +516,7 @@ static inline tree_stmt* tree_get_case_body(const tree_stmt* self)
         return _tree_get_ccase(self)->_body;
 }
 
-static inline void tree_set_case_value(tree_stmt* self, tree_const_exp* value)
+static inline void tree_set_case_value(tree_stmt* self, tree_exp* value)
 {
         _tree_get_case(self)->_value = value;
 }

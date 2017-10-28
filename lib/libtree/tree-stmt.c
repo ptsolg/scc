@@ -54,7 +54,7 @@ extern tree_stmt* tree_new_labeled_stmt(tree_context* context, tree_xlocation lo
 }
 
 extern tree_stmt* tree_new_case_stmt(
-        tree_context* context, tree_xlocation  loc, tree_const_exp* value, tree_stmt* body)
+        tree_context* context, tree_xlocation  loc, tree_exp* value, tree_stmt* body)
 {
         tree_stmt* s = tree_new_stmt(context, TSK_CASE, loc, sizeof(struct _tree_case_stmt));
         if (!s)

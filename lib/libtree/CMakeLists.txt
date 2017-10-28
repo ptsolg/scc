@@ -14,8 +14,6 @@ create_module(libtree
 	tree-common.c
 	tree-exp.h
 	tree-exp.c
-	tree-eval.h
-	tree-eval.c
 	tree-module.h
 	tree-module.c
 	tree-target.h

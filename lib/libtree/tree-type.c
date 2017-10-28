@@ -1,5 +1,6 @@
 #include "tree-type.h"
 #include "tree-context.h"
+#include "tree-target.h"
 
 extern tree_type* tree_new_type(tree_context* context, tree_type_kind kind, ssize size)
 {
@@ -56,7 +57,7 @@ extern void tree_add_function_type_param(tree_type* self, tree_type* param)
 }
 
 extern tree_type* tree_new_array_type(
-        tree_context* context, tree_type* eltype, tree_const_exp* size)
+        tree_context* context, tree_type* eltype, tree_exp* size)
 {
         tree_type* t = tree_new_chain_type(context, TTK_ARRAY, eltype,
                 sizeof(struct _tree_array_type));
@@ -474,12 +475,72 @@ extern tree_builtin_type_kind tree_get_integer_counterpart(const tree_type* t)
         }
 }
 
+extern ssize tree_get_sizeof_record(const tree_target_info* info, const tree_decl* d)
+{
+        return 0;
+}
+
 extern ssize tree_get_sizeof(const tree_target_info* info, const tree_type* t)
+{
+        S_ASSERT(t);
+        t = tree_desugar_ctype(t);
+
+        if (tree_type_is_pointer(t))
+                return tree_get_pointer_size(info);
+        else if (tree_type_is(t, TTK_BUILTIN))
+                return tree_get_builtin_type_size(info, tree_get_builtin_type_kind(t));
+        else if (tree_type_is(t, TTK_DECL))
+        {
+                tree_decl* entity = tree_get_decl_type_entity(t);
+                tree_decl_kind dk = tree_get_decl_kind(entity);
+   
+                if (dk == TDK_ENUM)
+                        return tree_get_builtin_type_size(info, TBTK_INT32);
+                else if (dk == TDK_RECORD)
+                        return tree_get_sizeof_record(info, entity);
+
+                S_UNREACHABLE();
+        }
+        else if (tree_type_is(t, TTK_ARRAY))
+        {
+                // todo
+        }
+
+        S_UNREACHABLE(); // probably function type
+        return 0;
+}
+
+extern ssize tree_get_alignof_record(const tree_target_info* info, const tree_decl* d)
 {
         return 0;
 }
 
 extern ssize tree_get_alignof(const tree_target_info* info, const tree_type* t)
 {
+        S_ASSERT(t);
+        t = tree_desugar_ctype(t);
+
+        if (tree_type_is_pointer(t))
+                return tree_get_pointer_align(info);
+        else if (tree_type_is(t, TTK_BUILTIN))
+                return tree_get_builtin_type_align(info, tree_get_builtin_type_kind(t));
+        else if (tree_type_is(t, TTK_DECL))
+        {
+                tree_decl* entity = tree_get_decl_type_entity(t);
+                tree_decl_kind dk = tree_get_decl_kind(entity);
+
+                if (dk == TDK_ENUM)
+                        return tree_get_builtin_type_align(info, TBTK_INT32);
+                else if (dk == TDK_RECORD)
+                        return tree_get_alignof_record(info, entity);
+
+                S_UNREACHABLE();
+        }
+        else if (tree_type_is(t, TTK_ARRAY))
+        {
+                // todo
+        }
+
+        S_UNREACHABLE(); // probably function type
         return 0;
 }

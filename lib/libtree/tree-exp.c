@@ -317,7 +317,7 @@ extern tree_designator* tree_new_member_designator(tree_context* context, tree_d
 }
 
 extern tree_designator* tree_new_array_designator(
-        tree_context* context, tree_type* eltype, tree_const_exp* index)
+        tree_context* context, tree_type* eltype, tree_exp* index)
 {
         tree_designator* d = tree_context_fast_allocate(context, sizeof(tree_designator));
         if (!d)
@@ -416,12 +416,3 @@ extern bool tree_exp_designates_bitfield(const tree_exp* self)
         return false; // todo
 }
 
-extern tree_const_exp* tree_new_const_exp(tree_context* context, tree_exp* root)
-{
-        tree_const_exp* e = tree_context_fast_allocate(context, sizeof(tree_const_exp));
-        if (!e)
-                return NULL;
-
-        tree_set_const_exp_root(e, root);
-        return e;
-}
