@@ -463,8 +463,13 @@ extern tree_exp* cprog_build_sizeof(cprog* self, tree_location loc, csizeof_rhs*
         }
         if (!cprog_require_complete_type(self, rhs->loc, rt))
                 return NULL;
+        if (rhs->unary && tree_exp_designates_bitfield(rhs->exp))
+        {
+                cerror(self->error_manager, CES_ERROR, rhs->loc,
+                        "operand of sizeof may not be a bitfield");
+                return NULL;
+        }
 
-        // todo: bitfields
         tree_builtin_type_kind btk = TBTK_UINT32;
         if (tree_platform_is(tree_get_module_platform(self->module), TPK_X64))
                 btk = TBTK_UINT64;
@@ -595,6 +600,10 @@ static tree_type* cprog_check_compare_op(
 
         if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
                 return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
+        else if (tree_type_is_pointer(lt) && tree_exp_is_null_pointer_constant(*rhs))
+                ;
+        else if (tree_type_is_pointer(rt) && tree_exp_is_null_pointer_constant(*lhs))
+                ;
         else if (tree_type_is_pointer(lt) && tree_type_is_pointer(rt))
         {
                 tree_type* ltarget = tree_desugar_type(tree_get_pointer_target(lt));
@@ -609,7 +618,6 @@ static tree_type* cprog_check_compare_op(
                 }
                 else if (!cprog_require_compatible_exp_types(self, lt, rt, loc))
                         return NULL;
-                // todo: null pointer constant
         }
         else
         {
@@ -854,7 +862,7 @@ static bool cprog_check_pointer_qualifier_discartion(
         return false;
 }
 
-static bool cprog_check_assign_pointer_types(
+static bool cprog_check_assignment_pointer_types(
         cprog* self, tree_type* lt, tree_type* rt, tree_location loc)
 {
         S_ASSERT(tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt));
@@ -871,7 +879,6 @@ static bool cprog_check_assign_pointer_types(
                         "assignment from incompatible pointer type");
                 return false;
         }
-        // todo: null pointer constant
 
         return cprog_check_pointer_qualifier_discartion(self, lt, rt, loc);
 }
@@ -912,9 +919,11 @@ static tree_type* cprog_check_assign_op(
                 if (!cprog_require_compatible_exp_types(self, lt, rt, loc))
                         return NULL;
         }
+        else if (tree_type_is_object_pointer(lt) && tree_exp_is_null_pointer_constant(*rhs))
+                ; // nothing to check
         else if (tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt))
         {
-                if (!cprog_check_assign_pointer_types(self, lt, rt, loc))
+                if (!cprog_check_assignment_pointer_types(self, lt, rt, loc))
                         return NULL;
         }
         else

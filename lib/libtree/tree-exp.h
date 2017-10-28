@@ -596,6 +596,9 @@ extern const tree_exp* tree_ignore_paren_cexps(const tree_exp* self);
 extern tree_exp*       tree_desugar_exp(tree_exp* self);
 extern const tree_exp* tree_desugar_cexp(const tree_exp* self);
 
+extern bool            tree_exp_is_null_pointer_constant(const tree_exp* self);
+extern bool            tree_exp_designates_bitfield(const tree_exp* self);
+
 typedef struct _tree_const_exp
 {
         tree_exp*  _root;

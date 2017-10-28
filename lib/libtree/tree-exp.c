@@ -406,6 +406,16 @@ extern const tree_exp* tree_desugar_cexp(const tree_exp* self)
         return ignored;
 }
 
+extern bool tree_exp_is_null_pointer_constant(const tree_exp* self)
+{
+        return false; // todo
+}
+
+extern bool tree_exp_designates_bitfield(const tree_exp* self)
+{
+        return false; // todo
+}
+
 extern tree_const_exp* tree_new_const_exp(tree_context* context, tree_exp* root)
 {
         tree_const_exp* e = tree_context_fast_allocate(context, sizeof(tree_const_exp));
