@@ -471,7 +471,7 @@ extern tree_exp* cprog_build_sizeof(cprog* self, tree_location loc, csizeof_rhs*
         }
 
         tree_builtin_type_kind btk = TBTK_UINT32;
-        if (tree_platform_is(tree_get_module_platform(self->module), TPK_X64))
+        if (tree_target_is(tree_get_module_target(self->module), TTARGET_X64))
                 btk = TBTK_UINT64;
 
         tree_type* t = cprog_build_builtin_type(self, TTQ_UNQUALIFIED, btk);
@@ -866,12 +866,12 @@ static bool cprog_check_assignment_pointer_types(
         cprog* self, tree_type* lt, tree_type* rt, tree_location loc)
 {
         S_ASSERT(tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt));
-
-        if (tree_types_are_compatible(lt, rt))
-                return cprog_check_pointer_qualifier_discartion(self, lt, rt, loc);
-
         tree_type* ltarget = tree_get_pointer_target(lt);
         tree_type* rtarget = tree_get_pointer_target(rt);
+
+        if (tree_types_are_compatible(ltarget, rtarget))
+                return cprog_check_pointer_qualifier_discartion(self, ltarget, rtarget, loc);
+
         if (tree_type_is_incomplete(ltarget) && !tree_type_is_void(rtarget)
          || tree_type_is_incomplete(rtarget) && !tree_type_is_void(ltarget))
         {
@@ -1108,21 +1108,6 @@ extern tree_exp* cprog_build_conditional(
         return tree_new_conditional_exp(self->context, TVK_RVALUE, t, loc, condition, lhs, rhs);
 }
 
-// 6.6 Constant expressions
-// Constant expressions shall not contain assignment, increment, decrement, function-call,
-//    or comma operators, except when they are contained within a subexpression that is not
-//    evaluated.
-// 
-// Each constant expression shall evaluate to a constant that is in the range of representable
-//    values for its type.
-extern tree_const_exp* cprog_build_const_exp(cprog* self, tree_exp* root)
-{
-        if (!root)
-                return NULL;
-
-        return tree_new_const_exp(self->context, root);
-}
-
 extern tree_designation* cprog_build_designation(cprog* self)
 {
         return tree_new_designation(self->context, NULL);
@@ -1165,7 +1150,7 @@ extern tree_designator* cprog_build_member_designator(
 }
 
 extern tree_designator* cprog_build_array_designator(
-        cprog* self, tree_location loc, tree_type* t, tree_const_exp* index)
+        cprog* self, tree_location loc, tree_type* t, tree_exp* index)
 {
         t = tree_desugar_type(t);
         if (!cprog_require_array_exp_type(self, t, loc))

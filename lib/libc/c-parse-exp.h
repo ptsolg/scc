@@ -11,9 +11,8 @@ extern "C" {
 
 #include "c-parser.h"
 
-typedef struct _tree_exp       tree_exp;
-typedef struct _tree_decl      tree_decl;
-typedef struct _tree_const_exp tree_const_exp;
+typedef struct _tree_exp  tree_exp;
+typedef struct _tree_decl tree_decl;
 
 extern const ctoken_kind ctk_rbracket_or_comma[];
 
@@ -127,7 +126,7 @@ extern tree_exp* cparse_exp_ex(cparser* self, int min_prec);
 
 // c99 6.6 constant-expression:
 //      conditional-expression
-extern tree_const_exp* cparse_const_exp(cparser* self);
+extern tree_exp* cparse_const_exp(cparser* self);
 
 // c99 6.7.8 initializer:
 //      assignment-expression

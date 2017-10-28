@@ -21,7 +21,6 @@ typedef struct _tree_decl       tree_decl;
 typedef struct _tree_stmt       tree_stmt;
 typedef struct _tree_decl_scope tree_decl_scope;
 typedef struct _tree_scope      tree_scope;
-typedef struct _tree_const_exp  tree_const_exp;
 typedef struct _tree_module     tree_module;
 typedef struct _tree_context    tree_context;
 
@@ -68,7 +67,6 @@ extern void cprint_token(cprinter* self, const ctoken* token, const ctoken_print
 extern void cprint_tokens(cprinter* self, const objgroup* tokens);
 
 extern void cprint_exp(cprinter* self, const tree_exp* exp);
-extern void cprint_const_exp(cprinter* self, const tree_const_exp* exp);
 
 enum
 {

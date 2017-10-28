@@ -88,7 +88,6 @@ extern tree_exp* cprog_build_conditional(
         tree_exp*     lhs,
         tree_exp*     rhs);
 
-extern tree_const_exp*   cprog_build_const_exp(cprog* self, tree_exp* root);
 extern tree_designation* cprog_build_designation(cprog* self);
 
 extern tree_designation* cprog_finish_designation(
@@ -106,7 +105,7 @@ extern tree_designator* cprog_build_member_designator(
         cprog* self, tree_location loc, tree_type* t, tree_id name);
 
 extern tree_designator* cprog_build_array_designator(
-        cprog* self, tree_location loc, tree_type* t, tree_const_exp* index);
+        cprog* self, tree_location loc, tree_type* t, tree_exp* index);
 
 extern tree_designator* cprog_finish_designator(
         cprog* self, tree_designation* designation, tree_designator* designator);

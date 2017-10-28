@@ -64,7 +64,7 @@ extern bool cprog_build_direct_declarator_function_suffix(
 }
 
 extern bool cprog_build_direct_declarator_array_suffix(
-        cprog* self, cdeclarator* declarator, tree_type_quals quals, tree_const_exp* size)
+        cprog* self, cdeclarator* declarator, tree_type_quals quals, tree_exp* size)
 {
         tree_type* suffix = cprog_build_array_type(self,
                 cdeclarator_get_id_loc_or_begin(declarator), quals, NULL, size);
@@ -197,7 +197,7 @@ extern tree_decl* cprog_finish_decl_ex(cprog* self, tree_location end_loc, tree_
 }
 
 extern tree_decl* cprog_build_enumerator(
-        cprog* self, tree_decl* enum_, tree_id name, tree_const_exp* value)
+        cprog* self, tree_decl* enum_, tree_id name, tree_exp* value)
 {
         tree_type* t = tree_new_qual_type(self->context, TTQ_UNQUALIFIED,
                 tree_new_decl_type(self->context, enum_, true));
@@ -218,7 +218,7 @@ extern tree_decl* cprog_build_enum_decl(cprog* self, tree_location kw_loc, tree_
 }
 
 extern tree_decl* cprog_build_member_decl(
-        cprog* self, tree_type* typespec, cdeclarator* struct_declarator, tree_const_exp* bits)
+        cprog* self, tree_type* typespec, cdeclarator* struct_declarator, tree_exp* bits)
 {
         tree_type* member_type = cprog_set_declarator_type(self, struct_declarator, typespec);
         if (!member_type)

@@ -41,7 +41,7 @@ extern tree_stmt* cparse_case_stmt(cparser* self, cstmt_context context)
         if (!cparser_require(self, CTK_CASE))
                 return NULL;
 
-        tree_const_exp* value = cparse_const_exp(self);
+        tree_exp* value = cparse_const_exp(self);
         if (!value)
                 return NULL;
 

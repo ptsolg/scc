@@ -20,7 +20,7 @@ extern tree_stmt* cprog_build_case_stmt(
         cprog*          self,
         tree_location   kw_loc,
         tree_location   colon_loc,
-        tree_const_exp* value,
+        tree_exp*       value,
         tree_stmt*      body);
 
 extern tree_stmt* cprog_build_default_stmt(

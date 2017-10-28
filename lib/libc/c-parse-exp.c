@@ -264,12 +264,9 @@ extern tree_exp* cparse_exp_ex(cparser* self, int min_prec)
                 : NULL;
 }
 
-extern tree_const_exp* cparse_const_exp(cparser* self)
+extern tree_exp* cparse_const_exp(cparser* self)
 {
-        tree_exp* root = cparse_exp_ex(self, CPL_CONDITIONAL);
-        return root
-                ? cprog_build_const_exp(self->prog, root)
-                : NULL;
+        return cparse_exp_ex(self, CPL_CONDITIONAL);
 }
 
 static tree_designation* cparse_designation(cparser* self, tree_type* t)
@@ -294,7 +291,7 @@ static tree_designation* cparse_designation(cparser* self, tree_type* t)
                 else if (k == CTK_LSBRACKET)
                 {
                         cparser_consume_token(self);
-                        tree_const_exp* index = cparse_const_exp(self);
+                        tree_exp* index = cparse_const_exp(self);
                         if (!index || !cparser_require(self, CTK_RSBRACKET))
                                 return NULL;
 

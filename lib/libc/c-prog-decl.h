@@ -20,7 +20,7 @@ extern bool cprog_build_direct_declarator_function_suffix(
         cprog* self, cdeclarator* declarator);
 
 extern bool cprog_build_direct_declarator_array_suffix(
-        cprog* self, cdeclarator* declarator, tree_type_quals quals, tree_const_exp* size);
+        cprog* self, cdeclarator* declarator, tree_type_quals quals, tree_exp* size);
 
 extern bool cprog_add_direct_declarator_parens(cprog* self, cdeclarator* declarator);
 extern bool cprog_set_declarator_name(
@@ -38,12 +38,12 @@ extern tree_type* cprog_build_type_name(
         cprog* self, cdeclarator* declarator, tree_type* typespec);
 
 extern tree_decl* cprog_build_enumerator(
-        cprog* self, tree_decl* enum_, tree_id name, tree_const_exp* value);
+        cprog* self, tree_decl* enum_, tree_id name, tree_exp* value);
 
 extern tree_decl* cprog_build_enum_decl(cprog* self, tree_location kw_loc, tree_id name);
 
 extern tree_decl* cprog_build_member_decl(
-        cprog* self, tree_type* typespec, cdeclarator* struct_declarator, tree_const_exp* bits);
+        cprog* self, tree_type* typespec, cdeclarator* struct_declarator, tree_exp* bits);
 
 extern tree_decl* cprog_build_record_decl(
         cprog* self, tree_location kw_loc, tree_id name, bool is_union);

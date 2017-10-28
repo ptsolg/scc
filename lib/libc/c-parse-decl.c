@@ -311,7 +311,7 @@ static bool cparse_struct_declaration(cparser* self)
                         return false;
                 }
 
-                tree_const_exp* bits = NULL;
+                tree_exp* bits = NULL;
                 if (cparser_at(self, CTK_COLON))
                 {
                         cparser_consume_token(self);
@@ -411,7 +411,7 @@ static tree_decl* cparse_enumerator(cparser* self, tree_decl* enum_)
                 return NULL;
 
         tree_id name = ctoken_get_string(cparser_get_prev(self));
-        tree_const_exp* value = NULL;
+        tree_exp* value = NULL;
 
         if (cparser_at(self, CTK_EQ))
         {
@@ -571,7 +571,7 @@ static bool cparse_direct_declarator_suffix_opt(cparser* self, cdeclarator* resu
         else if (cparser_at(self, CTK_LSBRACKET))
         {
                 cparser_consume_token(self);
-                tree_const_exp* size = NULL;
+                tree_exp* size = NULL;
                 if (!cparser_at(self, CTK_RSBRACKET))
                         if (!(size = cparse_const_exp(self)))
                                 return false;

@@ -431,7 +431,7 @@ static void cprint_designation(cprinter* self, const tree_designation* d)
                 else if (k == TDK_DES_ARRAY)
                 {
                         cprint_lsbracket(self);
-                        cprint_const_exp(self, tree_get_array_designator_index(designator));
+                        cprint_exp(self, tree_get_array_designator_index(designator));
                         cprint_rsbracket(self);
                 }
         }
@@ -502,12 +502,6 @@ extern void cprint_exp(cprinter* self, const tree_exp* exp)
                 || k == TEK_IMPLICIT_CAST;
         bool brackets = self->opts.force_brackets && !is_primitive;
         _cprint_exp(self, exp, brackets);
-}
-
-extern void cprint_const_exp(cprinter* self, const tree_const_exp* exp)
-{
-        if (exp)
-                cprint_exp(self, tree_get_const_exp_root(exp));
 }
 
 static void cprint_type_quals(cprinter* self, tree_type_quals q)
@@ -651,7 +645,7 @@ static void cprint_suffix_endings(cprinter* self, ctype_name_info* info, int opt
                 else if (k == TTK_ARRAY)
                 {
                         cprint_lsbracket(self);
-                        cprint_const_exp(self, tree_get_array_size(t));
+                        cprint_exp(self, tree_get_array_size(t));
                         cprint_rsbracket(self);
                 }
                 else if (k == TTK_PAREN)
@@ -799,13 +793,13 @@ static void cprint_member(cprinter* self, const tree_decl* m, int opts)
         }
 
         _cprint_type_name(self, tree_get_decl_type(m), tree_get_decl_name(m), NULL, opts);
-        const tree_const_exp* bits = tree_get_member_bits(m);
+        const tree_exp* bits = tree_get_member_bits(m);
         if (bits)
         {
                 cprint_space(self);
                 cprintrw(self, CTK_COLON);
                 cprint_space(self);
-                cprint_const_exp(self, bits);
+                cprint_exp(self, bits);
         }
         if (!(opts & CPRINTER_IGNORE_DECL_ENDING))
                 cprintrw(self, CTK_SEMICOLON);
@@ -838,13 +832,13 @@ static void cprint_enumerator(cprinter* self, const tree_decl* e, int opts)
 {
         cprint_decl_name(self, e);
 
-        const tree_const_exp* value = tree_get_enumerator_value(e);
+        const tree_exp* value = tree_get_enumerator_value(e);
         if (value && !(opts & CPRINT_DECL_NAME))
         {
                 cprint_space(self);
                 cprintrw(self, CTK_EQ);
                 cprint_space(self);
-                cprint_const_exp(self, value);
+                cprint_exp(self, value);
         }
         if (!(opts & CPRINTER_IGNORE_DECL_ENDING))
                 cprint_comma(self);
@@ -925,7 +919,7 @@ static void cprint_case_stmt(cprinter* self, const tree_stmt* s)
 {
         cprintrw(self, CTK_CASE);
         cprint_space(self);
-        cprint_const_exp(self, tree_get_case_value(s));
+        cprint_exp(self, tree_get_case_value(s));
         cprintrw(self, CTK_COLON);
         cprinter_add_indent(self);
         cprint_endl(self);
