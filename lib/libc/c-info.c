@@ -8,7 +8,7 @@ typedef struct
         const char* string;
 } cbuiltin_type_info;
 
-S_STATIC_ASSERT(13 == TBTK_SIZE, "cbuiltin_type_info_table needs update.");
+S_STATIC_ASSERT(12 == TBTK_SIZE, "cbuiltin_type_info_table needs update.");
 static const cbuiltin_type_info cbuiltin_type_info_table[TBTK_SIZE] =
 {
         { ""                   }, // TBTK_INVALID
@@ -23,7 +23,6 @@ static const cbuiltin_type_info cbuiltin_type_info_table[TBTK_SIZE] =
         { "unsigned long long" }, // TBTK_UINT64
         { "float"              }, // TBTK_FLOAT
         { "double"             }, // TBTK_DOUBLE
-        { "va_arg"             }, // TBTK_VA_ARG
 };
 
 static inline const cbuiltin_type_info* cget_builtin_type_info(tree_builtin_type_kind k)

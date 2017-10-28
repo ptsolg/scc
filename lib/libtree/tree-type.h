@@ -76,7 +76,6 @@ typedef enum
         TBTK_UINT64,
         TBTK_FLOAT,
         TBTK_DOUBLE,
-        TBTK_VA_ARG,
         TBTK_SIZE,
 } tree_builtin_type_kind;
 
