@@ -823,6 +823,59 @@ static tree_type* cprog_check_log_or_op(
         return cprog_check_log_op(self, TBK_LOG_OR, loc, lhs, rhs);
 }
 
+// returns false if pointee of lt has less qualifiers than pointee of rt
+static bool cprog_check_pointer_qualifier_discartion(
+        cprog* self, tree_type* lt, tree_type* rt, tree_location loc)
+{
+        lt = tree_get_pointer_target(lt);
+        rt = tree_get_pointer_target(rt);
+
+        tree_type_quals rq = tree_get_type_quals(rt);
+        if (rq == TTQ_UNQUALIFIED)
+                return true;
+
+        tree_type_quals diff = TTQ_UNQUALIFIED;
+        tree_type_quals lq   = tree_get_type_quals(lt);
+
+        if ((rq & TTQ_CONST) && !(lq & TTQ_CONST))
+                diff |= TTQ_CONST;
+        if ((rq & TTQ_VOLATILE) && !(lq & TTQ_VOLATILE))
+                diff |= TTQ_VOLATILE;
+        if ((rq & TTQ_RESTRICT) && !(lq & TTQ_RESTRICT))
+                diff |= TTQ_RESTRICT;
+        
+        if (diff == TTQ_UNQUALIFIED)
+                return true;
+
+        char quals[64];
+        cqet_qual_string(diff, quals);
+        cerror(self->error_manager, CES_ERROR, loc,
+                "assignment discards '%s' qualifier", quals);
+        return false;
+}
+
+static bool cprog_check_assign_pointer_types(
+        cprog* self, tree_type* lt, tree_type* rt, tree_location loc)
+{
+        S_ASSERT(tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt));
+
+        if (tree_types_are_compatible(lt, rt))
+                return cprog_check_pointer_qualifier_discartion(self, lt, rt, loc);
+
+        tree_type* ltarget = tree_get_pointer_target(lt);
+        tree_type* rtarget = tree_get_pointer_target(rt);
+        if (tree_type_is_incomplete(ltarget) && !tree_type_is_void(rtarget)
+         || tree_type_is_incomplete(rtarget) && !tree_type_is_void(ltarget))
+        {
+                cerror(self->error_manager, CES_ERROR, loc,
+                        "assignment from incompatible pointer type");
+                return false;
+        }
+        // todo: null pointer constant
+
+        return cprog_check_pointer_qualifier_discartion(self, lt, rt, loc);
+}
+
 // 6.5.16.1 Simple assignment
 // One of the following shall hold:
 // - the left operand has qualified or unqualified arithmetic type and the right has
@@ -851,9 +904,6 @@ static tree_type* cprog_check_assign_op(
         {
                 if (!cprog_require_arithmetic_exp_type(self, rt, rl))
                         return NULL;
-
-                *rhs = cprog_build_impl_cast(self, *rhs, lt);
-                return lt;
         }
         else if (tree_type_is_record(lt))
         {
@@ -861,24 +911,21 @@ static tree_type* cprog_check_assign_op(
                         return NULL;
                 if (!cprog_require_compatible_exp_types(self, lt, rt, loc))
                         return NULL;
-
-                return lt;
         }
-        else if (tree_type_is_pointer(lt) && tree_type_is_pointer(rt))
+        else if (tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt))
         {
-                bool same_quals = tree_get_type_quals(lt) == tree_get_type_quals(rt);
-                if (tree_types_are_compatible(lt, rt) && same_quals)
-                        return lt;
-                if ((tree_type_is_void_pointer(lt) || tree_type_is_void_pointer(rt)) && same_quals)
-                        return lt;
-                /*
-                todo:
-                if (nullptr(lhs) && nullptr(rhs)
-                return lt;
-                */
+                if (!cprog_check_assign_pointer_types(self, lt, rt, loc))
+                        return NULL;
         }
-        cerror(self->error_manager, CES_ERROR, loc, "invalid operands to binary '='");
-        return NULL;
+        else
+        {
+                cerror(self->error_manager, CES_ERROR, loc,
+                        "invalid operands to binary '='");
+                return NULL;
+        }
+
+        *rhs = cprog_build_impl_cast(self, *rhs, lt);
+        return lt;
 }
 
 static tree_type* cprog_check_add_assign_op(
