@@ -149,6 +149,17 @@ extern const char* cget_unop_string(tree_unop_kind k)
         return cget_unop_info(k)->string;
 }
 
+extern void cqet_qual_string(tree_type_quals q, char* buf)
+{
+        *buf = '\0';
+        if (q & TTQ_CONST)
+                strcat(buf, "const ");
+        if (q & TTQ_VOLATILE)
+                strcat(buf, "volatile ");
+        if (q & TTQ_RESTRICT)
+                strcat(buf, "restrict ");
+}
+
 extern tree_binop_kind ctoken_to_binop(const ctoken* self)
 {
         switch (ctoken_get_kind(self))
