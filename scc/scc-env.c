@@ -131,8 +131,8 @@ static serrcode scc_init_cenv(scc_env* self, cenv* env)
 
 static serrcode _scc_perform_syntax_analysis(scc_env* self, cenv* env)
 {
-        tree_platform_info info;
-        tree_init_platform_info(&info, self->opts.x32 ? TPK_X32 : TPK_X64);
+        tree_target_info info;
+        tree_init_target_info(&info, self->opts.x32 ? TTARGET_X32 : TTARGET_X64);
         tree_module* m = cparse_file(env, objgroup_first(&self->input), &info);
         if (!m)
                 return S_ERROR;

@@ -34,12 +34,12 @@ static csource* cenv_open_file(cenv* self, const char* file)
         return source;
 }
 
-extern tree_module* cparse_source(cenv* self, csource* source, tree_platform_info* platform)
+extern tree_module* cparse_source(cenv* self, csource* source, tree_target_info* target)
 {
         if (!source)
                 return NULL;
 
-        tree_module* m = tree_new_module(ctree_context_base(&self->context), platform);
+        tree_module* m = tree_new_module(ctree_context_base(&self->context), target);
 
         clexer  lexer;
         cprog   prog;
@@ -74,14 +74,14 @@ extern tree_module* cparse_source(cenv* self, csource* source, tree_platform_inf
         return m;
 }
 
-extern tree_module* cparse_file(cenv* self, const char* file, tree_platform_info* platform)
+extern tree_module* cparse_file(cenv* self, const char* file, tree_target_info* target)
 {
-        return cparse_source(self, cenv_open_file(self, file), platform);
+        return cparse_source(self, cenv_open_file(self, file), target);
 }
 
-extern tree_module* cparse_string(cenv* self, const char* str, tree_platform_info* platform)
+extern tree_module* cparse_string(cenv* self, const char* str, tree_target_info* target)
 {
-        return cparse_source(self, csource_emulate(&self->source_manager, "", str), platform);
+        return cparse_source(self, csource_emulate(&self->source_manager, "", str), target);
 }
 
 extern serrcode clex_source(cenv* self, csource* source, objgroup* result)

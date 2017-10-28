@@ -64,29 +64,6 @@ static inline tree_xlocation tree_set_xloc_end(tree_xlocation self, tree_locatio
 extern tree_id tree_get_empty_id();
 extern bool    tree_id_is_empty(tree_id id);
 
-typedef enum
-{
-        TPK_X32,
-        TPK_X64,
-} tree_platform_kind;
-
-typedef struct _tree_platform_info
-{
-        tree_platform_kind _kind;
-} tree_platform_info;
-
-extern void tree_init_platform_info(tree_platform_info* self, tree_platform_kind k);
-
-static inline tree_platform_kind tree_get_platform_kind(const tree_platform_info* self)
-{
-        return self->_kind;
-}
-
-static inline bool tree_platform_is(const tree_platform_info* self, tree_platform_kind k)
-{
-        return tree_get_platform_kind(self) == k;
-}
-
 #ifdef __cplusplus
 }
 #endif

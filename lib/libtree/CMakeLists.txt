@@ -18,6 +18,8 @@ create_module(libtree
 	tree-eval.c
 	tree-module.h
 	tree-module.c
+	tree-target.h
+	tree-target.c
 
 	USING
 	libscl

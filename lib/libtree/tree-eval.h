@@ -11,8 +11,9 @@ extern "C" {
  
 #include "tree-common.h"
 
-typedef struct _tree_exp  tree_exp;
-typedef struct _tree_type tree_type;
+typedef struct _tree_exp         tree_exp;
+typedef struct _tree_type        tree_type;
+typedef struct _tree_target_info tree_target_info;
 
 typedef struct _tree_eval_result
 {
@@ -27,7 +28,7 @@ typedef struct _tree_eval_result
 
 //extern void tree_eval_result_init(tree_eval_result* self, const tree_type* type);
 
-extern bool tree_eval_exp(const tree_exp* e, const tree_platform_info* i, tree_eval_result* r);
+extern bool tree_eval_exp(const tree_exp* e, const tree_target_info* i, tree_eval_result* r);
 
 #ifdef __cplusplus
 }

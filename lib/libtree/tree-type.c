@@ -358,7 +358,7 @@ extern bool tree_types_are_compatible(const tree_type* a, const tree_type* b)
         if (tree_type_is_qualified(a))
                 a = tree_get_unqualified_ctype(a);
         if (tree_type_is_qualified(b))
-                a = tree_get_unqualified_ctype(b);
+                b = tree_get_unqualified_ctype(b);
 
         if (a == b)
                 return true;
@@ -474,7 +474,12 @@ extern tree_builtin_type_kind tree_get_integer_counterpart(const tree_type* t)
         }
 }
 
-extern ssize tree_get_sizeof(const tree_type* t)
+extern ssize tree_get_sizeof(const tree_target_info* info, const tree_type* t)
+{
+        return 0;
+}
+
+extern ssize tree_get_alignof(const tree_target_info* info, const tree_type* t)
 {
         return 0;
 }

@@ -13,9 +13,10 @@ extern "C" {
 #include "tree-common.h"
 #include "tree-decl.h" // tree_decl_kind
 
-typedef struct _tree_type      tree_type;
-typedef struct _tree_decl      tree_decl;
-typedef struct _tree_const_exp tree_const_exp;
+typedef struct _tree_type        tree_type;
+typedef struct _tree_decl        tree_decl;
+typedef struct _tree_const_exp   tree_const_exp;
+typedef struct _tree_target_info tree_target_info;
 
 typedef enum _tree_type_kind
 {
@@ -273,7 +274,8 @@ extern tree_type* tree_get_type_next(const tree_type* self);
 
 extern tree_builtin_type_kind tree_get_integer_counterpart(const tree_type* self);
 
-extern ssize tree_get_sizeof(const tree_type* t);
+extern ssize tree_get_sizeof(const tree_target_info* info, const tree_type* t);
+extern ssize tree_get_alignof(const tree_target_info* info, const tree_type* t);
 
 #define TREE_ASSERT_TYPE(T) S_ASSERT(T)
 

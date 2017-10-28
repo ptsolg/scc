@@ -1,58 +1,58 @@
 #include "tree-eval.h"
 #include "tree-exp.h"
 
-static bool tree_eval_sizeof(const tree_exp* e, const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_sizeof(const tree_exp* e, const tree_target_info* i, tree_eval_result* r)
 {
         return false;
 }
 
-static bool tree_eval_paren(const tree_exp* e, const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_paren(const tree_exp* e, const tree_target_info* i, tree_eval_result* r)
 {
         return false;
 }
 
-static bool tree_eval_cast(const tree_exp* e, const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_cast(const tree_exp* e, const tree_target_info* i, tree_eval_result* r)
 {
         return false;
 }
 
-static bool tree_eval_numeric_literal(const tree_exp* e, const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_numeric_literal(const tree_exp* e, const tree_target_info* i, tree_eval_result* r)
 {
         return false;
 }
 
-static bool tree_eval_conditional(const tree_exp* e, const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_conditional(const tree_exp* e, const tree_target_info* i, tree_eval_result* r)
 {
         return false;
 }
 
-static bool tree_eval_invalid_unop(const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_invalid_unop(const tree_target_info* i, tree_eval_result* r)
 {
         return false;
 }
 
-static bool tree_eval_plus(const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_plus(const tree_target_info* i, tree_eval_result* r)
 {
         return false;
 }
 
-static bool tree_eval_minus(const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_minus(const tree_target_info* i, tree_eval_result* r)
 {
         return false;
 }
 
-static bool tree_eval_not(const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_not(const tree_target_info* i, tree_eval_result* r)
 {
         return false;
 }
 
-static bool tree_eval_log_not(const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_log_not(const tree_target_info* i, tree_eval_result* r)
 {
         return false;
 }
 
 static bool(*const tree_unop_eval_table[])(
-        const tree_platform_info*,
+        const tree_target_info*,
         tree_eval_result*) =
 {
         &tree_eval_invalid_unop, // TUK_UNKNOWN
@@ -68,7 +68,7 @@ static bool(*const tree_unop_eval_table[])(
         &tree_eval_invalid_unop, // TUK_ADDRESS
 };
 
-static bool tree_eval_unop(const tree_exp* e, const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_unop(const tree_exp* e, const tree_target_info* i, tree_eval_result* r)
 {
         const tree_type* t = tree_desugar_ctype(tree_get_exp_type(e));
         if (tree_get_type_kind(t) != TTK_BUILTIN)
@@ -79,7 +79,7 @@ static bool tree_eval_unop(const tree_exp* e, const tree_platform_info* i, tree_
 
 typedef struct
 {
-        const tree_platform_info* platform;
+        const tree_target_info* platform;
         tree_eval_result          lhs;
         tree_eval_result          rhs;
 } tree_binop_eval_info;
@@ -214,7 +214,7 @@ static bool(*const tree_binop_eval_table[])(const tree_binop_eval_info*, tree_ev
         &tree_eval_invalid_binop, // TBK_COMMA
 };
 
-static bool tree_eval_binop(const tree_exp* e, const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_binop(const tree_exp* e, const tree_target_info* i, tree_eval_result* r)
 {
         const tree_exp* lhs = tree_get_binop_lhs(e);
         const tree_exp* rhs = tree_get_binop_rhs(e);
@@ -232,14 +232,14 @@ static bool tree_eval_binop(const tree_exp* e, const tree_platform_info* i, tree
         return tree_binop_eval_table[tree_get_binop_kind(e)](&info, r);
 }
 
-static bool tree_eval_invalid(const tree_exp* e, const tree_platform_info* i, tree_eval_result* r)
+static bool tree_eval_invalid(const tree_exp* e, const tree_target_info* i, tree_eval_result* r)
 {
         return false;
 }
 
 static bool(*const tree_eval_table[])(
         const tree_exp*,
-        const tree_platform_info*,
+        const tree_target_info*,
         tree_eval_result*) =
 {
         &tree_eval_invalid,         // TEK_UNKNOWN
@@ -261,7 +261,7 @@ static bool(*const tree_eval_table[])(
         &tree_eval_invalid,         // TEK_INIT
 };                         
                            
-extern bool tree_eval_exp(const tree_exp* e, const tree_platform_info* i, tree_eval_result* r)
+extern bool tree_eval_exp(const tree_exp* e, const tree_target_info* i, tree_eval_result* r)
 {
         return tree_eval_table[tree_get_exp_kind(e)](e, i, r);
 }

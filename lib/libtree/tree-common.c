@@ -17,8 +17,3 @@ extern bool tree_id_is_empty(tree_id id)
 {
         return id == tree_get_empty_id();
 }
-
-extern void tree_init_platform_info(tree_platform_info* self, tree_platform_kind k)
-{
-        self->_kind = k;
-}
