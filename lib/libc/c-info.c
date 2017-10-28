@@ -158,6 +158,9 @@ extern void cqet_qual_string(tree_type_quals q, char* buf)
                 strcat(buf, "volatile ");
         if (q & TTQ_RESTRICT)
                 strcat(buf, "restrict ");
+        
+        if (buf[0])
+                buf[strlen(buf) - 1] = '\0';
 }
 
 extern tree_binop_kind ctoken_to_binop(const ctoken* self)
