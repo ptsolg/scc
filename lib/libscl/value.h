@@ -54,6 +54,7 @@ extern op_result  float_add(float_value* self, const float_value* rhs);
 extern op_result  float_sub(float_value* self, const float_value* rhs);
 extern op_result  float_mul(float_value* self, const float_value* rhs);
 extern op_result  float_div(float_value* self, const float_value* rhs);
+extern op_result  float_neg(float_value* self);
 extern cmp_result float_cmp(const float_value* lhs, const float_value* rhs);
 
 extern bool       float_is_zero(const float_value* val);
@@ -93,6 +94,8 @@ extern op_result  int_shr(int_value* self, const int_value* rhs);
 extern op_result  int_and(int_value* self, const int_value* rhs);
 extern op_result  int_xor(int_value* self, const int_value* rhs);
 extern op_result  int_or(int_value* self, const int_value* rhs);
+extern op_result  int_not(int_value* self);
+extern op_result  int_neg(int_value* self);
 
 extern cmp_result int_cmp(const int_value* lhs, const int_value* rhs);
 
@@ -134,6 +137,8 @@ extern op_result  avalue_shr(avalue* self, const avalue* rhs);
 extern op_result  avalue_and(avalue* self, const avalue* rhs);
 extern op_result  avalue_xor(avalue* self, const avalue* rhs);
 extern op_result  avalue_or(avalue* self, const avalue* rhs);
+extern op_result  avalue_not(avalue* self);
+extern op_result  avalue_neg(avalue* self);
 
 extern cmp_result avalue_cmp(const avalue* lhs, const avalue* rhs);
 
@@ -147,6 +152,8 @@ extern suint32    avalue_get32(const avalue* val);
 extern suint64    avalue_get64(const avalue* val);
 extern float      avalue_get_sp(const avalue* val);
 extern double     avalue_get_dp(const avalue* val);
+extern int_value   avalue_get_int(const avalue* val);
+extern float_value avalue_get_float(const avalue* val);
 
 extern void       avalue_to_int(avalue* val, uint bits);
 extern void       avalue_to_sp(avalue* val);

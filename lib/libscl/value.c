@@ -62,6 +62,16 @@ extern op_result float_div(float_value* self, const float_value* rhs)
         return OR_OK;
 }
 
+extern op_result float_neg(float_value* self)
+{
+        if (float_is_sp(self))
+                self->_float = -float_get_sp(self);
+        else
+                self->_double = -float_get_dp(self);
+
+        return OR_OK;
+}
+
 extern cmp_result float_cmp(const float_value* lhs, const float_value* rhs)
 {
         if (float_is_sp(lhs))
@@ -278,6 +288,18 @@ extern op_result int_or(int_value* self, const int_value* rhs)
         return OR_OK;
 }
 
+extern op_result int_not(int_value* self)
+{
+        self->_val = mod2(~int_get64(self), int_get_bits(self));
+        return OR_OK;
+}
+
+extern op_result int_neg(int_value* self)
+{
+        self->_val = -self->_val;
+        return OR_OK;
+}
+
 extern cmp_result int_cmp(const int_value* lhs, const int_value* rhs)
 {
         if (int_get64(lhs) == int_get64(rhs))
@@ -476,6 +498,22 @@ extern op_result avalue_or(avalue* self, const avalue* rhs)
         return int_or(&self->_int, &r._int);
 }
 
+extern op_result avalue_not(avalue* self)
+{
+        if (avalue_is_float(self))
+                return OR_INVALID;
+        else
+                return int_not(&self->_int);
+}
+
+extern op_result avalue_neg(avalue* self)
+{
+        if (avalue_is_float(self))
+                return float_neg(&self->_float);
+        else
+                return int_neg(&self->_int);
+}
+
 extern cmp_result avalue_cmp(const avalue* lhs, const avalue* rhs)
 {
         avalue r = *rhs;
@@ -553,6 +591,17 @@ extern double avalue_get_dp(const avalue* val)
                 return float_get_dp(&val->_float);
         else
                 return int_get_dp(&val->_int);
+}
+extern int_value avalue_get_int(const avalue* val)
+{
+        S_ASSERT(avalue_is_int(val));
+        return val->_int;
+}
+
+extern float_value avalue_get_float(const avalue* val)
+{
+        S_ASSERT(avalue_is_float(val));
+        return val->_float;
 }
 
 extern void avalue_to_int(avalue* val, uint bits)
