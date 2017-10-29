@@ -2,5 +2,5 @@ void test()
 {
 	int a;
 	double b;
-	a + b;
+	a + b; // double
 }

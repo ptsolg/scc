@@ -88,78 +88,58 @@ extern tree_type* cprog_perform_unary_conversion(cprog* self, tree_exp** e)
         return cprog_perform_lvalue_conversion(self, e);
 }
 
-static tree_type* cprog_perform_float_conversion(cprog* self, tree_exp** flt, tree_exp** other)
-{
-        tree_type* f = tree_get_exp_type(*flt);
-        *other = cprog_build_impl_cast(self, *other, f);
-        return f;
-}
-
-static tree_type* cprog_perform_integer_conversion(cprog* self, tree_exp** lhs, tree_exp** rhs)
+extern tree_type* cprog_perform_usual_arithmetic_conversion(
+        cprog* self, tree_exp** lhs, tree_exp** rhs)
 {
         tree_type* lt = cprog_perform_integer_promotion(self, lhs);
         tree_type* rt = cprog_perform_integer_promotion(self, rhs);
 
+        S_ASSERT(tree_type_is_arithmetic(lt));
+        S_ASSERT(tree_type_is_arithmetic(rt));        
         if (tree_builtin_types_are_same(lt, rt))
                 return lt;
 
-        bool lsigned = tree_type_is_signed_integer(lt);
-        bool rsigned = tree_type_is_signed_integer(rt);
-        int  lrank = cget_type_rank(lt);
-        int  rrank = cget_type_rank(rt);
-        tree_type* common = NULL;
-        if (lsigned == rsigned)
+        tree_builtin_type_kind lk = tree_get_builtin_type_kind(lt);
+        tree_builtin_type_kind rk = tree_get_builtin_type_kind(rt);
+
+        if (cget_type_rank(lt) > cget_type_rank(rt))
         {
-                if (lrank > rrank)
-                {
-                        *rhs = cprog_build_impl_cast(self, *rhs, lt);
-                        common = lt;
-                }
-                else
-                {
-                        *lhs = cprog_build_impl_cast(self, *lhs, rt);
-                        common = rt;
-                }
+                tree_builtin_type_kind tk = rk;
+                rk = lk;
+                lk = tk;
+                tree_type* tt = rt;
+                rt = lt;
+                lt = tt;
+                tree_exp** te = rhs;
+                rhs = lhs;
+                lhs = te;
         }
-        else if ((!lsigned && lrank >= rrank) || (lsigned && lrank > rrank))
-        {
-                *rhs = cprog_build_impl_cast(self, *rhs, lt);
-                common = lt;
-        }
-        else if ((!rsigned && rrank >= lrank) || (rsigned && rrank > lrank))
+
+        if (tree_type_is_floating(rt))
         {
                 *lhs = cprog_build_impl_cast(self, *lhs, rt);
-                common = rt;
+                return rt;
         }
-        else if (lsigned)
+
+        uint lsize = tree_get_builtin_type_size(self->target, lk);
+        uint rsize = tree_get_builtin_type_size(self->target, rk);
+        if (rsize > lsize)
         {
-                common = cprog_build_builtin_type(self, TTQ_UNQUALIFIED, tree_get_integer_counterpart(lt));
-                *rhs = cprog_build_impl_cast(self, *rhs, common);
+                *lhs = cprog_build_impl_cast(self, *lhs, rt);
+                return rt;
         }
-        else if (rsigned)
-        {
-                common = cprog_build_builtin_type(self, TTQ_UNQUALIFIED, tree_get_integer_counterpart(rt));
-                *lhs = cprog_build_impl_cast(self, *lhs, common);
-        }
-        else
-                S_UNREACHABLE();
 
-        return common;
+        S_ASSERT(lsize == rsize);
+        if (tree_type_is_unsigned_integer(lt) == tree_type_is_unsigned_integer(rt))
+                return rt;
 
-}
+        tree_type* counterpart = rt;
+        if (tree_type_is_signed_integer(rt))
+                counterpart = cprog_build_builtin_type(self,
+                        TTQ_UNQUALIFIED, tree_get_integer_counterpart(rt));
 
-extern tree_type* cprog_perform_usual_arithmetic_conversion(
-        cprog* self, tree_exp** lhs, tree_exp** rhs)
-{
-        tree_type* lt = tree_get_exp_type(*lhs);
-        tree_type* rt = tree_get_exp_type(*rhs);
-        if (tree_type_is_floating(lt))
-                return cprog_perform_float_conversion(self, lhs, rhs);
-        else if (tree_type_is_floating(rt))
-                return cprog_perform_float_conversion(self, rhs, lhs);
-        else
-                return cprog_perform_integer_conversion(self, lhs, rhs);
+        *lhs = cprog_build_impl_cast(self, *lhs, counterpart);
+        *rhs = cprog_build_impl_cast(self, *rhs, counterpart);
 
-        S_UNREACHABLE();
-        return NULL;
+        return counterpart;
 }

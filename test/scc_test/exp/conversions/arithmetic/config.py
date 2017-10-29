@@ -1,1 +1,1 @@
-cmds = ['%test', '-syntax-only', '-o', '%output']
+cmds = ['%test', '-syntax-only', '-print-exp-type', '-o', '%output']
