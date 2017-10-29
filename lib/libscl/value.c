@@ -285,6 +285,17 @@ extern op_result int_div(int_value* self, const int_value* rhs)
 
 extern op_result int_mod(int_value* self, const int_value* rhs)
 {
+        if (int_is_signed(self))
+        {
+                sint64 x = int_get_i64(self);
+                sint64 y = int_get_i64(rhs);
+                if (y == 0)
+                        return OR_DIV_BY_ZERO;
+
+                self->_val = mod2((suint64)(x % y), int_get_bits(self));
+                return OR_OK;
+        }
+
         suint64 x = int_get_u64(self);
         suint64 y = int_get_u64(rhs);
         if (y == 0)
