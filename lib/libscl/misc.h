@@ -48,10 +48,17 @@ static inline ssize pointer_adjustment(void* p, ssize alignment)
         return (char*)align_pointer(p, alignment) - (char*)p;
 }
 
-// retursn number of digits in n
+// returns number of digits in n
 static inline int ndigits(int n)
 {
         return n ? (int)log10(n) + 1 : 1;
+}
+
+static inline suint64 mod2(suint64 x, uint pow)
+{
+        S_ASSERT(pow <= 64);
+        suint64 y = ((suint64)1) << pow;
+        return (x & (y - 1));
 }
 
 #ifdef __cplusplus
