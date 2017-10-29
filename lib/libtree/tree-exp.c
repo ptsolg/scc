@@ -187,7 +187,7 @@ extern tree_exp* tree_new_floating_literal(
         tree_context* context, tree_type* type, tree_location loc, float value)
 {
         tree_exp* e = tree_new_exp(context, TEK_FLOATING_LITERAL, TVK_RVALUE, type, loc,
-                sizeof(struct _tree_character_literal_exp));
+                sizeof(struct _tree_floating_literal_exp));
         if (!e)
                 return NULL;
 
@@ -199,7 +199,7 @@ extern tree_exp* tree_new_floating_lliteral(
         tree_context* context, tree_type* type, tree_location loc, ldouble value)
 {
         tree_exp* e = tree_new_exp(context, TEK_FLOATING_LITERAL, TVK_RVALUE, type, loc,
-                sizeof(struct _tree_character_literal_exp));
+                sizeof(struct _tree_floating_literal_exp));
         if (!e)
                 return NULL;
 
