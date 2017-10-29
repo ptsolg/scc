@@ -37,7 +37,7 @@ static bool tree_eval_div(avalue* lhs, const avalue* rhs)
 
 static bool tree_eval_mod(avalue* lhs, const avalue* rhs)
 {
-        return avalue_div(lhs, rhs) != OR_DIV_BY_ZERO;
+        return avalue_mod(lhs, rhs) == OR_OK;
 }
 
 static bool tree_eval_add(avalue* lhs, const avalue* rhs)
