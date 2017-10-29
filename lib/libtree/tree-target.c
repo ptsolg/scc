@@ -25,6 +25,7 @@ extern void tree_init_target_info(tree_target_info* self, tree_target_kind k)
         self->_builtin_size[TBTK_INT64]   = 8;
         self->_builtin_size[TBTK_UINT64]  = 8;
         self->_builtin_size[TBTK_FLOAT]   = 4;
+        self->_builtin_size[TBTK_DOUBLE]  = 8;
 
         if (k == TTARGET_X32)
         {
