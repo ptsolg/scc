@@ -97,7 +97,7 @@ static void scc_print_help(scc_env* self)
                 "   -x32                  Set X86 target architecture\n"
                 "   -x64                  Set X86-64 target architecture\n"
                 ;
-        fprintf(self->err, d);
+        fprintf(self->err, "%s", d);
 }
 
 static FILE* scc_open_output(scc_env* self)

@@ -609,8 +609,8 @@ static tree_type* cprog_check_compare_op(
                 tree_type* ltarget = tree_desugar_type(tree_get_pointer_target(lt));
                 tree_type* rtarget = tree_desugar_type(tree_get_pointer_target(rt));
 
-                if (tree_type_is_incomplete(ltarget) && !tree_type_is_void(rtarget)
-                 || tree_type_is_incomplete(rtarget) && !tree_type_is_void(ltarget))
+                if ((tree_type_is_incomplete(ltarget) && !tree_type_is_void(rtarget))
+                 || (tree_type_is_incomplete(rtarget) && !tree_type_is_void(ltarget)))
                 {
                         cerror(self->error_manager, CES_ERROR, loc,
                                 "comparison of distinct pointer types");
@@ -872,8 +872,8 @@ static bool cprog_check_assignment_pointer_types(
         if (tree_types_are_compatible(ltarget, rtarget))
                 return cprog_check_pointer_qualifier_discartion(self, ltarget, rtarget, loc);
 
-        if (tree_type_is_incomplete(ltarget) && !tree_type_is_void(rtarget)
-         || tree_type_is_incomplete(rtarget) && !tree_type_is_void(ltarget))
+        if ((tree_type_is_incomplete(ltarget) && !tree_type_is_void(rtarget))
+         || (tree_type_is_incomplete(rtarget) && !tree_type_is_void(ltarget)))
         {
                 cerror(self->error_manager, CES_ERROR, loc,
                         "assignment from incompatible pointer type");

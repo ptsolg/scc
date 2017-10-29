@@ -16,8 +16,8 @@ extern void float_init_dp(float_value* self, double v)
 
 extern void float_set_sign(float_value* self, bool positive)
 {
-        if (positive && !float_is_positive(self)
-        || !positive && float_is_positive(self))
+        if ((positive && !float_is_positive(self))
+        || (!positive && float_is_positive(self)))
                 float_neg(self);
 }
 

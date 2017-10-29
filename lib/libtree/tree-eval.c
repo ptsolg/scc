@@ -133,7 +133,7 @@ static bool tree_eval_log_or(avalue* lhs, const avalue* rhs)
         return true;
 }
 
-static bool(*const tree_binop_eval_table[TBK_SIZE])(avalue*, avalue*) =
+static bool(*const tree_binop_eval_table[TBK_SIZE])(avalue*, const avalue*) =
 {
         NULL,               // TBK_UNKNOWN
         &tree_eval_mul,     // TBK_MUL
