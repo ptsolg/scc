@@ -36,6 +36,7 @@ typedef struct _scc_env
                 bool print_exp_value;
                 bool print_exp_type;
                 bool print_impl_casts;
+                bool print_eval_result;
                 bool force_brackets;
                 int  float_precision;
                 int  double_precision;

@@ -8,17 +8,15 @@ extern scc_arg_handler* scc_new_arg_handler(
         allocator*  alloc,
         void(*const fn)(scc_arg_handler*, aparser*),
         scc_env*    scc,
-        const char* arg,
-        const char* description)
+        const char* arg)
 {
         scc_arg_handler* h = allocate(alloc, sizeof(*h));
         if (!h)
                 return NULL;
 
         aparser_cb_init(&h->base, fn);
-        h->description = description;
-        h->scc         = scc;
-        h->arg         = arg;
+        h->scc = scc;
+        h->arg = arg;
         return h;
 }
 
@@ -78,6 +76,11 @@ extern void scc_i(scc_arg_handler* self, aparser* p)
         scc_add_lookup_directory(self->scc, dir);
 }
 
+extern void scc_print_eval_result(scc_arg_handler* self, aparser* p)
+{
+        self->scc->opts.print_eval_result = true;
+}
+
 extern void scc_print_exp_value(scc_arg_handler* self, aparser* p)
 {
         self->scc->opts.print_exp_value = true;
@@ -112,6 +115,7 @@ extern void scc_x32(scc_arg_handler* self, aparser* p)
 
 extern void scc_x64(scc_arg_handler* self, aparser* p)
 {
+        self->scc->opts.x32 = false;
 }
 
 extern void scc_default(scc_arg_handler* self, aparser* p)

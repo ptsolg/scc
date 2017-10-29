@@ -18,21 +18,20 @@ typedef struct
         aparser_cb  base;
         scc_env*    scc;
         const char* arg;
-        const char* description;
 } scc_arg_handler;
 
 extern scc_arg_handler* scc_new_arg_handler(
         allocator*  alloc,
         void(*const fn)(scc_arg_handler*, aparser*),
         scc_env*    scc,
-        const char* arg,
-        const char* description);
+        const char* arg);
 
 extern void scc_syntax_only(scc_arg_handler* self, aparser* p);
 extern void scc_lex_only(scc_arg_handler* self, aparser* p);
 extern void scc_log(scc_arg_handler* self, aparser* p);
 extern void scc_o(scc_arg_handler* self, aparser* p);
 extern void scc_i(scc_arg_handler* self, aparser* p);
+extern void scc_print_eval_result(scc_arg_handler* self, aparser* p);
 extern void scc_print_exp_value(scc_arg_handler* self, aparser* p);
 extern void scc_print_exp_type(scc_arg_handler* self, aparser* p);
 extern void scc_print_impl_casts(scc_arg_handler* self, aparser* p);

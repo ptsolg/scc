@@ -4,27 +4,31 @@
 #include "c-reswords.h"
 #include "c-tree.h"
 #include "c-source.h"
+#include <libtree/tree-eval.h>
 #include <libscl/char-info.h>
 #include <stdarg.h>
 
 extern void cprinter_opts_init(cprinter_opts* self)
 {
-        self->print_exp_type   = false;
-        self->print_exp_value  = false;
-        self->print_impl_casts = false;
-        self->double_precision = 4;
-        self->float_precision  = 4;
-        self->force_brackets   = false;
+        self->print_exp_type    = false;
+        self->print_exp_value   = false;
+        self->print_impl_casts  = false;
+        self->print_eval_result = false;
+        self->double_precision  = 4;
+        self->float_precision   = 4;
+        self->force_brackets    = false;
 }
 
 extern void cprinter_init(
-        cprinter*              self,
-        write_cb*              write,
-        const tree_context*    context,
-        const csource_manager* source_manager)
+        cprinter*               self,
+        write_cb*               write,
+        const tree_context*     context,
+        const csource_manager*  source_manager,
+        const tree_target_info* target)
 {
         self->context        = context;
         self->source_manager = source_manager;
+        self->target         = target;
         self->indent_level   = 0;
         writebuf_init(&self->buf, write);
         cprinter_opts_init(&self->opts);
@@ -50,6 +54,39 @@ static inline void cprintf(cprinter* self, const char* f, ...)
         vsnprintf(buf, 1024, f, args);
 
         cprints(self, buf);
+}
+
+static inline void cprint_float(cprinter* self, float v)
+{
+        cprintf(self, "%.*ff", self->opts.float_precision, v);
+}
+
+static inline void cprint_double(cprinter* self, double v)
+{
+        cprintf(self, "%.*f", self->opts.double_precision, v);
+}
+
+static inline void cprint_d(cprinter* self, int v)
+{
+        cprintf(self, "%d", v);
+}
+
+static inline void cprint_lld(cprinter* self, sint64 v)
+{
+        cprintf(self, "%lld", v);
+        cprints(self, "LL");
+}
+
+static inline void cprint_u(cprinter* self, uint v)
+{
+        cprintf(self, "%u", v);
+        cprints(self, "U");
+}
+
+static inline void cprint_llu(cprinter* self, suint64 v)
+{
+        cprintf(self, "%llu", v);
+        cprints(self, "ULL");
 }
 
 static inline void cprintc(cprinter* self, int c)
@@ -334,22 +371,31 @@ static void cprint_decl_exp(cprinter* self, const tree_exp* exp)
 static void cprint_floating_literal(cprinter* self, const tree_exp* exp)
 {
         if (tree_builtin_type_is(tree_get_exp_type(exp), TBTK_FLOAT))
-                cprintf(self, "%.*ff", self->opts.float_precision,
-                        tree_get_floating_literal(exp));
+                cprint_float(self, tree_get_floating_literal(exp));
         else
-                cprintf(self, "%.*f", self->opts.double_precision,
-                        tree_get_floating_lliteral(exp));
+                cprint_double(self, tree_get_floating_lliteral(exp));
+}
+
+static void cprint_integer(cprinter* self, const tree_type* t, suint64 v)
+{
+        S_ASSERT(tree_type_is_integer(t));
+        bool sign = !tree_type_is_unsigned_integer(t);
+        bool ext = tree_builtin_type_is(t, TBTK_UINT64)
+                || tree_builtin_type_is(t, TBTK_INT64);
+
+        if (sign && ext)
+                cprint_lld(self, (sint64)v);
+        else if (!sign && ext)
+                cprint_llu(self, v);
+        else if (!sign)
+                cprint_u(self, (uint)v);
+        else
+                cprint_d(self, (int)v);
 }
 
 static void cprint_integer_literal(cprinter* self, const tree_exp* exp)
 {
-        cprintf(self, "%llu", tree_get_integer_literal(exp));
-
-        const tree_type* t = tree_get_exp_type(exp);
-        if (tree_builtin_type_is(t, TBTK_UINT64) || tree_builtin_type_is(t, TBTK_INT64))
-                cprints(self, "LL");
-        if (tree_type_is_unsigned_integer(t))
-                cprints(self, "U");
+        cprint_integer(self, tree_get_exp_type(exp), tree_get_integer_literal(exp));
 }
 
 static void cprint_char_literal(cprinter* self, const tree_exp* exp)
@@ -954,19 +1000,38 @@ static void cprint_exp_stmt(cprinter* self, const tree_stmt* s)
         const tree_exp* exp = tree_get_exp_stmt_root(s);
         cprint_exp(self, exp);
         cprintrw(self, CTK_SEMICOLON);
+        if (!exp)
+                return;
 
-        bool print_type = self->opts.print_exp_type;
-        bool print_val = self->opts.print_exp_value;
-        if ((print_type || print_val) && exp)
-        {
+        bool print_type        = self->opts.print_exp_type;
+        bool print_val         = self->opts.print_exp_value;
+        bool print_eval_result = self->opts.print_eval_result;
+        if (print_eval_result || print_val || print_type)
                 cprints(self, " // ");
-                if (print_val)
-                        cprints(self, (tree_exp_is_lvalue(exp) ? "lvalue " : "rvalue "));
-                if (print_type)
-                        cprint_type_name(self, tree_get_exp_type(exp),
-                                CPRINT_TYPE_REF | CPRINT_IMPL_TYPE_BRACKETS);
-        }
 
+        if (print_val)
+                cprints(self, (tree_exp_is_lvalue(exp) ? "lvalue " : "rvalue "));
+        if (print_type)
+                cprint_type_name(self, tree_get_exp_type(exp),
+                        CPRINT_TYPE_REF | CPRINT_IMPL_TYPE_BRACKETS);
+        if (print_eval_result)
+        {
+                avalue v;
+                tree_eval_info i;
+                tree_init_eval_info(&i, self->target);
+                if (!tree_eval_as_arithmetic(&i, exp, &v))
+                        cprints(self, "not-a-constant ");
+                else
+                {
+                        tree_type* t = tree_get_exp_type(exp);
+                        if (tree_type_is_integer(t))
+                                cprint_integer(self, t, avalue_get_u64(&v));
+                        else if (tree_builtin_type_is(t, TBTK_FLOAT))
+                                cprint_float(self, avalue_get_sp(&v));
+                        else if (tree_builtin_type_is(t, TBTK_DOUBLE))
+                                cprint_double(self, avalue_get_dp(&v));
+                }
+        }
 }
 
 static void cprint_if_stmt(cprinter* self, const tree_stmt* s)

@@ -13,22 +13,24 @@ extern "C" {
 #include <libscl/read-write.h>
 #include <libscl/objgroup.h>
 
-typedef struct _ctoken          ctoken;
-typedef struct _csource_manager csource_manager;
-typedef struct _tree_exp        tree_exp;
-typedef struct _tree_type       tree_type;
-typedef struct _tree_decl       tree_decl;
-typedef struct _tree_stmt       tree_stmt;
-typedef struct _tree_decl_scope tree_decl_scope;
-typedef struct _tree_scope      tree_scope;
-typedef struct _tree_module     tree_module;
-typedef struct _tree_context    tree_context;
+typedef struct _ctoken           ctoken;
+typedef struct _csource_manager  csource_manager;
+typedef struct _tree_exp         tree_exp;
+typedef struct _tree_type        tree_type;
+typedef struct _tree_decl        tree_decl;
+typedef struct _tree_stmt        tree_stmt;
+typedef struct _tree_decl_scope  tree_decl_scope;
+typedef struct _tree_scope       tree_scope;
+typedef struct _tree_module      tree_module;
+typedef struct _tree_context     tree_context;
+typedef struct _tree_target_info tree_target_info;
 
 typedef struct
 {
         bool print_exp_type;
         bool print_exp_value;
         bool print_impl_casts;
+        bool print_eval_result;
         bool force_brackets;
         int  float_precision;
         int  double_precision;
@@ -38,18 +40,21 @@ extern void cprinter_opts_init(cprinter_opts* self);
 
 typedef struct _cprinter
 {
-        writebuf               buf;
-        const tree_context*    context;
-        const csource_manager* source_manager;
-        cprinter_opts          opts;
-        int                    indent_level;
+        writebuf                buf;
+        const tree_context*     context;
+        // used when we need to print constant expression result
+        const tree_target_info* target;
+        const csource_manager*  source_manager;
+        cprinter_opts           opts;
+        int                     indent_level;
 } cprinter;
 
 extern void cprinter_init(
-        cprinter*              self,
-        write_cb*              write,
-        const tree_context*    context,
-        const csource_manager* source_manager);
+        cprinter*               self,
+        write_cb*               write,
+        const tree_context*     context,
+        const csource_manager*  source_manager,
+        const tree_target_info* target);
 
 extern void cprinter_dispose(cprinter* self);
 
