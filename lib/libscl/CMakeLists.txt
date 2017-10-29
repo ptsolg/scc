@@ -30,6 +30,8 @@ create_module(libscl
 	objgroup.h
 	objgroup.c
 	bit-utils.h
+	value.h
+	value.c
 )
 
 export_module(libscl)
