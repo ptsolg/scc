@@ -15,15 +15,16 @@ extern "C" {
 // The structure, used for semantic analysis and building AST
 typedef struct _cprog
 {
-        tree_context*    context;
-        ctree_context*   ccontext;
-        cerror_manager*  error_manager;
-        tree_decl*       function;
-        tree_decl_scope* globals;
-        tree_decl_scope* labels;
-        tree_decl_scope* locals;
-        tree_scope*      scope;
-        tree_module*     module;
+        tree_context*     context;
+        ctree_context*    ccontext;
+        cerror_manager*   error_manager;
+        tree_decl*        function;
+        tree_decl_scope*  globals;
+        tree_decl_scope*  labels;
+        tree_decl_scope*  locals;
+        tree_scope*       scope;
+        tree_module*      module;
+        tree_target_info* target;
 } cprog;
 
 extern void cprog_init(

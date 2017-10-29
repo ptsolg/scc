@@ -12,6 +12,7 @@ extern void cprog_init(
         self->module           = module;
         self->labels           = NULL;
         self->globals          = tree_get_module_globals(module);
+        self->target           = tree_get_module_target(module);
         self->locals           = self->globals;
         self->scope            = NULL;
         self->function         = NULL;
