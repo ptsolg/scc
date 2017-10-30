@@ -17,7 +17,7 @@ extern void float_init_dp(float_value* self, double v)
 extern void float_set_sign(float_value* self, bool positive)
 {
         if ((positive && !float_is_positive(self))
-        || (!positive && float_is_positive(self)))
+        || !positive && float_is_positive(self))
                 float_neg(self);
 }
 
@@ -353,9 +353,20 @@ extern op_result int_neg(int_value* self)
 
 extern cmp_result int_cmp(const int_value* lhs, const int_value* rhs)
 {
-        if (int_get_u64(lhs) == int_get_u64(rhs))
+        if (int_is_signed(lhs))
+        {
+                sint64 l = int_get_i64(lhs);
+                sint64 r = int_get_i64(rhs);
+                if (l == r)
+                        return CR_EQ;
+                return l > r ? CR_GR : CR_LE;
+        }
+
+        suint64 l = int_get_u64(lhs);
+        suint64 r = int_get_u64(rhs);
+        if (l == r)
                 return CR_EQ;
-        return int_get_u64(lhs) > int_get_u64(rhs) ? CR_GR : CR_LE;
+        return l > r ? CR_GR : CR_LE;
 }
 
 extern bool int_is_zero(const int_value* val)
