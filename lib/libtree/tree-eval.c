@@ -59,7 +59,7 @@ static bool tree_eval_shl(avalue* lhs, const avalue* rhs)
 
 static bool tree_eval_shr(avalue* lhs, const avalue* rhs)
 {
-        return avalue_shl(lhs, rhs) != OR_INVALID;
+        return avalue_shr(lhs, rhs) != OR_INVALID;
 }
 
 static bool tree_eval_le(avalue* lhs, const avalue* rhs)
