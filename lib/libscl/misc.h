@@ -57,7 +57,10 @@ static inline int ndigits(int n)
 static inline suint64 mod2(suint64 x, uint pow)
 {
         S_ASSERT(pow <= 64);
-        suint64 y = ((suint64)1) << pow;
+        if (pow == 64)
+                return x;
+
+        suint64 y = (((suint64)1) << pow);
         return (x & (y - 1));
 }
 
