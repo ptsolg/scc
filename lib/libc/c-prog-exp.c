@@ -599,7 +599,7 @@ static tree_type* cprog_check_compare_op(
         tree_location rl = tree_get_exp_loc(*rhs);
 
         if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
-                return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
+                cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
         else if (tree_type_is_pointer(lt) && tree_exp_is_null_pointer_constant(*rhs))
                 ;
         else if (tree_type_is_pointer(rt) && tree_exp_is_null_pointer_constant(*lhs))
