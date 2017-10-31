@@ -556,12 +556,20 @@ static void cprint_type_quals(cprinter* self, tree_type_quals q)
                 return;
 
         if (q & TTQ_CONST)
+        {
                 cprintrw(self, CTK_CONST);
+                cprint_space(self);
+        }
         if (q & TTQ_RESTRICT)
+        {
                 cprintrw(self, CTK_RESTRICT);
+                cprint_space(self);
+        }
         if (q & TTQ_VOLATILE)
+        {
                 cprintrw(self, CTK_VOLATILE);
-        cprint_space(self);
+                cprint_space(self);
+        }
 }
 
 typedef struct
