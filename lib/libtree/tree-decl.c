@@ -36,8 +36,8 @@ extern tree_decl* tree_symtab_get(const tree_symtab* self, tree_id name, bool pa
 
 extern bool tree_symtabs_are_same(const tree_symtab* a, const tree_symtab* b)
 {
-        htab* ah = &a->_symbols;
-        htab* bh = &b->_symbols;
+        const htab* ah = &a->_symbols;
+        const htab* bh = &b->_symbols;
         if (htab_size(ah) != htab_size(bh))
                 return false;
 
