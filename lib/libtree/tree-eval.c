@@ -254,7 +254,13 @@ static bool tree_eval_unop(tree_eval_info* info, const tree_exp* exp, avalue* re
 
 static bool tree_eval_conditional(tree_eval_info* info, const tree_exp* exp, avalue* result)
 {
-        return false;
+        avalue cond;
+        if (!tree_eval_as_arithmetic(info, tree_get_conditional_condition(exp), &cond))
+                return false;
+
+        return avalue_is_zero(&cond)
+                ? tree_eval_as_arithmetic(info, tree_get_conditional_rhs(exp), result)
+                : tree_eval_as_arithmetic(info, tree_get_conditional_lhs(exp), result);
 }
 
 static bool tree_eval_int_literal(tree_eval_info* info, const tree_exp* exp, avalue* result)
