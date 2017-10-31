@@ -866,21 +866,19 @@ static bool cprog_check_assignment_pointer_types(
         cprog* self, tree_type* lt, tree_type* rt, tree_location loc)
 {
         S_ASSERT(tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt));
-        tree_type* ltarget = tree_get_pointer_target(lt);
-        tree_type* rtarget = tree_get_pointer_target(rt);
+        tree_type* ltarget = tree_get_unqualified_type(tree_get_pointer_target(lt));
+        tree_type* rtarget = tree_get_unqualified_type(tree_get_pointer_target(rt));
 
-        if (tree_types_are_same(ltarget, rtarget))
-                return cprog_check_pointer_qualifier_discartion(self, ltarget, rtarget, loc);
-
-        if ((tree_type_is_incomplete(ltarget) && !tree_type_is_void(rtarget))
-         || (tree_type_is_incomplete(rtarget) && !tree_type_is_void(ltarget)))
+        if (tree_types_are_same(ltarget, rtarget)
+            || (tree_type_is_incomplete(ltarget) && tree_type_is_void(rtarget))
+            || (tree_type_is_incomplete(rtarget) && tree_type_is_void(ltarget)))
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "assignment from incompatible pointer type");
-                return false;
+                return cprog_check_pointer_qualifier_discartion(self, lt, rt, loc);
         }
 
-        return cprog_check_pointer_qualifier_discartion(self, lt, rt, loc);
+        cerror(self->error_manager, CES_ERROR, loc,
+               "assignment from incompatible pointer type");
+        return false;
 }
 
 // 6.5.16.1 Simple assignment
