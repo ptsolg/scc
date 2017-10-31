@@ -138,7 +138,7 @@ extern bool cprog_require_modifiable_lvalue(const cprog* self, const tree_exp* e
 extern bool cprog_require_compatible_exp_types(
         const cprog* self, const tree_type* a, const tree_type* b, tree_location l)
 {
-        if (!tree_types_are_compatible(a, b))
+        if (!tree_types_are_same(a, b))
         {
                 // todo: warning?
                 cerror(self->error_manager, CES_ERROR, l, "types are not compatible");
@@ -741,7 +741,7 @@ static tree_type* cprog_check_sub_op(
                 return cprog_perform_usual_arithmetic_conversion(self, lhs, rhs);
         else if (tree_type_is_object_pointer(lt))
         {
-                if (tree_type_is_object_pointer(rt) && tree_types_are_compatible(lt, rt))
+                if (tree_type_is_object_pointer(rt) && tree_types_are_same(lt, rt))
                         return lt;
 
                 if (!cprog_require_integral_exp_type(self, rt, rl))
@@ -869,7 +869,7 @@ static bool cprog_check_assignment_pointer_types(
         tree_type* ltarget = tree_get_pointer_target(lt);
         tree_type* rtarget = tree_get_pointer_target(rt);
 
-        if (tree_types_are_compatible(ltarget, rtarget))
+        if (tree_types_are_same(ltarget, rtarget))
                 return cprog_check_pointer_qualifier_discartion(self, ltarget, rtarget, loc);
 
         if ((tree_type_is_incomplete(ltarget) && !tree_type_is_void(rtarget))

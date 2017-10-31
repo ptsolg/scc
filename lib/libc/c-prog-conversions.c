@@ -96,7 +96,7 @@ extern tree_type* cprog_perform_usual_arithmetic_conversion(
 
         S_ASSERT(tree_type_is_arithmetic(lt));
         S_ASSERT(tree_type_is_arithmetic(rt));        
-        if (tree_builtin_types_are_same(lt, rt))
+        if (tree_types_are_same(lt, rt))
                 return lt;
 
         tree_builtin_type_kind lk = tree_get_builtin_type_kind(lt);

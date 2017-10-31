@@ -108,6 +108,7 @@ static inline const struct _tree_function_type* _tree_get_function_ctype(const t
 
 static inline ssize       tree_get_function_type_nparams(const tree_type* self);
 static inline tree_type*  tree_get_function_restype(const tree_type* self);
+static inline tree_type*  tree_get_function_type_param(const tree_type* self, ssize n);
 static inline tree_type** tree_get_function_type_begin(const tree_type* self);
 static inline tree_type** tree_get_function_type_end(const tree_type* self);
 
@@ -262,8 +263,7 @@ extern bool tree_type_is_void_pointer(const tree_type* self);
 // returns false if type size cannot be computed
 extern bool tree_type_is_incomplete(const tree_type* self);
 
-extern bool tree_builtin_types_are_same(const tree_type* a, const tree_type* b);
-extern bool tree_types_are_compatible(const tree_type* a, const tree_type* b);
+extern bool tree_types_are_same(const tree_type* a, const tree_type* b);
 // if type is pointer returns pointer target
 // if type is array returns array element type
 // if type is function returns function result type
@@ -366,6 +366,11 @@ static inline ssize tree_get_function_type_nparams(const tree_type* self)
 static inline tree_type* tree_get_function_restype(const tree_type* self)
 {
         return tree_get_chain_type_next(self);
+}
+
+static inline tree_type* tree_get_function_type_param(const tree_type* self, ssize n)
+{
+        return objgroup_nth(&_tree_get_function_ctype(self)->_params, n);
 }
 
 static inline tree_type** tree_get_function_type_begin(const tree_type* self)

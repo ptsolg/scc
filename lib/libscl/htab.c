@@ -149,6 +149,18 @@ error:
         return S_ERROR;
 }
 
+extern bool htabs_are_same(const htab* a, const htab* b)
+{
+        if (htab_size(a) != htab_size(b))
+                return false;
+
+        ssize matches = 0;
+        HTAB_FOREACH(a, it)
+                if (htab_exists(b, hiter_get_key(it)))
+                        matches++;
+        return matches == htab_size(a);
+}
+
 extern serrcode htab_reserve(htab* self, hval key)
 {
         return htab_insert(self, key, (void*)-1);

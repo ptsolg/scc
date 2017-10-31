@@ -32,6 +32,7 @@ extern void     htab_dispose(htab* self);
 extern void     htab_clear(htab* self);
 extern serrcode htab_insert(htab* self, hval key, void* val);
 extern serrcode htab_merge(htab* self, htab* other);
+extern bool     htabs_are_same(const htab* a, const htab* b);
 
 // reserves slot for an element
 extern serrcode htab_reserve(htab* self, hval key);

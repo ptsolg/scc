@@ -30,6 +30,8 @@ extern void tree_symtab_dispose(tree_symtab* self);
 extern serrcode   tree_symtab_insert(tree_symtab* self, tree_decl* symbol);
 extern tree_decl* tree_symtab_get(const tree_symtab* self, tree_id name, bool parent_lookup);
 
+extern bool tree_symtabs_are_same(const tree_symtab* a, const tree_symtab* b);
+
 static inline ssize        tree_get_symtab_size(const tree_symtab* self);
 static inline tree_symtab* tree_get_symtab_parent(const tree_symtab* self);
 static inline hiter        tree_get_symtab_begin(const tree_symtab* self);
@@ -55,6 +57,8 @@ extern void tree_init_decl_scope(
 extern tree_decl_scope* tree_new_decl_scope(tree_context* context, tree_decl_scope* parent);
 
 extern void tree_dispose_decl_scope(tree_decl_scope* self);
+
+extern bool tree_decl_scopes_are_same(const tree_decl_scope* a, const tree_decl_scope* b);
 
 // if decl is group then its content will not be added to symtab
 extern serrcode tree_decl_scope_insert(tree_decl_scope* self, tree_decl* decl);
@@ -228,6 +232,8 @@ extern tree_decl* tree_new_record_decl(
         tree_id          name,
         bool             is_union);
 
+extern bool tree_records_are_same(const tree_decl* a, const tree_decl* b);
+
 extern tree_decl*       tree_get_record_begin(tree_decl* self);
 extern const tree_decl* tree_get_record_cbegin(const tree_decl* self);
 extern tree_decl*       tree_get_record_end(tree_decl* self);
@@ -254,6 +260,8 @@ struct _tree_enum_decl
 
 extern tree_decl* tree_new_enum_decl(
         tree_context* context, tree_decl_scope* scope, tree_xlocation loc, tree_id name);
+
+extern bool tree_enums_are_same(const tree_decl* a, const tree_decl* b);
 
 static inline struct _tree_enum_decl*       _tree_get_enum(tree_decl* self);
 static inline const struct _tree_enum_decl* _tree_get_cenum(const tree_decl* self);
@@ -414,6 +422,9 @@ typedef struct _tree_decl
                 struct _tree_label_decl      _label;
         };
 } tree_decl;
+
+extern bool tree_decls_have_same_name(const tree_decl* a, const tree_decl* b);
+extern bool tree_decls_are_same(const tree_decl* a, const tree_decl* b);
 
 // accessors
 

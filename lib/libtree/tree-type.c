@@ -317,70 +317,59 @@ extern bool tree_type_is_incomplete(const tree_type* self)
         return false;
 }
 
-extern bool tree_builtin_types_are_same(const tree_type* a, const tree_type* b)
+extern bool tree_types_are_same(const tree_type* a, const tree_type* b)
 {
-        a = tree_desugar_ctype(a);
-        b = tree_desugar_ctype(b);
-        return tree_get_builtin_type_kind(a) == tree_get_builtin_type_kind(b);
-}
-
-static bool tree_function_types_are_compatible(const tree_type* a, const tree_type* b)
-{
-        //todo: arguments
-        return tree_types_are_compatible(tree_get_function_restype(a), tree_get_function_restype(b));
-}
-
-static bool tree_decl_types_are_compatible(const tree_type* a, const tree_type* b)
-{
-        const tree_decl* ad = tree_get_decl_type_entity(a);
-        const tree_decl* bd = tree_get_decl_type_entity(b);
-        tree_id aname = tree_get_decl_name(ad);
-        tree_id bname = tree_get_decl_name(bd);
-        if (aname != bname)
-                return false;
-
-        tree_decl_kind adk = tree_get_decl_kind(ad);
-        tree_decl_kind bdk = tree_get_decl_kind(bd);
-        if (adk == TDK_RECORD && bdk == TDK_RECORD)
-                return true; // todo
-        else if (adk == TDK_ENUM && bdk == TDK_ENUM)
-                return true; // todo
-        else if (adk == TDK_TYPEDEF && bdk == TDK_TYPEDEF)
-                return tree_types_are_compatible(tree_get_decl_type(ad), tree_get_decl_type(bd));
-
-        return false;
-}
-
-extern bool tree_types_are_compatible(const tree_type* a, const tree_type* b)
-{
-        if (!a || !b)
-                return false;
-
-        if (tree_type_is_qualified(a))
-                a = tree_get_unqualified_ctype(a);
-        if (tree_type_is_qualified(b))
-                b = tree_get_unqualified_ctype(b);
-
-        if (a == b)
-                return true;
-
-        tree_type_kind ak = tree_get_type_kind(a);
-        tree_type_kind bk = tree_get_type_kind(b);
-
-        if (ak == TTK_BUILTIN && bk == TTK_BUILTIN)
-                return tree_get_builtin_type_kind(a) == tree_get_builtin_type_kind(b);
-        else if (ak == TTK_POINTER && bk == TTK_POINTER)
-                return tree_types_are_compatible(tree_get_pointer_target(a), tree_get_pointer_target(b));
-        else if (ak == TTK_ARRAY && bk == TTK_ARRAY)
+        while(1)
         {
-                // todo: const array
-                return tree_types_are_compatible(tree_get_array_eltype(a), tree_get_array_eltype(b));
+                if (a == b)
+                        return true;
+
+                if (tree_get_type_quals(a) != tree_get_type_quals(b))
+                        return false;
+
+                a = tree_desugar_ctype(a);
+                b = tree_desugar_ctype(b);
+                tree_type_kind ak = tree_get_type_kind(a);
+                tree_type_kind bk = tree_get_type_kind(b);
+                if (ak != bk)
+                        return false;
+
+                if (ak == TTK_BUILTIN)
+                        return tree_get_builtin_type_kind(a) == tree_get_builtin_type_kind(b);
+                else if (ak == TTK_POINTER)
+                {
+                        a = tree_get_pointer_target(a);
+                        b = tree_get_pointer_target(b);
+                }
+                else if (ak == TTK_ARRAY)
+                {
+                        // todo: compare size
+                        a = tree_get_array_eltype(a);
+                        b = tree_get_array_eltype(b);
+                }
+                else if (ak == TTK_FUNCTION)
+                {
+                        ssize n = tree_get_function_type_nparams(a);
+                        if (n != tree_get_function_type_nparams(b))
+                                return false;
+
+                        for (ssize i = 0; i < n; i++)
+                        {
+                                tree_type* ap = tree_get_function_type_param(a, i);
+                                tree_type* bp = tree_get_function_type_param(b, i);
+                                if (!tree_types_are_same(ap, bp))
+                                        return false;
+                        }
+
+                        a = tree_get_function_restype(a);
+                        b = tree_get_function_restype(b);
+                }
+                else if (ak == TTK_DECL)
+                        return tree_decls_are_same(
+                                tree_get_decl_type_entity(a), tree_get_decl_type_entity(b));
+                else
+                        S_UNREACHABLE();
         }
-        else if (ak == TTK_FUNCTION && bk == TTK_FUNCTION)
-                return tree_function_types_are_compatible(a, b);
-        else if (ak == TTK_DECL && bk == TTK_DECL)
-                return tree_decl_types_are_compatible(a, b);
-        return false;
 }
 
 extern tree_type* tree_get_type_next(const tree_type* self)

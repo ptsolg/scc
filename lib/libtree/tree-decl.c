@@ -1,4 +1,5 @@
 #include "tree-decl.h"
+#include "tree-type.h"
 #include "tree-context.h"
 
 extern void tree_symtab_init(tree_symtab* self, tree_context* context, tree_symtab* parent)
@@ -33,6 +34,29 @@ extern tree_decl* tree_symtab_get(const tree_symtab* self, tree_id name, bool pa
         return NULL;
 }
 
+extern bool tree_symtabs_are_same(const tree_symtab* a, const tree_symtab* b)
+{
+        htab* ah = &a->_symbols;
+        htab* bh = &b->_symbols;
+        if (htab_size(ah) != htab_size(bh))
+                return false;
+
+        ssize matches = 0;
+        HTAB_FOREACH(ah, it)
+        {
+                tree_id aname = hiter_get_key(it);
+                tree_decl* bdecl = htab_find(bh, aname);
+                if (!bdecl)
+                        return false;
+
+                tree_decl* adecl = hiter_get_val(it);
+                if (!tree_decls_are_same(adecl, bdecl))
+                        return false;
+                matches++;
+        }
+        return matches == htab_size(ah);
+}
+
 extern void tree_init_decl_scope(
         tree_decl_scope* self, tree_context* context, tree_decl_scope* parent)
 {
@@ -56,6 +80,12 @@ extern void tree_dispose_decl_scope(tree_decl_scope* self)
 {
         tree_symtab_dispose(&self->_symtab);
         //...
+}
+
+extern bool tree_decl_scopes_are_same(const tree_decl_scope* a, const tree_decl_scope* b)
+{
+        return tree_symtabs_are_same(
+                tree_get_decl_scope_csymtab(a), tree_get_decl_scope_csymtab(b));
 }
 
 extern serrcode tree_decl_scope_insert(tree_decl_scope* self, tree_decl* decl)
@@ -352,4 +382,49 @@ extern serrcode tree_decl_group_add(tree_decl* self, tree_decl* d)
         S_ASSERT(d);
         S_ASSERT(tree_get_decl_kind(d) != TDK_GROUP && "Decl group cannot contain other decl group");
         return objgroup_push_back(&_tree_get_decl_group(self)->_group, d);
+}
+
+extern bool tree_decls_have_same_name(const tree_decl* a, const tree_decl* b)
+{
+        return tree_get_decl_name(a) == tree_get_decl_name(b);
+}
+
+extern bool tree_decls_are_same(const tree_decl* a, const tree_decl* b)
+{
+        if (a == b)
+                return true;
+
+        if (!a || !b)
+                return false;
+
+        if (!tree_decls_have_same_name(a, b))
+                return false;
+
+        tree_decl_kind k = tree_get_decl_kind(a);
+        if (k != tree_get_decl_kind(b))
+                return false;
+
+        if (k == TDK_RECORD)
+                return tree_decl_scopes_are_same(
+                        tree_get_record_cscope(a), tree_get_record_cscope(b));
+        else if (k == TDK_ENUM) // todo: sort enumerators by value
+                return tree_decl_scopes_are_same(
+                        tree_get_enum_cscope(a), tree_get_enum_cscope(b));
+        else if (k == TDK_MEMBER)
+                ; // todo: bit size
+        else if (k == TDK_ENUMERATOR)
+        {
+                ; // todo: value
+                return true;
+        }
+        else if (k == TDK_GROUP)
+        {
+                ; // todo:
+                S_UNREACHABLE();
+                return true;
+        }
+        else if (k == TDK_LABEL)
+                return true;
+
+        return tree_types_are_same(tree_get_decl_type(a), tree_get_decl_type(b));
 }

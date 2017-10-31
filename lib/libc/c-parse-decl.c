@@ -51,7 +51,7 @@ static tree_decl* cparse_function_or_init_declarator(
         return decl;
 }
 
-static const ctoken_kind ctk_lbracket_or_id[] = 
+static const ctoken_kind ctk_lbracket_or_id[] =
 {
         CTK_ID,
         CTK_LBRACKET,
@@ -75,7 +75,7 @@ static tree_decl* cparse_function_or_init_declarator_list(cparser* self, cdecl_s
                 tree_decl* d = cparse_function_or_init_declarator(self, specs, &is_function_with_body);
                 if (!d)
                         return NULL;
-  
+
                 if (!(list = cprog_add_init_declarator(self->prog, list, d)))
                         return NULL;
 
@@ -240,7 +240,7 @@ extern tree_type* cparse_type_specifier(cparser* self)
                         res = cbuiltin_type_info_set_short(&info);
                 else if (k == CTK_LONG)
                         res = cbuiltin_type_info_set_long(&info);
-                else         
+                else
                         break;
 
                 if (!res)
@@ -356,7 +356,7 @@ static bool cparse_struct_declaration_list(cparser* self, tree_decl* record)
         return res;
 }
 
-static const ctoken_kind ctk_struct_or_union[] = 
+static const ctoken_kind ctk_struct_or_union[] =
 {
         CTK_STRUCT,
         CTK_UNION,
@@ -490,7 +490,7 @@ extern tree_decl* cparse_enum_specifier(cparser* self, bool* referenced)
                         *referenced = true;
                 return enum_;
         }
-        
+
         if (!cparser_require(self, CTK_LBRACE))
                 return NULL;
         if (!cparse_enumerator_list(self, enum_))
