@@ -1078,6 +1078,58 @@ extern tree_exp* cprog_build_binop(
         return tree_new_binop(self->context, TVK_RVALUE, t, loc, opcode, lhs, rhs);
 }
 
+static tree_type* cprog_check_conditional_operator_pointer_types(
+        cprog* self, tree_exp* lhs, tree_exp* rhs, tree_location loc)
+{
+        tree_type* lt = tree_get_exp_type(lhs);
+        tree_type* rt = tree_get_exp_type(rhs);
+        bool lpointer = tree_type_is_object_pointer(lt);
+        bool rpointer = tree_type_is_object_pointer(rt);
+
+        tree_type*      target = NULL;
+        tree_type_quals quals  = TTQ_UNQUALIFIED;
+        if (rpointer && tree_exp_is_null_pointer_constant(lhs))
+        {
+                target = tree_get_pointer_target(rt);
+                quals  = tree_get_type_quals(target);
+                if (lpointer)
+                        quals |= tree_get_type_quals(tree_get_pointer_target(lt));
+        }
+        else if (lpointer && tree_exp_is_null_pointer_constant(rhs))
+        {
+                target = tree_get_pointer_target(lt);
+                quals  = tree_get_type_quals(target);
+                if (rpointer)
+                        quals |= tree_get_type_quals(tree_get_pointer_target(rt));
+        }
+        else if (lpointer && rpointer)
+        {
+                tree_type* ltarget = tree_get_pointer_target(lt);
+                tree_type* rtarget = tree_get_pointer_target(rt);
+                if (tree_type_is_void(ltarget))
+                        target = ltarget;
+                else if (tree_type_is_void(rtarget))
+                        target = rtarget;
+                else if (tree_types_are_same(tree_get_unqualified_type(ltarget),
+                                             tree_get_unqualified_type(rtarget)))
+                {
+                        target = ltarget;
+                }
+                else
+                {
+                        cerror(self->error_manager, CES_ERROR, loc,
+                               "pointer type mismatch in conditional expression");
+                        return NULL;
+                }
+                quals = tree_get_type_quals(ltarget) | tree_get_type_quals(rtarget);
+        }
+        else
+                return NULL;
+
+        target = tree_new_qual_type(self->context, quals, target);
+        return cprog_build_pointer(self, TTQ_UNQUALIFIED, target);
+}
+
 // 6.5.15 Conditional operator
 // The first operand shall have scalar type.
 // One of the following shall hold for the second and third operands:
@@ -1102,7 +1154,29 @@ extern tree_exp* cprog_build_conditional(
         if (!cprog_require_scalar_exp_type(self, ct, tree_get_exp_loc(condition)))
                 return NULL;
 
-        tree_type* t = tree_get_exp_type(lhs);
+        tree_type* t  = NULL;
+        tree_type* lt = tree_get_exp_type(lhs);
+        tree_type* rt = tree_get_exp_type(rhs);
+        if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
+                t = cprog_perform_usual_arithmetic_conversion(self, &lhs, &rhs);
+        else if (tree_type_is_record(lt) && tree_type_is_record(rt))
+        {
+                if (!cprog_require_compatible_exp_types(self, lt, rt, loc))
+                        return NULL;
+                t = lt;
+        }
+        else if (tree_type_is_void(lt) && tree_type_is_void(rt))
+                t = lt;
+        else if ((t = cprog_check_conditional_operator_pointer_types(self, lhs, rhs, loc)))
+                ;
+        else
+        {
+                cerror(self->error_manager, CES_ERROR, loc,
+                       "type mismatch in conditional expression");
+                return NULL;
+        }
+
+        S_ASSERT(t);
         return tree_new_conditional_exp(self->context, TVK_RVALUE, t, loc, condition, lhs, rhs);
 }
 
