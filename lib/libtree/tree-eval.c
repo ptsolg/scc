@@ -176,7 +176,6 @@ static bool tree_eval_binop(tree_eval_info* info, const tree_exp* exp, avalue* r
         const tree_type* rt = tree_get_exp_type(rhs);
 
         S_ASSERT(tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt));
-        S_ASSERT(tree_builtin_types_are_same(lt, rt));
 
         if (!tree_eval_as_arithmetic(info, lhs, result))
                 return false;
