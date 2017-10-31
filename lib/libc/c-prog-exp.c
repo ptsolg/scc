@@ -550,6 +550,13 @@ static tree_type* cprog_check_log_op(
         return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
 }
 
+static void cprog_invalid_binop_operands(
+        const cprog* self, tree_binop_kind opcode, tree_location loc)
+{
+        cerror(self->error_manager, CES_ERROR, loc,
+                "invalid operands to binary '%s'", cget_binop_string(opcode));
+}
+
 // 6.5.8 Relational operators
 // One of the following shall hold:
 //    - both operands have real type;
@@ -576,8 +583,7 @@ static tree_type* cprog_check_relational_op(
         }
         else
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "invalid operands to binary '%s'", cget_binop_string(opcode));
+                cprog_invalid_binop_operands(self, opcode, loc);
                 return NULL;
         }
 
@@ -621,8 +627,7 @@ static tree_type* cprog_check_compare_op(
         }
         else
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "invalid operands to binary '%s'", cget_binop_string(opcode));
+                cprog_invalid_binop_operands(self, opcode, loc);
                 return NULL;
         }
         return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
@@ -653,7 +658,10 @@ static tree_type* cprog_check_add_sub_assign_op(
                         return NULL;
         }
         else
+        {
+                cprog_invalid_binop_operands(self, opcode, loc);
                 return NULL;
+        }
 
         return lt;
 }
@@ -719,7 +727,7 @@ static tree_type* cprog_check_add_op(
 
                 return rt;
         }
-        cerror(self->error_manager, CES_ERROR, loc, "invalid operands to binary '+'");
+        cprog_invalid_binop_operands(self, TBK_ADD, loc);
         return NULL;
 }
 
@@ -749,7 +757,7 @@ static tree_type* cprog_check_sub_op(
 
                 return lt;
         }
-        cerror(self->error_manager, CES_ERROR, loc, "invalid operands to binary '-'");
+        cprog_invalid_binop_operands(self, TBK_SUB, loc);
         return NULL;
 }
 
@@ -926,8 +934,7 @@ static tree_type* cprog_check_assign_op(
         }
         else
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "invalid operands to binary '='");
+                cprog_invalid_binop_operands(self, TBK_ASSIGN, loc);
                 return NULL;
         }
 
