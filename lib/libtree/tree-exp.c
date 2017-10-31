@@ -1,6 +1,6 @@
 #include "tree-exp.h"
 #include "tree-context.h"
-#include "tree-type.h"
+#include "tree-eval.h"
 
 extern tree_exp* tree_new_exp(
         tree_context*   context,
@@ -362,6 +362,14 @@ extern bool tree_exp_is_literal(const tree_exp* self)
         }
 }
 
+extern const tree_exp* tree_ignore_ccasts(const tree_exp* self)
+{
+        while (tree_exp_is(self, TEK_EXPLICIT_CAST)
+            || tree_exp_is(self, TEK_IMPLICIT_CAST))
+                self = tree_get_cast_exp(self);
+        return self;
+}
+
 extern tree_exp* tree_ignore_impl_casts(tree_exp* self)
 {
         while(tree_exp_is(self, TEK_IMPLICIT_CAST))
@@ -408,7 +416,31 @@ extern const tree_exp* tree_desugar_cexp(const tree_exp* self)
 
 extern bool tree_exp_is_null_pointer_constant(const tree_exp* self)
 {
-        return false; // todo
+        while (tree_type_is_void_pointer(tree_get_exp_type(self)))
+        {
+                if (tree_exp_is(self, TEK_IMPLICIT_CAST)
+                 || tree_exp_is(self, TEK_EXPLICIT_CAST))
+                {
+                        self = tree_get_cast_exp(self);
+                }
+                else
+                        return false;
+        }
+
+        if (!tree_type_is_integer(tree_get_exp_type(self)))
+                return false;
+
+        tree_target_info t;
+        tree_eval_info i;
+        int_value v;
+
+        tree_init_target_info(&t, TTARGET_X32);
+        tree_init_eval_info(&i, &t);
+
+        if (!tree_eval_as_integer(&i, self, &v))
+                return false;
+
+        return int_is_zero(&v);
 }
 
 extern bool tree_exp_designates_bitfield(const tree_exp* self)

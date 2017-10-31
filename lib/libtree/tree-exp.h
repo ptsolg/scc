@@ -587,6 +587,7 @@ typedef struct _tree_exp
 } tree_exp;
 
 extern bool            tree_exp_is_literal(const tree_exp* self);
+extern const tree_exp* tree_ignore_ccasts(const tree_exp* self);
 extern tree_exp*       tree_ignore_impl_casts(tree_exp* self);
 extern const tree_exp* tree_ignore_impl_ccasts(const tree_exp* self);
 extern tree_exp*       tree_ignore_paren_exps(tree_exp* self);
