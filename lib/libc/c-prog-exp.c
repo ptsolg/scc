@@ -1021,9 +1021,8 @@ static tree_type* cprog_check_or_assign_op(
 static tree_type* cprog_check_comma_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
-        cprog_perform_unary_conversion(self, lhs);
-        cprog_perform_unary_conversion(self, rhs);
-        return cprog_build_builtin_type(self, TTQ_UNQUALIFIED, TBTK_VOID);
+        cprog_perform_unary_conversion(self, lhs); 
+        return cprog_perform_unary_conversion(self, rhs);
 }
 
 S_STATIC_ASSERT(TBK_SIZE == 31, "Binop table needs an update");
