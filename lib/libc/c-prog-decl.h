@@ -43,7 +43,7 @@ extern tree_decl* cprog_build_enumerator(
 extern tree_decl* cprog_build_enum_decl(cprog* self, tree_location kw_loc, tree_id name);
 
 extern tree_decl* cprog_build_member_decl(
-        cprog* self, tree_type* typespec, cdeclarator* struct_declarator, tree_exp* bits);
+        cprog* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_exp* bits);
 
 extern tree_decl* cprog_build_record_decl(
         cprog* self, tree_location kw_loc, tree_id name, bool is_union);

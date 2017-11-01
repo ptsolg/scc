@@ -262,18 +262,18 @@ extern tree_decl* cprog_build_enum_decl(cprog* self, tree_location kw_loc, tree_
 }
 
 extern tree_decl* cprog_build_member_decl(
-        cprog* self, tree_type* typespec, cdeclarator* struct_declarator, tree_exp* bits)
+        cprog* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_exp* bits)
 {
-        tree_type* member_type = cprog_set_declarator_type(self, struct_declarator, typespec);
-        if (!member_type)
+        tree_type* t = cprog_set_declarator_type(self, struct_declarator, decl_specs->typespec);
+        if (!t)
                 return NULL;
 
         return tree_new_member_decl(
                 self->context,
                 self->locals,
-                struct_declarator->loc,
+                decl_specs->loc,
                 struct_declarator->id,
-                member_type,
+                t,
                 bits);
 }
 

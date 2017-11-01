@@ -297,17 +297,19 @@ static const ctoken_kind ctk_semicolon_or_comma[] =
 
 static bool cparse_struct_declaration(cparser* self)
 {
-        tree_type* typespec = cparse_specifier_qualifier_list(self);
-        if (!typespec)
+        cdecl_specs ds;
+        cdecl_specs_init(&ds);
+        if (!cparse_decl_specs(self, &ds))
                 return false;
 
         while (1)
         {
-                cdeclarator struct_declarator;
-                cprog_init_declarator(self->prog, &struct_declarator, CDK_MEMBER);
-                if (!cparse_declarator(self, &struct_declarator))
+                cdeclarator sd;
+                cprog_init_declarator(self->prog, &sd, CDK_MEMBER);
+
+                if (!cparse_declarator(self, &sd))
                 {
-                        cdeclarator_dispose(&struct_declarator);
+                        cdeclarator_dispose(&sd);
                         return false;
                 }
 
@@ -318,11 +320,10 @@ static bool cparse_struct_declaration(cparser* self)
                         bits = cparse_const_exp(self);
                 }
 
-                tree_decl* member = cprog_build_member_decl(
-                        self->prog, typespec, &struct_declarator, bits);
-                cdeclarator_dispose(&struct_declarator);
+                tree_decl* m = cprog_build_member_decl(self->prog, &ds, &sd, bits);
+                cdeclarator_dispose(&sd);
 
-                if (!member || !cprog_finish_decl(self->prog, member))
+                if (!m || !cprog_finish_decl(self->prog, m))
                         return false;
 
                 if (cparser_at(self, CTK_SEMICOLON))
