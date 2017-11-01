@@ -100,6 +100,12 @@ extern serrcode tree_decl_scope_insert(tree_decl_scope* self, tree_decl* decl)
         return S_NO_ERROR;
 }
 
+extern tree_decl* tree_decl_scope_find(
+        const tree_decl_scope* self, tree_id id, bool parent_lookup)
+{
+        return tree_symtab_get(tree_get_decl_scope_csymtab(self), id, parent_lookup);
+}
+
 extern tree_decl* tree_new_decl(
         tree_context*    context,
         tree_decl_kind   kind,
@@ -387,6 +393,17 @@ extern serrcode tree_decl_group_add(tree_decl* self, tree_decl* d)
 extern bool tree_decls_have_same_name(const tree_decl* a, const tree_decl* b)
 {
         return tree_get_decl_name(a) == tree_get_decl_name(b);
+}
+
+extern bool tree_decls_have_same_linkage(const tree_decl* a, const tree_decl* b)
+{
+        tree_decl_storage_class asc = tree_get_decl_storage_class(a);
+        tree_decl_storage_class bsc = tree_get_decl_storage_class(b);
+        if (asc == TDSC_EXTERN && bsc == TDSC_IMPL_EXTERN)
+                return true;
+        if (bsc == TDSC_EXTERN && asc == TDSC_IMPL_EXTERN)
+                return true;
+        return asc == bsc;
 }
 
 extern bool tree_decls_are_same(const tree_decl* a, const tree_decl* b)

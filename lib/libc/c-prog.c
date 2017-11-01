@@ -78,17 +78,17 @@ extern void cprog_init_objgroup(cprog* self, objgroup* args)
 
 extern tree_decl* cprog_get_local_decl(const cprog* self, tree_id name)
 {
-        return tree_symtab_get(tree_get_decl_scope_csymtab(self->locals), name, true);
+        return tree_decl_scope_find(self->locals, name, true);
 }
 
 extern tree_decl* cprog_get_global_decl(const cprog* self, tree_id name)
 {
-        return tree_symtab_get(tree_get_decl_scope_csymtab(self->globals), name, false);
+        return tree_decl_scope_find(self->globals, name, false);
 }
 
 extern tree_decl* cprog_get_label_decl(const cprog* self, tree_id name)
 {
-        return tree_symtab_get(tree_get_decl_scope_csymtab(self->labels), name, false);
+        return tree_decl_scope_find(self->labels, name, false);
 }
 
 extern tree_decl* cprog_require_decl(

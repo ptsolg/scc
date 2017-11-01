@@ -108,10 +108,14 @@ extern bool cprog_finish_declarator(
 extern tree_decl* cprog_export_decl(cprog* self, tree_decl_scope* scope, tree_decl* decl)
 {
         tree_symtab* symtab = tree_get_decl_scope_symtab(scope);
-        // decl already exists
         if (tree_symtab_get(symtab, tree_get_decl_name(decl), false))
+        {
+                cerror(self->error_manager, CES_ERROR,
+                        tree_get_xloc_begin(tree_get_decl_loc(decl)),
+                        "redefinition of '%s'",
+                        cprog_get_id(self, tree_get_decl_name(decl)));
                 return NULL;
-        
+        }
         tree_symtab_insert(symtab, decl);
         return decl;
 }
@@ -125,7 +129,7 @@ static bool cprog_export_decl_scope(cprog* self, tree_decl_scope* to, tree_decl_
         return true;
 }
 
-static tree_decl* cprog_finish_member(cprog* self, tree_decl_scope* scope, tree_decl* decl)
+static tree_decl* cprog_finish_member_decl(cprog* self, tree_decl_scope* scope, tree_decl* decl)
 {
         tree_type* dt = tree_desugar_type(tree_get_decl_type(decl));
         if (!cprog_require_complete_type(self, tree_get_decl_loc_begin(decl), dt))
@@ -146,27 +150,67 @@ static tree_decl* cprog_finish_member(cprog* self, tree_decl_scope* scope, tree_
         return decl;
 }
 
+static tree_decl* cprog_finish_value_decl(
+        cprog* self, tree_decl_scope* scope, tree_decl* decl)
+{
+        // c99 6.7
+        // If an identifier has no linkage, there shall be no more than one
+        //    declaration of the identifier (in a declarator or type specifier)
+        //    with the same scope and in the same name space
+        // If an identifier for an object is declared with no linkage,
+        //    the type for the object shall be complete by the end of its declarator
+
+        tree_location loc = tree_get_xloc_begin(tree_get_decl_loc(decl));
+        tree_id name = tree_get_decl_name(decl);
+        tree_decl_storage_class sc = tree_get_decl_storage_class(decl);
+
+        if (sc == TDSC_NONE || sc == TDSC_IMPL_EXTERN)
+                if (!cprog_require_complete_type(self, loc, tree_get_decl_type(decl)))
+                        return NULL;
+        if (sc == TDSC_NONE)
+        {
+                if (!cprog_export_decl(self, scope, decl))
+                        return NULL;
+                if (tree_get_decl_kind(decl) == TDK_MEMBER)
+                        if (!cprog_finish_member_decl(self, scope, decl))
+                                return NULL;
+                return decl;
+        }
+
+        S_ASSERT(tree_get_decl_kind(decl) != TDK_MEMBER);
+
+        tree_decl* orig = tree_decl_scope_find(scope, tree_get_decl_name(decl), false);
+        if (!orig)
+                return cprog_export_decl(self, scope, decl);
+
+        if (!tree_decls_have_same_linkage(decl, orig))
+        {
+                cerror(self->error_manager, CES_ERROR, loc,
+                        "redefinition of '%s' with different storage class",
+                        cprog_get_id(self, name));
+                return NULL;
+        }
+
+        if (!tree_types_are_same(tree_get_decl_type(decl), tree_get_decl_type(orig)))
+        {
+                cerror(self->error_manager, CES_ERROR, loc,
+                        "conflicting types for '%s'", cprog_get_id(self, name));
+                return NULL;
+        }
+
+        return decl;
+}
+
 static tree_decl* _cprog_finish_decl(cprog* self, tree_decl_scope* scope, tree_decl* decl)
 {
         tree_decl_kind dk = tree_get_decl_kind(decl);
-        if (dk != TDK_RECORD && dk != TDK_ENUM && !cprog_export_decl(self, scope, decl))
-                return NULL;
-
-        if (dk == TDK_MEMBER)
+        if (dk == TDK_VAR || dk == TDK_FUNCTION || dk == TDK_MEMBER)
         {
-                if (!cprog_finish_member(self, scope, decl))
+                if (!cprog_finish_value_decl(self, scope, decl))
                         return NULL;
         }
         else if (dk == TDK_RECORD)
                 tree_set_record_complete(decl, true);
-        else if (dk == TDK_VAR && !tree_decl_is_unnamed(decl))
-        {
-                if (!cprog_require_complete_type(self,
-                        tree_get_decl_loc_begin(decl), tree_get_decl_type(decl)))
-                {
-                        return NULL;
-                }
-        }
         else if (dk == TDK_ENUMERATOR)
                 if (!cprog_export_decl(self, self->globals, decl))
                         return NULL;

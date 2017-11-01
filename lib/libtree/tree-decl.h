@@ -62,6 +62,8 @@ extern bool tree_decl_scopes_are_same(const tree_decl_scope* a, const tree_decl_
 
 // if decl is group then its content will not be added to symtab
 extern serrcode tree_decl_scope_insert(tree_decl_scope* self, tree_decl* decl);
+extern tree_decl* tree_decl_scope_find(
+        const tree_decl_scope* self, tree_id id, bool parent_lookup);
 
 static inline ssize              tree_get_decl_scope_size(const tree_decl_scope* self);
 static inline tree_decl_scope*   tree_get_decl_scope_parent(const tree_decl_scope* self);
@@ -425,6 +427,7 @@ typedef struct _tree_decl
 } tree_decl;
 
 extern bool tree_decls_have_same_name(const tree_decl* a, const tree_decl* b);
+extern bool tree_decls_have_same_linkage(const tree_decl* a, const tree_decl* b);
 extern bool tree_decls_are_same(const tree_decl* a, const tree_decl* b);
 
 // accessors
