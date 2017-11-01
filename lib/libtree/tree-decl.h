@@ -79,10 +79,11 @@ static inline const tree_decl*   tree_get_decl_scope_cend(const tree_decl_scope*
 typedef enum
 {
         TDSC_NONE,
+        TDSC_EXTERN,
+        TDSC_IMPL_EXTERN,
+        TDSC_STATIC,
         TDSC_AUTO,
         TDSC_REGISTER,
-        TDSC_EXTERN,
-        TDSC_STATIC
 } tree_decl_storage_class;
 
 typedef enum _tree_decl_kind

@@ -267,13 +267,20 @@ static bool cprog_add_function_param(cprog* self, tree_decl* function, cparam* p
 static tree_decl* cprog_build_function_decl(
         cprog* self, cdecl_specs* decl_specs, cdeclarator* declarator)
 {
+        // c99 6.2.2.5
+        // If the declaration of an identifier for a function has no storage - class specifier,
+        // its linkage is external
+        tree_decl_storage_class sc = decl_specs->class_;
+        if (sc == TDSC_NONE)
+                sc = TDSC_IMPL_EXTERN;
+
         tree_type* ftype = declarator->type.head;
         tree_decl* func = tree_new_function_decl(
                 self->context,
                 self->locals,
                 decl_specs->loc,
                 declarator->id,
-                decl_specs->class_,
+                sc,
                 ftype,
                 decl_specs->funcspec,
                 NULL);
@@ -305,12 +312,19 @@ static tree_decl* cprog_build_typedef_decl(
 static tree_decl* cprog_build_var_decl(
         cprog* self, cdecl_specs* decl_specs, cdeclarator* declarator)
 {
+        // c99 6.2.2.5
+        // If the declaration of an identifier for an object has file scope
+        // and no storage - class specifier, its linkage is external.
+        tree_decl_storage_class sc = decl_specs->class_;
+        if (sc == TDSC_NONE && cprog_at_file_scope(self))
+                sc = TDSC_IMPL_EXTERN;
+
         return tree_new_var_decl(
                 self->context,
                 self->locals,
                 decl_specs->loc,
                 declarator->id,
-                decl_specs->class_,
+                sc,
                 declarator->type.head,
                 NULL);
 }

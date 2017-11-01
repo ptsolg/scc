@@ -79,6 +79,9 @@ extern tree_module* cparser_act_on_finish_module(cprog* self);
 
 extern const char* cprog_get_id(const cprog* self, tree_id id);
 
+extern bool cprog_at_file_scope(const cprog* self);
+extern bool cprog_at_block_scope(const cprog* self);
+
 #ifdef __cplusplus
 }
 #endif

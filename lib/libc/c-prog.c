@@ -160,3 +160,13 @@ extern const char* cprog_get_id(const cprog* self, tree_id id)
 {
         return tree_context_get_id(self->context, id);
 }
+
+extern bool cprog_at_file_scope(const cprog* self)
+{
+        return self->locals == self->globals;
+}
+
+extern bool cprog_at_block_scope(const cprog* self)
+{
+        return (bool)self->function;
+}
