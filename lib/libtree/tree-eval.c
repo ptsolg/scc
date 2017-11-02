@@ -340,6 +340,20 @@ static bool tree_eval_paren(tree_eval_info* info, const tree_exp* exp, avalue* r
         return tree_eval_as_arithmetic(info, tree_get_paren_exp(exp), result);
 }
 
+static bool tree_eval_decl(tree_eval_info* info, const tree_exp* exp, avalue* result)
+{
+        tree_decl* d = tree_get_decl_exp_entity(exp);
+        if (!tree_decl_is(d, TDK_ENUMERATOR))
+                return false;
+
+        return tree_eval_as_arithmetic(info, tree_get_enumerator_value(d), result);
+}
+
+static bool tree_eval_impl_init(tree_eval_info* info, const tree_exp* exp, avalue* result)
+{
+        return tree_eval_as_arithmetic(info, tree_get_impl_init_exp(exp), result);
+}
+
 static bool(*const tree_eval_table[TEK_SIZE])(
         tree_eval_info*, const tree_exp*, avalue*) =
 {
@@ -353,13 +367,14 @@ static bool(*const tree_eval_table[TEK_SIZE])(
         &tree_eval_char_literal, // TEK_CHARACTER_LITERAL
         &tree_eval_flt_literal,  // TEK_FLOATING_LITERAL
         NULL,                    // TEK_STRING_LITERAL
-        NULL,                    // TEK_DECL
+        &tree_eval_decl,         // TEK_DECL
         NULL,                    // TEK_MEMBER
         &tree_eval_cast,         // TEK_EXPLICIT_CAST
         &tree_eval_cast,         // TEK_IMPLICIT_CAST
         &tree_eval_sizeof,       // TEK_SIZEOF
         &tree_eval_paren,        // TEK_PAREN
         NULL,                    // TEK_INIT
+        &tree_eval_impl_init,    // TEK_IMPL_INIT
 };
 
 extern bool tree_eval_as_arithmetic(tree_eval_info* info, const tree_exp* exp, avalue* result)
