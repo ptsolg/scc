@@ -408,10 +408,11 @@ extern tree_decl* cparse_struct_or_union_specifier(cparser* self, bool* referenc
 
 static tree_decl* cparse_enumerator(cparser* self, tree_decl* enum_)
 {
+        tree_id id_loc = cparser_get_loc(self);
         if (!cparser_require(self, CTK_ID))
                 return NULL;
 
-        tree_id name = ctoken_get_string(cparser_get_prev(self));
+        tree_id id = ctoken_get_string(cparser_get_prev(self));
         tree_exp* value = NULL;
 
         if (cparser_at(self, CTK_EQ))
@@ -421,7 +422,7 @@ static tree_decl* cparse_enumerator(cparser* self, tree_decl* enum_)
                         return NULL;
         }
 
-        tree_decl* e = cprog_build_enumerator(self->prog, enum_, name, value);
+        tree_decl* e = cprog_build_enumerator(self->prog, enum_, id, id_loc, value);
         return e
                 ? cprog_finish_decl(self->prog, e)
                 : NULL;
