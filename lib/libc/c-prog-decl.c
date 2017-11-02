@@ -132,6 +132,13 @@ static bool cprog_export_decl_scope(cprog* self, tree_decl_scope* to, tree_decl_
 static tree_decl* cprog_finish_member_decl(cprog* self, tree_decl_scope* scope, tree_decl* decl)
 {
         tree_type* dt = tree_desugar_type(tree_get_decl_type(decl));
+        if (tree_type_is(dt, TTK_FUNCTION))
+        {
+                cerror(self->error_manager, CES_ERROR, tree_get_decl_loc_begin(decl),
+                       "field '%s' declared as function",
+                       cprog_get_id(self, tree_get_decl_name(decl)));
+                return NULL;
+        }
         if (!tree_declared_type_is(dt, TDK_RECORD))
                 return decl;
 
