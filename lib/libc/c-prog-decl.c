@@ -132,9 +132,6 @@ static bool cprog_export_decl_scope(cprog* self, tree_decl_scope* to, tree_decl_
 static tree_decl* cprog_finish_member_decl(cprog* self, tree_decl_scope* scope, tree_decl* decl)
 {
         tree_type* dt = tree_desugar_type(tree_get_decl_type(decl));
-        if (!cprog_require_complete_type(self, tree_get_decl_loc_begin(decl), dt))
-                return NULL;
-
         if (!tree_declared_type_is(dt, TDK_RECORD))
                 return decl;
 
@@ -150,8 +147,30 @@ static tree_decl* cprog_finish_member_decl(cprog* self, tree_decl_scope* scope, 
         return decl;
 }
 
-static tree_decl* cprog_finish_value_decl(
-        cprog* self, tree_decl_scope* scope, tree_decl* decl)
+static bool cprog_check_decl_with_no_linkage(const cprog* self, const tree_decl* decl)
+{
+        tree_location loc = tree_get_xloc_begin(tree_get_decl_loc(decl));
+        tree_type*    dt  = tree_get_decl_type(decl);
+
+        if (tree_get_decl_kind(decl) != TDK_FUNCTION)
+                return cprog_require_complete_type(self, loc, dt);
+
+        const tree_decl_scope* params = tree_get_function_cparams(decl);
+        TREE_DECL_SCOPE_FOREACH(params, p)
+        {
+                tree_location ploc = tree_get_xloc_begin(tree_get_decl_loc(p));
+                tree_type* ptype = tree_get_decl_type(p);
+                if (!cprog_require_complete_type(self, ploc, ptype))
+                        return false;
+        }
+
+        dt = tree_get_function_restype(dt);
+        return tree_type_is_void(dt)
+                ? true : cprog_require_complete_type(self, loc, dt);
+}
+
+static tree_decl* cprog_finish_object_or_function_decl(
+        cprog* self, tree_decl_scope* scope, tree_decl* decl, bool allow_incomplete)
 {
         // c99 6.7
         // If an identifier has no linkage, there shall be no more than one
@@ -160,18 +179,16 @@ static tree_decl* cprog_finish_value_decl(
         // If an identifier for an object is declared with no linkage,
         //    the type for the object shall be complete by the end of its declarator
 
-        tree_location loc = tree_get_xloc_begin(tree_get_decl_loc(decl));
-        tree_id name = tree_get_decl_name(decl);
         tree_decl_storage_class sc = tree_get_decl_storage_class(decl);
-
         if (sc == TDSC_NONE || sc == TDSC_IMPL_EXTERN)
-                if (!cprog_require_complete_type(self, loc, tree_get_decl_type(decl)))
+                if (!allow_incomplete && !cprog_check_decl_with_no_linkage(self, decl))
                         return NULL;
+
         if (sc == TDSC_NONE)
         {
                 if (!cprog_export_decl(self, scope, decl))
                         return NULL;
-                if (tree_get_decl_kind(decl) == TDK_MEMBER)
+                if (tree_decl_is(decl, TDK_MEMBER))
                         if (!cprog_finish_member_decl(self, scope, decl))
                                 return NULL;
                 return decl;
@@ -182,6 +199,9 @@ static tree_decl* cprog_finish_value_decl(
         tree_decl* orig = tree_decl_scope_find(scope, tree_get_decl_name(decl), false);
         if (!orig)
                 return cprog_export_decl(self, scope, decl);
+
+        tree_id       name = tree_get_decl_name(decl);
+        tree_location loc  = tree_get_xloc_begin(tree_get_decl_loc(decl));
 
         if (!tree_decls_have_same_linkage(decl, orig))
         {
@@ -201,12 +221,13 @@ static tree_decl* cprog_finish_value_decl(
         return decl;
 }
 
-static tree_decl* _cprog_finish_decl(cprog* self, tree_decl_scope* scope, tree_decl* decl)
+static tree_decl* _cprog_finish_decl(
+        cprog* self, tree_decl_scope* scope, tree_decl* decl, bool allow_incomplete)
 {
         tree_decl_kind dk = tree_get_decl_kind(decl);
         if (dk == TDK_VAR || dk == TDK_FUNCTION || dk == TDK_MEMBER)
         {
-                if (!cprog_finish_value_decl(self, scope, decl))
+                if (!cprog_finish_object_or_function_decl(self, scope, decl, allow_incomplete))
                         return NULL;
         }
         else if (dk == TDK_RECORD)
@@ -227,7 +248,7 @@ extern tree_type* cprog_build_type_name(
 
 extern tree_decl* cprog_finish_decl(cprog* self, tree_decl* decl)
 {
-        return _cprog_finish_decl(self, self->locals, decl);
+        return _cprog_finish_decl(self, self->locals, decl, false);
 }
 
 extern tree_decl* cprog_finish_decl_ex(cprog* self, tree_location end_loc, tree_decl* decl)
@@ -295,8 +316,7 @@ extern tree_decl* cprog_build_record_decl(
 
 static bool cprog_add_function_param(cprog* self, tree_decl* function, cparam* param)
 {
-        // todo semantics
-        tree_decl* var = tree_new_var_decl(
+        tree_decl* d = tree_new_var_decl(
                 self->context,
                 self->locals,
                 cparam_get_loc(param),
@@ -305,7 +325,9 @@ static bool cprog_add_function_param(cprog* self, tree_decl* function, cparam* p
                 param->declarator.type.head,
                 NULL);
         
-        return cprog_finish_decl(self, var);
+        tree_decl_storage_class sc = tree_get_decl_storage_class(function);
+        return _cprog_finish_decl(self, self->locals, d,
+                sc == TDSC_EXTERN || sc == TDSC_STATIC);
 }
 
 static tree_decl* cprog_build_function_decl(
@@ -339,7 +361,6 @@ static tree_decl* cprog_build_function_decl(
         cprog_exit_decl_scope(self);
 
         return func;
-        
 }
 
 static tree_decl* cprog_build_typedef_decl(

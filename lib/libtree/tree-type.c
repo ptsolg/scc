@@ -305,15 +305,17 @@ extern bool tree_type_is_incomplete(const tree_type* self)
                 return true;
 
         self = tree_desugar_ctype(self);
+        const tree_type* tt = tree_get_unqualified_type(self);
         if (tree_type_is_void(self))
                 return true;
-        else if (tree_type_is_array(self) && !tree_get_array_size(self))
-                return true;
+        else if (tree_type_is_array(self))
+                return !tree_get_array_size(self);
         else if (tree_type_is_record(self))
         {
                 const tree_decl* entity = tree_get_decl_type_entity(self);
                 return !tree_record_is_complete(entity);
         }
+        
         return false;
 }
 

@@ -69,8 +69,6 @@ extern tree_type* cprog_set_function_restype(
 {
         if (!restype)
                 return func;
-        if (!tree_type_is_void(restype) && !cprog_require_complete_type(self, 0, restype))
-                return NULL;
 
         tree_type* dt = tree_desugar_type(restype);
         if (tree_type_is(dt, TTK_ARRAY))
@@ -125,9 +123,6 @@ extern tree_type* cprog_build_array_type(
 extern tree_type* cprog_set_array_eltype(
         cprog* self, tree_location loc, tree_type* array, tree_type* eltype)
 {
-        if (eltype && !cprog_require_complete_type(self, loc, eltype))
-                return NULL;
-
         tree_set_array_eltype(array, eltype);
         return array;
 }
