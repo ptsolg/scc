@@ -305,7 +305,6 @@ extern bool tree_type_is_incomplete(const tree_type* self)
                 return true;
 
         self = tree_desugar_ctype(self);
-        const tree_type* tt = tree_get_unqualified_type(self);
         if (tree_type_is_void(self))
                 return true;
         else if (tree_type_is_array(self))
