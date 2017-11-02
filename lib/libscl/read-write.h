@@ -50,6 +50,21 @@ static inline ssize writebuf_get_bytes_written(const writebuf* self)
         return self->_written;
 }
 
+typedef struct _snwrite_cb
+{
+        write_cb _base;
+        char*    _pos;
+        char*    _begin;
+        ssize    _n;
+} snwrite_cb;
+
+extern void snwrite_cb_init(snwrite_cb* self, char* buf, ssize n);
+
+static inline write_cb* snwrite_cb_base(snwrite_cb* self)
+{
+        return &self->_base;
+}
+
 #ifndef RB_SIZE
 #define RB_SIZE 4095
 #endif

@@ -84,6 +84,34 @@ extern ssize writebuf_writec(writebuf* self, int c)
         return bytes;
 }
 
+static ssize snwrite_cb_write(snwrite_cb* self, const void* data, ssize bytes)
+{
+        ssize written = self->_pos - self->_begin;
+        S_ASSERT(written <= self->_n);
+
+        ssize available = self->_n - written;
+
+        if (bytes > available)
+                bytes = available;
+
+        if (!bytes)
+                return 0;
+
+        memcpy(self->_pos, data, bytes - 1);
+        self->_pos += bytes;
+        self->_pos[bytes] = '\0';
+
+        return bytes;
+}
+
+extern void snwrite_cb_init(snwrite_cb* self, char* buf, ssize n)
+{
+        self->_n     = n;
+        self->_pos   = buf;
+        self->_begin = buf;
+        write_cb_init(snwrite_cb_base(self), &snwrite_cb_write);
+}
+
 extern void read_cb_init(read_cb* self, void* read_fn)
 {
         self->_read = read_fn;
