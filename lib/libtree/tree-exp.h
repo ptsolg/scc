@@ -39,6 +39,7 @@ typedef enum
         TEK_SIZEOF,
         TEK_PAREN,
         TEK_INIT,
+        TEK_IMPL_INIT,
         TEK_SIZE,
 } tree_exp_kind;
 
@@ -484,8 +485,8 @@ typedef enum
 
 struct _tree_designator_base
 {
-        list_node               _node;
-        tree_designator_kind    _kind;
+        list_node            _node;
+        tree_designator_kind _kind;
 };
 
 static inline struct _tree_designator_base*       _tree_get_designator(tree_designator* self);
@@ -563,6 +564,20 @@ static inline void tree_set_designation_initializer(tree_designation* self, tree
         for (tree_designator* ITNAME = tree_get_designation_begin(PEXP); \
                 ITNAME != tree_get_designation_end(PEXP);                \
                 ITNAME = tree_get_next_designator(ITNAME))
+
+typedef struct _tree_impl_init_exp
+{
+        struct _tree_exp_base _base;
+        tree_exp*             _init;
+};
+
+extern tree_exp* tree_new_impl_init_exp(tree_context* context, tree_exp* init);
+
+static inline struct _tree_impl_init_exp*       _tree_get_impl_init_exp(tree_exp* self);
+static inline const struct _tree_impl_init_exp* _tree_get_impl_init_cexp(const tree_exp* self);
+
+static inline tree_exp* tree_get_impl_init_exp(const tree_exp* self);
+static inline void      tree_set_impl_init_exp(tree_exp* self, tree_exp* init);
 
 typedef struct _tree_exp
 {
@@ -1255,6 +1270,28 @@ static inline tree_exp* tree_get_designation_initializer(const tree_designation*
 static inline void tree_set_designation_initializer(tree_designation* self, tree_exp* initializer)
 {
         self->_initializer = initializer;
+}
+
+static inline struct _tree_impl_init_exp* _tree_get_impl_init_exp(tree_exp* self)
+{
+        TREE_ASSERT_EXP(self, TEK_IMPL_INIT);
+        return (struct _tree_impl_init_exp*)self;
+}
+
+static inline const struct _tree_impl_init_exp* _tree_get_impl_init_cexp(const tree_exp* self)
+{
+        TREE_ASSERT_EXP(self, TEK_IMPL_INIT);
+        return (const struct _tree_impl_init_exp*)self;
+}
+
+static inline tree_exp* tree_get_impl_init_exp(const tree_exp* self)
+{
+        return _tree_get_impl_init_cexp(self)->_init;
+}
+
+static inline void tree_set_impl_init_exp(tree_exp* self, tree_exp* init)
+{
+        _tree_get_impl_init_exp(self)->_init = init;
 }
 
 static inline bool tree_exp_is(const tree_exp* self, tree_exp_kind k)

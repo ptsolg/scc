@@ -347,6 +347,17 @@ extern void tree_add_designation_designator(tree_designation* self, tree_designa
         list_push_back(&self->_designators, &_tree_get_designator(d)->_node);
 }
 
+extern tree_exp* tree_new_impl_init_exp(tree_context* context, tree_exp* init)
+{
+        tree_exp* e = tree_new_exp(context, TEK_IMPL_INIT, TVK_RVALUE, NULL, TREE_INVALID_LOC,
+                sizeof(struct _tree_impl_init_exp));
+        if (!e)
+                return NULL;
+
+        tree_set_impl_init_exp(e, init);
+        return e;
+}
+
 extern bool tree_exp_is_literal(const tree_exp* self)
 {
         switch (tree_get_exp_kind(self))
