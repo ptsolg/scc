@@ -517,10 +517,19 @@ extern bool cprog_set_typespec(cprog* self, cdecl_specs* specs, tree_type* types
         return true;
 }
 
+static void cprog_multiple_storage_classes(const cprog* self, const cdecl_specs* specs)
+{
+        cerror(self->error_manager, CES_ERROR, cdecl_specs_get_start_loc(specs),
+               "multiple storage classes in declaration specifiers");
+}
+
 extern bool cprog_set_typedef_specifier(cprog* self, cdecl_specs* specs)
 {
         if (specs->class_ != TDSC_NONE || specs->is_typedef)
-                return false; // storage class is already defined
+        {
+                cprog_multiple_storage_classes(self, specs);
+                return false;
+        }
 
         specs->is_typedef = true;
         return true;
@@ -537,8 +546,7 @@ extern bool cprog_set_decl_storage_class(
 {
         if (specs->class_ != TDSC_NONE || specs->is_typedef)
         {
-                cerror(self->error_manager, CES_ERROR, cdecl_specs_get_start_loc(specs),
-                        "multiple storage classes in declaration specifiers");
+                cprog_multiple_storage_classes(self, specs);
                 return false;
         }
 
