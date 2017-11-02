@@ -1,6 +1,7 @@
 #include "c-prog-decl.h"
 #include "c-prog-type.h"
 #include "c-prog-conversions.h"
+#include <libtree/tree-eval.h>
 
 extern void cprog_init_declarator(cprog* self, cdeclarator* declarator, cdeclarator_kind k)
 {
@@ -317,13 +318,55 @@ extern tree_decl* cprog_build_member_decl(
         if (!t)
                 return NULL;
 
-        return tree_new_member_decl(
-                self->context,
-                self->locals,
-                decl_specs->loc,
-                struct_declarator->id,
-                t,
-                bits);
+        tree_id        id = struct_declarator->id;
+        tree_xlocation loc  = decl_specs->loc;
+
+        tree_decl* m = tree_new_member_decl(
+                self->context, self->locals, loc, id, t, bits);
+        if (!bits)
+                return m;
+
+        tree_location start_loc = tree_get_xloc_begin(loc);
+        const char*   name      = cprog_get_id(self, id);
+
+        if (!tree_type_is_integer(t))
+        {
+                cerror(self->error_manager, CES_ERROR, start_loc,
+                       "bit-field '%s' has invalid type", name);
+                return NULL;
+        }
+
+        int_value val;
+        tree_eval_info i;
+        tree_init_eval_info(&i, self->target);
+        if (!tree_eval_as_integer(&i, bits, &val))
+        {
+                cerror(self->error_manager, CES_ERROR, start_loc,
+                        "bit-field '%s' width not an integer constant", name);
+                return NULL;
+        }
+
+        if (int_is_zero(&val))
+        {
+                cerror(self->error_manager, CES_ERROR, start_loc,
+                        "zero width for bit-field '%s'", name);
+                return NULL;
+        }
+
+        if (int_is_signed(&val) && int_get_i64(&val) < 0)
+        {
+                cerror(self->error_manager, CES_ERROR, start_loc,
+                       "negative width in bit-field '%s'", name);
+                return NULL;
+        }
+
+        if (int_get_u64(&val) > 8 * tree_get_sizeof(self->target, t))
+        {
+                cerror(self->error_manager, CES_ERROR, start_loc,
+                       "width of '%s' exceeds its type", name);
+                return NULL;
+        }
+        return m;
 }
 
 extern tree_decl* cprog_build_record_decl(
