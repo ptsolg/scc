@@ -410,7 +410,7 @@ extern bool tree_type_is_integer(const tree_type* t)
 {
         t = tree_desugar_ctype(t);
         if (tree_get_type_kind(t) != TTK_BUILTIN)
-                return false;
+                return tree_declared_type_is(t, TDK_ENUM);
 
         switch (tree_get_builtin_type_kind(t))
         {
