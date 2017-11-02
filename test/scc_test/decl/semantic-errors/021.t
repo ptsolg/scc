@@ -1,0 +1,4 @@
+struct
+{
+    struct B b;
+};

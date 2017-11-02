@@ -1,0 +1,1 @@
+typedef typedef int int32;

@@ -1,0 +1,1 @@
+typedef static int int32;

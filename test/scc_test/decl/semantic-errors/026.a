@@ -1,0 +1,1 @@
+026.t:3:5: error: bit-field 'a' width not an integer constant
