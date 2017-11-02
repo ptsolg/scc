@@ -333,7 +333,7 @@ extern tree_decl* cprog_build_enumerator(
         if (!tree_eval_as_integer(&i, value, &val))
         {
                 cerror(self->error_manager, CES_ERROR, id_loc,
-                        "enumerator value for ‘%s’ is not an integer constant", name);
+                        "enumerator value for '%s' is not an integer constant", name);
                 return NULL;
         }
 
