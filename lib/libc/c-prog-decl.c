@@ -1,6 +1,7 @@
 #include "c-prog-decl.h"
 #include "c-prog-type.h"
 #include "c-prog-conversions.h"
+#include "c-prog-exp.h"
 #include <libtree/tree-eval.h>
 
 extern void cprog_init_declarator(cprog* self, cdeclarator* declarator, cdeclarator_kind k)
@@ -290,12 +291,53 @@ extern tree_decl* cprog_finish_decl_ex(cprog* self, tree_location end_loc, tree_
         return d;
 }
 
+static void cprog_compute_enumerator_value(
+        cprog* self, tree_decl* enum_, tree_decl* enumerator)
+{
+        int v = 0;
+        tree_decl_scope* s = tree_get_enum_scope(enum_);
+
+        if (tree_get_decl_scope_size(s))
+        {
+                tree_decl* last = tree_get_prev_decl(tree_get_decl_scope_end(s));
+                int_value last_val;
+                tree_eval_info i;
+                bool r = tree_eval_as_integer(&i, tree_get_enumerator_value(last), &last_val);
+                S_ASSERT(r);
+                v = int_get_i32(&last_val) + 1;
+        }
+
+        tree_exp* val = cprog_build_integer_literal(self, tree_get_decl_loc_begin(enumerator), v, true, false);
+        tree_set_enumerator_value(enumerator, tree_new_impl_init_exp(self->context, val));
+}
+
 extern tree_decl* cprog_build_enumerator(
-        cprog* self, tree_decl* enum_, tree_id name, tree_exp* value)
+        cprog* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_exp* value)
 {
         tree_type* t = tree_new_qual_type(self->context, TTQ_UNQUALIFIED,
                 tree_new_decl_type(self->context, enum_, true));
-        return tree_new_enumerator_decl(self->context, self->locals, 0, name, t, value);
+        tree_decl* e = tree_new_enumerator_decl(
+                self->context, self->locals, tree_init_xloc(id_loc, id_loc), id, t, value);
+
+        if (!value)
+        {
+                cprog_compute_enumerator_value(self, enum_, e);
+                return e;
+        }
+
+        const char* name = cprog_get_id(self, tree_get_decl_name(e));
+
+        int_value val;
+        tree_eval_info i;
+        tree_init_eval_info(&i, self->target);
+        if (!tree_eval_as_integer(&i, value, &val))
+        {
+                cerror(self->error_manager, CES_ERROR, id_loc,
+                        "enumerator value for ‘%s’ is not an integer constant", name);
+                return NULL;
+        }
+
+        return e;
 }
 
 extern tree_decl* cprog_build_enum_decl(cprog* self, tree_location kw_loc, tree_id name)
