@@ -1,0 +1,1 @@
+extern struct A a;

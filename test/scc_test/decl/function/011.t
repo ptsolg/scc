@@ -1,0 +1,1 @@
+extern struct A foo(struct B b, int c[]);
