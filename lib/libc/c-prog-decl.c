@@ -169,6 +169,48 @@ static bool cprog_check_decl_with_no_linkage(const cprog* self, const tree_decl*
                 ? true : cprog_require_complete_type(self, loc, dt);
 }
 
+static bool cprog_check_decl_with_linkage(cprog* self, tree_decl_scope* scope, tree_decl* decl)
+{
+        tree_decl_kind dk = tree_get_decl_kind(decl);
+        S_ASSERT(dk != TDK_MEMBER);
+
+        tree_location loc  = tree_get_xloc_begin(tree_get_decl_loc(decl));
+        tree_id       name = tree_get_decl_name(decl);
+
+
+        if (dk == TDK_FUNCTION && cprog_at_block_scope(self))
+        {
+                tree_decl_storage_class sc = tree_get_decl_storage_class(decl);
+                if (sc != TDSC_EXTERN && sc != TDSC_IMPL_EXTERN)
+                {
+                        cerror(self->error_manager, CES_ERROR, loc,
+                               "invalid storage class for '%s'",
+                               cprog_get_id(self, name));
+                        return false;
+                }
+        }
+
+        tree_decl* orig = tree_decl_scope_find(scope, tree_get_decl_name(decl), false);
+        if (!orig)
+                return (bool)cprog_export_decl(self, scope, decl);
+
+        if (!tree_decls_have_same_linkage(decl, orig))
+        {
+                cerror(self->error_manager, CES_ERROR, loc,
+                       "redefinition of '%s' with different storage class",
+                       cprog_get_id(self, name));
+                return false;
+        }
+
+        if (!tree_types_are_same(tree_get_decl_type(decl), tree_get_decl_type(orig)))
+        {
+                cerror(self->error_manager, CES_ERROR, loc,
+                       "conflicting types for '%s'", cprog_get_id(self, name));
+                return false;
+        }
+        return true;
+}
+
 static tree_decl* cprog_finish_object_or_function_decl(
         cprog* self, tree_decl_scope* scope, tree_decl* decl, bool allow_incomplete)
 {
@@ -194,29 +236,8 @@ static tree_decl* cprog_finish_object_or_function_decl(
                 return decl;
         }
 
-        S_ASSERT(tree_get_decl_kind(decl) != TDK_MEMBER);
-
-        tree_decl* orig = tree_decl_scope_find(scope, tree_get_decl_name(decl), false);
-        if (!orig)
-                return cprog_export_decl(self, scope, decl);
-
-        tree_id       name = tree_get_decl_name(decl);
-        tree_location loc  = tree_get_xloc_begin(tree_get_decl_loc(decl));
-
-        if (!tree_decls_have_same_linkage(decl, orig))
-        {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "redefinition of '%s' with different storage class",
-                        cprog_get_id(self, name));
+        if (!cprog_check_decl_with_linkage(self, scope, decl))
                 return NULL;
-        }
-
-        if (!tree_types_are_same(tree_get_decl_type(decl), tree_get_decl_type(orig)))
-        {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "conflicting types for '%s'", cprog_get_id(self, name));
-                return NULL;
-        }
 
         return decl;
 }
