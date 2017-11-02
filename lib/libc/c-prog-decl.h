@@ -38,7 +38,7 @@ extern tree_type* cprog_build_type_name(
         cprog* self, cdeclarator* declarator, tree_type* typespec);
 
 extern tree_decl* cprog_build_enumerator(
-        cprog* self, tree_decl* enum_, tree_id name, tree_exp* value);
+        cprog* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_exp* value);
 
 extern tree_decl* cprog_build_enum_decl(cprog* self, tree_location kw_loc, tree_id name);
 
