@@ -565,7 +565,7 @@ static inline void tree_set_designation_initializer(tree_designation* self, tree
                 ITNAME != tree_get_designation_end(PEXP);                \
                 ITNAME = tree_get_next_designator(ITNAME))
 
-typedef struct _tree_impl_init_exp
+struct _tree_impl_init_exp
 {
         struct _tree_exp_base _base;
         tree_exp*             _init;
