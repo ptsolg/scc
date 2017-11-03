@@ -319,7 +319,7 @@ extern void cdeclarator_dispose(cdeclarator* self)
 extern void cdeclarator_set_id(cdeclarator* self, tree_location id_loc, tree_id id)
 {
         self->id = id;
-        self->id_loc = id;
+        self->id_loc = id_loc;
 }
 
 extern void cdeclarator_set_initialized(cdeclarator* self)
