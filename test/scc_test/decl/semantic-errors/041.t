@@ -1,0 +1,3 @@
+restrict int foo()
+{
+}

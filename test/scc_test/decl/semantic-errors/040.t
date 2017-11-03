@@ -1,0 +1,4 @@
+struct
+{
+    restrict int a;
+};

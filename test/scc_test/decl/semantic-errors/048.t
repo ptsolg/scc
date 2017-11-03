@@ -1,0 +1,4 @@
+struct
+{
+    inline int a;
+};

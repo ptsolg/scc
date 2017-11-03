@@ -1,0 +1,1 @@
+typedef inline int a;
