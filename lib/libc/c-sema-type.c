@@ -127,10 +127,17 @@ extern tree_type* csema_set_array_eltype(
         return array;
 }
 
-extern tree_type* csema_set_type_quals(csema* self, tree_type* type, tree_type_quals quals)
+extern tree_type* csema_set_type_quals(
+        csema* self, tree_type* type, tree_type_quals quals, tree_location loc)
 {
         if (!type)
                 return NULL;
+
+        if ((quals & TTQ_RESTRICT) && !tree_type_is_pointer(type))
+        {
+                cerror(self->error_manager, CES_ERROR, loc, "invalid use of 'restrict'");
+                return NULL;
+        }
 
         tree_set_type_quals(type, quals);
         return type;

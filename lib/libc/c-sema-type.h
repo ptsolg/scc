@@ -43,7 +43,8 @@ extern tree_type* csema_new_array_type(
 extern tree_type* csema_set_array_eltype(
         csema* self, tree_location loc, tree_type* array, tree_type* eltype);
 
-extern tree_type* csema_set_type_quals(csema* self, tree_type* type, tree_type_quals quals);
+extern tree_type* csema_set_type_quals(
+        csema* self, tree_type* type, tree_type_quals quals, tree_location loc);
 
 #ifdef __cplusplus
 }
