@@ -385,9 +385,28 @@ extern tree_decl* csema_new_enum_decl(
         return e;
 }
 
+static bool csema_check_specifiers(
+        const csema* self, const cdecl_specs* specs, const cdeclarator* d, bool function)
+{
+        if (specs->funcspec == TFSK_INLINE && !function)
+        {
+                tree_location loc = cdeclarator_get_id_loc_or_begin(d);
+                if (loc == TREE_INVALID_LOC)
+                        loc = cdecl_specs_get_start_loc(specs);
+
+                cerror(self->error_manager, CES_ERROR, loc,
+                        "'inline' specifier allowed on function declarations only");
+                return false;
+        }
+        return true;
+}
+
 extern tree_decl* csema_new_member_decl(
         csema* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_expr* bits)
 {
+        if (!csema_check_specifiers(self, decl_specs, struct_declarator, false))
+                return NULL;
+
         tree_type* t = csema_set_declarator_type(self, struct_declarator, decl_specs->typespec);
         if (!t)
                 return NULL;
@@ -523,33 +542,38 @@ static tree_decl* csema_new_function_decl(
 }
 
 static tree_decl* csema_new_typedef_decl(
-        csema* self, cdecl_specs* decl_specs, cdeclarator* declarator)
+        csema* self, cdecl_specs* specs, cdeclarator* d)
 {
+        if (!csema_check_specifiers(self, specs, d, false))
+                return NULL;
+
         return tree_new_typedef_decl(
                 self->context,
                 self->locals,
-                decl_specs->loc,
-                declarator->id,
-                declarator->type.head);
+                specs->loc,
+                d->id,
+                d->type.head);
 }
 
 static tree_decl* csema_new_var_decl(
-        csema* self, cdecl_specs* decl_specs, cdeclarator* declarator)
+        csema* self, cdecl_specs* specs, cdeclarator* d)
 {
+        if (!csema_check_specifiers(self, specs, d, false))
+                return NULL;
         // c99 6.2.2.5
         // If the declaration of an identifier for an object has file scope
         // and no storage - class specifier, its linkage is external.
-        tree_decl_storage_class sc = decl_specs->class_;
+        tree_decl_storage_class sc = specs->class_;
         if (sc == TDSC_NONE && csema_at_file_scope(self))
                 sc = TDSC_IMPL_EXTERN;
 
         return tree_new_var_decl(
                 self->context,
                 self->locals,
-                decl_specs->loc,
-                declarator->id,
+                specs->loc,
+                d->id,
                 sc,
-                declarator->type.head,
+                d->type.head,
                 NULL);
 }
 
@@ -559,19 +583,10 @@ extern tree_decl* csema_new_external_decl(
         if (!csema_set_declarator_type(self, declarator, decl_specs->typespec))
                 return NULL;
 
-        // todo semantics
         if (decl_specs->is_typedef)
-        {
-                //... 
                 return csema_new_typedef_decl(self, decl_specs, declarator);
-        }
         else if (tree_type_is(declarator->type.head, TTK_FUNCTION))
-        {
-                //...
                 return csema_new_function_decl(self, decl_specs, declarator);
-        }
-
-        //...
         return csema_new_var_decl(self, decl_specs, declarator);
 }
 
@@ -647,6 +662,8 @@ extern cparam* csema_add_declarator_param(csema* self, cdeclarator* d, cparam* p
 
 extern cparam* csema_finish_param(csema* self, cparam* p)
 {
+        if (!csema_check_specifiers(self, &p->specs, &p->declarator, false))
+                return NULL;
         if (!csema_set_declarator_type(self, &p->declarator, p->specs.typespec))
                 return NULL;
 
