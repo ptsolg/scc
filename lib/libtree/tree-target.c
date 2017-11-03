@@ -5,45 +5,45 @@ extern void tree_init_target_info(tree_target_info* self, tree_target_kind k)
         self->_kind = k;
         
         self->_builtin_align[TBTK_INVALID] = 0;
-        self->_builtin_align[TBTK_VOID]    = 1;
-        self->_builtin_align[TBTK_INT8]    = 1;
-        self->_builtin_align[TBTK_UINT8]   = 1;
-        self->_builtin_align[TBTK_INT16]   = 2;
-        self->_builtin_align[TBTK_UINT16]  = 2;
-        self->_builtin_align[TBTK_INT32]   = 4;
-        self->_builtin_align[TBTK_UINT32]  = 4;
-        self->_builtin_align[TBTK_FLOAT]   = 4;
+        self->_builtin_align[TBTK_VOID] = 1;
+        self->_builtin_align[TBTK_INT8] = 1;
+        self->_builtin_align[TBTK_UINT8] = 1;
+        self->_builtin_align[TBTK_INT16] = 2;
+        self->_builtin_align[TBTK_UINT16] = 2;
+        self->_builtin_align[TBTK_INT32] = 4;
+        self->_builtin_align[TBTK_UINT32] = 4;
+        self->_builtin_align[TBTK_FLOAT] = 4;
 
         self->_builtin_size[TBTK_INVALID] = 0;
-        self->_builtin_size[TBTK_VOID]    = 1;
-        self->_builtin_size[TBTK_INT8]    = 1;
-        self->_builtin_size[TBTK_UINT8]   = 1;
-        self->_builtin_size[TBTK_INT16]   = 2;
-        self->_builtin_size[TBTK_UINT16]  = 2;
-        self->_builtin_size[TBTK_INT32]   = 4;
-        self->_builtin_size[TBTK_UINT32]  = 4;
-        self->_builtin_size[TBTK_INT64]   = 8;
-        self->_builtin_size[TBTK_UINT64]  = 8;
-        self->_builtin_size[TBTK_FLOAT]   = 4;
-        self->_builtin_size[TBTK_DOUBLE]  = 8;
+        self->_builtin_size[TBTK_VOID] = 1;
+        self->_builtin_size[TBTK_INT8] = 1;
+        self->_builtin_size[TBTK_UINT8] = 1;
+        self->_builtin_size[TBTK_INT16] = 2;
+        self->_builtin_size[TBTK_UINT16] = 2;
+        self->_builtin_size[TBTK_INT32] = 4;
+        self->_builtin_size[TBTK_UINT32] = 4;
+        self->_builtin_size[TBTK_INT64] = 8;
+        self->_builtin_size[TBTK_UINT64] = 8;
+        self->_builtin_size[TBTK_FLOAT] = 4;
+        self->_builtin_size[TBTK_DOUBLE] = 8;
 
         if (k == TTARGET_X32)
         {
                 self->_pointer_align = 4;
-                self->_pointer_size  = 4;
+                self->_pointer_size = 4;
 
-                self->_builtin_align[TBTK_INT64]  = 4;
+                self->_builtin_align[TBTK_INT64] = 4;
                 self->_builtin_align[TBTK_UINT64] = 4;
                 self->_builtin_align[TBTK_DOUBLE] = 8;
         }
         else if (k == TTARGET_X64)
         {
                 self->_pointer_align = 8;
-                self->_pointer_size  = 8;
+                self->_pointer_size = 8;
 
-                self->_builtin_align[TBTK_INT64]  = 8;
+                self->_builtin_align[TBTK_INT64] = 8;
                 self->_builtin_align[TBTK_UINT64] = 8;
-                self->_builtin_align[TBTK_FLOAT]  = 8;
+                self->_builtin_align[TBTK_FLOAT] = 8;
                 self->_builtin_align[TBTK_DOUBLE] = 8;
         }
         else

@@ -15,8 +15,8 @@ extern void bpa_init_ex(bp_allocator* self, allocator* alloc)
         allocator_init_ex(bpa_base(self), &bp_allocate, &bp_allocate_ex, &deallocate_plug);
         list_init(&self->_chunks);
         self->_alloc = alloc;
-        self->_end   = NULL;
-        self->_pos   = NULL;
+        self->_end = NULL;
+        self->_pos = NULL;
 }
 
 extern void bpa_dispose(bp_allocator* self)
@@ -81,8 +81,8 @@ extern void obj_allocator_init_ex(obj_allocator* self, ssize obsize, allocator* 
         bpa_init_ex(obj_allocator_base(self), alloc);
         allocator_init_ex(bpa_base(obj_allocator_base(self))
                 , &_obj_allocate, &_obj_allocate_ex, &_obj_deallocate);
-        self->_top     = NULL;
-        self->_obsize  = obsize;
+        self->_top = NULL;
+        self->_obsize = obsize;
         self->_objects = 0;
 }
 
@@ -125,9 +125,9 @@ static void std_deallocate(void* p, void* block)
 
 static allocator std_alloc =
 {
-        ._allocate    = &std_allocate,
+        ._allocate = &std_allocate,
         ._allocate_ex = &std_allocate_ex,
-        ._deallocate  = &std_deallocate
+        ._deallocate = &std_deallocate
 };
 
 extern allocator* get_std_alloc()

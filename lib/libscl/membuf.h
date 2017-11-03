@@ -16,14 +16,14 @@ extern "C" {
 // struct used for dynamic memory allocation management
 typedef struct
 {
-        uchar*     _begin;
-        uchar*     _end;
+        uchar* _begin;
+        uchar* _end;
         allocator* _alloc;
 } membuf;
 
-extern void     membuf_init(membuf* self);
-extern void     membuf_init_ex(membuf* self, allocator* alloc);
-extern void     membuf_dispose(membuf* self);
+extern void membuf_init(membuf* self);
+extern void membuf_init_ex(membuf* self, allocator* alloc);
+extern void membuf_dispose(membuf* self);
 extern serrcode membuf_resize(membuf* self, ssize size);
 
 // doubles the size of membuf
@@ -31,7 +31,7 @@ extern serrcode membuf_grow(membuf* self);
 // new size = old size * mul + cst
 extern serrcode membuf_resize_ex(membuf* self, ssize mul, ssize cst);
 // doesnt copy elements
-extern void     membuf_move(membuf* to, membuf* from);
+extern void membuf_move(membuf* to, membuf* from);
 
 static inline ssize membuf_size(const membuf* self)
 {

@@ -107,11 +107,11 @@ extern tree_decl* tree_decl_scope_find(
 }
 
 extern tree_decl* tree_new_decl(
-        tree_context*    context,
-        tree_decl_kind   kind,
+        tree_context* context,
+        tree_decl_kind kind,
         tree_decl_scope* scope,
-        tree_xlocation   loc,
-        ssize            size)
+        tree_xlocation loc,
+        ssize size)
 {
         tree_decl* d = tree_context_fast_allocate(context, size);
         if (!d)
@@ -126,12 +126,12 @@ extern tree_decl* tree_new_decl(
 }
 
 extern tree_decl* tree_new_named_decl(
-        tree_context*    context,
-        tree_decl_kind   kind,
+        tree_context* context,
+        tree_decl_kind kind,
         tree_decl_scope* scope,
-        tree_xlocation   loc,
-        tree_id          name,
-        ssize            size)
+        tree_xlocation loc,
+        tree_id name,
+        ssize size)
 {
         tree_decl* d = tree_new_decl(context, kind, scope, loc, size);
         if (!d)
@@ -142,13 +142,13 @@ extern tree_decl* tree_new_named_decl(
 }
 
 extern tree_decl* tree_new_typed_decl(
-        tree_context*    context,
-        tree_decl_kind   kind,
+        tree_context* context,
+        tree_decl_kind kind,
         tree_decl_scope* scope,
-        tree_xlocation   loc,
-        tree_id          name,
-        tree_type*       type,
-        ssize            size)
+        tree_xlocation loc,
+        tree_id name,
+        tree_type* type,
+        ssize size)
 {
         tree_decl* d = tree_new_named_decl(context, kind, scope, loc, name, size);
         if (!d)
@@ -159,14 +159,14 @@ extern tree_decl* tree_new_typed_decl(
 }
 
 extern tree_decl* tree_new_value_decl(
-        tree_context*           context,
-        tree_decl_kind          kind,
-        tree_decl_scope*        scope,
-        tree_xlocation          loc,
-        tree_id                 name,
+        tree_context* context,
+        tree_decl_kind kind,
+        tree_decl_scope* scope,
+        tree_xlocation loc,
+        tree_id name,
         tree_decl_storage_class class_,
-        tree_type*              type,
-        ssize                   size)
+        tree_type* type,
+        ssize size)
 {
         tree_decl* d = tree_new_typed_decl(context, kind, scope, loc, name, type, size);
         if (!d)
@@ -177,22 +177,22 @@ extern tree_decl* tree_new_value_decl(
 }
 
 extern tree_decl* tree_new_typedef_decl(
-        tree_context*    context,
+        tree_context* context,
         tree_decl_scope* scope,
-        tree_xlocation   loc,
-        tree_id          name,
-        tree_type*       type)
+        tree_xlocation loc,
+        tree_id name,
+        tree_type* type)
 {
         return tree_new_typed_decl(context,
                 TDK_TYPEDEF, scope, loc, name, type, sizeof(struct _tree_typedef_decl));
 }
 
 extern tree_decl* tree_new_record_decl(
-        tree_context*    context,
+        tree_context* context,
         tree_decl_scope* scope,
-        tree_xlocation   loc,
-        tree_id          name,
-        bool             is_union)
+        tree_xlocation loc,
+        tree_id name,
+        bool is_union)
 {
         tree_decl* d = tree_new_named_decl(context,
                 TDK_RECORD, scope, loc, name, sizeof(struct _tree_record_decl));
@@ -282,14 +282,14 @@ extern tree_decl* tree_new_enum_decl(
 }
 
 extern tree_decl* tree_new_function_decl(
-        tree_context*                context,
-        tree_decl_scope*             scope,
-        tree_xlocation               loc,
-        tree_id                      name,
-        tree_decl_storage_class      class_,
-        tree_type*                   type,
+        tree_context* context,
+        tree_decl_scope* scope,
+        tree_xlocation loc,
+        tree_id name,
+        tree_decl_storage_class class_,
+        tree_type* type,
         tree_function_specifier_kind spec,
-        tree_stmt*                   body)
+        tree_stmt* body)
 {
         tree_decl* d = tree_new_value_decl(context,
                 TDK_FUNCTION, scope, loc, name, class_, type, sizeof(struct _tree_function_decl));
@@ -304,13 +304,13 @@ extern tree_decl* tree_new_function_decl(
 }
 
 extern tree_decl* tree_new_var_decl(
-        tree_context*           context,
-        tree_decl_scope*        scope,
-        tree_xlocation          loc,
-        tree_id                 name,
+        tree_context* context,
+        tree_decl_scope* scope,
+        tree_xlocation loc,
+        tree_id name,
         tree_decl_storage_class class_,
-        tree_type*              type,
-        tree_exp*               init)
+        tree_type* type,
+        tree_exp* init)
 {
         tree_decl* d = tree_new_value_decl(context,
                 TDK_VAR, scope, loc, name, class_, type, sizeof(struct _tree_var_decl));
@@ -322,12 +322,12 @@ extern tree_decl* tree_new_var_decl(
 }
 
 extern tree_decl* tree_new_member_decl(
-        tree_context*    context,
+        tree_context* context,
         tree_decl_scope* scope,
-        tree_xlocation   loc,
-        tree_id          name,
-        tree_type*       type,
-        tree_exp*        bits)
+        tree_xlocation loc,
+        tree_id name,
+        tree_type* type,
+        tree_exp* bits)
 {
         tree_decl* d = tree_new_value_decl(context,
                 TDK_MEMBER, scope, loc, name, TDSC_NONE, type, sizeof(struct _tree_member_decl));
@@ -339,12 +339,12 @@ extern tree_decl* tree_new_member_decl(
 }
 
 extern tree_decl* tree_new_enumerator_decl(
-        tree_context*    context,
+        tree_context* context,
         tree_decl_scope* scope,
-        tree_xlocation   loc,
-        tree_id          name,
-        tree_type*       type,
-        tree_exp*        value)
+        tree_xlocation loc,
+        tree_id name,
+        tree_type* type,
+        tree_exp* value)
 {
         tree_decl* d = tree_new_typed_decl(context,
                 TDK_ENUMERATOR, scope, loc, name, type, sizeof(struct _tree_enumerator_decl));
@@ -356,11 +356,11 @@ extern tree_decl* tree_new_enumerator_decl(
 }
 
 extern tree_decl* tree_new_label_decl(
-        tree_context*    context,
+        tree_context* context,
         tree_decl_scope* scope,
-        tree_xlocation   loc,
-        tree_id          name,
-        tree_stmt*       stmt)
+        tree_xlocation loc,
+        tree_id name,
+        tree_stmt* stmt)
 {
         tree_decl* d = tree_new_named_decl(context,
                 TDK_LABEL, scope, loc, name, sizeof(struct _tree_label_decl));

@@ -14,10 +14,10 @@ extern "C" {
 typedef int serrcode;
 
 #define S_NO_ERROR ((serrcode)0)
-#define S_ERROR    ((serrcode)1)
+#define S_ERROR ((serrcode)1)
 
 #define S_SUCCEEDED(E) (((serrcode)(E)) == S_NO_ERROR)
-#define S_FAILED(E)    (!S_SUCCEEDED(E))
+#define S_FAILED(E) (!S_SUCCEEDED(E))
 
 #ifdef __cplusplus
 }

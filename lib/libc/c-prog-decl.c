@@ -19,9 +19,9 @@ static tree_type* cprog_set_declarator_type(cprog* self, cdeclarator* d, tree_ty
                 return t;
         }
 
-        tree_type*     tail = d->type.tail;
-        tree_type_kind k    = tree_get_type_kind(tail);
-        tree_location  loc  = cdeclarator_get_id_loc_or_begin(d);
+        tree_type* tail = d->type.tail;
+        tree_type_kind k = tree_get_type_kind(tail);
+        tree_location loc = cdeclarator_get_id_loc_or_begin(d);
 
         if (k == TTK_POINTER)
         {
@@ -155,7 +155,7 @@ static tree_decl* cprog_finish_member_decl(cprog* self, tree_decl_scope* scope, 
         if (!tree_declared_type_is(dt, TDK_RECORD))
                 return decl;
 
-        tree_decl* record        = tree_get_decl_type_entity(dt);
+        tree_decl* record = tree_get_decl_type_entity(dt);
         tree_decl_scope* members = tree_get_record_scope(record);
 
         // if decl is unnamed struct member then add its members to local scope
@@ -170,7 +170,7 @@ static tree_decl* cprog_finish_member_decl(cprog* self, tree_decl_scope* scope, 
 static bool cprog_check_decl_with_no_linkage(const cprog* self, const tree_decl* decl)
 {
         tree_location loc = tree_get_xloc_begin(tree_get_decl_loc(decl));
-        tree_type*    dt  = tree_get_decl_type(decl);
+        tree_type* dt = tree_get_decl_type(decl);
 
         if (tree_get_decl_kind(decl) != TDK_FUNCTION)
                 return cprog_require_complete_type(self, loc, dt);
@@ -194,8 +194,8 @@ static bool cprog_check_decl_with_linkage(cprog* self, tree_decl_scope* scope, t
         tree_decl_kind dk = tree_get_decl_kind(decl);
         S_ASSERT(dk != TDK_MEMBER);
 
-        tree_location loc  = tree_get_xloc_begin(tree_get_decl_loc(decl));
-        tree_id       name = tree_get_decl_name(decl);
+        tree_location loc = tree_get_xloc_begin(tree_get_decl_loc(decl));
+        tree_id name = tree_get_decl_name(decl);
 
 
         if (dk == TDK_FUNCTION && cprog_at_block_scope(self))
@@ -236,10 +236,10 @@ static tree_decl* cprog_finish_object_or_function_decl(
 {
         // c99 6.7
         // If an identifier has no linkage, there shall be no more than one
-        //    declaration of the identifier (in a declarator or type specifier)
-        //    with the same scope and in the same name space
+        // declaration of the identifier (in a declarator or type specifier)
+        // with the same scope and in the same name space
         // If an identifier for an object is declared with no linkage,
-        //    the type for the object shall be complete by the end of its declarator
+        // the type for the object shall be complete by the end of its declarator
 
         tree_decl_storage_class sc = tree_get_decl_storage_class(decl);
         if (sc == TDSC_NONE || sc == TDSC_IMPL_EXTERN)
@@ -392,8 +392,8 @@ extern tree_decl* cprog_build_member_decl(
         if (!t)
                 return NULL;
 
-        tree_id        id = struct_declarator->id;
-        tree_xlocation loc  = decl_specs->loc;
+        tree_id id = struct_declarator->id;
+        tree_xlocation loc = decl_specs->loc;
 
         tree_decl* m = tree_new_member_decl(
                 self->context, self->locals, loc, id, t, bits);
@@ -401,7 +401,7 @@ extern tree_decl* cprog_build_member_decl(
                 return m;
 
         tree_location start_loc = tree_get_xloc_begin(loc);
-        const char*   name      = cprog_get_id(self, id);
+        const char* name = cprog_get_id(self, id);
 
         if (!tree_type_is_integer(t))
         {
@@ -562,7 +562,7 @@ extern tree_decl* cprog_build_external_decl(
         // todo semantics
         if (decl_specs->is_typedef)
         {
-                //...       
+                //... 
                 return cprog_build_typedef_decl(self, decl_specs, declarator);
         }
         else if (tree_type_is(declarator->type.head, TTK_FUNCTION))

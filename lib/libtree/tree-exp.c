@@ -3,12 +3,12 @@
 #include "tree-eval.h"
 
 extern tree_exp* tree_new_exp(
-        tree_context*   context,
-        tree_exp_kind   kind,
+        tree_context* context,
+        tree_exp_kind kind,
         tree_value_kind value_kind,
-        tree_type*      type,
-        tree_location   loc,
-        ssize           size)
+        tree_type* type,
+        tree_location loc,
+        ssize size)
 {
         S_ASSERT(size >= sizeof(struct _tree_exp_base));
         tree_exp* e = tree_context_fast_allocate(context, size);
@@ -23,13 +23,13 @@ extern tree_exp* tree_new_exp(
 }
 
 extern tree_exp* tree_new_binop(
-        tree_context*   context,
+        tree_context* context,
         tree_value_kind value_kind,
-        tree_type*      type,
-        tree_location   loc,
+        tree_type* type,
+        tree_location loc,
         tree_binop_kind kind,
-        tree_exp*       lhs,
-        tree_exp*       rhs)
+        tree_exp* lhs,
+        tree_exp* rhs)
 {
         tree_exp* e = tree_new_exp(context, TEK_BINARY, value_kind, type, loc,
                 sizeof(struct _tree_binop));
@@ -43,12 +43,12 @@ extern tree_exp* tree_new_binop(
 }
 
 extern tree_exp* tree_new_unop(
-        tree_context*   context,
+        tree_context* context,
         tree_value_kind value_kind,
-        tree_type*      type,
-        tree_location   loc,
-        tree_unop_kind  kind,
-        tree_exp*       exp)
+        tree_type* type,
+        tree_location loc,
+        tree_unop_kind kind,
+        tree_exp* exp)
 {
         tree_exp* e = tree_new_exp(context, TEK_UNARY, value_kind, type, loc,
                 sizeof(struct _tree_unop));
@@ -61,11 +61,11 @@ extern tree_exp* tree_new_unop(
 }
 
 extern tree_exp* tree_new_explicit_cast_exp(
-        tree_context*   context,
+        tree_context* context,
         tree_value_kind value_kind,
-        tree_location   loc,
-        tree_type*      type,
-        tree_exp*       exp)
+        tree_location loc,
+        tree_type* type,
+        tree_exp* exp)
 {
         tree_exp* e = tree_new_exp(context, TEK_EXPLICIT_CAST, value_kind, type, loc,
                 sizeof(struct _tree_cast_exp));
@@ -77,11 +77,11 @@ extern tree_exp* tree_new_explicit_cast_exp(
 }
 
 extern tree_exp* tree_new_implicit_cast_exp(
-        tree_context*   context,
+        tree_context* context,
         tree_value_kind value_kind,
-        tree_location   loc,
-        tree_type*      type,
-        tree_exp*       exp)
+        tree_location loc,
+        tree_type* type,
+        tree_exp* exp)
 {
         tree_exp* e = tree_new_exp(context, TEK_IMPLICIT_CAST, value_kind, type, loc,
                 sizeof(struct _tree_cast_exp));
@@ -93,11 +93,11 @@ extern tree_exp* tree_new_implicit_cast_exp(
 }
 
 extern tree_exp* tree_new_call_exp(
-        tree_context*   context,
+        tree_context* context,
         tree_value_kind value_kind,
-        tree_type*      type,
-        tree_location   loc,
-        tree_exp*       lhs)
+        tree_type* type,
+        tree_location loc,
+        tree_exp* lhs)
 {
         tree_exp* e = tree_new_exp(context, TEK_CALL, value_kind, type, loc,
                 sizeof(struct _tree_call_exp));
@@ -122,12 +122,12 @@ extern void tree_add_call_arg(tree_exp* self, tree_exp* arg)
 }
 
 extern tree_exp* tree_new_subscript_exp(
-        tree_context*   context,
+        tree_context* context,
         tree_value_kind value_kind,
-        tree_type*      type,
-        tree_location   loc,
-        tree_exp*       lhs,
-        tree_exp*       rhs)
+        tree_type* type,
+        tree_location loc,
+        tree_exp* lhs,
+        tree_exp* rhs)
 {
         tree_exp* e = tree_new_exp(context, TEK_SUBSCRIPT, value_kind, type, loc,
                 sizeof(struct _tree_subscript_exp));
@@ -140,13 +140,13 @@ extern tree_exp* tree_new_subscript_exp(
 }
 
 extern tree_exp* tree_new_conditional_exp(
-        tree_context*   context,
+        tree_context* context,
         tree_value_kind value_kind,
-        tree_type*      type,
-        tree_location   loc,
-        tree_exp*       condition,
-        tree_exp*       lhs,
-        tree_exp*       rhs)
+        tree_type* type,
+        tree_location loc,
+        tree_exp* condition,
+        tree_exp* lhs,
+        tree_exp* rhs)
 {
         tree_exp* e = tree_new_exp(context, TEK_CONDITIONAL, value_kind, type, loc,
                 sizeof(struct _tree_conditional_exp));
@@ -220,11 +220,11 @@ extern tree_exp* tree_new_string_literal(
 }
 
 extern tree_exp* tree_new_decl_exp(
-        tree_context*   context,
+        tree_context* context,
         tree_value_kind value_kind,
-        tree_type*      type,
-        tree_location   loc,
-        tree_decl*      decl)
+        tree_type* type,
+        tree_location loc,
+        tree_decl* decl)
 {
         tree_exp* e = tree_new_exp(context, TEK_DECL, value_kind, type, loc, 
                 sizeof(struct _tree_decl_exp));
@@ -236,13 +236,13 @@ extern tree_exp* tree_new_decl_exp(
 }
 
 extern tree_exp* tree_new_member_exp(
-        tree_context*   context,
+        tree_context* context,
         tree_value_kind value_kind,
-        tree_type*      type,
-        tree_location   loc,
-        tree_exp*       lhs,
-        tree_decl*      decl,
-        bool            is_arrow)
+        tree_type* type,
+        tree_location loc,
+        tree_exp* lhs,
+        tree_decl* decl,
+        bool is_arrow)
 {
         tree_exp* e = tree_new_exp(context, TEK_MEMBER, value_kind, type, loc,
                 sizeof(struct _tree_member_exp));
@@ -273,11 +273,11 @@ extern tree_exp* tree_new_sizeof_exp(
 }
 
 extern tree_exp* tree_new_paren_exp(
-        tree_context*   context,
+        tree_context* context,
         tree_value_kind value_kind,
-        tree_type*      type,
-        tree_location   loc,
-        tree_exp*       exp)
+        tree_type* type,
+        tree_location loc,
+        tree_exp* exp)
 {
         tree_exp* e = tree_new_exp(context, TEK_PAREN, value_kind, type, loc,
                 sizeof(struct _tree_paren_exp));

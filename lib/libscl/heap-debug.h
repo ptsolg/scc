@@ -13,7 +13,7 @@ extern "C" {
 
 // inserts read-only page of memory after each allocated block of memory
 extern void* __cdecl hd_malloc(size_t size);
-extern void  __cdecl hd_free(void* block);
+extern void __cdecl hd_free(void* block);
 extern void scl_enable_heap_debug();
 
 #ifdef __cplusplus

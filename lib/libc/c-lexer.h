@@ -14,21 +14,21 @@ extern "C" {
 
 typedef struct _clexer
 {
-        cpproc    pp;
+        cpproc pp;
         creswords reswords;
 } clexer;
 
 extern void clexer_init(
-        clexer*          self,
+        clexer* self,
         csource_manager* source_manager,
-        cerror_manager*  error_manager,
-        ctree_context*   context);
+        cerror_manager* error_manager,
+        ctree_context* context);
 
 extern serrcode clexer_enter_source_file(clexer* self, csource* source);
 extern serrcode clexer_init_reswords(clexer* self);
-extern void     clexer_dispose(clexer* self);
+extern void clexer_dispose(clexer* self);
 
-extern ctoken*  clex(clexer* self);
+extern ctoken* clex(clexer* self);
 
 #ifdef __cplusplus
 }

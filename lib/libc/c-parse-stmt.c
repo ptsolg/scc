@@ -7,18 +7,18 @@ static tree_stmt* _cparse_stmt(cparser* self, cstmt_context context)
 {
         switch (ctoken_get_kind(cparser_get_token(self)))
         {
-                case CTK_CASE:     return cparse_case_stmt(self, context);
-                case CTK_DEFAULT:  return cparse_default_stmt(self, context);
-                case CTK_LBRACE:   return cparse_block_stmt(self, context);
-                case CTK_IF:       return cparse_if_stmt(self, context);
-                case CTK_SWITCH:   return cparse_switch_stmt(self, context);
-                case CTK_WHILE:    return cparse_while_stmt(self, context);
-                case CTK_DO:       return cparse_do_while_stmt(self, context);
-                case CTK_FOR:      return cparse_for_stmt(self, context);
-                case CTK_GOTO:     return cparse_goto_stmt(self);
+                case CTK_CASE: return cparse_case_stmt(self, context);
+                case CTK_DEFAULT: return cparse_default_stmt(self, context);
+                case CTK_LBRACE: return cparse_block_stmt(self, context);
+                case CTK_IF: return cparse_if_stmt(self, context);
+                case CTK_SWITCH: return cparse_switch_stmt(self, context);
+                case CTK_WHILE: return cparse_while_stmt(self, context);
+                case CTK_DO: return cparse_do_while_stmt(self, context);
+                case CTK_FOR: return cparse_for_stmt(self, context);
+                case CTK_GOTO: return cparse_goto_stmt(self);
                 case CTK_CONTINUE: return cparse_continue_stmt(self);
-                case CTK_BREAK:    return cparse_break_stmt(self);
-                case CTK_RETURN:   return cparse_return_stmt(self);
+                case CTK_BREAK: return cparse_break_stmt(self);
+                case CTK_RETURN: return cparse_return_stmt(self);
 
                 default:
                         if (cparser_next_token_is(self, CTK_COLON))
@@ -235,10 +235,10 @@ extern tree_stmt* cparse_for_stmt(cparser* self, cstmt_context context)
         if (!cparser_require(self, CTK_LBRACKET))
                 return NULL;
 
-        tree_stmt* init      = NULL;
-        tree_exp*  condition = NULL;
-        tree_exp*  step      = NULL;
-        tree_stmt* body      = NULL;
+        tree_stmt* init = NULL;
+        tree_exp* condition = NULL;
+        tree_exp* step = NULL;
+        tree_stmt* body = NULL;
 
         cprog_push_scope(self->prog);
         if (cparser_at_declaration(self))

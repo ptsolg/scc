@@ -63,12 +63,12 @@ extern tree_exp* cprog_build_call_exp(
         cprog* self, tree_location loc, tree_exp* lhs, objgroup* args);
 
 extern tree_exp* cprog_build_member_exp(
-        cprog*        self,
+        cprog* self,
         tree_location loc,
-        tree_exp*     lhs,
-        tree_id       id,
+        tree_exp* lhs,
+        tree_id id,
         tree_location id_loc,
-        bool          is_arrow);
+        bool is_arrow);
 
 extern tree_exp* cprog_build_unop(
         cprog* self, tree_location loc, tree_unop_kind opcode, tree_exp* exp);
@@ -82,19 +82,19 @@ extern tree_exp* cprog_build_binop(
         cprog* self, tree_location loc, tree_binop_kind opcode, tree_exp* lhs, tree_exp* rhs);
 
 extern tree_exp* cprog_build_conditional(
-        cprog*        self,
+        cprog* self,
         tree_location loc,
-        tree_exp*     condition,
-        tree_exp*     lhs,
-        tree_exp*     rhs);
+        tree_exp* condition,
+        tree_exp* lhs,
+        tree_exp* rhs);
 
 extern tree_designation* cprog_build_designation(cprog* self);
 
 extern tree_designation* cprog_finish_designation(
-        cprog*            self,
-        tree_exp*         initializer_list,
+        cprog* self,
+        tree_exp* initializer_list,
         tree_designation* designation,
-        tree_exp*         designation_initializer);
+        tree_exp* designation_initializer);
 
 // adds empty designation to initializer list to check whether it has trailing comma or not
 extern bool cprog_add_empty_designation(cprog* self, tree_exp* initializer_list);

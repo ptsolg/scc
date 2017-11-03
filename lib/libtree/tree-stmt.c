@@ -8,16 +8,16 @@ extern void tree_init_scope(
 }
 
 extern void tree_init_scope_ex(
-        tree_scope*      self,
-        tree_context*    context,
-        tree_scope*      parent,
+        tree_scope* self,
+        tree_context* context,
+        tree_scope* parent,
         tree_decl_scope* decl_parent,
         tree_scope_flags flags)
 {
         tree_init_decl_scope(tree_get_scope_decls(self), context, decl_parent);
         list_init(&self->_stmts);
         self->_parent = parent;
-        self->_flags  = flags;
+        self->_flags = flags;
 }
 
 extern void tree_dispose_scope(tree_scope* self)
@@ -54,7 +54,7 @@ extern tree_stmt* tree_new_labeled_stmt(tree_context* context, tree_xlocation lo
 }
 
 extern tree_stmt* tree_new_case_stmt(
-        tree_context* context, tree_xlocation  loc, tree_exp* value, tree_stmt* body)
+        tree_context* context, tree_xlocation loc, tree_exp* value, tree_stmt* body)
 {
         tree_stmt* s = tree_new_stmt(context, TSK_CASE, loc, sizeof(struct _tree_case_stmt));
         if (!s)
@@ -87,9 +87,9 @@ extern tree_stmt* tree_new_compound_stmt(
 }
 
 extern tree_stmt* tree_new_compound_stmt_ex(
-        tree_context*    context,
-        tree_xlocation   loc,
-        tree_scope*      parent,
+        tree_context* context,
+        tree_xlocation loc,
+        tree_scope* parent,
         tree_decl_scope* decl_parent,
         tree_scope_flags flags)
 {
@@ -122,11 +122,11 @@ extern tree_stmt* tree_new_exp_stmt(tree_context* context, tree_xlocation loc, t
 }
 
 extern tree_stmt* tree_new_if_stmt(
-        tree_context*  context,
+        tree_context* context,
         tree_xlocation loc,
-        tree_exp*      condition,
-        tree_stmt*     body,
-        tree_stmt*     else_)
+        tree_exp* condition,
+        tree_stmt* body,
+        tree_stmt* else_)
 {
         tree_stmt* s = tree_new_stmt(context, TSK_IF, loc, sizeof(struct _tree_if_stmt));
         if (!s)
@@ -140,8 +140,8 @@ extern tree_stmt* tree_new_if_stmt(
 
 extern tree_stmt* tree_new_switch_stmt(tree_context* context,
                                       tree_xlocation loc,
-                                      tree_stmt*     body,
-                                      tree_exp*      exp)
+                                      tree_stmt* body,
+                                      tree_exp* exp)
 {
         tree_stmt* s = tree_new_stmt(context, TSK_SWITCH, loc, sizeof(struct _tree_switch_stmt));
         if (!s)
@@ -153,7 +153,7 @@ extern tree_stmt* tree_new_switch_stmt(tree_context* context,
 }
 
 extern tree_stmt* tree_new_while_stmt(
-        tree_context*  context, tree_xlocation loc, tree_exp* condition, tree_stmt* body)
+        tree_context* context, tree_xlocation loc, tree_exp* condition, tree_stmt* body)
 {
         tree_stmt* s = tree_new_stmt(context, TSK_WHILE, loc, sizeof(struct _tree_while_stmt));
         if (!s)
@@ -177,12 +177,12 @@ extern tree_stmt* tree_new_do_while_stmt(
 }
 
 extern tree_stmt* tree_new_for_stmt(
-        tree_context*  context,
+        tree_context* context,
         tree_xlocation loc,
-        tree_stmt*     init,
-        tree_exp*      condition,
-        tree_exp*      step,
-        tree_stmt*     body)
+        tree_stmt* init,
+        tree_exp* condition,
+        tree_exp* step,
+        tree_stmt* body)
 {
         tree_stmt* s = tree_new_stmt(context, TSK_FOR, loc, sizeof(struct _tree_for_stmt));
         if (!s)

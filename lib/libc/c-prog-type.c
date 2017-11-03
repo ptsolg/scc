@@ -108,11 +108,11 @@ extern tree_type* cprog_set_paren_type(cprog* self, tree_type* paren, tree_type*
 }
 
 extern tree_type* cprog_build_array_type(
-        cprog*          self,
-        tree_location   loc,
+        cprog* self,
+        tree_location loc,
         tree_type_quals quals,
-        tree_type*      eltype,
-        tree_exp*       size)
+        tree_type* eltype,
+        tree_exp* size)
 {
         tree_type* arr = tree_new_qual_type(self->context, quals,
                 tree_new_array_type(self->context, NULL, size));

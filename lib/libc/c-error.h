@@ -15,12 +15,12 @@ extern "C" {
 
 typedef struct _cerror_manager
 {
-        int                    errors;
-        int                    warnings;
-        bool                   errors_as_warnings;
-        bool                   enabled;
+        int errors;
+        int warnings;
+        bool errors_as_warnings;
+        bool enabled;
         const csource_manager* source_manager;
-        FILE*                  err;
+        FILE* err;
 } cerror_manager;
 
 extern void cerror_manager_init(
@@ -39,8 +39,8 @@ typedef enum
 extern void cerror(
         cerror_manager* self,
         cerror_severity severity,
-        tree_location   loc,
-        const char*     description, ...);
+        tree_location loc,
+        const char* description, ...);
 
 #ifdef __cplusplus
 }

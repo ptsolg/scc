@@ -9,9 +9,9 @@ extern void write_cb_init(write_cb* self, void* write_fn)
 extern void writebuf_init(writebuf* self, write_cb* cb)
 {
         S_ASSERT(cb && cb->_write);
-        self->_cb      = cb;
+        self->_cb = cb;
         self->_written = 0;
-        self->_pos     = self->_data;
+        self->_pos = self->_data;
 }
 
 extern void writebuf_dispose(writebuf* self)
@@ -32,7 +32,7 @@ static inline ssize writebuf_write(writebuf* self, const void* data, ssize len)
 extern ssize writebuf_flush(writebuf* self)
 {
         ssize bytes = writebuf_write(self, self->_data, self->_pos - self->_data);
-        self->_pos  = self->_data;
+        self->_pos = self->_data;
         return bytes;
 }
 
@@ -50,7 +50,7 @@ extern ssize writebuf_write_bytes(writebuf* self, const void* b, ssize len)
         if (len > WB_SIZE)
         {
                 ssize bytes = writebuf_flush(self);
-                bytes      += writebuf_write(self, b, len);
+                bytes += writebuf_write(self, b, len);
                 return bytes;
         }
 
@@ -106,8 +106,8 @@ static ssize snwrite_cb_write(snwrite_cb* self, const void* data, ssize bytes)
 
 extern void snwrite_cb_init(snwrite_cb* self, char* buf, ssize n)
 {
-        self->_n     = n;
-        self->_pos   = buf;
+        self->_n = n;
+        self->_pos = buf;
         self->_begin = buf;
         write_cb_init(snwrite_cb_base(self), &snwrite_cb_write);
 }
@@ -120,9 +120,9 @@ extern void read_cb_init(read_cb* self, void* read_fn)
 extern void readbuf_init(readbuf* self, read_cb* cb)
 {
         S_ASSERT(cb && cb->_read);
-        self->_cb   = cb;
-        self->_end  = self->_data;
-        self->_pos  = self->_end;
+        self->_cb = cb;
+        self->_end = self->_data;
+        self->_pos = self->_end;
         self->_read = 0;
 }
 
@@ -139,8 +139,8 @@ static inline ssize readbuf_read(readbuf* self, void* buf, ssize len)
 static inline ssize readbuf_read_chunk(readbuf* self)
 {
         ssize bytes = readbuf_read(self, self->_data, RB_SIZE);
-        self->_pos  = self->_data;
-        self->_end  = self->_data + bytes;
+        self->_pos = self->_data;
+        self->_end = self->_data + bytes;
         return bytes;
 }
 
@@ -188,8 +188,8 @@ extern ssize readbuf_read_bytes(readbuf* self, void* buf, ssize len)
 
         readbuf_flush(self, buf, available);
         ssize written = available;
-        ssize remain  = len - available;
-        available     = readbuf_read_chunk(self);
+        ssize remain = len - available;
+        available = readbuf_read_chunk(self);
 
         if (available <= len)
         {
@@ -204,7 +204,7 @@ extern ssize readbuf_read_bytes(readbuf* self, void* buf, ssize len)
 extern ssize readbuf_reads(readbuf* self, char* buf, ssize len)
 {
         ssize read = readbuf_read_bytes(self, buf, len);
-        buf[read]  = '\0';
+        buf[read] = '\0';
         return read;
 }
 

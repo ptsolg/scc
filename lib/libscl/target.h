@@ -11,7 +11,7 @@
 #if defined(_MSC_VER)
         #define S_MSVC 1
 #elif defined(__GNUC__) || defined(__GNUG__)
-        #define S_GCC  1
+        #define S_GCC 1
 #elif defined(__clang__)
         #define S_CLANG 1
 #else

@@ -36,7 +36,7 @@ static const ssize primes[] =
 typedef struct
 {
         void* val;
-        hval  key;
+        hval key;
 } hentry;
 
 extern void htab_init(htab* self)
@@ -47,16 +47,16 @@ extern void htab_init(htab* self)
 extern void htab_init_ex(htab* self, allocator* alloc)
 {
         membuf_init_ex(&self->_entries, alloc);
-        self->_used      = 0;
-        self->_critical  = 0; 
+        self->_used = 0;
+        self->_critical = 0; 
         self->_prime_lvl = 0;
 }
 
 extern void htab_dispose(htab* self)
 {
         membuf_dispose(&self->_entries);
-        self->_used      = 0;
-        self->_critical  = 0;
+        self->_used = 0;
+        self->_critical = 0;
         self->_prime_lvl = 0;
 }
 
@@ -73,7 +73,7 @@ extern void htab_clear(htab* self)
 
 static inline serrcode htab_grow(htab* self)
 {
-        ssize  new_size = primes[self->_prime_lvl + 1];
+        ssize new_size = primes[self->_prime_lvl + 1];
         membuf new_buf;
         membuf old_buf = self->_entries;
 
@@ -83,7 +83,7 @@ static inline serrcode htab_grow(htab* self)
         
         self->_prime_lvl++;
         self->_critical = (ssize)(new_size * 0.5) + 1;
-        self->_entries  = new_buf;
+        self->_entries = new_buf;
         htab_clear(self);
 
         MEMBUF_FOREACH(&old_buf, hentry*, entry)
@@ -97,8 +97,8 @@ static inline serrcode htab_grow(htab* self)
 static inline hiter htab_find_existing_or_empty_entry(const htab* self, hval key)
 {
         hiter begin = membuf_begin(&self->_entries);
-        hiter end   = membuf_end(&self->_entries);
-        hiter sep   = (hentry*)begin + key % primes[self->_prime_lvl];
+        hiter end = membuf_end(&self->_entries);
+        hiter sep = (hentry*)begin + key % primes[self->_prime_lvl];
 
         for (hiter it = sep; it != end; it = (hentry*)it + 1)
                 if (!hiter_get_val(it) || hiter_get_key(it) == key)
@@ -189,7 +189,7 @@ extern void* htab_find(const htab* self, hval key)
 extern hiter htab_begin(const htab* self)
 {
         hiter begin = membuf_begin(&self->_entries);
-        hiter end   = htab_end(self);
+        hiter end = htab_end(self);
 
         for (hiter it = begin; it != end; it = (hentry*)it + 1)
                 if (hiter_get_val(it))
@@ -206,7 +206,7 @@ extern hiter htab_end(const htab* self)
 extern hiter hiter_get_next(hiter self, const htab* tab)
 {
         hiter next = (hentry*)self + 1;
-        hiter end  = htab_end(tab);
+        hiter end = htab_end(tab);
         for (hiter it = next; it != end; it = (hentry*)it + 1)
                 if (hiter_get_val(it))
                         return it;

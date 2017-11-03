@@ -55,13 +55,13 @@ extern tree_type* cprog_perform_function_to_pointer_conversion(cprog* self, tree
 
 extern tree_type* cprog_perform_integer_promotion(cprog* self, tree_exp** e)
 {
-        tree_type* t      = tree_desugar_type(tree_get_exp_type(*e));
+        tree_type* t = tree_desugar_type(tree_get_exp_type(*e));
         tree_type_kind tk = tree_get_type_kind(t);
         if (tk != TTK_BUILTIN)
                 return t;
 
         tree_builtin_type_kind btk = tree_get_builtin_type_kind(t);
-        tree_type_quals quals      = tree_get_type_quals(t);
+        tree_type_quals quals = tree_get_type_quals(t);
 
         if (btk == TBTK_INT8 || btk == TBTK_INT16)
         {
@@ -95,7 +95,7 @@ extern tree_type* cprog_perform_usual_arithmetic_conversion(
         tree_type* rt = cprog_perform_integer_promotion(self, rhs);
 
         S_ASSERT(tree_type_is_arithmetic(lt));
-        S_ASSERT(tree_type_is_arithmetic(rt));        
+        S_ASSERT(tree_type_is_arithmetic(rt)); 
         if (tree_types_are_same(lt, rt))
                 return lt;
 

@@ -17,7 +17,7 @@ extern tree_type* cprog_build_builtin_type(
 extern tree_type* cprog_build_decl_type(cprog* self, tree_decl* d, bool referenced);
 
 extern tree_type* cprog_build_typedef_name(cprog* self, tree_location name_loc, tree_id name);
-extern bool       cprog_typedef_name_exists(cprog* self, tree_id name);
+extern bool cprog_typedef_name_exists(cprog* self, tree_id name);
 
 extern tree_type* cprog_build_pointer(cprog* self, tree_type_quals quals, tree_type* target);
 extern tree_type* cprog_set_pointer_target(cprog* self, tree_type* pointer, tree_type* target);
@@ -34,11 +34,11 @@ extern tree_type* cprog_build_paren_type(cprog* self, tree_type* next);
 extern tree_type* cprog_set_paren_type(cprog* self, tree_type* paren, tree_type* next);
 
 extern tree_type* cprog_build_array_type(
-        cprog*          self,
-        tree_location   loc,
+        cprog* self,
+        tree_location loc,
         tree_type_quals quals,
-        tree_type*      eltype,
-        tree_exp*       size);
+        tree_type* eltype,
+        tree_exp* size);
 
 extern tree_type* cprog_set_array_eltype(
         cprog* self, tree_location loc, tree_type* array, tree_type* eltype);

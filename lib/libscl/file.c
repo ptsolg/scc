@@ -38,8 +38,8 @@ extern void path_add_trailing_slash(char* path)
         if (!path_has_trailing_slash(path))
         {
                 char* end = sstrend(path);
-                *end++    = S_PATH_DELIMETER;
-                *end      = '\0';
+                *end++ = S_PATH_DELIMETER;
+                *end = '\0';
         }
 }
 

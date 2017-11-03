@@ -15,7 +15,7 @@ extern "C" {
 typedef struct _tree_context
 {
         bp_allocator _base;
-        strpool      _strings;
+        strpool _strings;
 } tree_context;
 
 extern void tree_init_context(tree_context* self);

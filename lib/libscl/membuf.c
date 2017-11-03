@@ -5,7 +5,7 @@
 extern void membuf_init_ex(membuf* self, allocator* alloc)
 {
         self->_begin = NULL;
-        self->_end   = NULL;
+        self->_end = NULL;
         self->_alloc = alloc;
 }
 
@@ -18,7 +18,7 @@ extern void membuf_dispose(membuf* self)
 {
         deallocate(self->_alloc, self->_begin);
         self->_begin = NULL;
-        self->_end   = NULL;
+        self->_end = NULL;
 }
 
 extern serrcode membuf_resize(membuf* self, ssize size)
@@ -44,7 +44,7 @@ extern serrcode membuf_resize_ex(membuf* self, ssize mul, ssize cst)
         memcpy(new_buf, self->_begin, cpy_size);
 
         self->_begin = new_buf;
-        self->_end   = new_buf + new_size;
+        self->_end = new_buf + new_size;
 
         return S_NO_ERROR;
 }

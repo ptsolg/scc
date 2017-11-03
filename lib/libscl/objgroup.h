@@ -18,29 +18,29 @@ typedef struct _objgroup
         void** _last;
 } objgroup;
 
-extern void     objgroup_init(objgroup* self);
-extern void     objgroup_init_ex(objgroup* self, allocator* alloc);
-extern void     objgroup_dispose(objgroup* self);
-extern void     objgroup_move(objgroup* to, objgroup* from);
+extern void objgroup_init(objgroup* self);
+extern void objgroup_init_ex(objgroup* self, allocator* alloc);
+extern void objgroup_dispose(objgroup* self);
+extern void objgroup_move(objgroup* to, objgroup* from);
 extern serrcode objgroup_reserve(objgroup* self, ssize size);
 extern serrcode objgroup_resize(objgroup* self, ssize size);
 
-static inline membuf*       objgroup_base(objgroup* self);
+static inline membuf* objgroup_base(objgroup* self);
 static inline const membuf* objgroup_cbase(const objgroup* self);
 
-static inline ssize    objgroup_size(const objgroup* self);
-static inline ssize    objgroup_available(const objgroup* self);
-static inline ssize    objgroup_total(const objgroup* self);
+static inline ssize objgroup_size(const objgroup* self);
+static inline ssize objgroup_available(const objgroup* self);
+static inline ssize objgroup_total(const objgroup* self);
 static inline serrcode objgroup_push_back(objgroup* self, void* obj);
-static inline void*    objgroup_pop_back(objgroup* self);
+static inline void* objgroup_pop_back(objgroup* self);
 
 static inline void** objgroup_begin(const objgroup* self);
 static inline void** objgroup_end(const objgroup* self);
-static inline void*  objgroup_first(const objgroup* self);
-static inline void*  objgroup_last(const objgroup* self);
-static inline void*  objgroup_nth(const objgroup* self, ssize n);
+static inline void* objgroup_first(const objgroup* self);
+static inline void* objgroup_last(const objgroup* self);
+static inline void* objgroup_nth(const objgroup* self, ssize n);
 
-#define OBJGROUP_FOREACH(PGROUP, ITTYPE, ITNAME)                          \
+#define OBJGROUP_FOREACH(PGROUP, ITTYPE, ITNAME) \
         for (ITTYPE ITNAME = (ITTYPE)objgroup_begin(((objgroup*)PGROUP)); \
                 ITNAME != (ITTYPE)objgroup_end(((objgroup*)PGROUP)); ITNAME++)
 
@@ -82,7 +82,7 @@ static inline serrcode objgroup_push_back(objgroup* self, void* obj)
 static inline void* objgroup_pop_back(objgroup* self)
 {
         S_ASSERT(objgroup_size(self));
-        void* res  = objgroup_last(self);
+        void* res = objgroup_last(self);
         serrcode e = objgroup_resize(self, objgroup_size(self) - 1);
         S_ASSERT(S_SUCCEEDED(e));
         return res;

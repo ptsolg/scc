@@ -6,13 +6,13 @@
 
 extern void cparser_init(cparser* self, clexer* lexer, cprog* prog, cerror_manager* error_manager)
 {
-        self->lexer         = lexer;
-        self->prog          = prog;
+        self->lexer = lexer;
+        self->prog = prog;
         self->error_manager = error_manager;
-        self->on_error      = NULL;
-        self->buffer[0]     = NULL;
-        self->buffer[1]     = NULL;
-        self->buffer[2]     = NULL;
+        self->on_error = NULL;
+        self->buffer[0] = NULL;
+        self->buffer[1] = NULL;
+        self->buffer[2] = NULL;
 }
 
 extern void cparser_set_on_error(cparser* self, int* b)

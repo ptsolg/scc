@@ -15,7 +15,7 @@ extern "C" {
 static inline suint32 murmurhash3_86_32(const void* data, suint32 seed, int len)
 {
         const suint8* bytes = data;
-        const int nblocks   = len / 4;
+        const int nblocks = len / 4;
         int i;
 
         suint32 h1 = seed;
@@ -29,7 +29,7 @@ static inline suint32 murmurhash3_86_32(const void* data, suint32 seed, int len)
                 suint32 k1 = blocks[i];
 
                 k1 *= c1;
-                k1  = s_rotl32(k1, 15);
+                k1 = s_rotl32(k1, 15);
                 k1 *= c2;
 
                 h1 ^= k1;
@@ -47,13 +47,13 @@ static inline suint32 murmurhash3_86_32(const void* data, suint32 seed, int len)
                 case 1: k1 ^= tail[0];
 
                         k1 *= c1;
-                        k1  = s_rotl32(k1, 15);
+                        k1 = s_rotl32(k1, 15);
                         k1 *= c2;
                         h1 ^= k1;
         }
 
         h1 ^= len;
-        h1  = s_mix32(h1);
+        h1 = s_mix32(h1);
         return h1;
 }
 

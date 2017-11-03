@@ -42,8 +42,8 @@ extern tree_module* cparse_source(cenv* self, csource* source, tree_target_info*
 
         tree_module* m = tree_new_module(ctree_context_base(&self->context), target);
 
-        clexer  lexer;
-        cprog   prog;
+        clexer lexer;
+        cprog prog;
         cparser parser;
 
         clexer_init(&lexer, &self->source_manager, &self->error_manager, &self->context);

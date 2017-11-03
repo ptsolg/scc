@@ -15,7 +15,7 @@ typedef struct _tree_target_info tree_target_info;
 
 typedef struct _tree_module
 {
-        tree_decl_scope   _globals;
+        tree_decl_scope _globals;
         tree_target_info* _target;
 } tree_module;
 

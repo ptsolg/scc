@@ -3,7 +3,7 @@
 extern void tree_init_eval_info(tree_eval_info* self, const tree_target_info* target)
 {
         self->_target = target;
-        self->_error  = NULL;
+        self->_error = NULL;
 }
 
 extern const tree_exp* tree_get_eval_eror(const tree_eval_info* self)
@@ -135,37 +135,37 @@ static bool tree_eval_log_or(avalue* lhs, const avalue* rhs)
 
 static bool(*const tree_binop_eval_table[TBK_SIZE])(avalue*, const avalue*) =
 {
-        NULL,               // TBK_UNKNOWN
-        &tree_eval_mul,     // TBK_MUL
-        &tree_eval_div,     // TBK_DIV
-        &tree_eval_mod,     // TBK_MOD
-        &tree_eval_add,     // TBK_ADD
-        &tree_eval_sub,     // TBK_SUB
-        &tree_eval_shl,     // TBK_SHL
-        &tree_eval_shr,     // TBK_SHR
-        &tree_eval_le,      // TBK_LE
-        &tree_eval_gr,      // TBK_GR
-        &tree_eval_leq,     // TBK_LEQ
-        &tree_eval_geq,     // TBK_GEQ
-        &tree_eval_eq,      // TBK_EQ
-        &tree_eval_neq,     // TBK_NEQ
-        &tree_eval_and,     // TBK_AND
-        &tree_eval_xor,     // TBK_XOR
-        &tree_eval_or,      // TBK_OR
+        NULL, // TBK_UNKNOWN
+        &tree_eval_mul, // TBK_MUL
+        &tree_eval_div, // TBK_DIV
+        &tree_eval_mod, // TBK_MOD
+        &tree_eval_add, // TBK_ADD
+        &tree_eval_sub, // TBK_SUB
+        &tree_eval_shl, // TBK_SHL
+        &tree_eval_shr, // TBK_SHR
+        &tree_eval_le, // TBK_LE
+        &tree_eval_gr, // TBK_GR
+        &tree_eval_leq, // TBK_LEQ
+        &tree_eval_geq, // TBK_GEQ
+        &tree_eval_eq, // TBK_EQ
+        &tree_eval_neq, // TBK_NEQ
+        &tree_eval_and, // TBK_AND
+        &tree_eval_xor, // TBK_XOR
+        &tree_eval_or, // TBK_OR
         &tree_eval_log_and, // TBK_LOG_AND
-        &tree_eval_log_or,  // TBK_LOG_OR
-        NULL,               // TBK_ASSIGN
-        NULL,               // TBK_ADD_ASSIGN
-        NULL,               // TBK_SUB_ASSIGN
-        NULL,               // TBK_MUL_ASSIGN
-        NULL,               // TBK_DIV_ASSIGN
-        NULL,               // TBK_MOD_ASSIGN
-        NULL,               // TBK_SHL_ASSIGN
-        NULL,               // TBK_SHR_ASSIGN
-        NULL,               // TBK_AND_ASSIGN
-        NULL,               // TBK_XOR_ASSIGN
-        NULL,               // TBK_OR_ASSIGN
-        NULL,               // TBK_COMMA
+        &tree_eval_log_or, // TBK_LOG_OR
+        NULL, // TBK_ASSIGN
+        NULL, // TBK_ADD_ASSIGN
+        NULL, // TBK_SUB_ASSIGN
+        NULL, // TBK_MUL_ASSIGN
+        NULL, // TBK_DIV_ASSIGN
+        NULL, // TBK_MOD_ASSIGN
+        NULL, // TBK_SHL_ASSIGN
+        NULL, // TBK_SHR_ASSIGN
+        NULL, // TBK_AND_ASSIGN
+        NULL, // TBK_XOR_ASSIGN
+        NULL, // TBK_OR_ASSIGN
+        NULL, // TBK_COMMA
 };
 
 static bool tree_eval_binop(tree_eval_info* info, const tree_exp* exp, avalue* result)
@@ -220,17 +220,17 @@ static bool tree_eval_log_not(avalue* result)
 
 static bool(*const tree_unop_eval_table[TUK_SIZE])(avalue*) =
 {
-        NULL,               // TUK_UNKNOWN
-        NULL,               // TUK_POST_INC
-        NULL,               // TUK_POST_DEC
-        NULL,               // TUK_PRE_INC
-        NULL,               // TUK_PRE_DEC
-        &tree_eval_plus,    // TUK_PLUS
-        &tree_eval_minus,   // TUK_MINUS
-        &tree_eval_not,     // TUK_NOT
+        NULL, // TUK_UNKNOWN
+        NULL, // TUK_POST_INC
+        NULL, // TUK_POST_DEC
+        NULL, // TUK_PRE_INC
+        NULL, // TUK_PRE_DEC
+        &tree_eval_plus, // TUK_PLUS
+        &tree_eval_minus, // TUK_MINUS
+        &tree_eval_not, // TUK_NOT
         &tree_eval_log_not, // TUK_LOG_NOT
-        NULL,               // TUK_DEREFERENCE
-        NULL,               // TUK_ADDRESS
+        NULL, // TUK_DEREFERENCE
+        NULL, // TUK_ADDRESS
 };
 
 static bool tree_eval_unop(tree_eval_info* info, const tree_exp* exp, avalue* result)
@@ -301,7 +301,7 @@ static bool tree_eval_cast(tree_eval_info* info, const tree_exp* exp, avalue* re
                 return false;
         }
 
-        tree_exp*  e  = tree_get_cast_exp(exp);
+        tree_exp* e = tree_get_cast_exp(exp);
         tree_type* et = tree_get_exp_type(e);
         if (!tree_eval_as_arithmetic(info, e, result))
                 return false;
@@ -357,24 +357,24 @@ static bool tree_eval_impl_init(tree_eval_info* info, const tree_exp* exp, avalu
 static bool(*const tree_eval_table[TEK_SIZE])(
         tree_eval_info*, const tree_exp*, avalue*) =
 {
-        NULL,                    // TEK_UNKNOWN
-        &tree_eval_binop,        // TEK_BINARY
-        &tree_eval_unop,         // TEK_UNARY
-        NULL,                    // TEK_CALL
-        NULL,                    // TEK_SUBSCRIPT
-        &tree_eval_conditional,  // TEK_CONDITIONAL
-        &tree_eval_int_literal,  // TEK_INTEGER_LITERAL
+        NULL, // TEK_UNKNOWN
+        &tree_eval_binop, // TEK_BINARY
+        &tree_eval_unop, // TEK_UNARY
+        NULL, // TEK_CALL
+        NULL, // TEK_SUBSCRIPT
+        &tree_eval_conditional, // TEK_CONDITIONAL
+        &tree_eval_int_literal, // TEK_INTEGER_LITERAL
         &tree_eval_char_literal, // TEK_CHARACTER_LITERAL
-        &tree_eval_flt_literal,  // TEK_FLOATING_LITERAL
-        NULL,                    // TEK_STRING_LITERAL
-        &tree_eval_decl,         // TEK_DECL
-        NULL,                    // TEK_MEMBER
-        &tree_eval_cast,         // TEK_EXPLICIT_CAST
-        &tree_eval_cast,         // TEK_IMPLICIT_CAST
-        &tree_eval_sizeof,       // TEK_SIZEOF
-        &tree_eval_paren,        // TEK_PAREN
-        NULL,                    // TEK_INIT
-        &tree_eval_impl_init,    // TEK_IMPL_INIT
+        &tree_eval_flt_literal, // TEK_FLOATING_LITERAL
+        NULL, // TEK_STRING_LITERAL
+        &tree_eval_decl, // TEK_DECL
+        NULL, // TEK_MEMBER
+        &tree_eval_cast, // TEK_EXPLICIT_CAST
+        &tree_eval_cast, // TEK_IMPLICIT_CAST
+        &tree_eval_sizeof, // TEK_SIZEOF
+        &tree_eval_paren, // TEK_PAREN
+        NULL, // TEK_INIT
+        &tree_eval_impl_init, // TEK_IMPL_INIT
 };
 
 extern bool tree_eval_as_arithmetic(tree_eval_info* info, const tree_exp* exp, avalue* result)

@@ -16,8 +16,8 @@ extern "C" {
 #define SMAX(a, b) ((a) > (b) ? (a) : (b))
 
 #define MEM_FOREACH(PFIRST, PLAST, ITTYPE, ITNAME) \
-        for (ITTYPE ITNAME = (ITTYPE)(PFIRST);     \
-                (char*)ITNAME < (char*)(PLAST);    \
+        for (ITTYPE ITNAME = (ITTYPE)(PFIRST); \
+                (char*)ITNAME < (char*)(PLAST); \
                 ITNAME = (ITTYPE)((char*)ITNAME + sizeof(*ITNAME)))
 
 // truncates v to next highest power of 2

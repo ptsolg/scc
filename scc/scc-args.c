@@ -5,9 +5,9 @@
 #include <stdio.h>
 
 extern scc_arg_handler* scc_new_arg_handler(
-        allocator*  alloc,
+        allocator* alloc,
         void(*const fn)(scc_arg_handler*, aparser*),
-        scc_env*    scc,
+        scc_env* scc,
         const char* arg)
 {
         scc_arg_handler* h = allocate(alloc, sizeof(*h));

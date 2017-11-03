@@ -3,23 +3,23 @@
 #include <libscl/bit-utils.h>
 
 extern void cprog_init(
-        cprog*          self,
-        ctree_context*  context,
-        cident_info*    id_info,
-        tree_module*    module,
+        cprog* self,
+        ctree_context* context,
+        cident_info* id_info,
+        tree_module* module,
         cerror_manager* error_manager)
 {
-        self->ccontext         = context;
-        self->context          = ctree_context_base(context);
-        self->id_info          = id_info;
-        self->module           = module;
-        self->labels           = NULL;
-        self->globals          = tree_get_module_globals(module);
-        self->target           = tree_get_module_target(module);
-        self->locals           = self->globals;
-        self->scope            = NULL;
-        self->function         = NULL;
-        self->error_manager    = error_manager;
+        self->ccontext = context;
+        self->context = ctree_context_base(context);
+        self->id_info = id_info;
+        self->module = module;
+        self->labels = NULL;
+        self->globals = tree_get_module_globals(module);
+        self->target = tree_get_module_target(module);
+        self->locals = self->globals;
+        self->scope = NULL;
+        self->function = NULL;
+        self->error_manager = error_manager;
 }
 
 extern void cprog_dispose(cprog* self)
@@ -57,14 +57,14 @@ extern void cprog_exit_decl_scope(cprog* self)
 
 extern void cprog_enter_function(cprog* self, tree_decl* func)
 {
-        self->labels   = tree_get_function_labels(func);
+        self->labels = tree_get_function_labels(func);
         self->function = func;
         cprog_enter_decl_scope(self, tree_get_function_params(func));
 }
 
 extern void cprog_exit_function(cprog* self)
 {
-        self->labels   = NULL;
+        self->labels = NULL;
         self->function = NULL;
         cprog_exit_decl_scope(self);
 }
@@ -109,12 +109,12 @@ extern tree_decl* cprog_get_label_decl(const cprog* self, tree_id name)
 }
 
 extern tree_decl* cprog_require_decl(
-        const cprog*           self,
+        const cprog* self,
         const tree_decl_scope* scope,
-        tree_location          name_loc,
-        tree_decl_kind         kind,
-        tree_id                name,
-        bool                   parent_lookup)
+        tree_location name_loc,
+        tree_decl_kind kind,
+        tree_id name,
+        bool parent_lookup)
 {
         tree_decl* d = tree_symtab_get(tree_get_decl_scope_csymtab(scope), name, parent_lookup);
         if (!d)

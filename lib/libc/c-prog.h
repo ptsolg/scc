@@ -15,24 +15,24 @@ extern "C" {
 // The structure, used for semantic analysis and building AST
 typedef struct _cprog
 {
-        tree_context*     context;
-        ctree_context*    ccontext;
-        cident_info*      id_info;
-        cerror_manager*   error_manager;
-        tree_decl*        function;
-        tree_decl_scope*  globals;
-        tree_decl_scope*  labels;
-        tree_decl_scope*  locals;
-        tree_scope*       scope;
-        tree_module*      module;
+        tree_context* context;
+        ctree_context* ccontext;
+        cident_info* id_info;
+        cerror_manager* error_manager;
+        tree_decl* function;
+        tree_decl_scope* globals;
+        tree_decl_scope* labels;
+        tree_decl_scope* locals;
+        tree_scope* scope;
+        tree_module* module;
         tree_target_info* target;
 } cprog;
 
 extern void cprog_init(
-        cprog*          self,
-        ctree_context*  context,
-        cident_info*    id_info,
-        tree_module*    module,
+        cprog* self,
+        ctree_context* context,
+        cident_info* id_info,
+        tree_module* module,
         cerror_manager* error_manager);
 
 extern void cprog_dispose(cprog* self);
@@ -57,12 +57,12 @@ extern tree_decl* cprog_get_global_decl(const cprog* self, tree_id name);
 extern tree_decl* cprog_get_label_decl(const cprog* self, tree_id name);
 
 extern tree_decl* cprog_require_decl(
-        const cprog*           self,
+        const cprog* self,
         const tree_decl_scope* scope,
-        tree_location          name_loc,
-        tree_decl_kind         kind,
-        tree_id                name,
-        bool                   parent_lookup);
+        tree_location name_loc,
+        tree_decl_kind kind,
+        tree_id name,
+        bool parent_lookup);
 
 extern tree_decl* cprog_require_local_decl(
         const cprog* self, tree_location name_loc, tree_decl_kind kind, tree_id name);

@@ -20,11 +20,11 @@ typedef enum
 
 typedef struct _tree_target_info
 {
-        tree_target_kind   _kind;
-        suint8             _pointer_size;
-        suint8             _pointer_align;
-        suint8             _builtin_size[TBTK_SIZE];
-        suint8             _builtin_align[TBTK_SIZE];
+        tree_target_kind _kind;
+        suint8 _pointer_size;
+        suint8 _pointer_align;
+        suint8 _builtin_size[TBTK_SIZE];
+        suint8 _builtin_align[TBTK_SIZE];
 } tree_target_info;
 
 extern void tree_init_target_info(tree_target_info* self, tree_target_kind k);

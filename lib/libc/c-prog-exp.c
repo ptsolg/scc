@@ -166,9 +166,9 @@ extern tree_exp* cprog_build_decl_exp(cprog* self, tree_location loc, tree_id na
         if (!d)
                 return NULL; // unknown decl
 
-        tree_decl_kind  dk = tree_get_decl_kind(d);
+        tree_decl_kind dk = tree_get_decl_kind(d);
         tree_value_kind vk = TVK_LVALUE;
-        tree_type*      t  = tree_desugar_type(tree_get_decl_type(d));
+        tree_type* t = tree_desugar_type(tree_get_decl_type(d));
 
         if (dk == TDK_ENUMERATOR || dk == TDK_FUNCTION)
                 vk = TVK_RVALUE;
@@ -216,17 +216,17 @@ extern tree_exp* cprog_build_string_literal(cprog* self, tree_location loc, tree
 
 // c99 6.5.2.1 array subscripting
 // One of the expressions shall have type "pointer to object type",
-//    the other expression shall have integer type, and the result has type "type".
+// the other expression shall have integer type, and the result has type "type".
 extern tree_exp* cprog_build_subscript_exp(
         cprog* self, tree_location loc, tree_exp* lhs, tree_exp* rhs)
 {
         if (!lhs || !rhs)
                 return NULL;
 
-        tree_type*    lt = tree_desugar_type(cprog_perform_unary_conversion(self, &lhs));
-        tree_type*    rt = tree_desugar_type(tree_get_exp_type(rhs));
+        tree_type* lt = tree_desugar_type(cprog_perform_unary_conversion(self, &lhs));
+        tree_type* rt = tree_desugar_type(tree_get_exp_type(rhs));
         tree_location rl = tree_get_exp_loc(rhs);
-        tree_type*    t  = NULL;
+        tree_type* t = NULL;
 
         if (tree_type_is_pointer(lt))
         {
@@ -250,11 +250,11 @@ extern tree_exp* cprog_build_subscript_exp(
 
 // c99 6.5.2.2 function calls
 // The expression that denotes the called function shall have type pointer to function
-//    returning void or returning an object type other than an array type.
+// returning void or returning an object type other than an array type.
 // If the expression that denotes the called function has a type that includes a prototype,
-//    the number of arguments shall agree with the number of parameters. Each argument shall
-//    have a type such that its value may be assigned to an object with the unqualified version
-//    of the type of its corresponding parameter.
+// the number of arguments shall agree with the number of parameters. Each argument shall
+// have a type such that its value may be assigned to an object with the unqualified version
+// of the type of its corresponding parameter.
 extern tree_exp* cprog_build_call_exp(
         cprog* self, tree_location loc, tree_exp* lhs, objgroup* args)
 {
@@ -284,17 +284,17 @@ extern tree_exp* cprog_build_call_exp(
 
 // c99 6.5.2.3 structure and union members
 // The first operand of the . operator shall have a qualified or unqualified
-//    structure or union type, and the second operand shall name a member of that type.
+// structure or union type, and the second operand shall name a member of that type.
 // The first operand of the -> operator shall have type "pointer to qualified 
-//    or unqualified structure" or "pointer to qualified or unqualified union",
-//    and the second operand shall name a member of the type pointed to.
+// or unqualified structure" or "pointer to qualified or unqualified union",
+// and the second operand shall name a member of the type pointed to.
 extern tree_exp* cprog_build_member_exp(
-        cprog*        self,
+        cprog* self,
         tree_location loc,
-        tree_exp*     lhs,
-        tree_id       id,
+        tree_exp* lhs,
+        tree_id id,
         tree_location id_loc,
-        bool          is_arrow)
+        bool is_arrow)
 {
         if (!lhs)
                 return NULL;
@@ -315,7 +315,7 @@ extern tree_exp* cprog_build_member_exp(
                 return NULL;
         
         tree_decl* record = tree_get_decl_type_entity(t);
-        tree_decl* m      = cprog_require_member_decl(self, id_loc, record, id);
+        tree_decl* m = cprog_require_member_decl(self, id_loc, record, id);
         if (!m)
                 return NULL;
 
@@ -325,7 +325,7 @@ extern tree_exp* cprog_build_member_exp(
 
 // c99 6.5.2.4/6.5.3.1
 // The operand of the postfix (or prefix) increment or decrement operator shall have
-//    qualified or unqualified real or pointer type and shall be a modifiable lvalue.
+// qualified or unqualified real or pointer type and shall be a modifiable lvalue.
 static tree_type* cprog_check_inc_dec_op(cprog* self, tree_exp** exp)
 {
         tree_type* t = cprog_perform_array_function_to_pointer_conversion(self, exp);
@@ -338,8 +338,8 @@ static tree_type* cprog_check_inc_dec_op(cprog* self, tree_exp** exp)
 
 // 6.5.3.2 address and inderection operators
 // The operand of the unary & operator shall be either a function designator, the result of a
-//    [] or unary * operator, or an lvalue that designates an object
-//    that is not a bit - field and is not declared with the register storage - class specifier.
+// [] or unary * operator, or an lvalue that designates an object
+// that is not a bit - field and is not declared with the register storage - class specifier.
 static tree_type* cprog_check_address_op(cprog* self, tree_exp** exp)
 {
         if (!cprog_require_lvalue_or_function_designator(self, *exp))
@@ -352,7 +352,7 @@ static tree_type* cprog_check_address_op(cprog* self, tree_exp** exp)
 // The operand of the unary * operator shall have pointer type.
 static tree_type* cprog_check_dereference_op(cprog* self, tree_exp** exp, tree_value_kind* vk)
 {
-        tree_type* t      = tree_desugar_type(cprog_perform_unary_conversion(self, exp));
+        tree_type* t = tree_desugar_type(cprog_perform_unary_conversion(self, exp));
         tree_type_kind tk = tree_get_type_kind(t);
 
         if (!cprog_require_object_pointer_exp_type(self, t, tree_get_exp_loc(*exp)))
@@ -402,7 +402,7 @@ extern tree_exp* cprog_build_unop(
         if (!exp)
                 return NULL;
 
-        tree_type* t       = NULL;
+        tree_type* t = NULL;
         tree_value_kind vk = TVK_RVALUE;
 
         switch (opcode)
@@ -447,8 +447,8 @@ extern tree_exp* cprog_build_unop(
 
 // c99 6.5.3.4
 // The sizeof operator shall not be applied to an expression that has function type or an
-//    incomplete type, to the parenthesized name of such a type, or to an expression that
-//    designates a bit - field member.
+// incomplete type, to the parenthesized name of such a type, or to an expression that
+// designates a bit - field member.
 extern tree_exp* cprog_build_sizeof(cprog* self, tree_location loc, csizeof_rhs* rhs)
 {
         if (!rhs)
@@ -480,9 +480,9 @@ extern tree_exp* cprog_build_sizeof(cprog* self, tree_location loc, csizeof_rhs*
 
 // c99 6.5.4 cast operators
 // Unless the type name specifies a void type, the type name shall specify qualified or
-//    unqualified scalar type and the operand shall have scalar type.
+// unqualified scalar type and the operand shall have scalar type.
 // Conversions that involve pointers, other than where permitted by the constraints of
-//    6.5.16.1, shall be specified by means of an explicit cast.
+// 6.5.16.1, shall be specified by means of an explicit cast.
 extern tree_exp* cprog_build_cast(
         cprog* self, tree_location loc, tree_type* type, tree_exp* exp)
 {
@@ -559,16 +559,16 @@ static void cprog_invalid_binop_operands(
 
 // 6.5.8 Relational operators
 // One of the following shall hold:
-//    - both operands have real type;
-//    - both operands are pointers to qualified or unqualified versions of
-//      compatible object types; or
-//    - both operands are pointers to qualified or unqualified versions of
-//      compatible incomplete types
+// - both operands have real type;
+// - both operands are pointers to qualified or unqualified versions of
+// compatible object types; or
+// - both operands are pointers to qualified or unqualified versions of
+// compatible incomplete types
 static tree_type* cprog_check_relational_op(
         cprog* self, tree_binop_kind opcode, tree_location loc, tree_exp** lhs, tree_exp** rhs)
 {
-        tree_type*    lt = cprog_perform_unary_conversion(self, lhs);
-        tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
+        tree_type* lt = cprog_perform_unary_conversion(self, lhs);
+        tree_type* rt = cprog_perform_unary_conversion(self, rhs);
         tree_location rl = tree_get_exp_loc(*rhs);
 
         if (tree_type_is_real(lt) && tree_type_is_real(rt))
@@ -592,16 +592,16 @@ static tree_type* cprog_check_relational_op(
 
 // 6.5.9 Equality operators
 // One of the following shall hold:
-//    - both operands have arithmetic type;
-//    - both operands are pointers to qualified or unqualified versions of compatible types;
-//    - one operand is a pointer to an object or incomplete type and the other is a pointer to a
-//      qualified or unqualified version of void; or
-//    - one operand is a pointer and the other is a null pointer constant.
+// - both operands have arithmetic type;
+// - both operands are pointers to qualified or unqualified versions of compatible types;
+// - one operand is a pointer to an object or incomplete type and the other is a pointer to a
+// qualified or unqualified version of void; or
+// - one operand is a pointer and the other is a null pointer constant.
 static tree_type* cprog_check_compare_op(
         cprog* self, tree_binop_kind opcode, tree_location loc, tree_exp** lhs, tree_exp** rhs)
 {
-        tree_type*    lt = cprog_perform_unary_conversion(self, lhs);
-        tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
+        tree_type* lt = cprog_perform_unary_conversion(self, lhs);
+        tree_type* rt = cprog_perform_unary_conversion(self, rhs);
         tree_location rl = tree_get_exp_loc(*rhs);
 
         if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
@@ -635,13 +635,13 @@ static tree_type* cprog_check_compare_op(
 
 // 6.5.16.2 Compound assignment
 // For the operators += and -= only, either the left operand shall be a pointer to an object
-//    type and the right shall have integer type, or the left operand shall have qualified or
-//    unqualified arithmetic type and the right shall have arithmetic type.
+// type and the right shall have integer type, or the left operand shall have qualified or
+// unqualified arithmetic type and the right shall have arithmetic type.
 static tree_type* cprog_check_add_sub_assign_op(
         cprog* self, tree_binop_kind opcode, tree_location loc, tree_exp** lhs, tree_exp** rhs)
 {
-        tree_type*    lt = cprog_perform_array_function_to_pointer_conversion(self, lhs);
-        tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
+        tree_type* lt = cprog_perform_array_function_to_pointer_conversion(self, lhs);
+        tree_type* rt = cprog_perform_unary_conversion(self, rhs);
         tree_location rl = tree_get_exp_loc(*rhs);
 
         if (!cprog_require_modifiable_lvalue(self, *lhs))
@@ -702,13 +702,13 @@ static tree_type* cprog_check_mod_op(
 
 // 6.5.6 additive
 // For addition, either both operands shall have arithmetic type, or one operand shall be a
-//    pointer to an object type and the other shall have integer type.
-//    (Incrementing is equivalent to adding 1.)
+// pointer to an object type and the other shall have integer type.
+// (Incrementing is equivalent to adding 1.)
 static tree_type* cprog_check_add_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
-        tree_type*    lt = cprog_perform_unary_conversion(self, lhs);
-        tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
+        tree_type* lt = cprog_perform_unary_conversion(self, lhs);
+        tree_type* rt = cprog_perform_unary_conversion(self, rhs);
         tree_location rl = tree_get_exp_loc(*rhs);
 
         if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
@@ -733,16 +733,16 @@ static tree_type* cprog_check_add_op(
 
 // 6.5.6 additive
 // For subtraction, one of the following shall hold :
-//    - both operands have arithmetic type;
-//    - both operands are pointers to qualified or unqualified versions
-//      of compatible object types; or
-//    - the left operand is a pointer to an object type and the right operand has integer type.
+// - both operands have arithmetic type;
+// - both operands are pointers to qualified or unqualified versions
+// of compatible object types; or
+// - the left operand is a pointer to an object type and the right operand has integer type.
 // (Decrementing is equivalent to subtracting 1.)
 static tree_type* cprog_check_sub_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
-        tree_type*    lt = cprog_perform_unary_conversion(self, lhs);
-        tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
+        tree_type* lt = cprog_perform_unary_conversion(self, lhs);
+        tree_type* rt = cprog_perform_unary_conversion(self, rhs);
         tree_location rl = tree_get_exp_loc(*rhs);
 
         if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
@@ -851,7 +851,7 @@ static bool cprog_check_pointer_qualifier_discartion(
                 return true;
 
         tree_type_quals diff = TTQ_UNQUALIFIED;
-        tree_type_quals lq   = tree_get_type_quals(lt);
+        tree_type_quals lq = tree_get_type_quals(lt);
 
         if ((rq & TTQ_CONST) && !(lq & TTQ_CONST))
                 diff |= TTQ_CONST;
@@ -892,22 +892,22 @@ static bool cprog_check_assignment_pointer_types(
 // 6.5.16.1 Simple assignment
 // One of the following shall hold:
 // - the left operand has qualified or unqualified arithmetic type and the right has
-//   arithmetic type;
+// arithmetic type;
 // - the left operand has a qualified or unqualified version of a structure or union type
-//   compatible with the type of the right;
+// compatible with the type of the right;
 // - both operands are pointers to qualified or unqualified versions of compatible types,
-//   and the type pointed to by the left has all the qualifiers of the type pointed to by the
-//   right;
+// and the type pointed to by the left has all the qualifiers of the type pointed to by the
+// right;
 // - one operand is a pointer to an object or incomplete type and the other is a pointer to a
-//   qualified or unqualified version of void, and the type pointed to by the left has all
-//   the qualifiers of the type pointed to by the right;
+// qualified or unqualified version of void, and the type pointed to by the left has all
+// the qualifiers of the type pointed to by the right;
 // - the left operand is a pointer and the right is a null pointer constant; or
 // - the left operand has type _Bool and the right is a pointer.
 static tree_type* cprog_check_assign_op(
         cprog* self, tree_exp** lhs, tree_exp** rhs, tree_location loc)
 {
-        tree_type*    lt = cprog_perform_array_function_to_pointer_conversion(self, lhs);
-        tree_type*    rt = cprog_perform_unary_conversion(self, rhs);
+        tree_type* lt = cprog_perform_array_function_to_pointer_conversion(self, lhs);
+        tree_type* rt = cprog_perform_unary_conversion(self, rhs);
         tree_location rl = tree_get_exp_loc(*rhs);
 
         if (!cprog_require_modifiable_lvalue(self, *lhs))
@@ -1030,26 +1030,26 @@ S_STATIC_ASSERT(TBK_SIZE == 31, "Binop table needs an update");
 static tree_type* (*ccheck_binop_table[TBK_SIZE])(
         cprog*, tree_exp**, tree_exp**, tree_location) =
 {
-        NULL,                      // TBK_UNKNOWN
-        cprog_check_mul_op,        // TBK_MUL
-        cprog_check_div_op,        // TBK_DIV
-        cprog_check_mod_op,        // TBK_MOD
-        cprog_check_add_op,        // TBK_ADD
-        cprog_check_sub_op,        // TBK_SUB
-        cprog_check_shl_op,        // TBK_SHL
-        cprog_check_shr_op,        // TBK_SHR
-        cprog_check_le_op,         // TBK_LE
-        cprog_check_gr_op,         // TBK_GR
-        cprog_check_leq_op,        // TBK_LEQ
-        cprog_check_geq_op,        // TBK_GEQ
-        cprog_check_eq_op,         // TBK_EQ
-        cprog_check_neq_op,        // TBK_NEQ
-        cprog_check_and_op,        // TBK_AND
-        cprog_check_xor_op,        // TBK_XOR
-        cprog_check_or_op,         // TBK_OR
-        cprog_check_log_and_op,    // TBK_LOG_AND
-        cprog_check_log_or_op,     // TBK_LOG_OR
-        cprog_check_assign_op,     // TBK_ASSIGN
+        NULL, // TBK_UNKNOWN
+        cprog_check_mul_op, // TBK_MUL
+        cprog_check_div_op, // TBK_DIV
+        cprog_check_mod_op, // TBK_MOD
+        cprog_check_add_op, // TBK_ADD
+        cprog_check_sub_op, // TBK_SUB
+        cprog_check_shl_op, // TBK_SHL
+        cprog_check_shr_op, // TBK_SHR
+        cprog_check_le_op, // TBK_LE
+        cprog_check_gr_op, // TBK_GR
+        cprog_check_leq_op, // TBK_LEQ
+        cprog_check_geq_op, // TBK_GEQ
+        cprog_check_eq_op, // TBK_EQ
+        cprog_check_neq_op, // TBK_NEQ
+        cprog_check_and_op, // TBK_AND
+        cprog_check_xor_op, // TBK_XOR
+        cprog_check_or_op, // TBK_OR
+        cprog_check_log_and_op, // TBK_LOG_AND
+        cprog_check_log_or_op, // TBK_LOG_OR
+        cprog_check_assign_op, // TBK_ASSIGN
         cprog_check_add_assign_op, // TBK_ADD_ASSIGN
         cprog_check_sub_assign_op, // TBK_SUB_ASSIGN
         cprog_check_mul_assign_op, // TBK_MUL_ASSIGN
@@ -1059,8 +1059,8 @@ static tree_type* (*ccheck_binop_table[TBK_SIZE])(
         cprog_check_shr_assign_op, // TBK_SHR_ASSIGN
         cprog_check_and_assign_op, // TBK_AND_ASSIGN
         cprog_check_xor_assign_op, // TBK_XOR_ASSIGN
-        cprog_check_or_assign_op,  // TBK_OR_ASSIGN
-        cprog_check_comma_op,      // TBK_COMMA
+        cprog_check_or_assign_op, // TBK_OR_ASSIGN
+        cprog_check_comma_op, // TBK_COMMA
 };
 
 // returns type of the binary operator
@@ -1092,19 +1092,19 @@ static tree_type* cprog_check_conditional_operator_pointer_types(
         bool lpointer = tree_type_is_object_pointer(lt);
         bool rpointer = tree_type_is_object_pointer(rt);
 
-        tree_type*      target = NULL;
-        tree_type_quals quals  = TTQ_UNQUALIFIED;
+        tree_type* target = NULL;
+        tree_type_quals quals = TTQ_UNQUALIFIED;
         if (rpointer && tree_exp_is_null_pointer_constant(lhs))
         {
                 target = tree_get_pointer_target(rt);
-                quals  = tree_get_type_quals(target);
+                quals = tree_get_type_quals(target);
                 if (lpointer)
                         quals |= tree_get_type_quals(tree_get_pointer_target(lt));
         }
         else if (lpointer && tree_exp_is_null_pointer_constant(rhs))
         {
                 target = tree_get_pointer_target(lt);
-                quals  = tree_get_type_quals(target);
+                quals = tree_get_type_quals(target);
                 if (rpointer)
                         quals |= tree_get_type_quals(tree_get_pointer_target(rt));
         }
@@ -1145,13 +1145,13 @@ static tree_type* cprog_check_conditional_operator_pointer_types(
 // - both operands are pointers to qualified or unqualified versions of compatible types;
 // - one operand is a pointer and the other is a null pointer constant; or
 // - one operand is a pointer to an object or incomplete type and the other is a pointer to a
-//   qualified or unqualified version of void.
+// qualified or unqualified version of void.
 extern tree_exp* cprog_build_conditional(
-        cprog*        self,
+        cprog* self,
         tree_location loc,
-        tree_exp*     condition,
-        tree_exp*     lhs,
-        tree_exp*     rhs)
+        tree_exp* condition,
+        tree_exp* lhs,
+        tree_exp* rhs)
 {
         if (!condition || !lhs || !rhs)
                 return NULL;
@@ -1160,7 +1160,7 @@ extern tree_exp* cprog_build_conditional(
         if (!cprog_require_scalar_exp_type(self, ct, tree_get_exp_loc(condition)))
                 return NULL;
 
-        tree_type* t  = NULL;
+        tree_type* t = NULL;
         tree_type* lt = tree_get_exp_type(lhs);
         tree_type* rt = tree_get_exp_type(rhs);
         if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
@@ -1192,10 +1192,10 @@ extern tree_designation* cprog_build_designation(cprog* self)
 }
 
 extern tree_designation* cprog_finish_designation(
-        cprog*            self,
-        tree_exp*         initializer_list,
+        cprog* self,
+        tree_exp* initializer_list,
         tree_designation* designation,
-        tree_exp*         designation_initializer)
+        tree_exp* designation_initializer)
 {
         tree_set_designation_initializer(designation, designation_initializer);
         tree_add_init_designation(initializer_list, designation);
@@ -1220,7 +1220,7 @@ extern tree_designator* cprog_build_member_designator(
                 return NULL;
 
         tree_decl* record = tree_get_decl_type_entity(t);
-        tree_decl* m      = cprog_require_member_decl(self, loc, record, name);
+        tree_decl* m = cprog_require_member_decl(self, loc, record, name);
         if (!m)
                 return NULL;
         
@@ -1242,7 +1242,7 @@ extern tree_designator* cprog_build_array_designator(
 }
 
 extern tree_designator* cprog_finish_designator(
-        cprog* self, tree_designation* designation, tree_designator*  designator)
+        cprog* self, tree_designation* designation, tree_designator* designator)
 {
         tree_add_designation_designator(designation, designator);
         return designator;

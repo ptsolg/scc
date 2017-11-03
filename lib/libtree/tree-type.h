@@ -13,8 +13,8 @@ extern "C" {
 #include "tree-common.h"
 #include "tree-decl.h" // tree_decl_kind
 
-typedef struct _tree_type        tree_type;
-typedef struct _tree_decl        tree_decl;
+typedef struct _tree_type tree_type;
+typedef struct _tree_decl tree_decl;
 typedef struct _tree_target_info tree_target_info;
 
 typedef enum _tree_type_kind
@@ -37,11 +37,11 @@ struct _tree_type_base
 
 extern tree_type* tree_new_type(tree_context* context, tree_type_kind kind, ssize size);
 
-static inline struct _tree_type_base*       _tree_get_type(tree_type* self);
+static inline struct _tree_type_base* _tree_get_type(tree_type* self);
 static inline const struct _tree_type_base* _tree_get_ctype(const tree_type* self);
 
-static inline bool           tree_type_is(const tree_type* self, tree_type_kind k);
-static inline bool           tree_type_is_qualified(const tree_type* self);
+static inline bool tree_type_is(const tree_type* self, tree_type_kind k);
+static inline bool tree_type_is_qualified(const tree_type* self);
 static inline tree_type_kind tree_get_type_kind(const tree_type* self);
 
 static inline void tree_set_type_kind(tree_type* self, tree_type_kind k);
@@ -49,17 +49,17 @@ static inline void tree_set_type_kind(tree_type* self, tree_type_kind k);
 struct _tree_chain_type
 {
         struct _tree_type_base _base;
-        tree_type*             _next;
+        tree_type* _next;
 };
 
 extern tree_type* tree_new_chain_type(
         tree_context* context, tree_type_kind kind, tree_type* next, ssize size);
 
-static inline struct _tree_chain_type*       _tree_get_chain_type(tree_type* self);
+static inline struct _tree_chain_type* _tree_get_chain_type(tree_type* self);
 static inline const struct _tree_chain_type* _tree_get_chain_ctype(const tree_type* self);
 
 static inline tree_type* tree_get_chain_type_next(const tree_type* self);
-static inline void       tree_set_chain_type_next(tree_type* self, tree_type* next);
+static inline void tree_set_chain_type_next(tree_type* self, tree_type* next);
 
 typedef enum
 {
@@ -86,7 +86,7 @@ struct _tree_builtin_type
 
 extern tree_type* tree_new_builtin_type(tree_context* context, tree_builtin_type_kind kind);
 
-static inline struct _tree_builtin_type*       _tree_get_builtin_type(tree_type* self);
+static inline struct _tree_builtin_type* _tree_get_builtin_type(tree_type* self);
 static inline const struct _tree_builtin_type* _tree_get_builtin_ctype(const tree_type* self);
 
 static inline tree_builtin_type_kind tree_get_builtin_type_kind(const tree_type* self);
@@ -96,42 +96,42 @@ static inline void tree_set_builtin_type_kind(tree_type* self, tree_builtin_type
 struct _tree_function_type
 {
         struct _tree_chain_type _base;
-        objgroup                _params;
+        objgroup _params;
 };
 
 extern tree_type* tree_new_function_type(tree_context* context, tree_type* restype);
-extern void       tree_set_function_type_params(tree_type* self, objgroup* params);
-extern void       tree_add_function_type_param(tree_type* self, tree_type* param);
+extern void tree_set_function_type_params(tree_type* self, objgroup* params);
+extern void tree_add_function_type_param(tree_type* self, tree_type* param);
 
-static inline struct _tree_function_type*       _tree_get_function_type(tree_type* self);
+static inline struct _tree_function_type* _tree_get_function_type(tree_type* self);
 static inline const struct _tree_function_type* _tree_get_function_ctype(const tree_type* self);
 
-static inline ssize       tree_get_function_type_nparams(const tree_type* self);
-static inline tree_type*  tree_get_function_restype(const tree_type* self);
-static inline tree_type*  tree_get_function_type_param(const tree_type* self, ssize n);
+static inline ssize tree_get_function_type_nparams(const tree_type* self);
+static inline tree_type* tree_get_function_restype(const tree_type* self);
+static inline tree_type* tree_get_function_type_param(const tree_type* self, ssize n);
 static inline tree_type** tree_get_function_type_begin(const tree_type* self);
 static inline tree_type** tree_get_function_type_end(const tree_type* self);
 
 static inline void tree_set_function_restype(tree_type* self, tree_type* restype);
 
-#define TREE_FOREACH_FUNC_PARAM(PFUNC, ITNAME)                         \
+#define TREE_FOREACH_FUNC_PARAM(PFUNC, ITNAME) \
         for (tree_type** ITNAME = tree_get_function_type_begin(PFUNC); \
                 ITNAME != tree_get_function_type_end(PFUNC); ITNAME++)
 
 struct _tree_array_type
 {
         struct _tree_chain_type _base;
-        tree_exp*               _size;
+        tree_exp* _size;
 };
 
 extern tree_type* tree_new_array_type(
         tree_context* context, tree_type* eltype, tree_exp* size);
 
-static inline struct _tree_array_type*       _tree_get_array_type(tree_type* self);
+static inline struct _tree_array_type* _tree_get_array_type(tree_type* self);
 static inline const struct _tree_array_type* _tree_get_array_ctype(const tree_type* self);
 
 static inline tree_type* tree_get_array_eltype(const tree_type* self);
-static inline tree_exp*  tree_get_array_size(const tree_type* self);
+static inline tree_exp* tree_get_array_size(const tree_type* self);
 
 static inline void tree_set_array_eltype(tree_type* self, tree_type* eltype);
 static inline void tree_set_array_size(tree_type* self, tree_exp* size);
@@ -139,16 +139,16 @@ static inline void tree_set_array_size(tree_type* self, tree_exp* size);
 struct _tree_decl_type
 {
         struct _tree_type_base _base;
-        tree_decl*             _entity;
-        bool                   _referenced;
+        tree_decl* _entity;
+        bool _referenced;
 };
 
 extern tree_type* tree_new_decl_type(tree_context* context, tree_decl* decl, bool referenced);
 
-static inline struct _tree_decl_type*       _tree_get_decl_type(tree_type* self);
+static inline struct _tree_decl_type* _tree_get_decl_type(tree_type* self);
 static inline const struct _tree_decl_type* _tree_get_decl_ctype(const tree_type* self);
 
-static inline bool       tree_decl_type_is_referenced(const tree_type* self);
+static inline bool tree_decl_type_is_referenced(const tree_type* self);
 static inline tree_decl* tree_get_decl_type_entity(const tree_type* self);
 
 static inline void tree_set_decl_type_entity(tree_type* self, tree_decl* decl);
@@ -161,11 +161,11 @@ struct _tree_pointer_type
 
 extern tree_type* tree_new_pointer_type(tree_context* context, tree_type* target);
 
-static inline struct _tree_pointer_type*       _tree_get_pointer(tree_type* self);
+static inline struct _tree_pointer_type* _tree_get_pointer(tree_type* self);
 static inline const struct _tree_pointer_type* _tree_get_cpointer(const tree_type* self);
 
 static inline tree_type* tree_get_pointer_target(const tree_type* self);
-static inline void       tree_set_pointer_target(tree_type* self, tree_type* target);
+static inline void tree_set_pointer_target(tree_type* self, tree_type* target);
 
 struct _tree_paren_type
 {
@@ -175,43 +175,43 @@ struct _tree_paren_type
 extern tree_type* tree_new_paren_type(tree_context* context, tree_type* next);
 
 static inline tree_type* tree_get_paren_type(const tree_type* self);
-static inline void       tree_set_paren_type(tree_type* self, tree_type* next);
+static inline void tree_set_paren_type(tree_type* self, tree_type* next);
 
 union _tree_unqualified_type
 {
-        struct _tree_builtin_type  _builtin;
+        struct _tree_builtin_type _builtin;
         struct _tree_function_type _func;
-        struct _tree_pointer_type  _pointer;
-        struct _tree_array_type    _array;
-        struct _tree_decl_type     _decl;
+        struct _tree_pointer_type _pointer;
+        struct _tree_array_type _array;
+        struct _tree_decl_type _decl;
 };
 
 typedef enum
 {
         TTQ_UNQUALIFIED = 0,
-        TTQ_CONST       = 1,
-        TTQ_VOLATILE    = 2,
-        TTQ_RESTRICT    = 4,
+        TTQ_CONST = 1,
+        TTQ_VOLATILE = 2,
+        TTQ_RESTRICT = 4,
 } tree_type_quals;
 
 struct _tree_qualified_type
 {
         union _tree_unqualified_type* _type;
-        tree_type_quals               _quals;
+        tree_type_quals _quals;
 };
 
-#define _TREE_QUAL_FLAG   ((ssize)1)
+#define _TREE_QUAL_FLAG ((ssize)1)
 #define _TREE_UNQUAL_MASK (~_TREE_QUAL_FLAG)
 
 extern tree_type* tree_new_qual_type(
         tree_context* context, tree_type_quals quals, tree_type* type);
 
-static inline struct _tree_qualified_type*       _tree_get_qtype(tree_type* self);
+static inline struct _tree_qualified_type* _tree_get_qtype(tree_type* self);
 static inline const struct _tree_qualified_type* _tree_get_cqtype(const tree_type* self);
 
-static inline tree_type_quals  tree_get_type_quals(const tree_type* self);
+static inline tree_type_quals tree_get_type_quals(const tree_type* self);
 static inline const tree_type* tree_get_unqualified_ctype(const tree_type* self);
-static inline tree_type*       tree_get_unqualified_type(tree_type* self);
+static inline tree_type* tree_get_unqualified_type(tree_type* self);
 
 static inline void tree_add_type_quals(tree_type* self, tree_type_quals q);
 static inline void tree_set_type_quals(tree_type* self, tree_type_quals q);
@@ -222,16 +222,16 @@ typedef struct _tree_type
         union
         {
                 union _tree_unqualified_type _utype;
-                struct _tree_qualified_type  _qtype;
+                struct _tree_qualified_type _qtype;
         };
 } tree_type;
 
-extern tree_type*       tree_ignore_typedefs(tree_type* self);
+extern tree_type* tree_ignore_typedefs(tree_type* self);
 extern const tree_type* tree_ignore_ctypedefs(const tree_type* self);
-extern tree_type*       tree_ignore_paren_types(tree_type* self);
+extern tree_type* tree_ignore_paren_types(tree_type* self);
 extern const tree_type* tree_ignore_paren_ctypes(const tree_type* self);
 // ignores typedefs and ignore parenthesises, if any
-extern tree_type*       tree_desugar_type(tree_type* self);
+extern tree_type* tree_desugar_type(tree_type* self);
 extern const tree_type* tree_desugar_ctype(const tree_type* self);
 
 extern bool tree_builtin_type_is(const tree_type* self, tree_builtin_type_kind k);

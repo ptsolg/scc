@@ -22,13 +22,13 @@ typedef enum
 typedef struct _scc_env
 {
         scc_run_mode mode;
-        aparser      parser;
-        objgroup     handlers;
-        objgroup     input;
-        objgroup     include;
-        const char*  output;
-        FILE*        err;
-        serrcode     return_code;
+        aparser parser;
+        objgroup handlers;
+        objgroup input;
+        objgroup include;
+        const char* output;
+        FILE* err;
+        serrcode return_code;
 
         struct
         {
@@ -38,14 +38,14 @@ typedef struct _scc_env
                 bool print_impl_casts;
                 bool print_eval_result;
                 bool force_brackets;
-                int  float_precision;
-                int  double_precision;
+                int float_precision;
+                int double_precision;
         } opts;
 } scc_env;
 
 extern serrcode scc_init(scc_env* self, FILE* err, int argc, const char** argv);
 extern serrcode scc_run(scc_env* self);
-extern void     scc_dispose(scc_env* self);
+extern void scc_dispose(scc_env* self);
 
 extern serrcode scc_add_lookup_directory(scc_env* self, const char* dir);
 extern serrcode scc_add_input(scc_env* self, const char* file);

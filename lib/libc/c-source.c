@@ -15,7 +15,7 @@ extern int csource_get_line(const csource* self, tree_location loc)
 
         for (ssize i = 0; i < nlines; i++)
         {
-                tree_location cur  = (tree_location)objgroup_nth(&self->_lines, i);
+                tree_location cur = (tree_location)objgroup_nth(&self->_lines, i);
                 tree_location next = csource_end(self);
                 if (i + 1 < nlines)
                         next = (tree_location)objgroup_nth(&self->_lines, i + 1);
@@ -133,12 +133,12 @@ static csource* _csource_new(allocator* alloc, const char* path)
         }
 
         strcpy(source->_path, path);
-        source->_begin    = 0;
-        source->_end      = 0;
-        source->_opened   = false;
+        source->_begin = 0;
+        source->_end = 0;
+        source->_opened = false;
         source->_emulated = false;
-        source->_content  = NULL;
-        source->_file     = NULL;
+        source->_content = NULL;
+        source->_file = NULL;
         objgroup_init_ex(&source->_lines, alloc);
         return source;
 }
@@ -156,7 +156,7 @@ static csource* csource_new(
 
         if (content)
         {
-                ssize len        = strlen(content) + 1; // space for eof
+                ssize len = strlen(content) + 1; // space for eof
                 source->_content = allocate(source_manager->alloc, len);
                 if (!source->_content)
                 {
@@ -166,7 +166,7 @@ static csource* csource_new(
 
                 strcpy(source->_content, content);
                 source->_emulated = true;
-                source->_end      = source->_begin + (tree_location)len;
+                source->_end = source->_begin + (tree_location)len;
         }
         else
         {
@@ -219,15 +219,15 @@ extern serrcode csource_find_loc(const csource_manager* self, clocation* res, tr
         {
                 if (csource_has(*it, loc))
                 {
-                        res->file   = csource_get_name(*it);
-                        res->line   = csource_get_line(*it, loc);
+                        res->file = csource_get_name(*it);
+                        res->line = csource_get_line(*it, loc);
                         res->column = csource_get_col(*it, loc);
                         return S_NO_ERROR;
                 }
         }
 
-        res->file   = "";
-        res->line   = 0;
+        res->file = "";
+        res->line = 0;
         res->column = 0;
         return S_ERROR;
 }

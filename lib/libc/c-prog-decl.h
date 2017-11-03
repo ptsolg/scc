@@ -58,7 +58,7 @@ extern bool cprog_set_var_initializer(cprog* self, tree_decl* decl, tree_exp* in
 extern bool cprog_set_function_body(cprog* self, tree_decl* decl, tree_stmt* body);
 
 extern cparam* cprog_build_param(cprog* self);
-extern void    cprog_handle_unused_param(cprog* self, cparam* p);
+extern void cprog_handle_unused_param(cprog* self, cparam* p);
 extern cparam* cprog_add_declarator_param(cprog* self, cdeclarator* d, cparam* p);
 extern cparam* cprog_finish_param(cprog* self, cparam* p);
 

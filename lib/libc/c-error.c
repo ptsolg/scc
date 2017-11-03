@@ -5,12 +5,12 @@
 extern void cerror_manager_init(
         cerror_manager* self, const csource_manager* source_manager, FILE* err)
 {
-        self->enabled            = true;
-        self->errors             = 0;
-        self->warnings           = 0;
+        self->enabled = true;
+        self->errors = 0;
+        self->warnings = 0;
         self->errors_as_warnings = false;
-        self->source_manager     = source_manager;
-        self->err                = err;
+        self->source_manager = source_manager;
+        self->err = err;
 }
 
 extern void cerrors_set_enabled(cerror_manager* self)
@@ -33,8 +33,8 @@ static const char* cerror_severity_to_str[] =
 extern void cerror(
         cerror_manager* self,
         cerror_severity severity,
-        tree_location   loc,
-        const char*     description, ...)
+        tree_location loc,
+        const char* description, ...)
 {
         if (!self->enabled)
                 return;

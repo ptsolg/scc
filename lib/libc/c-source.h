@@ -12,20 +12,20 @@ extern "C" {
 #include <libscl/file.h>
 #include <libtree/tree-common.h>
 
-typedef struct _ctree_context   ctree_context;
+typedef struct _ctree_context ctree_context;
 typedef struct _csource_manager csource_manager;
 
 typedef struct _csource
 {
-        char*         _path;
+        char* _path;
         tree_location _begin;
         tree_location _end;
-        bool          _opened;
-        objgroup      _lines;
-        bool          _emulated;
-        char*         _content;
-        FILE*         _file;
-        readbuf       _rb;
+        bool _opened;
+        objgroup _lines;
+        bool _emulated;
+        char* _content;
+        FILE* _file;
+        readbuf _rb;
         union
         {
                 fread_cb _fread;
@@ -33,16 +33,16 @@ typedef struct _csource
         };
 } csource;
 
-extern bool     csource_has(const csource* self, tree_location loc);
+extern bool csource_has(const csource* self, tree_location loc);
 // returns 0 if location is invalid
-extern int      csource_get_line(const csource* self, tree_location loc);
+extern int csource_get_line(const csource* self, tree_location loc);
 // returns 0 if location is invalid
-extern int      csource_get_col(const csource* self, tree_location loc);
+extern int csource_get_col(const csource* self, tree_location loc);
 // assumes that loc is beginning of a line
 extern serrcode csource_save_line_loc(csource* self, tree_location loc);
                 
 extern readbuf* csource_open(csource* self);
-extern void     csource_close(csource* self);
+extern void csource_close(csource* self);
 
 static inline tree_location csource_begin(const csource* self)
 {
@@ -71,23 +71,23 @@ static inline const char* csource_get_name(const csource* self)
 
 typedef struct _csource_manager
 {
-        htab       source_lookup;
-        objgroup   sources;
-        objgroup   lookup;
+        htab source_lookup;
+        objgroup sources;
+        objgroup lookup;
         allocator* alloc;
 } csource_manager;
 
-extern void     csource_manager_init(csource_manager* self, ctree_context* context);
-extern void     csource_manager_dispose(csource_manager* self);
+extern void csource_manager_init(csource_manager* self, ctree_context* context);
+extern void csource_manager_dispose(csource_manager* self);
 extern serrcode csource_manager_add_lookup(csource_manager* self, const char* path);
-extern bool     csource_exists(csource_manager* self, const char* path);
+extern bool csource_exists(csource_manager* self, const char* path);
 extern csource* csource_find(csource_manager* self, const char* path);
 extern csource* csource_emulate(csource_manager* self, const char* name, const char* content);
 
 typedef struct _clocation
 {
-        int         line;
-        int         column;
+        int line;
+        int column;
         const char* file;
 } clocation;
 

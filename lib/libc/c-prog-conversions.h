@@ -11,7 +11,7 @@ extern "C" {
 
 #include "c-prog.h"
 
-extern tree_exp*  cprog_build_impl_cast(cprog* self, tree_exp* e, tree_type* t);
+extern tree_exp* cprog_build_impl_cast(cprog* self, tree_exp* e, tree_type* t);
 extern tree_type* cprog_perform_lvalue_conversion(cprog* self, tree_exp** e);
 extern tree_type* cprog_perform_array_to_pointer_conversion(cprog* self, tree_exp** e);
 extern tree_type* cprog_perform_function_to_pointer_conversion(cprog* self, tree_exp** e);

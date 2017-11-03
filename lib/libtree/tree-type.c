@@ -179,8 +179,8 @@ extern bool tree_type_is_unsigned_integer(const tree_type* self)
 
         switch (tree_get_builtin_type_kind(self))
         {
-                case TBTK_UINT8:        
-                case TBTK_UINT16:   
+                case TBTK_UINT8: 
+                case TBTK_UINT16: 
                 case TBTK_UINT32:
                 case TBTK_UINT64:
                         return true;
@@ -400,7 +400,7 @@ extern tree_type* tree_new_qual_type(
         if (!qt)
                 return NULL;
 
-        qt->_qtype._type  = (union _tree_unqualified_type*)type;
+        qt->_qtype._type = (union _tree_unqualified_type*)type;
         qt->_qtype._quals = quals;
         qt = (tree_type*)((ssize)qt | _TREE_QUAL_FLAG);
         return qt;
@@ -450,13 +450,13 @@ extern tree_builtin_type_kind tree_get_integer_counterpart(const tree_type* t)
 {
         switch (tree_get_builtin_type_kind(t))
         {
-                case TBTK_INT8:   return TBTK_UINT8;
-                case TBTK_UINT8:  return TBTK_INT8;
-                case TBTK_INT16:  return TBTK_UINT16;
+                case TBTK_INT8: return TBTK_UINT8;
+                case TBTK_UINT8: return TBTK_INT8;
+                case TBTK_INT16: return TBTK_UINT16;
                 case TBTK_UINT16: return TBTK_INT16;
-                case TBTK_INT32:  return TBTK_UINT32;
+                case TBTK_INT32: return TBTK_UINT32;
                 case TBTK_UINT32: return TBTK_INT32;
-                case TBTK_INT64:  return TBTK_UINT64;
+                case TBTK_INT64: return TBTK_UINT64;
                 case TBTK_UINT64: return TBTK_INT64;
 
                 default:

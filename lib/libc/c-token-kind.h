@@ -18,7 +18,7 @@ extern "C" {
 #define CPUNCTUATOR(T) CTOKEN(T)
 
 // if else do while etc...
-#define CKEYWORD(T)    CTOKEN(T)
+#define CKEYWORD(T) CTOKEN(T)
 
 typedef enum _ctoken_kind
 {
@@ -34,7 +34,7 @@ typedef enum _ctoken_kind
 #define CTOKEN(T) _TOSTR(CTK_##T)
 #define CPP_KEYWORD(T) _TOSTR(CTK_PP_##T)
 #define CPUNCTUATOR(T) CTOKEN(T)
-#define CKEYWORD(T)    CTOKEN(T)
+#define CKEYWORD(T) CTOKEN(T)
 
 static const char* ctoken_kind_to_string[] = 
 {

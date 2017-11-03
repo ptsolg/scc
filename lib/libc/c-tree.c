@@ -85,22 +85,22 @@ extern tree_id ctree_context_add_string(ctree_context* self, const char* s, ssiz
 extern void csizeof_exp_init(csizeof_rhs* self, tree_exp* e)
 {
         self->unary = true;
-        self->exp   = e;
-        self->loc   = tree_get_exp_loc(e);
+        self->exp = e;
+        self->loc = tree_get_exp_loc(e);
 }
 
 extern void csizeof_type_init(csizeof_rhs* self, tree_type* t, tree_location loc)
 {
         self->unary = false;
-        self->type  = t;
-        self->loc   = loc;
+        self->type = t;
+        self->loc = loc;
 }
 
 extern void cinit_iterator_init(cinit_iterator* self, tree_type* entity)
 {
-        self->entity        = tree_desugar_type(entity);
-        self->member_pos    = NULL;
-        self->array_pos     = -1;
+        self->entity = tree_desugar_type(entity);
+        self->member_pos = NULL;
+        self->array_pos = -1;
         self->type_iterated = false;
 }
 
@@ -156,10 +156,10 @@ extern tree_type* cinit_iterator_get_pos_type(cinit_iterator* self)
 
 extern void cbuiltin_type_info_init(cbuiltin_type_info* self)
 {
-        self->base      = TBTK_INVALID;
-        self->nshort    = 0;
-        self->nlong     = 0;
-        self->nsigned   = 0;
+        self->base = TBTK_INVALID;
+        self->nshort = 0;
+        self->nlong = 0;
+        self->nsigned = 0;
         self->nunsigned = 0;
 }
 
@@ -270,11 +270,11 @@ extern bool cbuiltin_type_info_set_long(cbuiltin_type_info* self)
 
 extern void cdecl_specs_init(cdecl_specs* self)
 {
-        self->class_     = TDSC_NONE;
-        self->typespec   = NULL;
-        self->funcspec   = TFSK_NONE;
+        self->class_ = TDSC_NONE;
+        self->typespec = NULL;
+        self->funcspec = TFSK_NONE;
         self->is_typedef = false;
-        self->loc        = TREE_INVALID_XLOC;
+        self->loc = TREE_INVALID_XLOC;
 }
 
 extern void cdecl_specs_set_start_loc(cdecl_specs* self, tree_location start_loc)
@@ -300,11 +300,11 @@ extern void ctype_chain_init(ctype_chain* self)
 
 extern void cdeclarator_init(cdeclarator* self, ctree_context* context, cdeclarator_kind k)
 {
-        self->kind               = k;
-        self->id                 = tree_get_empty_id();
+        self->kind = k;
+        self->id = tree_get_empty_id();
         self->params_initialized = false;
-        self->loc                = TREE_INVALID_XLOC;
-        self->id_loc             = TREE_INVALID_LOC;
+        self->loc = TREE_INVALID_XLOC;
+        self->id_loc = TREE_INVALID_LOC;
 
         ctype_chain_init(&self->type);
         objgroup_init_ex(&self->params,
@@ -318,7 +318,7 @@ extern void cdeclarator_dispose(cdeclarator* self)
 
 extern void cdeclarator_set_id(cdeclarator* self, tree_location id_loc, tree_id id)
 {
-        self->id     = id;
+        self->id = id;
         self->id_loc = id;
 }
 

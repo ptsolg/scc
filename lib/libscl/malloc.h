@@ -15,7 +15,7 @@ typedef void*(*malloc_fn)(size_t);
 typedef void (*free_fn)(void*);
 
 extern malloc_fn smalloc;
-extern free_fn   sfree;
+extern free_fn sfree;
 
 extern void scl_override_malloc(malloc_fn malloc, free_fn free);
       

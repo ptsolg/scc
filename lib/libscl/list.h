@@ -43,7 +43,7 @@ static inline void list_node_add_after(list_node* self, list_node* other)
 
         other->_next = next;
         other->_prev = self;
-        self->_next  = other;
+        self->_next = other;
 }
 
 // inserts other node before self node
@@ -56,7 +56,7 @@ static inline void list_node_add_before(list_node* self, list_node* other)
 
         other->_prev = prev;
         other->_next = self;
-        self->_prev  = other;
+        self->_prev = other;
 }
 
 static inline list_node* list_node_remove(list_node* self)
@@ -70,7 +70,7 @@ typedef struct _list_head
 {
         union
         {
-                list_node  _base;
+                list_node _base;
                 struct
                 {
                         list_node* _first;
@@ -112,7 +112,7 @@ static inline const list_node* list_cend(const list_head* self)
 static inline void list_init(list_head* self)
 {
         self->_first = list_end(self);
-        self->_last  = list_end(self);
+        self->_last = list_end(self);
 }
 
 static inline list_head list_create(list_node* first, list_node* last)
@@ -132,7 +132,7 @@ static inline void list_push_back(list_head* self, list_node* node)
         if (list_empty(self))
         {
                 self->_first = node;
-                node->_prev  = list_end(self);
+                node->_prev = list_end(self);
         }
 }
 
@@ -151,13 +151,13 @@ static inline void list_push_back_list(list_head* self, list_head* other)
         if (list_empty(other))
                 return;
 
-        list_node* first   = list_begin(other);
-        list_node* last    = list_last(other);
+        list_node* first = list_begin(other);
+        list_node* last = list_last(other);
 
-        first->_prev       = self->_last;
-        last->_next        = list_end(self);
+        first->_prev = self->_last;
+        last->_next = list_end(self);
         self->_last->_next = first;
-        self->_last        = last;
+        self->_last = last;
 }
 
 static inline list_node* list_pop_back(list_head* self)
@@ -180,9 +180,9 @@ static inline void list_init_array(list_head* self, list_node nodes[], ssize cou
         }
 }
 
-#define LIST_FOREACH(PLIST, ITTYPE, ITNAME)                                  \
-        for (ITTYPE ITNAME = (ITTYPE)list_begin(((const list_head*)PLIST));  \
-                ITNAME != (ITTYPE)list_cend(((const list_head*)PLIST));      \
+#define LIST_FOREACH(PLIST, ITTYPE, ITNAME) \
+        for (ITTYPE ITNAME = (ITTYPE)list_begin(((const list_head*)PLIST)); \
+                ITNAME != (ITTYPE)list_cend(((const list_head*)PLIST)); \
                 ITNAME = (ITTYPE)list_node_next(((const list_node*)ITNAME)))
 
 #ifdef __cplusplus

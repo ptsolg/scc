@@ -16,7 +16,7 @@ extern "C" {
 typedef struct _tree_eval_info
 {
         const tree_target_info* _target;
-        const tree_exp*         _error;
+        const tree_exp* _error;
 } tree_eval_info;
 
 extern void tree_init_eval_info(tree_eval_info* self, const tree_target_info* target);

@@ -24,7 +24,7 @@ extern tree_exp* cparse_paren_exp(cparser* self)
 
 extern tree_exp* cparse_primary_exp(cparser* self)
 {
-        ctoken*     t = cparser_get_token(self);
+        ctoken* t = cparser_get_token(self);
         ctoken_kind k = ctoken_get_kind(t);
         if (k == CTK_LBRACKET)
                 return cparse_paren_exp(self);
@@ -83,7 +83,7 @@ static inline tree_id cparse_identifier(cparser* self)
 
 static tree_exp* cparse_rhs_of_postfix_exp(cparser* self, tree_exp* lhs)
 {
-        ctoken_kind   k   = ctoken_get_kind(cparser_get_token(self));
+        ctoken_kind k = ctoken_get_kind(cparser_get_token(self));
         tree_location loc = cparser_get_loc(self);
 
         if (k == CTK_LSBRACKET)
@@ -216,7 +216,7 @@ static inline tree_exp* cparse_rhs_of_binary_exp(cparser* self, tree_exp* lhs, i
                         return lhs;
 
                 const ctoken* optoken = cparser_get_token(self);
-                tree_location oploc   = ctoken_get_loc(optoken);
+                tree_location oploc = ctoken_get_loc(optoken);
                 cparser_consume_token(self);
                 
                 tree_exp* ternary_middle = NULL;
@@ -276,7 +276,7 @@ static tree_designation* cparse_designation(cparser* self, tree_type* t)
         {
                 tree_designator* designator = NULL;
                 ctoken_kind k = ctoken_get_kind(cparser_get_token(self));
-                tree_id loc   = cparser_get_loc(self);
+                tree_id loc = cparser_get_loc(self);
 
                 if (k == CTK_DOT)
                 {

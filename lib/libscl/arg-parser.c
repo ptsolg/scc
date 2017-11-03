@@ -6,7 +6,7 @@ extern void aparser_init(aparser* self, int argc, const char** argv)
 {
         self->_argv = argv;
         self->_argc = argc;
-        self->_pos  = 1;
+        self->_pos = 1;
         htab_init(&self->_handlers);
 }
 

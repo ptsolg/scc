@@ -18,7 +18,7 @@ typedef hval strref;
 // a set of unique strings that can be accessed through strref
 typedef struct
 {
-        htab         _strings;
+        htab _strings;
         bp_allocator _alloc;
 } strpool;
 
@@ -31,23 +31,23 @@ typedef struct
 
 #define STRREF(S) STRREFL(S, strlen(S))
 
-extern void        strpool_init(strpool* self);
-extern void        strpool_init_ex(strpool* self, allocator* alloc);
-extern void        strpool_dispose(strpool* self);
+extern void strpool_init(strpool* self);
+extern void strpool_init_ex(strpool* self, allocator* alloc);
+extern void strpool_dispose(strpool* self);
 extern const char* strpool_get(const strpool* self, strref ref);
-extern bool        strpooled(const strpool* self, strref ref);
-extern strref      strpool_insert(strpool* self, const char* string);
-extern strref      strpool_insertl(strpool* self, const char* string, ssize len);
+extern bool strpooled(const strpool* self, strref ref);
+extern strref strpool_insert(strpool* self, const char* string);
+extern strref strpool_insertl(strpool* self, const char* string, ssize len);
 
-extern ssize       sstrlen(const char* string);
-extern bool        sstreq(const char* a, const char* b, const char* ignore);
-extern char*       sstrprecat(char* string, const char* other);
-extern char*       sstrcatn(char* string, ssize n, ...);
-extern char*       sstrprecatn(char* string, ssize n, ...);
-extern char*       sstrwrap(const char* prefix, char* string, const char* suffix);
-extern char*       sstrend(char* string);
+extern ssize sstrlen(const char* string);
+extern bool sstreq(const char* a, const char* b, const char* ignore);
+extern char* sstrprecat(char* string, const char* other);
+extern char* sstrcatn(char* string, ssize n, ...);
+extern char* sstrprecatn(char* string, ssize n, ...);
+extern char* sstrwrap(const char* prefix, char* string, const char* suffix);
+extern char* sstrend(char* string);
 extern const char* scstrend(const char* string);
-extern char*       sstrfill(char* string, int v, ssize n);
+extern char* sstrfill(char* string, int v, ssize n);
 
 #ifdef __cplusplus
 }

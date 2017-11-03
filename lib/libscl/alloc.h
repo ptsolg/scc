@@ -26,17 +26,17 @@ typedef struct _allocator
 static inline void allocator_init(
         allocator* self, void* alloc, void* dealloc)
 {
-        self->_allocate    = alloc;
+        self->_allocate = alloc;
         self->_allocate_ex = NULL;
-        self->_deallocate  = dealloc;
+        self->_deallocate = dealloc;
 }
 
 static inline void allocator_init_ex(
-        allocator*  self, void* alloc, void* alloc_ex, void* dealloc)
+        allocator* self, void* alloc, void* alloc_ex, void* dealloc)
 {
-        self->_allocate    = alloc;
+        self->_allocate = alloc;
         self->_allocate_ex = alloc_ex;
-        self->_deallocate  = dealloc;
+        self->_deallocate = dealloc;
 }
 
 static inline void* allocate(allocator* self, ssize bytes)
@@ -66,16 +66,16 @@ static inline void deallocate(allocator* self, void* block)
 typedef struct
 {
         list_node _node;
-        ssize     _size;
-        char      _bytes[0];
+        ssize _size;
+        char _bytes[0];
 } _bp_chunk;
 
 typedef struct _bp_allocator
 {
-        allocator  _base;
-        char*      _pos;
-        char*      _end;
-        list_head  _chunks;
+        allocator _base;
+        char* _pos;
+        char* _end;
+        list_head _chunks;
         allocator* _alloc;
 } bp_allocator;
 
@@ -100,8 +100,8 @@ static inline bool bpa_can_allocate(const bp_allocator* self, ssize bytes, ssize
 }
 
 extern _bp_chunk* _bpa_new_chunk(bp_allocator* self, ssize bytes);
-extern void       _bpa_use_chunk(bp_allocator* self, _bp_chunk* c);
-extern serrcode   _bpa_grow(bp_allocator* self, ssize cst);
+extern void _bpa_use_chunk(bp_allocator* self, _bp_chunk* c);
+extern serrcode _bpa_grow(bp_allocator* self, ssize cst);
 
 static inline void* bp_allocate_ex(bp_allocator* self, ssize bytes, ssize alignment)
 {
@@ -131,20 +131,20 @@ static inline allocator* bpa_alloc(const bp_allocator* self)
 typedef struct
 {
         void* _next;
-        char  _bytes[0];
+        char _bytes[0];
 } _obj_header;
 
 // an allocator for objects with the same size
 typedef struct _obj_allocator
 {
         bp_allocator _base;
-        void*        _top;
-        ssize        _objects;
-        ssize        _obsize;
+        void* _top;
+        ssize _objects;
+        ssize _obsize;
 } obj_allocator;
 
-extern void     obj_allocator_init(obj_allocator* self, ssize obsize);
-extern void     obj_allocator_init_ex(obj_allocator* self, ssize obsize, allocator* alloc);
+extern void obj_allocator_init(obj_allocator* self, ssize obsize);
+extern void obj_allocator_init_ex(obj_allocator* self, ssize obsize, allocator* alloc);
 extern serrcode _obj_allocator_grow(obj_allocator* self);
 
 static inline bp_allocator* obj_allocator_base(obj_allocator* self)
@@ -163,8 +163,8 @@ static inline void obj_deallocate(obj_allocator* self, void* obj)
                 return;
 
         _obj_header* h = (_obj_header*)obj;
-        h->_next       = self->_top;
-        self->_top     = h;
+        h->_next = self->_top;
+        self->_top = h;
 }
 
 static inline void* obj_allocate(obj_allocator* self)
@@ -175,7 +175,7 @@ static inline void* obj_allocate(obj_allocator* self)
 
         S_ASSERT(self->_top);
         _obj_header* top = (_obj_header*)self->_top;
-        self->_top       = top->_next;
+        self->_top = top->_next;
         return top->_bytes;
 }
 

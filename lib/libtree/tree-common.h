@@ -18,10 +18,10 @@ extern "C" {
 #define TREE_INVALID_LOC ((tree_location)-1)
 #define TREE_INVALID_XLOC ((tree_xlocation)-1)
 
-typedef strref               tree_id;
-typedef suint32              tree_location;
+typedef strref tree_id;
+typedef suint32 tree_location;
 // extended location wich stores begin and end
-typedef suint64              tree_xlocation;
+typedef suint64 tree_xlocation;
 typedef struct _tree_context tree_context;
 
 extern tree_xlocation tree_init_xloc(tree_location begin, tree_location end);
@@ -62,7 +62,7 @@ static inline tree_xlocation tree_set_xloc_end(tree_xlocation self, tree_locatio
 }
 
 extern tree_id tree_get_empty_id();
-extern bool    tree_id_is_empty(tree_id id);
+extern bool tree_id_is_empty(tree_id id);
 
 #ifdef __cplusplus
 }

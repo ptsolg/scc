@@ -7,7 +7,7 @@
 #include <libscl/file.h>
 
 static bool scc_add_handler(
-        scc_env*    self,
+        scc_env* self,
         const char* arg,
         void(*const fn)(scc_arg_handler*, aparser*))
 {
@@ -38,20 +38,20 @@ static bool scc_add_default_handler(scc_env* self)
 static serrcode scc_init_args(scc_env* self)
 {
         return scc_add_default_handler(self)
-                && scc_add_handler(self, "-syntax-only",       &scc_syntax_only)
-                && scc_add_handler(self, "-lex-only",          &scc_lex_only)
-                && scc_add_handler(self, "-log",               &scc_log)
-                && scc_add_handler(self, "-o",                 &scc_o)
-                && scc_add_handler(self, "-i",                 &scc_i)
+                && scc_add_handler(self, "-syntax-only", &scc_syntax_only)
+                && scc_add_handler(self, "-lex-only", &scc_lex_only)
+                && scc_add_handler(self, "-log", &scc_log)
+                && scc_add_handler(self, "-o", &scc_o)
+                && scc_add_handler(self, "-i", &scc_i)
                 && scc_add_handler(self, "-print-eval-result", &scc_print_eval_result)
-                && scc_add_handler(self, "-print-exp-value",   &scc_print_exp_value)
-                && scc_add_handler(self, "-print-exp-type",    &scc_print_exp_type)
-                && scc_add_handler(self, "-print-impl-casts",  &scc_print_impl_casts)
-                && scc_add_handler(self, "-force-brackets",    &scc_force_brackets)
-                && scc_add_handler(self, "-float-precision",   &scc_float_precision)
-                && scc_add_handler(self, "-double-precision",  &scc_double_precision)
-                && scc_add_handler(self, "-x32",               &scc_x32)
-                && scc_add_handler(self, "-x64",               &scc_x64)
+                && scc_add_handler(self, "-print-exp-value", &scc_print_exp_value)
+                && scc_add_handler(self, "-print-exp-type", &scc_print_exp_type)
+                && scc_add_handler(self, "-print-impl-casts", &scc_print_impl_casts)
+                && scc_add_handler(self, "-force-brackets", &scc_force_brackets)
+                && scc_add_handler(self, "-float-precision", &scc_float_precision)
+                && scc_add_handler(self, "-double-precision", &scc_double_precision)
+                && scc_add_handler(self, "-x32", &scc_x32)
+                && scc_add_handler(self, "-x64", &scc_x64)
                 ? S_NO_ERROR : S_ERROR;
 }
 
@@ -62,18 +62,18 @@ extern serrcode scc_init(scc_env* self, FILE* err, int argc, const char** argv)
         objgroup_init(&self->include);
         aparser_init(&self->parser, argc, argv);
 
-        self->output                 = NULL;
-        self->mode                   = SRM_SYNTAX_ONLY;
-        self->err                    = err;
-        self->return_code            = S_NO_ERROR;
-        self->opts.x32               = true;
-        self->opts.print_exp_type    = false;
-        self->opts.print_exp_value   = false;
-        self->opts.force_brackets    = false;
-        self->opts.print_impl_casts  = false;
+        self->output = NULL;
+        self->mode = SRM_SYNTAX_ONLY;
+        self->err = err;
+        self->return_code = S_NO_ERROR;
+        self->opts.x32 = true;
+        self->opts.print_exp_type = false;
+        self->opts.print_exp_value = false;
+        self->opts.force_brackets = false;
+        self->opts.print_impl_casts = false;
         self->opts.print_eval_result = false;
-        self->opts.float_precision   = 4;
-        self->opts.double_precision  = 4;
+        self->opts.float_precision = 4;
+        self->opts.double_precision = 4;
 
         return scc_init_args(self);
 }
@@ -82,20 +82,20 @@ static void scc_print_help(scc_env* self)
 {
         const char* d =
                 "Options:\n"
-                "   -syntax-only          Syntax analysis only\n"
-                "   -lex-only             Lexical analysis only\n"
-                "   -log <file>           Specify the log file\n"
-                "   -o <file>             Specify the output file\n"
-                "   -i <dir>              Specify the include directory\n"
-                "   -print-eval-result    Print constant expression value\n"
-                "   -print-exp-value      Print expression value (lvalue or rvalue)\n"
-                "   -print-exp-type       Print expression type\n"
-                "   -print-impl-casts     Print implicit casts\n"
-                "   -force-brackets       Force bracket printing\n"
-                "   -float-precision      Specify the float precision, when printing\n"
-                "   -double-precision     Specify the double precision, when printing\n"
-                "   -x32                  Set X86 target architecture\n"
-                "   -x64                  Set X86-64 target architecture\n"
+                " -syntax-only Syntax analysis only\n"
+                " -lex-only Lexical analysis only\n"
+                " -log <file> Specify the log file\n"
+                " -o <file> Specify the output file\n"
+                " -i <dir> Specify the include directory\n"
+                " -print-eval-result Print constant expression value\n"
+                " -print-exp-value Print expression value (lvalue or rvalue)\n"
+                " -print-exp-type Print expression type\n"
+                " -print-impl-casts Print implicit casts\n"
+                " -force-brackets Force bracket printing\n"
+                " -float-precision Specify the float precision, when printing\n"
+                " -double-precision Specify the double precision, when printing\n"
+                " -x32 Set X86 target architecture\n"
+                " -x64 Set X86-64 target architecture\n"
                 ;
         fprintf(self->err, "%s", d);
 }
@@ -114,13 +114,13 @@ static FILE* scc_open_output(scc_env* self)
 
 static void scc_set_printer_opts(const scc_env* self, cprinter_opts* opts)
 {
-        opts->double_precision  = self->opts.double_precision;
-        opts->float_precision   = self->opts.float_precision;
-        opts->force_brackets    = self->opts.force_brackets;
+        opts->double_precision = self->opts.double_precision;
+        opts->float_precision = self->opts.float_precision;
+        opts->force_brackets = self->opts.force_brackets;
         opts->print_eval_result = self->opts.print_eval_result;
-        opts->print_exp_type    = self->opts.print_exp_type;
-        opts->print_exp_value   = self->opts.print_exp_value;
-        opts->print_impl_casts  = self->opts.print_impl_casts;
+        opts->print_exp_type = self->opts.print_exp_type;
+        opts->print_exp_value = self->opts.print_exp_value;
+        opts->print_impl_casts = self->opts.print_impl_casts;
 }
 
 static serrcode scc_init_cenv(scc_env* self, cenv* env)

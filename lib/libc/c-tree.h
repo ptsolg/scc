@@ -17,7 +17,7 @@ typedef struct _cident_info
         bool use_tags;
 } cident_info;
 
-extern void    cident_info_init(cident_info* self);
+extern void cident_info_init(cident_info* self);
 
 extern tree_id cident_info_to_tag(const cident_info* self, tree_id id);
 extern tree_id cident_info_from_tag(const cident_info* self, tree_id tag);
@@ -25,23 +25,23 @@ extern tree_id cident_info_get_orig_decl_name(const cident_info* self, const tre
 
 typedef struct _ctree_context_allocator
 {
-        allocator  base;
+        allocator base;
         allocator* alloc;
-        jmp_buf*   on_out_of_memory;
+        jmp_buf* on_out_of_memory;
 } ctree_context_allocator;
 
 extern void ctree_context_allocator_init(ctree_context_allocator* self, allocator* alloc);
 
 typedef struct _ctree_context
 {
-        tree_context            base;
+        tree_context base;
         ctree_context_allocator alloc;
 } ctree_context;
 
-extern void    ctree_context_init(ctree_context* self);
-extern void    ctree_context_init_ex(ctree_context* self, allocator* alloc);
-extern void    ctree_context_dispose(ctree_context* self);
-extern void    ctree_context_set_on_out_of_memory(ctree_context* self, jmp_buf* b);
+extern void ctree_context_init(ctree_context* self);
+extern void ctree_context_init_ex(ctree_context* self, allocator* alloc);
+extern void ctree_context_dispose(ctree_context* self);
+extern void ctree_context_set_on_out_of_memory(ctree_context* self, jmp_buf* b);
 extern tree_id ctree_context_add_string(ctree_context* self, const char* s, ssize len);
 
 static inline tree_context* ctree_context_base(ctree_context* self)
@@ -56,13 +56,13 @@ static inline const tree_context* ctree_context_cbase(const ctree_context* self)
 
 typedef struct
 {
-        bool          unary;
+        bool unary;
         tree_location loc;
         union
         {
                 tree_type* type;
-                tree_exp*  exp;
-                void*      pointer;
+                tree_exp* exp;
+                void* pointer;
         };
 } csizeof_rhs;
 
@@ -72,15 +72,15 @@ extern void csizeof_type_init(csizeof_rhs* self, tree_type* t, tree_location loc
 typedef struct
 {
         tree_type* entity;
-        bool       type_iterated;
+        bool type_iterated;
         tree_decl* member_pos;
-        int        array_pos;
+        int array_pos;
 } cinit_iterator;
 
-extern void       cinit_iterator_init(cinit_iterator* self, tree_type* entity);
-extern bool       cinit_iterator_at_record(const cinit_iterator* self);
-extern bool       cinit_iterator_at_array(const cinit_iterator* self);
-extern bool       cinit_iterator_advance(cinit_iterator* self);
+extern void cinit_iterator_init(cinit_iterator* self, tree_type* entity);
+extern bool cinit_iterator_at_record(const cinit_iterator* self);
+extern bool cinit_iterator_at_array(const cinit_iterator* self);
+extern bool cinit_iterator_advance(cinit_iterator* self);
 extern tree_type* cinit_iterator_get_pos_type(cinit_iterator* self);
 
 typedef struct
@@ -108,11 +108,11 @@ extern tree_builtin_type_kind cbuiltin_type_info_get_type(const cbuiltin_type_in
 
 typedef struct
 {
-        tree_decl_storage_class      class_;
-        tree_type*                   typespec;
+        tree_decl_storage_class class_;
+        tree_type* typespec;
         tree_function_specifier_kind funcspec;
-        tree_xlocation               loc;
-        bool                         is_typedef;
+        tree_xlocation loc;
+        bool is_typedef;
 } cdecl_specs;
 
 extern void cdecl_specs_init(cdecl_specs* self);
@@ -140,12 +140,12 @@ extern void ctype_chain_init(ctype_chain* self);
 typedef struct _cdeclarator
 {
         cdeclarator_kind kind;
-        ctype_chain      type;
-        tree_id          id;
-        tree_xlocation   loc;
-        tree_location    id_loc;
-        objgroup         params;
-        bool             params_initialized;
+        ctype_chain type;
+        tree_id id;
+        tree_xlocation loc;
+        tree_location id_loc;
+        objgroup params;
+        bool params_initialized;
 } cdeclarator;
 
 extern void cdeclarator_init(cdeclarator* self, ctree_context* context, cdeclarator_kind k);
@@ -165,15 +165,15 @@ typedef struct
 } cparam;
 
 extern cparam* cparam_new(ctree_context* context);
-extern void    cparam_delete(ctree_context* context, cparam* p);
+extern void cparam_delete(ctree_context* context, cparam* p);
 
 extern tree_xlocation cparam_get_loc(const cparam* self);
 
 typedef enum _cstmt_context
 {
-        CSC_NONE      = 0,
+        CSC_NONE = 0,
         CSC_ITERATION = 1,
-        CSC_SWITCH    = 2,
+        CSC_SWITCH = 2,
 } cstmt_context;
 
 #ifdef __cplusplus

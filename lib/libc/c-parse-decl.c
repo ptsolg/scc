@@ -184,7 +184,7 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
                 if (cparser_at(self, CTK_ID))
                 {
                         ctoken* id_tok = cparser_get_token(self);
-                        tree_id id     = ctoken_get_string(id_tok);
+                        tree_id id = ctoken_get_string(id_tok);
                         cerror(self->error_manager, CES_ERROR, ctoken_get_loc(id_tok),
                                 "unknown type name '%s'", cprog_get_id(self->prog, id));
                         return false;
@@ -280,7 +280,7 @@ extern tree_type_quals cparse_type_qualifier_list_opt(cparser* self)
 extern tree_type* cparse_specifier_qualifier_list(cparser* self)
 {
         tree_type_quals quals = cparse_type_qualifier_list_opt(self);
-        tree_type* typespec   = cparse_type_specifier(self);
+        tree_type* typespec = cparse_type_specifier(self);
         if (!typespec)
                 return NULL;
 
@@ -597,7 +597,7 @@ static bool cparse_direct_declarator(cparser* self, cdeclarator* result)
 {
         if (cparser_at(self, CTK_ID))
         {
-                tree_id id           = ctoken_get_string(cparser_get_token(self));
+                tree_id id = ctoken_get_string(cparser_get_token(self));
                 tree_location id_loc = cparser_get_loc(self);
                 if (!cprog_set_declarator_name(self->prog, id_loc, result, id))
                         return false;

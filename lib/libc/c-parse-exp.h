@@ -11,142 +11,142 @@ extern "C" {
 
 #include "c-parser.h"
 
-typedef struct _tree_exp  tree_exp;
+typedef struct _tree_exp tree_exp;
 typedef struct _tree_decl tree_decl;
 
 extern const ctoken_kind ctk_rbracket_or_comma[];
 
 // c99 6.5.1 primary-expression:
-//      identifier
-//      constant
-//      string-literal
-//      paren-expression
+// identifier
+// constant
+// string-literal
+// paren-expression
 //
 // paren-expression:
-//      ( expression )
+// ( expression )
 extern tree_exp* cparse_paren_exp(cparser* self);
 extern tree_exp* cparse_primary_exp(cparser* self);
 
 // c99 6.5.2 postfix-expression:
-//      primary-expression
-//      postfix-expression [ expression ]
-//      postfix-expression ( argument-expression-list-opt )
-//      postfix-expression . identifier
-//      postfix-expression -> identifier
-//      postfix-expression ++
-//      postfix-expression --
+// primary-expression
+// postfix-expression [ expression ]
+// postfix-expression ( argument-expression-list-opt )
+// postfix-expression . identifier
+// postfix-expression -> identifier
+// postfix-expression ++
+// postfix-expression --
 //
 // argument-expression-list:
-//      assignment-expression
-//      argument-expression-list , assignment-expression
+// assignment-expression
+// argument-expression-list , assignment-expression
 extern tree_exp* cparse_postfix_exp(cparser* self);
 
 // c99 6.5.3 unary-expression:
-//      postfix-expression
-//      ++ unary-expression
-//      -- unary-expression
-//      unary-operator cast-expression
-//      sizeof unary-expression
-//      sizeof ( type-name )
+// postfix-expression
+// ++ unary-expression
+// -- unary-expression
+// unary-operator cast-expression
+// sizeof unary-expression
+// sizeof ( type-name )
 //
 // unary-operator: one of
-//      & * + - ~ !
+// & * + - ~ !
 extern tree_exp* cparse_unary_exp(cparser* self);
 
 // c99 6.5.4 cast-expression:
-//      unary-expression
-//      ( type-name ) cast-expression
+// unary-expression
+// ( type-name ) cast-expression
 extern tree_exp* cparse_cast_exp(cparser* self);
 
 // c99 6.5.5 multiplicative-expression:
-//      cast-expression
-//      multiplicative-expression * cast-expression
-//      multiplicative-expression / cast-expression
-//      multiplicative-expression % cast-expression
+// cast-expression
+// multiplicative-expression * cast-expression
+// multiplicative-expression / cast-expression
+// multiplicative-expression % cast-expression
 //
 // c99 6.5.6 additive-expression:
-//      multiplicative-expression
-//      additive-expression + multiplicative-expression
-//      additive-expression - multiplicative-expression
+// multiplicative-expression
+// additive-expression + multiplicative-expression
+// additive-expression - multiplicative-expression
 //
 // c99 6.5.7 shift-expression
-//      additive-expression
-//      shift-expression << additive-expression
-//      shift-expression >> additive-expression
+// additive-expression
+// shift-expression << additive-expression
+// shift-expression >> additive-expression
 //
 // c99 6.5.8 relational-expression:
-//      shift-expression
-//      relational-expression < shift-expression
-//      relational-expression > shift-expression
-//      relational-expression <= shift-expression
-//      relational-expression >= shift-expression
+// shift-expression
+// relational-expression < shift-expression
+// relational-expression > shift-expression
+// relational-expression <= shift-expression
+// relational-expression >= shift-expression
 //
 // c99 6.5.9 equality-expression:
-//      relational-expression
-//      equality-expression == relational-expression
-//      equality-expression != relational-expression
+// relational-expression
+// equality-expression == relational-expression
+// equality-expression != relational-expression
 //
 // c99 6.5.10 and-expression:
-//      equality-expression
-//      and-expression & equality-expression
+// equality-expression
+// and-expression & equality-expression
 //
 // c99 6.5.11 xor-expression:
-//      and-expression
-//      xor-expression ^ and-expression
+// and-expression
+// xor-expression ^ and-expression
 //
 // c99 6.5.12 or-expression:
-//      xor-expression
-//      or-expression | xor-expression
+// xor-expression
+// or-expression | xor-expression
 //
 // c99 6.5.13 logical-and-expression:
-//      or-expression
-//      logical-and-expression && or-expression
+// or-expression
+// logical-and-expression && or-expression
 //
 // c99 6.5.14 logical-or-expression:
-//      logical-and-expression
-//      logical-or-expression || logical-and-expression
+// logical-and-expression
+// logical-or-expression || logical-and-expression
 //
 // c99 6.5.15 conditional-expression
-//      logical-or-expression
-//      logical-or-expression ? expression : conditional-expression
+// logical-or-expression
+// logical-or-expression ? expression : conditional-expression
 //
 // c99 6.5.16 assignment-expression:
-//      conditional-expression
-//      unary-expression assignment-operator assignment-expression
+// conditional-expression
+// unary-expression assignment-operator assignment-expression
 //
 // asignment-operator: one of
 // = *= /= %= += -= <<= >>= &= ^= |=
 extern tree_exp* cparse_assignment_exp(cparser* self);
 
 // c99 6.5.17 expression:
-//      assignment-expression
-//      expression , assignment-expression
+// assignment-expression
+// expression , assignment-expression
 extern tree_exp* cparse_exp(cparser* self);
 extern tree_exp* cparse_exp_ex(cparser* self, int min_prec);
 
 // c99 6.6 constant-expression:
-//      conditional-expression
+// conditional-expression
 extern tree_exp* cparse_const_exp(cparser* self);
 
 // c99 6.7.8 initializer:
-//      assignment-expression
-//      { initializer-list
-//      { initializer-list , }
+// assignment-expression
+// { initializer-list
+// { initializer-list , }
 //
 // initializer-list:
-//      designation-opt initializer
-//      initializer-list , designation-opt initializer
+// designation-opt initializer
+// initializer-list , designation-opt initializer
 //
 // designation:
-//      designator-list =
+// designator-list =
 //
 // designator-list:
-//      designator
-//      designator-list designator
+// designator
+// designator-list designator
 //
 // designator:
-//      [ constant-expression ]
-//      . identifier
+// [ constant-expression ]
+// . identifier
 extern tree_exp* cparse_initializer(cparser* self, tree_decl* decl);
 
 #ifdef __cplusplus

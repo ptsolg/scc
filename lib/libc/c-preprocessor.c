@@ -101,23 +101,23 @@ static inline int cpplexer_readc(cpplexer* self)
 }
 
 extern void cpplexer_init(
-        cpplexer*        self,
+        cpplexer* self,
         const creswords* reswords,
         csource_manager* source_manager,
-        cerror_manager*  error_manager,
-        ctree_context*   context)
+        cerror_manager* error_manager,
+        ctree_context* context)
 {
-        self->reswords       = reswords;
-        self->context        = context;
-        self->error_manager  = error_manager;
-        self->source         = NULL;
+        self->reswords = reswords;
+        self->context = context;
+        self->error_manager = error_manager;
+        self->source = NULL;
         self->source_manager = source_manager;
-        self->buf            = NULL;
-        self->tab_to_space   = 4;
-        self->chars[0]       = RB_ENDC;
-        self->chars[1]       = RB_ENDC;
-        self->chars[2]       = RB_ENDC;
-        self->loc            = TREE_INVALID_LOC;
+        self->buf = NULL;
+        self->tab_to_space = 4;
+        self->chars[0] = RB_ENDC;
+        self->chars[1] = RB_ENDC;
+        self->chars[2] = RB_ENDC;
+        self->loc = TREE_INVALID_LOC;
 }
 
 extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source)
@@ -138,16 +138,16 @@ extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source)
         // fill buffer
         cpplexer_readc(self);
         cpplexer_readc(self);
-        self->loc      = csource_begin(source);
-        self->source   = source;
+        self->loc = csource_begin(source);
+        self->source = source;
         return S_NO_ERROR;
 }
 
 typedef struct 
 {
-        ssize         size;
+        ssize size;
         tree_location loc;
-        char          val[CMAX_LINE_LENGTH + 1];
+        char val[CMAX_LINE_LENGTH + 1];
 } csequence;
 
 static inline void csequence_finish(csequence* self)
@@ -158,7 +158,7 @@ static inline void csequence_finish(csequence* self)
 static void csequence_init(csequence* self)
 {
         self->size = 0;
-        self->loc  = 0;
+        self->loc = 0;
         csequence_finish(self);
 }
 
@@ -185,7 +185,7 @@ static tree_id cpplexer_pool_seq(cpplexer* self, csequence* seq)
 static bool cpplex_word_seq(cpplexer* self, csequence* seq)
 {
         seq->loc = cpplexer_loc(self);
-        int c    = cpplexer_getc(self);
+        int c = cpplexer_getc(self);
         while (get_char_info(c) & (ACK_ALPHA | ACK_DIGIT))
         {
                 if (!csequence_append(seq, self, c))
@@ -209,7 +209,7 @@ extern ctoken* cpplex_identifier(cpplexer* self)
 
 static bool cpplex_quoted_seq(cpplexer* self, csequence* seq, int quote)
 {
-        seq->loc     = cpplexer_loc(self);
+        seq->loc = cpplexer_loc(self);
         bool consume = false;
         while (1)
         {
@@ -272,7 +272,7 @@ extern ctoken* cpplex_const_char(cpplexer* self)
 static bool cpplex_num_seq(cpplexer* self, csequence* seq)
 {
         seq->loc = cpplexer_loc(self);
-        int c    = cpplexer_getc(self);
+        int c = cpplexer_getc(self);
         while(1)
         {
                 bool pp = (get_char_info(c) & (ACK_DIGIT | ACK_ALPHA))
@@ -368,7 +368,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
                                 case '>': cpplexer_readc(self); return CTK_ARROW;
                                 case '=': cpplexer_readc(self); return CTK_MINUS_EQ;
                                 case '-': cpplexer_readc(self); return CTK_MINUS2;
-                                default:                        return CTK_MINUS;
+                                default: return CTK_MINUS;
                         }
 
                 case '<':
@@ -433,7 +433,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
                         {
                                 case '&': cpplexer_readc(self); return CTK_AMP2;
                                 case '=': cpplexer_readc(self); return CTK_AMP_EQ;
-                                default:                        return CTK_AMP;
+                                default: return CTK_AMP;
                         }
 
                 case '|':
@@ -442,7 +442,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
                         {
                                 case '|': cpplexer_readc(self); return CTK_VBAR2;
                                 case '=': cpplexer_readc(self); return CTK_VBAR_EQ;
-                                default:                        return CTK_VBAR;
+                                default: return CTK_VBAR;
                         }
 
                 case '^':
@@ -460,7 +460,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
                         {
                                 case '+': cpplexer_readc(self); return CTK_PLUS2;
                                 case '=': cpplexer_readc(self); return CTK_PLUS_EQ;
-                                default:                        return CTK_PLUS;
+                                default: return CTK_PLUS;
                         }
 
                 case '*':
@@ -507,7 +507,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 static ctoken* cpplex_punctuator(cpplexer* self)
 {
         tree_location loc = cpplexer_loc(self);
-        ctoken_kind k     = _cpplex_punctuator(self);
+        ctoken_kind k = _cpplex_punctuator(self);
         if (k == CTK_UNKNOWN)
         {
                 cerror(self->error_manager, CES_ERROR, loc,
@@ -537,8 +537,8 @@ static ctoken* cpplex_symbols(cpplexer* self)
 static ctoken* cpplex_wspace(cpplexer* self)
 {
         tree_location loc = cpplexer_loc(self);
-        int spaces        = 0;
-        int c             = cpplexer_getc(self);
+        int spaces = 0;
+        int c = cpplexer_getc(self);
         while (char_is_wspace(c) && !cpplexer_at_eof(self))
         {
                 spaces += c == '\t' ? self->tab_to_space : 1;
@@ -562,7 +562,7 @@ extern ctoken* cpplex_token(cpplexer* self)
                 return cpplex_wspace(self);
         else if (i & ACK_NEWLINE)
         {
-                tree_location loc  = cpplexer_loc(self);
+                tree_location loc = cpplexer_loc(self);
                 cpplexer_readc(self);
                 return ctoken_new(self->context, CTK_EOL, loc);
 
@@ -580,17 +580,17 @@ extern ctoken* cpplex_token(cpplexer* self)
 }
 
 extern void cpproc_init(
-        cpproc*          self,
+        cpproc* self,
         const creswords* reswords,
         csource_manager* source_manager,
-        cerror_manager*  error_manager,
-        ctree_context*   context)
+        cerror_manager* error_manager,
+        ctree_context* context)
 {
-        self->reswords       = reswords;
-        self->state          = self->files - 1;
+        self->reswords = reswords;
+        self->state = self->files - 1;
         self->source_manager = source_manager;
-        self->error_manager  = error_manager;
-        self->context        = context;
+        self->error_manager = error_manager;
+        self->context = context;
         objgroup_init_ex(&self->expansion,
                 tree_get_context_allocator(ctree_context_base(context)));
 }
@@ -616,7 +616,7 @@ extern serrcode cpproc_enter_source_file(cpproc* self, csource* source)
         }
 
         cpproc_state* next = self->state + 1;
-        cpplexer* pplexer  = &next->lexer;
+        cpplexer* pplexer = &next->lexer;
         cpplexer_init(
                 pplexer,
                 self->reswords,
@@ -626,11 +626,11 @@ extern serrcode cpproc_enter_source_file(cpproc* self, csource* source)
         if (S_FAILED(cpplexer_enter_source_file(pplexer, source)))
                 return S_ERROR;
 
-        self->state                = next;
-        self->state->source        = source;
-        self->state->nhash         = 0;
+        self->state = next;
+        self->state->source = source;
+        self->state->nhash = 0;
         self->state->hash_expected = true;
-        self->state->in_directive  = false;
+        self->state->in_directive = false;
         return S_NO_ERROR;
 }
 

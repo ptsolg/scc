@@ -7,10 +7,10 @@
 #include <ctype.h> // toupper
 
 extern void clexer_init(
-        clexer*          self,
+        clexer* self,
         csource_manager* source_manager,
-        cerror_manager*  error_manager,
-        ctree_context*   context)
+        cerror_manager* error_manager,
+        ctree_context* context)
 {
         creswords_init(&self->reswords);
         cpproc_init(&self->pp, &self->reswords, source_manager, error_manager, context);
@@ -117,10 +117,10 @@ static inline ctoken* clex_integer_constant(clexer* self, ctoken* pp)
                 : 10;
 
         char* suffix = NULL;
-        suint64 val  = strtoull(num, &suffix, base);
+        suint64 val = strtoull(num, &suffix, base);
 
         bool is_signed = true;
-        int ls         = 0;
+        int ls = 0;
         if (!clex_integer_suffix(self, suffix, &is_signed, &ls))
         {
                 cerror(self->pp.error_manager, CES_ERROR, ctoken_get_loc(pp),
@@ -138,8 +138,8 @@ static inline ctoken* clex_integer_constant(clexer* self, ctoken* pp)
 static inline ctoken* clex_floating_constant(clexer* self, ctoken* pp)
 {
         const char* num = clexer_get_string(self, ctoken_get_string(pp));
-        ssize len       = strlen(num);
-        char* suffix    = NULL;
+        ssize len = strlen(num);
+        char* suffix = NULL;
 
         float f;
         double d;

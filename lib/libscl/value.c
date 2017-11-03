@@ -5,13 +5,13 @@
 extern void float_init_sp(float_value* self, float v)
 {
         self->_precision = FP_SINGLE;
-        self->_float     = v;
+        self->_float = v;
 }
 
 extern void float_init_dp(float_value* self, double v)
 {
         self->_precision = FP_DOUBLE;
-        self->_double    = v;
+        self->_double = v;
 }
 
 extern void float_set_sign(float_value* self, bool positive)
@@ -226,7 +226,7 @@ extern sint64 float_get_i64(const float_value* val)
 
 extern void int_init(int_value* self, uint bits, bool signed_, suint64 val)
 {
-        self->_val    = val;
+        self->_val = val;
         int_set_signed(self, signed_);
         int_resize(self, bits);
 }
@@ -248,24 +248,24 @@ extern bool int_is_signed(const int_value* self)
 
 extern op_result int_add(int_value* self, const int_value* rhs)
 {
-        suint64 x  = int_get_u64(self);
-        suint64 y  = int_get_u64(rhs);
+        suint64 x = int_get_u64(self);
+        suint64 y = int_get_u64(rhs);
         self->_val = mod2(x + y, int_get_bits(self));
         return self->_val < x ? OR_OVERFLOW : OR_OK;
 }
 
 extern op_result int_sub(int_value* self, const int_value* rhs)
 {
-        suint64 x  = int_get_u64(self);
-        suint64 y  = int_get_u64(rhs);
+        suint64 x = int_get_u64(self);
+        suint64 y = int_get_u64(rhs);
         self->_val = mod2(x - y, int_get_bits(self));
         return self->_val > x ? OR_UNDERFLOW : OR_OK;
 }
 
 extern op_result int_mul(int_value* self, const int_value* rhs)
 {
-        suint64 x  = int_get_u64(self);
-        suint64 y  = int_get_u64(rhs);
+        suint64 x = int_get_u64(self);
+        suint64 y = int_get_u64(rhs);
         self->_val = mod2(x * y, int_get_bits(self));
 
         return x != 0 && self->_val / x != y
@@ -307,16 +307,16 @@ extern op_result int_mod(int_value* self, const int_value* rhs)
 
 extern op_result int_shl(int_value* self, const int_value* rhs)
 {
-        suint64 x  = int_get_u64(self);
-        suint64 y  = int_get_u64(rhs);
+        suint64 x = int_get_u64(self);
+        suint64 y = int_get_u64(rhs);
         self->_val = mod2(x << y, int_get_bits(self));
         return self->_val >> y == x ? OR_OK : OR_OVERFLOW;
 }
 
 extern op_result int_shr(int_value* self, const int_value* rhs)
 {
-        suint64 x  = int_get_u64(self);
-        suint64 y  = int_get_u64(rhs);
+        suint64 x = int_get_u64(self);
+        suint64 y = int_get_u64(rhs);
         self->_val = x >> y;
         return self->_val << y == x ? OR_OK : OR_UNDERFLOW;
 }
@@ -449,7 +449,7 @@ extern void int_resize(int_value* val, uint bits)
 {
         S_ASSERT(bits && bits <= 64);
         val->_bits = bits;
-        val->_val  = mod2(val->_val, bits);
+        val->_val = mod2(val->_val, bits);
 }
 
 extern float_value int_to_sp(const int_value* val)
@@ -744,7 +744,7 @@ extern void avalue_to_int(avalue* val, uint bits, bool signed_)
         if (avalue_is_float(val))
         {
                 val->_integer = true;
-                val->_int     = float_to_int(&val->_float, bits);
+                val->_int = float_to_int(&val->_float, bits);
         }
         else
         {
@@ -760,7 +760,7 @@ extern void avalue_to_sp(avalue* val)
         else
         {
                 val->_integer = false;
-                val->_float   = int_to_sp(&val->_int);
+                val->_float = int_to_sp(&val->_int);
         }
 }
 
@@ -771,6 +771,6 @@ extern void avalue_to_dp(avalue* val)
         else
         {
                 val->_integer = false;
-                val->_float   = int_to_dp(&val->_int);
+                val->_float = int_to_dp(&val->_int);
         }
 }
