@@ -112,7 +112,7 @@ extern tree_type* cprog_build_array_type(
         tree_location loc,
         tree_type_quals quals,
         tree_type* eltype,
-        tree_exp* size)
+        tree_expr* size)
 {
         tree_type* arr = tree_new_qual_type(self->context, quals,
                 tree_new_array_type(self->context, NULL, size));

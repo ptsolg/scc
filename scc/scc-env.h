@@ -33,8 +33,8 @@ typedef struct _scc_env
         struct
         {
                 bool x32;
-                bool print_exp_value;
-                bool print_exp_type;
+                bool print_expr_value;
+                bool print_expr_type;
                 bool print_impl_casts;
                 bool print_eval_result;
                 bool force_brackets;

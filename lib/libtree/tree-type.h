@@ -121,20 +121,20 @@ static inline void tree_set_function_restype(tree_type* self, tree_type* restype
 struct _tree_array_type
 {
         struct _tree_chain_type _base;
-        tree_exp* _size;
+        tree_expr* _size;
 };
 
 extern tree_type* tree_new_array_type(
-        tree_context* context, tree_type* eltype, tree_exp* size);
+        tree_context* context, tree_type* eltype, tree_expr* size);
 
 static inline struct _tree_array_type* _tree_get_array_type(tree_type* self);
 static inline const struct _tree_array_type* _tree_get_array_ctype(const tree_type* self);
 
 static inline tree_type* tree_get_array_eltype(const tree_type* self);
-static inline tree_exp* tree_get_array_size(const tree_type* self);
+static inline tree_expr* tree_get_array_size(const tree_type* self);
 
 static inline void tree_set_array_eltype(tree_type* self, tree_type* eltype);
-static inline void tree_set_array_size(tree_type* self, tree_exp* size);
+static inline void tree_set_array_size(tree_type* self, tree_expr* size);
 
 struct _tree_decl_type
 {
@@ -405,7 +405,7 @@ static inline tree_type* tree_get_array_eltype(const tree_type* self)
         return tree_get_chain_type_next(self);
 }
 
-static inline tree_exp* tree_get_array_size(const tree_type* self)
+static inline tree_expr* tree_get_array_size(const tree_type* self)
 {
         return _tree_get_array_ctype(self)->_size;
 }
@@ -415,7 +415,7 @@ static inline void tree_set_array_eltype(tree_type* self, tree_type* eltype)
         tree_set_chain_type_next(self, eltype);
 }
 
-static inline void tree_set_array_size(tree_type* self, tree_exp* size)
+static inline void tree_set_array_size(tree_type* self, tree_expr* size)
 {
         _tree_get_array_type(self)->_size = size;
 }

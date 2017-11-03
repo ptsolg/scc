@@ -1,4 +1,0 @@
-void test()
-{
-	&test; // void(*)()
-}

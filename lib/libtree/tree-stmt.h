@@ -13,7 +13,7 @@ extern "C" {
 
 typedef struct _tree_stmt tree_stmt;
 typedef struct _tree_decl tree_decl;
-typedef struct _tree_exp tree_exp;
+typedef struct _tree_expr tree_expr;
 typedef struct _tree_scope tree_scope;
 
 typedef enum
@@ -68,7 +68,7 @@ typedef enum _tree_stmt_kind
         TSK_CASE,
         TSK_DEFAULT,
         TSK_COMPOUND,
-        TSK_EXP,
+        TSK_expr,
         TSK_IF,
         TSK_SWITCH,
         TSK_WHILE,
@@ -120,20 +120,20 @@ static inline void tree_set_label_stmt_decl(tree_stmt* self, tree_decl* label);
 struct _tree_case_stmt
 {
         struct _tree_stmt_base _base;
-        tree_exp* _value;
+        tree_expr* _value;
         tree_stmt* _body;
 };
 
 extern tree_stmt* tree_new_case_stmt(
-        tree_context* context, tree_xlocation loc, tree_exp* value, tree_stmt* body);
+        tree_context* context, tree_xlocation loc, tree_expr* value, tree_stmt* body);
 
 static inline struct _tree_case_stmt* _tree_get_case(tree_stmt* self);
 static inline const struct _tree_case_stmt* _tree_get_ccase(const tree_stmt* self);
 
-static inline tree_exp* tree_get_case_value(const tree_stmt* self);
+static inline tree_expr* tree_get_case_value(const tree_stmt* self);
 static inline tree_stmt* tree_get_case_body(const tree_stmt* self);
 
-static inline void tree_set_case_value(tree_stmt* self, tree_exp* value);
+static inline void tree_set_case_value(tree_stmt* self, tree_expr* value);
 static inline void tree_set_case_body(tree_stmt* self, tree_stmt* body);
 
 struct _tree_default_stmt
@@ -186,24 +186,24 @@ static inline const struct _tree_decl_stmt* _tree_get_decl_cstmt(const tree_stmt
 static inline tree_decl* tree_get_decl_stmt_entity(const tree_stmt* self);
 static inline void tree_set_decl_stmt_entity(tree_stmt* self, tree_decl* d);
 
-struct _tree_exp_stmt
+struct _tree_expr_stmt
 {
         struct _tree_stmt_base _base;
-        tree_exp* _root;
+        tree_expr* _root;
 };
 
-extern tree_stmt* tree_new_exp_stmt(tree_context* context, tree_xlocation loc, tree_exp* root);
+extern tree_stmt* tree_new_expr_stmt(tree_context* context, tree_xlocation loc, tree_expr* root);
 
-static inline struct _tree_exp_stmt* _tree_get_exp_stmt(tree_stmt* self);
-static inline const struct _tree_exp_stmt* _tree_get_exp_cstmt(const tree_stmt* self);
+static inline struct _tree_expr_stmt* _tree_get_expr_stmt(tree_stmt* self);
+static inline const struct _tree_expr_stmt* _tree_get_expr_cstmt(const tree_stmt* self);
 
-static inline tree_exp* tree_get_exp_stmt_root(const tree_stmt* self);
-static inline void tree_set_exp_stmt_root(tree_stmt* self, tree_exp* exp);
+static inline tree_expr* tree_get_expr_stmt_root(const tree_stmt* self);
+static inline void tree_set_expr_stmt_root(tree_stmt* self, tree_expr* expr);
 
 struct _tree_if_stmt
 {
         struct _tree_stmt_base _base;
-        tree_exp* _condition;
+        tree_expr* _condition;
         tree_stmt* _body;
         tree_stmt* _else;
 };
@@ -211,18 +211,18 @@ struct _tree_if_stmt
 extern tree_stmt* tree_new_if_stmt(
         tree_context* context,
         tree_xlocation loc,
-        tree_exp* condition,
+        tree_expr* condition,
         tree_stmt* body,
         tree_stmt* else_);
 
 static inline struct _tree_if_stmt* _tree_get_if_stmt(tree_stmt* self);
 static inline const struct _tree_if_stmt* _tree_get_if_cstmt(const tree_stmt* self);
 
-static inline tree_exp* tree_get_if_condition(const tree_stmt* self);
+static inline tree_expr* tree_get_if_condition(const tree_stmt* self);
 static inline tree_stmt* tree_get_if_body(const tree_stmt* self);
 static inline tree_stmt* tree_get_if_else(const tree_stmt* self);
 
-static inline void tree_set_if_condition(tree_stmt* self, tree_exp* exp);
+static inline void tree_set_if_condition(tree_stmt* self, tree_expr* expr);
 static inline void tree_set_if_body(tree_stmt* self, tree_stmt* body);
 static inline void tree_set_if_else(tree_stmt* self, tree_stmt* else_);
 
@@ -230,67 +230,67 @@ struct _tree_switch_stmt
 {
         struct _tree_stmt_base _base;
         tree_stmt* _body;
-        tree_exp* _exp;
+        tree_expr* _expr;
 };
 
 extern tree_stmt* tree_new_switch_stmt(tree_context* context,
-                                      tree_xlocation loc,
-                                      tree_stmt* body,
-                                      tree_exp* exp);
+        tree_xlocation loc,
+        tree_stmt* body,
+        tree_expr* expr);
 
 static inline struct _tree_switch_stmt* _tree_get_switch_stmt(tree_stmt* self);
 static inline const struct _tree_switch_stmt* _tree_get_switch_cstmt(const tree_stmt* self);
 
-static inline tree_exp* tree_get_switch_exp(const tree_stmt* self);
+static inline tree_expr* tree_get_switch_expr(const tree_stmt* self);
 static inline tree_stmt* tree_get_switch_body(const tree_stmt* self);
 
-static inline void tree_set_switch_exp(tree_stmt* self, tree_exp* exp);
+static inline void tree_set_switch_expr(tree_stmt* self, tree_expr* expr);
 static inline void tree_set_switch_body(tree_stmt* self, tree_stmt* body);
 
 struct _tree_while_stmt
 {
         struct _tree_stmt_base _base;
-        tree_exp* _condition;
+        tree_expr* _condition;
         tree_stmt* _body;
 };
 
 extern tree_stmt* tree_new_while_stmt(
-        tree_context* context, tree_xlocation loc, tree_exp* condition, tree_stmt* body);
+        tree_context* context, tree_xlocation loc, tree_expr* condition, tree_stmt* body);
 
 static inline struct _tree_while_stmt* _tree_get_while_stmt(tree_stmt* self);
 static inline const struct _tree_while_stmt* _tree_get_while_cstmt(const tree_stmt* self);
 
-static inline tree_exp* tree_get_while_condition(const tree_stmt* self);
+static inline tree_expr* tree_get_while_condition(const tree_stmt* self);
 static inline tree_stmt* tree_get_while_body(const tree_stmt* self);
 
-static inline void tree_set_while_condition(tree_stmt* self, tree_exp* exp);
+static inline void tree_set_while_condition(tree_stmt* self, tree_expr* expr);
 static inline void tree_set_while_body(tree_stmt* self, tree_stmt* body);
 
 struct _tree_do_while_stmt
 {
         struct _tree_stmt_base _base;
-        tree_exp* _condition;
+        tree_expr* _condition;
         tree_stmt* _body;
 };
 
 extern tree_stmt* tree_new_do_while_stmt(
-        tree_context* context, tree_xlocation loc, tree_exp* condition, tree_stmt* body);
+        tree_context* context, tree_xlocation loc, tree_expr* condition, tree_stmt* body);
 
 static inline struct _tree_do_while_stmt* _tree_get_do_while_stmt(tree_stmt* self);
 static inline const struct _tree_do_while_stmt* _tree_get_do_while_cstmt(const tree_stmt* self);
 
-static inline tree_exp* tree_get_do_while_condition(const tree_stmt* self);
+static inline tree_expr* tree_get_do_while_condition(const tree_stmt* self);
 static inline tree_stmt* tree_get_do_while_body(const tree_stmt* self);
 
-static inline void tree_set_do_while_condition(tree_stmt* self, tree_exp* exp);
+static inline void tree_set_do_while_condition(tree_stmt* self, tree_expr* expr);
 static inline void tree_set_do_while_body(tree_stmt* self, tree_stmt* body);
 
 struct _tree_for_stmt
 {
         struct _tree_stmt_base _base;
         tree_stmt* _init;
-        tree_exp* _condition;
-        tree_exp* _step;
+        tree_expr* _condition;
+        tree_expr* _step;
         tree_stmt* _body;
 };
 
@@ -298,21 +298,21 @@ extern tree_stmt* tree_new_for_stmt(
         tree_context* context,
         tree_xlocation loc,
         tree_stmt* init,
-        tree_exp* condition,
-        tree_exp* step,
+        tree_expr* condition,
+        tree_expr* step,
         tree_stmt* body);
 
 static inline struct _tree_for_stmt* _tree_get_for_stmt(tree_stmt* self);
 static inline const struct _tree_for_stmt* _tree_get_for_cstmt(const tree_stmt* self);
 
 static inline tree_stmt* tree_get_for_init(const tree_stmt* self);
-static inline tree_exp* tree_get_for_condition(const tree_stmt* self);
-static inline tree_exp* tree_get_for_step(const tree_stmt* self);
+static inline tree_expr* tree_get_for_condition(const tree_stmt* self);
+static inline tree_expr* tree_get_for_step(const tree_stmt* self);
 static inline tree_stmt* tree_get_for_body(const tree_stmt* self);
 
 static inline void tree_set_for_init(tree_stmt* self, tree_stmt* init);
-static inline void tree_set_for_condition(tree_stmt* self, tree_exp* condition);
-static inline void tree_set_for_step(tree_stmt* self, tree_exp* step);
+static inline void tree_set_for_condition(tree_stmt* self, tree_expr* condition);
+static inline void tree_set_for_step(tree_stmt* self, tree_expr* step);
 static inline void tree_set_for_body(tree_stmt* self, tree_stmt* body);
 
 
@@ -350,17 +350,17 @@ extern tree_stmt* tree_new_break_stmt(tree_context* context, tree_xlocation loc)
 struct _tree_return_stmt
 {
         struct _tree_stmt_base _base;
-        tree_exp* _value;
+        tree_expr* _value;
         // todo
 };
 
-extern tree_stmt* tree_new_return_stmt(tree_context* context, tree_xlocation loc, tree_exp* value);
+extern tree_stmt* tree_new_return_stmt(tree_context* context, tree_xlocation loc, tree_expr* value);
 
 static inline struct _tree_return_stmt* _tree_get_return_stmt(tree_stmt* self);
 static inline const struct _tree_return_stmt* _tree_get_return_cstmt(const tree_stmt* self);
 
-static inline tree_exp* tree_get_return_value(const tree_stmt* self);
-static inline void tree_set_return_value(tree_stmt* self, tree_exp* exp);
+static inline tree_expr* tree_get_return_value(const tree_stmt* self);
+static inline void tree_set_return_value(tree_stmt* self, tree_expr* expr);
 
 typedef struct _tree_stmt
 {
@@ -371,7 +371,7 @@ typedef struct _tree_stmt
                 struct _tree_case_stmt _case;
                 struct _tree_default_stmt _default;
                 struct _tree_compound_stmt _compound;
-                struct _tree_exp_stmt _exp;
+                struct _tree_expr_stmt _expr;
                 struct _tree_if_stmt _if;
                 struct _tree_switch_stmt _switch;
                 struct _tree_while_stmt _while;
@@ -506,7 +506,7 @@ static inline const struct _tree_case_stmt* _tree_get_ccase(const tree_stmt* sel
         return (const struct _tree_case_stmt*)self;
 }
 
-static inline tree_exp* tree_get_case_value(const tree_stmt* self)
+static inline tree_expr* tree_get_case_value(const tree_stmt* self)
 {
         return _tree_get_ccase(self)->_value;
 }
@@ -516,7 +516,7 @@ static inline tree_stmt* tree_get_case_body(const tree_stmt* self)
         return _tree_get_ccase(self)->_body;
 }
 
-static inline void tree_set_case_value(tree_stmt* self, tree_exp* value)
+static inline void tree_set_case_value(tree_stmt* self, tree_expr* value)
 {
         _tree_get_case(self)->_value = value;
 }
@@ -592,26 +592,26 @@ static inline void tree_set_decl_stmt_entity(tree_stmt* self, tree_decl* d)
         _tree_get_decl_stmt(self)->_entity = d;
 }
 
-static inline struct _tree_exp_stmt* _tree_get_exp_stmt(tree_stmt* self)
+static inline struct _tree_expr_stmt* _tree_get_expr_stmt(tree_stmt* self)
 {
-        TREE_ASSERT_STMT(self, TSK_EXP);
-        return (struct _tree_exp_stmt*)self;
+        TREE_ASSERT_STMT(self, TSK_expr);
+        return (struct _tree_expr_stmt*)self;
 }
 
-static inline const struct _tree_exp_stmt* _tree_get_exp_cstmt(const tree_stmt* self)
+static inline const struct _tree_expr_stmt* _tree_get_expr_cstmt(const tree_stmt* self)
 {
-        TREE_ASSERT_STMT(self, TSK_EXP);
-        return (const struct _tree_exp_stmt*)self;
+        TREE_ASSERT_STMT(self, TSK_expr);
+        return (const struct _tree_expr_stmt*)self;
 }
 
-static inline tree_exp* tree_get_exp_stmt_root(const tree_stmt* self)
+static inline tree_expr* tree_get_expr_stmt_root(const tree_stmt* self)
 {
-        return _tree_get_exp_cstmt(self)->_root;
+        return _tree_get_expr_cstmt(self)->_root;
 }
 
-static inline void tree_set_exp_stmt_root(tree_stmt* self, tree_exp* exp)
+static inline void tree_set_expr_stmt_root(tree_stmt* self, tree_expr* expr)
 {
-        _tree_get_exp_stmt(self)->_root = exp;
+        _tree_get_expr_stmt(self)->_root = expr;
 }
 
 static inline struct _tree_if_stmt* _tree_get_if_stmt(tree_stmt* self)
@@ -626,7 +626,7 @@ static inline const struct _tree_if_stmt* _tree_get_if_cstmt(const tree_stmt* se
         return (const struct _tree_if_stmt*)self;
 }
 
-static inline tree_exp* tree_get_if_condition(const tree_stmt* self)
+static inline tree_expr* tree_get_if_condition(const tree_stmt* self)
 {
         return _tree_get_if_cstmt(self)->_condition;
 }
@@ -641,9 +641,9 @@ static inline tree_stmt* tree_get_if_else(const tree_stmt* self)
         return _tree_get_if_cstmt(self)->_else;
 }
 
-static inline void tree_set_if_condition(tree_stmt* self, tree_exp* exp)
+static inline void tree_set_if_condition(tree_stmt* self, tree_expr* expr)
 {
-        _tree_get_if_stmt(self)->_condition = exp;
+        _tree_get_if_stmt(self)->_condition = expr;
 }
 
 static inline void tree_set_if_body(tree_stmt* self, tree_stmt* body)
@@ -668,9 +668,9 @@ static inline const struct _tree_switch_stmt* _tree_get_switch_cstmt(const tree_
         return (const struct _tree_switch_stmt*)self;
 }
 
-static inline tree_exp* tree_get_switch_exp(const tree_stmt* self)
+static inline tree_expr* tree_get_switch_expr(const tree_stmt* self)
 {
-        return _tree_get_switch_cstmt(self)->_exp;
+        return _tree_get_switch_cstmt(self)->_expr;
 }
 
 static inline tree_stmt* tree_get_switch_body(const tree_stmt* self)
@@ -678,9 +678,9 @@ static inline tree_stmt* tree_get_switch_body(const tree_stmt* self)
         return _tree_get_switch_cstmt(self)->_body;
 }
 
-static inline void tree_set_switch_exp(tree_stmt* self, tree_exp* exp)
+static inline void tree_set_switch_expr(tree_stmt* self, tree_expr* expr)
 {
-        _tree_get_switch_stmt(self)->_exp = exp;
+        _tree_get_switch_stmt(self)->_expr = expr;
 }
 
 static inline void tree_set_switch_body(tree_stmt* self, tree_stmt* body)
@@ -700,7 +700,7 @@ static inline const struct _tree_while_stmt* _tree_get_while_cstmt(const tree_st
         return (const struct _tree_while_stmt*)self;
 }
 
-static inline tree_exp* tree_get_while_condition(const tree_stmt* self)
+static inline tree_expr* tree_get_while_condition(const tree_stmt* self)
 {
         return _tree_get_while_cstmt(self)->_condition;
 }
@@ -710,9 +710,9 @@ static inline tree_stmt* tree_get_while_body(const tree_stmt* self)
         return _tree_get_while_cstmt(self)->_body;
 }
 
-static inline void tree_set_while_condition(tree_stmt* self, tree_exp* exp)
+static inline void tree_set_while_condition(tree_stmt* self, tree_expr* expr)
 {
-        _tree_get_while_stmt(self)->_condition = exp;
+        _tree_get_while_stmt(self)->_condition = expr;
 }
 
 static inline void tree_set_while_body(tree_stmt* self, tree_stmt* body)
@@ -732,7 +732,7 @@ static inline const struct _tree_do_while_stmt* _tree_get_do_while_cstmt(const t
         return (const struct _tree_do_while_stmt*)self;
 }
 
-static inline tree_exp* tree_get_do_while_condition(const tree_stmt* self)
+static inline tree_expr* tree_get_do_while_condition(const tree_stmt* self)
 {
         return _tree_get_do_while_cstmt(self)->_condition;
 }
@@ -742,9 +742,9 @@ static inline tree_stmt* tree_get_do_while_body(const tree_stmt* self)
         return _tree_get_do_while_cstmt(self)->_body;
 }
 
-static inline void tree_set_do_while_condition(tree_stmt* self, tree_exp* exp)
+static inline void tree_set_do_while_condition(tree_stmt* self, tree_expr* expr)
 {
-        _tree_get_do_while_stmt(self)->_condition = exp;
+        _tree_get_do_while_stmt(self)->_condition = expr;
 }
 
 static inline void tree_set_do_while_body(tree_stmt* self, tree_stmt* body)
@@ -769,12 +769,12 @@ static inline tree_stmt* tree_get_for_init(const tree_stmt* self)
         return _tree_get_for_cstmt(self)->_init;
 }
 
-static inline tree_exp* tree_get_for_condition(const tree_stmt* self)
+static inline tree_expr* tree_get_for_condition(const tree_stmt* self)
 {
         return _tree_get_for_cstmt(self)->_condition;
 }
 
-static inline tree_exp* tree_get_for_step(const tree_stmt* self)
+static inline tree_expr* tree_get_for_step(const tree_stmt* self)
 {
         return _tree_get_for_cstmt(self)->_step;
 }
@@ -789,12 +789,12 @@ static inline void tree_set_for_init(tree_stmt* self, tree_stmt* init)
         _tree_get_for_stmt(self)->_init = init;
 }
 
-static inline void tree_set_for_condition(tree_stmt* self, tree_exp* condition)
+static inline void tree_set_for_condition(tree_stmt* self, tree_expr* condition)
 {
         _tree_get_for_stmt(self)->_condition = condition;
 }
 
-static inline void tree_set_for_step(tree_stmt* self, tree_exp* step)
+static inline void tree_set_for_step(tree_stmt* self, tree_expr* step)
 {
         _tree_get_for_stmt(self)->_step = step;
 }
@@ -838,14 +838,14 @@ static inline const struct _tree_return_stmt* _tree_get_return_cstmt(const tree_
         return (const struct _tree_return_stmt*)self;
 }
 
-static inline tree_exp* tree_get_return_value(const tree_stmt* self)
+static inline tree_expr* tree_get_return_value(const tree_stmt* self)
 {
         return _tree_get_return_cstmt(self)->_value;
 }
 
-static inline void tree_set_return_value(tree_stmt* self, tree_exp* exp)
+static inline void tree_set_return_value(tree_stmt* self, tree_expr* expr)
 {
-        _tree_get_return_stmt(self)->_value = exp;
+        _tree_get_return_stmt(self)->_value = expr;
 }
 
 #ifdef __cplusplus

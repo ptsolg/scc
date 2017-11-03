@@ -61,12 +61,12 @@ typedef struct
         union
         {
                 tree_type* type;
-                tree_exp* exp;
+                tree_expr* expr;
                 void* pointer;
         };
 } csizeof_rhs;
 
-extern void csizeof_exp_init(csizeof_rhs* self, tree_exp* e);
+extern void csizeof_expr_init(csizeof_rhs* self, tree_expr* e);
 extern void csizeof_type_init(csizeof_rhs* self, tree_type* t, tree_location loc);
 
 typedef struct

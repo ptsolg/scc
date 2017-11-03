@@ -38,7 +38,7 @@ extern tree_type* cprog_build_array_type(
         tree_location loc,
         tree_type_quals quals,
         tree_type* eltype,
-        tree_exp* size);
+        tree_expr* size);
 
 extern tree_type* cprog_set_array_eltype(
         cprog* self, tree_location loc, tree_type* array, tree_type* eltype);

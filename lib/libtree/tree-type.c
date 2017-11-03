@@ -57,7 +57,7 @@ extern void tree_add_function_type_param(tree_type* self, tree_type* param)
 }
 
 extern tree_type* tree_new_array_type(
-        tree_context* context, tree_type* eltype, tree_exp* size)
+        tree_context* context, tree_type* eltype, tree_expr* size)
 {
         tree_type* t = tree_new_chain_type(context, TTK_ARRAY, eltype,
                 sizeof(struct _tree_array_type));

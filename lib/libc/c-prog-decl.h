@@ -20,7 +20,7 @@ extern bool cprog_build_direct_declarator_function_suffix(
         cprog* self, cdeclarator* declarator);
 
 extern bool cprog_build_direct_declarator_array_suffix(
-        cprog* self, cdeclarator* declarator, tree_type_quals quals, tree_exp* size);
+        cprog* self, cdeclarator* declarator, tree_type_quals quals, tree_expr* size);
 
 extern bool cprog_add_direct_declarator_parens(cprog* self, cdeclarator* declarator);
 extern bool cprog_set_declarator_name(
@@ -38,13 +38,13 @@ extern tree_type* cprog_build_type_name(
         cprog* self, cdeclarator* declarator, tree_type* typespec);
 
 extern tree_decl* cprog_build_enumerator(
-        cprog* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_exp* value);
+        cprog* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_expr* value);
 
 extern tree_decl* cprog_build_enum_decl(
         cprog* self, tree_location kw_loc, tree_id name, bool has_body);
 
 extern tree_decl* cprog_build_member_decl(
-        cprog* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_exp* bits);
+        cprog* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_expr* bits);
 
 extern tree_decl* cprog_build_record_decl(
         cprog* self, tree_location kw_loc, tree_id name, bool is_union, bool has_body);
@@ -54,7 +54,7 @@ extern tree_decl* cprog_build_external_decl(
 
 extern tree_decl* cprog_add_init_declarator(cprog* self, tree_decl* list, tree_decl* d);
 
-extern bool cprog_set_var_initializer(cprog* self, tree_decl* decl, tree_exp* init);
+extern bool cprog_set_var_initializer(cprog* self, tree_decl* decl, tree_expr* init);
 extern bool cprog_set_function_body(cprog* self, tree_decl* decl, tree_stmt* body);
 
 extern cparam* cprog_build_param(cprog* self);

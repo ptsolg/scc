@@ -26,7 +26,7 @@ static tree_stmt* _cparse_stmt(cparser* self, cstmt_context context)
 
                         return cparser_at_declaration(self)
                                 ? cparse_decl_stmt(self)
-                                : cparse_exp_stmt(self);
+                                : cparse_expr_stmt(self);
         }
 }
 
@@ -41,7 +41,7 @@ extern tree_stmt* cparse_case_stmt(cparser* self, cstmt_context context)
         if (!cparser_require(self, CTK_CASE))
                 return NULL;
 
-        tree_exp* value = cparse_const_exp(self);
+        tree_expr* value = cparse_const_expr(self);
         if (!value)
                 return NULL;
 
@@ -129,19 +129,19 @@ extern tree_stmt* cparse_decl_stmt(cparser* self)
         return cprog_build_decl_stmt(self->prog, begin_loc, semicolon_loc, d);
 }
 
-extern tree_stmt* cparse_exp_stmt(cparser* self)
+extern tree_stmt* cparse_expr_stmt(cparser* self)
 {
-        tree_exp* e = NULL;
+        tree_expr* e = NULL;
         tree_location begin_loc = cparser_get_loc(self);
         if (!cparser_at(self, CTK_SEMICOLON))
-                if (!(e = cparse_exp(self)))
+                if (!(e = cparse_expr(self)))
                         return NULL;
 
         tree_location semicolon_loc = cparser_get_loc(self);
         if (!cparser_require(self, CTK_SEMICOLON))
                 return NULL;
 
-        return cprog_build_exp_stmt(self->prog, begin_loc, semicolon_loc, e);
+        return cprog_build_expr_stmt(self->prog, begin_loc, semicolon_loc, e);
 }
 
 extern tree_stmt* cparse_if_stmt(cparser* self, cstmt_context context)
@@ -150,7 +150,7 @@ extern tree_stmt* cparse_if_stmt(cparser* self, cstmt_context context)
         if (!cparser_require(self, CTK_IF))
                 return NULL;
 
-        tree_exp* condition = cparse_paren_exp(self);
+        tree_expr* condition = cparse_paren_expr(self);
         if (!condition)
                 return NULL;
         tree_location rbracket_loc = ctoken_get_loc(cparser_get_prev(self));
@@ -176,7 +176,7 @@ extern tree_stmt* cparse_switch_stmt(cparser* self, cstmt_context context)
         if (!cparser_require(self, CTK_SWITCH))
                 return NULL;
 
-        tree_exp* value = cparse_paren_exp(self);
+        tree_expr* value = cparse_paren_expr(self);
         if (!value)
                 return NULL;
         tree_location rbracket_loc = ctoken_get_loc(cparser_get_prev(self));
@@ -194,7 +194,7 @@ extern tree_stmt* cparse_while_stmt(cparser* self, cstmt_context context)
         if (!cparser_require(self, CTK_WHILE))
                 return NULL;
 
-        tree_exp* condition = cparse_paren_exp(self);
+        tree_expr* condition = cparse_paren_expr(self);
         if (!condition)
                 return NULL;
         tree_location rbracket_loc = ctoken_get_loc(cparser_get_prev(self));
@@ -216,7 +216,7 @@ extern tree_stmt* cparse_do_while_stmt(cparser* self, cstmt_context context)
         if (!body || !cparser_require(self, CTK_WHILE))
                 return NULL;
 
-        tree_exp* condition = cparse_paren_exp(self);
+        tree_expr* condition = cparse_paren_expr(self);
         if (!condition)
                 return NULL;
 
@@ -236,8 +236,8 @@ extern tree_stmt* cparse_for_stmt(cparser* self, cstmt_context context)
                 return NULL;
 
         tree_stmt* init = NULL;
-        tree_exp* condition = NULL;
-        tree_exp* step = NULL;
+        tree_expr* condition = NULL;
+        tree_expr* step = NULL;
         tree_stmt* body = NULL;
 
         cprog_push_scope(self->prog);
@@ -247,17 +247,17 @@ extern tree_stmt* cparse_for_stmt(cparser* self, cstmt_context context)
                         return NULL;
         }
         else
-                if (!(init = cparse_exp_stmt(self)))
+                if (!(init = cparse_expr_stmt(self)))
                         return NULL;
 
         if (!cparser_at(self, CTK_SEMICOLON))
-                if (!(condition = cparse_exp(self)))
+                if (!(condition = cparse_expr(self)))
                         return NULL;
         if (!cparser_require(self, CTK_SEMICOLON))
                 return NULL;
 
         if (!cparser_at(self, CTK_RBRACKET))
-                if (!(step = cparse_exp(self)))
+                if (!(step = cparse_expr(self)))
                         return NULL;
         tree_location rbracket_loc = cparser_get_loc(self);
         if (!cparser_require(self, CTK_RBRACKET))
@@ -316,9 +316,9 @@ extern tree_stmt* cparse_return_stmt(cparser* self)
         if (!cparser_require(self, CTK_RETURN))
                 return NULL;
 
-        tree_exp* value = NULL;
+        tree_expr* value = NULL;
         if (!cparser_at(self, CTK_SEMICOLON))
-                if (!(value = cparse_exp(self)))
+                if (!(value = cparse_expr(self)))
                         return NULL;
 
         tree_location semicolon_loc = cparser_get_loc(self);

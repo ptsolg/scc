@@ -310,7 +310,7 @@ extern tree_decl* tree_new_var_decl(
         tree_id name,
         tree_decl_storage_class class_,
         tree_type* type,
-        tree_exp* init)
+        tree_expr* init)
 {
         tree_decl* d = tree_new_value_decl(context,
                 TDK_VAR, scope, loc, name, class_, type, sizeof(struct _tree_var_decl));
@@ -327,7 +327,7 @@ extern tree_decl* tree_new_member_decl(
         tree_xlocation loc,
         tree_id name,
         tree_type* type,
-        tree_exp* bits)
+        tree_expr* bits)
 {
         tree_decl* d = tree_new_value_decl(context,
                 TDK_MEMBER, scope, loc, name, TDSC_NONE, type, sizeof(struct _tree_member_decl));
@@ -344,7 +344,7 @@ extern tree_decl* tree_new_enumerator_decl(
         tree_xlocation loc,
         tree_id name,
         tree_type* type,
-        tree_exp* value)
+        tree_expr* value)
 {
         tree_decl* d = tree_new_typed_decl(context,
                 TDK_ENUMERATOR, scope, loc, name, type, sizeof(struct _tree_enumerator_decl));

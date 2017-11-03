@@ -56,7 +56,7 @@ extern tree_stmt* cprog_build_case_stmt(
         cprog* self,
         tree_location kw_loc,
         tree_location colon_loc,
-        tree_exp* value,
+        tree_expr* value,
         tree_stmt* body)
 {
         return tree_new_case_stmt(self->context,
@@ -102,18 +102,18 @@ extern tree_stmt* cprog_build_labeled_stmt(
                 tree_init_xloc(id_loc, colon_loc), label);
 }
 
-extern tree_stmt* cprog_build_exp_stmt(
-        cprog* self, tree_location begin_loc, tree_location semicolon_loc, tree_exp* exp)
+extern tree_stmt* cprog_build_expr_stmt(
+        cprog* self, tree_location begin_loc, tree_location semicolon_loc, tree_expr* expr)
 {
-        return tree_new_exp_stmt(self->context,
-                tree_init_xloc(begin_loc, semicolon_loc), exp);
+        return tree_new_expr_stmt(self->context,
+                tree_init_xloc(begin_loc, semicolon_loc), expr);
 }
 
 extern tree_stmt* cprog_build_if_stmt(
         cprog* self,
         tree_location kw_loc,
         tree_location rbracket_loc,
-        tree_exp* condition,
+        tree_expr* condition,
         tree_stmt* body,
         tree_stmt* else_)
 {
@@ -132,7 +132,7 @@ extern tree_stmt* cprog_build_switch_stmt(
         cprog* self,
         tree_location kw_loc,
         tree_location rbracket_loc,
-        tree_exp* value,
+        tree_expr* value,
         tree_stmt* body)
 {
         return tree_new_switch_stmt(self->context,
@@ -143,7 +143,7 @@ extern tree_stmt* cprog_build_while_stmt(
         cprog* self,
         tree_location kw_loc,
         tree_location rbracket_loc,
-        tree_exp* condition,
+        tree_expr* condition,
         tree_stmt* body)
 {
         return tree_new_while_stmt(self->context,
@@ -154,7 +154,7 @@ extern tree_stmt* cprog_build_do_while_stmt(
         cprog* self,
         tree_location kw_loc,
         tree_location semicolon_loc,
-        tree_exp* condition,
+        tree_expr* condition,
         tree_stmt* body)
 {
         return tree_new_do_while_stmt(self->context,
@@ -166,8 +166,8 @@ extern tree_stmt* cprog_build_for_stmt(
         tree_location kw_loc,
         tree_location rbracket_loc,
         tree_stmt* init,
-        tree_exp* condition,
-        tree_exp* step,
+        tree_expr* condition,
+        tree_expr* step,
         tree_stmt* body)
 {
         return tree_new_for_stmt(self->context,
@@ -204,7 +204,7 @@ extern tree_stmt* cprog_build_break_stmt(
 }
 
 extern tree_stmt* cprog_build_return_stmt(
-        cprog* self, tree_location kw_loc, tree_location semicolon_loc, tree_exp* value)
+        cprog* self, tree_location kw_loc, tree_location semicolon_loc, tree_expr* value)
 {
         if (value)
                 value = cprog_build_impl_cast(self, value,

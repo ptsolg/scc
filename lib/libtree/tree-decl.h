@@ -15,7 +15,7 @@ typedef struct _tree_decl_scope tree_decl_scope;
 typedef struct _tree_context tree_context;
 typedef struct _tree_type tree_type;
 typedef struct _tree_decl tree_decl;
-typedef struct _tree_exp tree_exp;
+typedef struct _tree_expr tree_expr;
 typedef struct _tree_stmt tree_stmt;
 
 typedef struct _tree_symtab
@@ -313,7 +313,7 @@ static inline void tree_set_function_body(tree_decl* self, tree_stmt* body);
 struct _tree_var_decl
 {
         struct _tree_value_decl _base;
-        tree_exp* _init;
+        tree_expr* _init;
 };
 
 extern tree_decl* tree_new_var_decl(
@@ -323,18 +323,18 @@ extern tree_decl* tree_new_var_decl(
         tree_id name, 
         tree_decl_storage_class class_,
         tree_type* type,
-        tree_exp* init);
+        tree_expr* init);
 
 static inline struct _tree_var_decl* _tree_get_var(tree_decl* self);
 static inline const struct _tree_var_decl* _tree_get_cvar(const tree_decl* self);
 
-static inline tree_exp* tree_get_var_init(const tree_decl* self);
-static inline void tree_set_var_init(tree_decl* self, tree_exp* init);
+static inline tree_expr* tree_get_var_init(const tree_decl* self);
+static inline void tree_set_var_init(tree_decl* self, tree_expr* init);
 
 struct _tree_member_decl
 {
         struct _tree_value_decl _base;
-        tree_exp* _bits;
+        tree_expr* _bits;
 };
 
 extern tree_decl* tree_new_member_decl(
@@ -343,18 +343,18 @@ extern tree_decl* tree_new_member_decl(
         tree_xlocation loc,
         tree_id name,
         tree_type* type,
-        tree_exp* bits);
+        tree_expr* bits);
 
 static inline struct _tree_member_decl* _tree_get_member(tree_decl* self);
 static inline const struct _tree_member_decl* _tree_get_cmember(const tree_decl* self);
 
-static inline tree_exp* tree_get_member_bits(const tree_decl* self);
-static inline void tree_set_member_bits(tree_decl* self, tree_exp* bits);
+static inline tree_expr* tree_get_member_bits(const tree_decl* self);
+static inline void tree_set_member_bits(tree_decl* self, tree_expr* bits);
 
 struct _tree_enumerator_decl
 {
         struct _tree_typed_decl _base;
-        tree_exp* _value;
+        tree_expr* _value;
 };
 
 extern tree_decl* tree_new_enumerator_decl(
@@ -363,13 +363,13 @@ extern tree_decl* tree_new_enumerator_decl(
         tree_xlocation loc,
         tree_id name,
         tree_type* type,
-        tree_exp* value);
+        tree_expr* value);
 
 static inline struct _tree_enumerator_decl* _tree_get_enumerator(tree_decl* self);
 static inline const struct _tree_enumerator_decl* _tree_get_cenumerator(const tree_decl* self);
 
-static inline tree_exp* tree_get_enumerator_value(const tree_decl* self);
-static inline void tree_set_enumerator_value(tree_decl* self, tree_exp* value);
+static inline tree_expr* tree_get_enumerator_value(const tree_decl* self);
+static inline void tree_set_enumerator_value(tree_decl* self, tree_expr* value);
 
 struct _tree_label_decl
 {
@@ -794,12 +794,12 @@ static inline const struct _tree_var_decl* _tree_get_cvar(const tree_decl* self)
         return (const struct _tree_var_decl*)self;
 }
 
-static inline tree_exp* tree_get_var_init(const tree_decl* self)
+static inline tree_expr* tree_get_var_init(const tree_decl* self)
 {
         return _tree_get_cvar(self)->_init;
 }
 
-static inline void tree_set_var_init(tree_decl* self, tree_exp* init)
+static inline void tree_set_var_init(tree_decl* self, tree_expr* init)
 {
         _tree_get_var(self)->_init = init;
 }
@@ -816,12 +816,12 @@ static inline const struct _tree_member_decl* _tree_get_cmember(const tree_decl*
         return (const struct _tree_member_decl*)self;
 }
 
-static inline tree_exp* tree_get_member_bits(const tree_decl* self)
+static inline tree_expr* tree_get_member_bits(const tree_decl* self)
 {
         return _tree_get_cmember(self)->_bits;
 }
 
-static inline void tree_set_member_bits(tree_decl* self, tree_exp* bits)
+static inline void tree_set_member_bits(tree_decl* self, tree_expr* bits)
 {
         _tree_get_member(self)->_bits = bits;
 }
@@ -838,12 +838,12 @@ static inline const struct _tree_enumerator_decl* _tree_get_cenumerator(const tr
         return (const struct _tree_enumerator_decl*)self;
 }
 
-static inline tree_exp* tree_get_enumerator_value(const tree_decl* self)
+static inline tree_expr* tree_get_enumerator_value(const tree_decl* self)
 {
         return _tree_get_cenumerator(self)->_value;
 }
 
-static inline void tree_set_enumerator_value(tree_decl* self, tree_exp* value)
+static inline void tree_set_enumerator_value(tree_decl* self, tree_expr* value)
 {
         _tree_get_enumerator(self)->_value = value;
 }

@@ -2,9 +2,9 @@
 #include "c-prog-type.h"
 #include "c-info.h"
 
-extern tree_exp* cprog_build_impl_cast(cprog* self, tree_exp* e, tree_type* t)
+extern tree_expr* cprog_build_impl_cast(cprog* self, tree_expr* e, tree_type* t)
 {
-        tree_type* et = tree_desugar_type(tree_get_exp_type(e));
+        tree_type* et = tree_desugar_type(tree_get_expr_type(e));
 
         if (et == t)
                 return e;
@@ -12,50 +12,50 @@ extern tree_exp* cprog_build_impl_cast(cprog* self, tree_exp* e, tree_type* t)
                 if (tree_get_builtin_type_kind(et) == tree_get_builtin_type_kind(t))
                         return e;
   
-        return tree_new_implicit_cast_exp(self->context,
-                tree_get_exp_value_kind(e), tree_get_exp_loc(e), t, e);
+        return tree_new_implicit_cast_expr(self->context,
+                tree_get_expr_value_kind(e), tree_get_expr_loc(e), t, e);
 }
 
-extern tree_type* cprog_perform_lvalue_conversion(cprog* self, tree_exp** e)
+extern tree_type* cprog_perform_lvalue_conversion(cprog* self, tree_expr** e)
 {
-        tree_type* t = tree_desugar_type(tree_get_exp_type(*e));
-        if (tree_exp_is_lvalue(*e) && tree_get_type_kind(t) != TTK_ARRAY)
+        tree_type* t = tree_desugar_type(tree_get_expr_type(*e));
+        if (tree_expr_is_lvalue(*e) && tree_get_type_kind(t) != TTK_ARRAY)
         {
                 t = tree_new_qual_type(self->context, TTQ_UNQUALIFIED, t);
                 *e = cprog_build_impl_cast(self, *e, t);
-                tree_set_exp_value_kind(*e, TVK_RVALUE);
+                tree_set_expr_value_kind(*e, TVK_RVALUE);
         }
         return t;
 }
 
-extern tree_type* cprog_perform_array_to_pointer_conversion(cprog* self, tree_exp** e)
+extern tree_type* cprog_perform_array_to_pointer_conversion(cprog* self, tree_expr** e)
 {
-        tree_type* t = tree_desugar_type(tree_get_exp_type(*e));
-        if (tree_exp_is_lvalue(*e) && tree_type_is(t, TTK_ARRAY))
+        tree_type* t = tree_desugar_type(tree_get_expr_type(*e));
+        if (tree_expr_is_lvalue(*e) && tree_type_is(t, TTK_ARRAY))
         {
                 tree_type* eltype = tree_get_array_eltype(t);
                 t = cprog_build_pointer(self, TTQ_UNQUALIFIED, eltype);
                 *e = cprog_build_impl_cast(self, *e, t);
-                tree_set_exp_value_kind(*e, TVK_RVALUE);
+                tree_set_expr_value_kind(*e, TVK_RVALUE);
         }
         return t;
 }
 
-extern tree_type* cprog_perform_function_to_pointer_conversion(cprog* self, tree_exp** e)
+extern tree_type* cprog_perform_function_to_pointer_conversion(cprog* self, tree_expr** e)
 {
-        tree_type* t = tree_desugar_type(tree_get_exp_type(*e));
+        tree_type* t = tree_desugar_type(tree_get_expr_type(*e));
         if (tree_type_is(t, TTK_FUNCTION))
         {
                 t = cprog_build_pointer(self, TTQ_UNQUALIFIED, t);
                 *e = cprog_build_impl_cast(self, *e, t);
-                tree_set_exp_value_kind(*e, TVK_RVALUE);
+                tree_set_expr_value_kind(*e, TVK_RVALUE);
         }
         return t;
 }
 
-extern tree_type* cprog_perform_integer_promotion(cprog* self, tree_exp** e)
+extern tree_type* cprog_perform_integer_promotion(cprog* self, tree_expr** e)
 {
-        tree_type* t = tree_desugar_type(tree_get_exp_type(*e));
+        tree_type* t = tree_desugar_type(tree_get_expr_type(*e));
         tree_type_kind tk = tree_get_type_kind(t);
         if (tk != TTK_BUILTIN)
                 return t;
@@ -76,20 +76,20 @@ extern tree_type* cprog_perform_integer_promotion(cprog* self, tree_exp** e)
         return t;
 }
 
-extern tree_type* cprog_perform_array_function_to_pointer_conversion(cprog* self, tree_exp** e)
+extern tree_type* cprog_perform_array_function_to_pointer_conversion(cprog* self, tree_expr** e)
 {
         cprog_perform_function_to_pointer_conversion(self, e);
         return cprog_perform_array_to_pointer_conversion(self, e);
 }
 
-extern tree_type* cprog_perform_unary_conversion(cprog* self, tree_exp** e)
+extern tree_type* cprog_perform_unary_conversion(cprog* self, tree_expr** e)
 {
         cprog_perform_array_function_to_pointer_conversion(self, e);
         return cprog_perform_lvalue_conversion(self, e);
 }
 
 extern tree_type* cprog_perform_usual_arithmetic_conversion(
-        cprog* self, tree_exp** lhs, tree_exp** rhs)
+        cprog* self, tree_expr** lhs, tree_expr** rhs)
 {
         tree_type* lt = cprog_perform_integer_promotion(self, lhs);
         tree_type* rt = cprog_perform_integer_promotion(self, rhs);
@@ -110,7 +110,7 @@ extern tree_type* cprog_perform_usual_arithmetic_conversion(
                 tree_type* tt = rt;
                 rt = lt;
                 lt = tt;
-                tree_exp** te = rhs;
+                tree_expr** te = rhs;
                 rhs = lhs;
                 lhs = te;
         }

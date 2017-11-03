@@ -81,14 +81,14 @@ extern void scc_print_eval_result(scc_arg_handler* self, aparser* p)
         self->scc->opts.print_eval_result = true;
 }
 
-extern void scc_print_exp_value(scc_arg_handler* self, aparser* p)
+extern void scc_print_expr_value(scc_arg_handler* self, aparser* p)
 {
-        self->scc->opts.print_exp_value = true;
+        self->scc->opts.print_expr_value = true;
 }
 
-extern void scc_print_exp_type(scc_arg_handler* self, aparser* p)
+extern void scc_print_expr_type(scc_arg_handler* self, aparser* p)
 {
-        self->scc->opts.print_exp_type = true;
+        self->scc->opts.print_expr_type = true;
 }
 
 extern void scc_print_impl_casts(scc_arg_handler* self, aparser* p)

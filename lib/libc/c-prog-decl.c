@@ -66,7 +66,7 @@ extern bool cprog_build_direct_declarator_function_suffix(
 }
 
 extern bool cprog_build_direct_declarator_array_suffix(
-        cprog* self, cdeclarator* declarator, tree_type_quals quals, tree_exp* size)
+        cprog* self, cdeclarator* declarator, tree_type_quals quals, tree_expr* size)
 {
         tree_type* suffix = cprog_build_array_type(self,
                 cdeclarator_get_id_loc_or_begin(declarator), quals, NULL, size);
@@ -318,12 +318,12 @@ static void cprog_compute_enumerator_value(
                 v = int_get_i32(&last_val) + 1;
         }
 
-        tree_exp* val = cprog_build_integer_literal(self, tree_get_decl_loc_begin(enumerator), v, true, false);
-        tree_set_enumerator_value(enumerator, tree_new_impl_init_exp(self->context, val));
+        tree_expr* val = cprog_build_integer_literal(self, tree_get_decl_loc_begin(enumerator), v, true, false);
+        tree_set_enumerator_value(enumerator, tree_new_impl_init_expr(self->context, val));
 }
 
 extern tree_decl* cprog_build_enumerator(
-        cprog* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_exp* value)
+        cprog* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_expr* value)
 {
         tree_type* t = tree_new_qual_type(self->context, TTQ_UNQUALIFIED,
                 tree_new_decl_type(self->context, enum_, true));
@@ -386,7 +386,7 @@ extern tree_decl* cprog_build_enum_decl(
 }
 
 extern tree_decl* cprog_build_member_decl(
-        cprog* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_exp* bits)
+        cprog* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_expr* bits)
 {
         tree_type* t = cprog_set_declarator_type(self, struct_declarator, decl_specs->typespec);
         if (!t)
@@ -596,13 +596,13 @@ extern tree_decl* cprog_add_init_declarator(cprog* self, tree_decl* list, tree_d
         return list;
 }
 
-extern bool cprog_set_var_initializer(cprog* self, tree_decl* decl, tree_exp* init)
+extern bool cprog_set_var_initializer(cprog* self, tree_decl* decl, tree_expr* init)
 {
         if (tree_get_decl_kind(decl) != TDK_VAR)
                 return false;
 
         tree_type* t = tree_get_decl_type(decl);
-        if (tree_get_exp_kind(init) != TEK_INIT)
+        if (tree_get_expr_kind(init) != TEK_INIT)
                 init = cprog_build_impl_cast(self, init, t);
 
         tree_set_var_init(decl, init);

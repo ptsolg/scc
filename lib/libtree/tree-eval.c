@@ -6,15 +6,15 @@ extern void tree_init_eval_info(tree_eval_info* self, const tree_target_info* ta
         self->_error = NULL;
 }
 
-extern const tree_exp* tree_get_eval_eror(const tree_eval_info* self)
+extern const tree_expr* tree_get_eval_eror(const tree_eval_info* self)
 {
         return self->_error;
 }
 
-extern bool tree_eval_as_integer(tree_eval_info* info, const tree_exp* exp, int_value* result)
+extern bool tree_eval_as_integer(tree_eval_info* info, const tree_expr* expr, int_value* result)
 {
         avalue r;
-        if (!tree_eval_as_arithmetic(info, exp, &r))
+        if (!tree_eval_as_arithmetic(info, expr, &r))
                 return false;
 
         if (!avalue_is_int(&r))
@@ -168,12 +168,12 @@ static bool(*const tree_binop_eval_table[TBK_SIZE])(avalue*, const avalue*) =
         NULL, // TBK_COMMA
 };
 
-static bool tree_eval_binop(tree_eval_info* info, const tree_exp* exp, avalue* result)
+static bool tree_eval_binop(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
-        const tree_exp* lhs = tree_get_binop_lhs(exp);
-        const tree_exp* rhs = tree_get_binop_rhs(exp);
-        const tree_type* lt = tree_get_exp_type(lhs);
-        const tree_type* rt = tree_get_exp_type(rhs);
+        const tree_expr* lhs = tree_get_binop_lhs(expr);
+        const tree_expr* rhs = tree_get_binop_rhs(expr);
+        const tree_type* lt = tree_get_expr_type(lhs);
+        const tree_type* rt = tree_get_expr_type(rhs);
 
         S_ASSERT(tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt));
 
@@ -184,12 +184,12 @@ static bool tree_eval_binop(tree_eval_info* info, const tree_exp* exp, avalue* r
         if (!tree_eval_as_arithmetic(info, rhs, &rr))
                 return false;
 
-        tree_binop_kind k = tree_get_binop_kind(exp);
+        tree_binop_kind k = tree_get_binop_kind(expr);
         S_ASSERT(k >= 0 && k < TBK_SIZE);
 
         if (!tree_binop_eval_table[k] || !tree_binop_eval_table[k](result, &rr))
         {
-                info->_error = exp;
+                info->_error = expr;
                 return false;
         }
 
@@ -233,39 +233,39 @@ static bool(*const tree_unop_eval_table[TUK_SIZE])(avalue*) =
         NULL, // TUK_ADDRESS
 };
 
-static bool tree_eval_unop(tree_eval_info* info, const tree_exp* exp, avalue* result)
+static bool tree_eval_unop(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
-        if (!exp)
+        if (!expr)
                 return false;
 
-        tree_unop_kind k = tree_get_unop_kind(exp);
+        tree_unop_kind k = tree_get_unop_kind(expr);
         S_ASSERT(k >= 0 && k < TUK_SIZE);
 
-        if (!tree_eval_as_arithmetic(info, tree_get_unop_exp(exp), result))
+        if (!tree_eval_as_arithmetic(info, tree_get_unop_expr(expr), result))
                 return false;
         if (!tree_unop_eval_table[k])
         {
-                info->_error = exp;
+                info->_error = expr;
                 return false;
         }
 
         return tree_unop_eval_table[k](result);
 }
 
-static bool tree_eval_conditional(tree_eval_info* info, const tree_exp* exp, avalue* result)
+static bool tree_eval_conditional(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
         avalue cond;
-        if (!tree_eval_as_arithmetic(info, tree_get_conditional_condition(exp), &cond))
+        if (!tree_eval_as_arithmetic(info, tree_get_conditional_condition(expr), &cond))
                 return false;
 
         return avalue_is_zero(&cond)
-                ? tree_eval_as_arithmetic(info, tree_get_conditional_rhs(exp), result)
-                : tree_eval_as_arithmetic(info, tree_get_conditional_lhs(exp), result);
+                ? tree_eval_as_arithmetic(info, tree_get_conditional_rhs(expr), result)
+                : tree_eval_as_arithmetic(info, tree_get_conditional_lhs(expr), result);
 }
 
-static bool tree_eval_int_literal(tree_eval_info* info, const tree_exp* exp, avalue* result)
+static bool tree_eval_int_literal(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
-        tree_type* t = tree_get_exp_type(exp);
+        tree_type* t = tree_get_expr_type(expr);
         bool ext = tree_builtin_type_is(t, TBTK_INT64)
                 || tree_builtin_type_is(t, TBTK_UINT64);
 
@@ -273,36 +273,36 @@ static bool tree_eval_int_literal(tree_eval_info* info, const tree_exp* exp, ava
                 result,
                 ext ? 64 : 32,
                 tree_type_is_signed_integer(t),
-                tree_get_integer_literal(exp));
+                tree_get_integer_literal(expr));
         return true;
 }
 
-static bool tree_eval_char_literal(tree_eval_info* info, const tree_exp* exp, avalue* result)
+static bool tree_eval_char_literal(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
-        avalue_init_int(result, 8, true, tree_get_character_literal(exp));
+        avalue_init_int(result, 8, true, tree_get_character_literal(expr));
         return true;
 }
 
-static bool tree_eval_flt_literal(tree_eval_info* info, const tree_exp* exp, avalue* result)
+static bool tree_eval_flt_literal(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
-        if (tree_builtin_type_is(tree_get_exp_type(exp), TBTK_FLOAT))
-                avalue_init_sp(result, tree_get_floating_literal(exp));
+        if (tree_builtin_type_is(tree_get_expr_type(expr), TBTK_FLOAT))
+                avalue_init_sp(result, tree_get_floating_literal(expr));
         else
-                avalue_init_dp(result, tree_get_floating_lliteral(exp));
+                avalue_init_dp(result, tree_get_floating_lliteral(expr));
         return true;
 }
 
-static bool tree_eval_cast(tree_eval_info* info, const tree_exp* exp, avalue* result)
+static bool tree_eval_cast(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
-        tree_type* cast_type = tree_get_exp_type(exp);
+        tree_type* cast_type = tree_get_expr_type(expr);
         if (!tree_type_is_arithmetic(cast_type))
         {
-                info->_error = exp;
+                info->_error = expr;
                 return false;
         }
 
-        tree_exp* e = tree_get_cast_exp(exp);
-        tree_type* et = tree_get_exp_type(e);
+        tree_expr* e = tree_get_cast_expr(expr);
+        tree_type* et = tree_get_expr_type(e);
         if (!tree_eval_as_arithmetic(info, e, result))
                 return false;
 
@@ -321,11 +321,11 @@ static bool tree_eval_cast(tree_eval_info* info, const tree_exp* exp, avalue* re
         return true;
 }
 
-static bool tree_eval_sizeof(tree_eval_info* info, const tree_exp* exp, avalue* result)
+static bool tree_eval_sizeof(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
-        tree_type* t = tree_sizeof_is_unary(exp)
-                ? tree_get_exp_type(tree_get_sizeof_exp(exp))
-                : tree_get_sizeof_type(exp);
+        tree_type* t = tree_sizeof_is_unary(expr)
+                ? tree_get_expr_type(tree_get_sizeof_expr(expr))
+                : tree_get_sizeof_type(expr);
 
         avalue_init_int(
                 result,
@@ -335,27 +335,27 @@ static bool tree_eval_sizeof(tree_eval_info* info, const tree_exp* exp, avalue* 
         return true;
 }
 
-static bool tree_eval_paren(tree_eval_info* info, const tree_exp* exp, avalue* result)
+static bool tree_eval_paren(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
-        return tree_eval_as_arithmetic(info, tree_get_paren_exp(exp), result);
+        return tree_eval_as_arithmetic(info, tree_get_paren_expr(expr), result);
 }
 
-static bool tree_eval_decl(tree_eval_info* info, const tree_exp* exp, avalue* result)
+static bool tree_eval_decl(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
-        tree_decl* d = tree_get_decl_exp_entity(exp);
+        tree_decl* d = tree_get_decl_expr_entity(expr);
         if (!tree_decl_is(d, TDK_ENUMERATOR))
                 return false;
 
         return tree_eval_as_arithmetic(info, tree_get_enumerator_value(d), result);
 }
 
-static bool tree_eval_impl_init(tree_eval_info* info, const tree_exp* exp, avalue* result)
+static bool tree_eval_impl_init(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
-        return tree_eval_as_arithmetic(info, tree_get_impl_init_exp(exp), result);
+        return tree_eval_as_arithmetic(info, tree_get_impl_init_expr(expr), result);
 }
 
 static bool(*const tree_eval_table[TEK_SIZE])(
-        tree_eval_info*, const tree_exp*, avalue*) =
+        tree_eval_info*, const tree_expr*, avalue*) =
 {
         NULL, // TEK_UNKNOWN
         &tree_eval_binop, // TEK_BINARY
@@ -369,7 +369,7 @@ static bool(*const tree_eval_table[TEK_SIZE])(
         NULL, // TEK_STRING_LITERAL
         &tree_eval_decl, // TEK_DECL
         NULL, // TEK_MEMBER
-        &tree_eval_cast, // TEK_EXPLICIT_CAST
+        &tree_eval_cast, // TEK_exprLICIT_CAST
         &tree_eval_cast, // TEK_IMPLICIT_CAST
         &tree_eval_sizeof, // TEK_SIZEOF
         &tree_eval_paren, // TEK_PAREN
@@ -377,19 +377,19 @@ static bool(*const tree_eval_table[TEK_SIZE])(
         &tree_eval_impl_init, // TEK_IMPL_INIT
 };
 
-extern bool tree_eval_as_arithmetic(tree_eval_info* info, const tree_exp* exp, avalue* result)
+extern bool tree_eval_as_arithmetic(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
-        if (!exp)
+        if (!expr)
                 return false;
 
-        tree_exp_kind k = tree_get_exp_kind(exp);
+        tree_expr_kind k = tree_get_expr_kind(expr);
         S_ASSERT(k >= 0 && k < TEK_SIZE);
 
         if (!tree_eval_table[k])
         {
-                info->_error = exp;
+                info->_error = expr;
                 return false;
         }
 
-        return tree_eval_table[k](info, exp, result);
+        return tree_eval_table[k](info, expr, result);
 }

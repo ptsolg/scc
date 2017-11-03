@@ -82,11 +82,11 @@ extern tree_id ctree_context_add_string(ctree_context* self, const char* s, ssiz
         return strpool_insertl(tree_get_context_strings(ctree_context_base(self)), s, len);
 }
 
-extern void csizeof_exp_init(csizeof_rhs* self, tree_exp* e)
+extern void csizeof_expr_init(csizeof_rhs* self, tree_expr* e)
 {
         self->unary = true;
-        self->exp = e;
-        self->loc = tree_get_exp_loc(e);
+        self->expr = e;
+        self->loc = tree_get_expr_loc(e);
 }
 
 extern void csizeof_type_init(csizeof_rhs* self, tree_type* t, tree_location loc)

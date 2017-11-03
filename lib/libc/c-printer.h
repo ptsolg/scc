@@ -16,7 +16,7 @@ extern "C" {
 typedef struct _ctoken ctoken;
 typedef struct _csource_manager csource_manager;
 typedef struct _cident_info cident_info;
-typedef struct _tree_exp tree_exp;
+typedef struct _tree_expr tree_expr;
 typedef struct _tree_type tree_type;
 typedef struct _tree_decl tree_decl;
 typedef struct _tree_stmt tree_stmt;
@@ -28,8 +28,8 @@ typedef struct _tree_target_info tree_target_info;
 
 typedef struct
 {
-        bool print_exp_type;
-        bool print_exp_value;
+        bool print_expr_type;
+        bool print_expr_value;
         bool print_impl_casts;
         bool print_eval_result;
         bool force_brackets;
@@ -74,7 +74,7 @@ extern void ctoken_print_info_init(ctoken_print_info* self);
 extern void cprint_token(cprinter* self, const ctoken* token, const ctoken_print_info* info);
 extern void cprint_tokens(cprinter* self, const objgroup* tokens);
 
-extern void cprint_exp(cprinter* self, const tree_exp* exp);
+extern void cprint_expr(cprinter* self, const tree_expr* expr);
 
 enum
 {

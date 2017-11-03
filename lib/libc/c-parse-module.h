@@ -12,8 +12,8 @@ extern "C" {
 #include "c-parser.h"
 
 // c99 6.9 translation-unit:
-//      external-declaration
-//      translation-unit external-declaration
+// external-declaration
+// translation-unit external-declaration
 extern tree_module* cparse_module(cparser* self);
 
 #ifdef __cplusplus

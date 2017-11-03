@@ -3,7 +3,7 @@
 #include "c-prog-decl.h"
 #include "c-prog-type.h"
 #include "c-parse-stmt.h"
-#include "c-parse-exp.h" // cparse_const_exp
+#include "c-parse-exp.h" // cparse_const_expr
 #include "c-reswords.h"
 
 static tree_decl* cparse_function_or_init_declarator(
@@ -28,7 +28,7 @@ static tree_decl* cparse_function_or_init_declarator(
         if (cparser_at(self, CTK_EQ))
         {
                 cparser_consume_token(self);
-                tree_exp* init = cparse_initializer(self, decl);
+                tree_expr* init = cparse_initializer(self, decl);
                 if (!init)
                         return NULL;
                 if (!cprog_set_var_initializer(self->prog, decl, init))
@@ -313,11 +313,11 @@ static bool cparse_struct_declaration(cparser* self)
                         return false;
                 }
 
-                tree_exp* bits = NULL;
+                tree_expr* bits = NULL;
                 if (cparser_at(self, CTK_COLON))
                 {
                         cparser_consume_token(self);
-                        bits = cparse_const_exp(self);
+                        bits = cparse_const_expr(self);
                 }
 
                 tree_decl* m = cprog_build_member_decl(self->prog, &ds, &sd, bits);
@@ -414,12 +414,12 @@ static tree_decl* cparse_enumerator(cparser* self, tree_decl* enum_)
                 return NULL;
 
         tree_id id = ctoken_get_string(cparser_get_prev(self));
-        tree_exp* value = NULL;
+        tree_expr* value = NULL;
 
         if (cparser_at(self, CTK_EQ))
         {
                 cparser_consume_token(self);
-                if (!(value = cparse_const_exp(self)))
+                if (!(value = cparse_const_expr(self)))
                         return NULL;
         }
 
@@ -574,9 +574,9 @@ static bool cparse_direct_declarator_suffix_opt(cparser* self, cdeclarator* resu
         else if (cparser_at(self, CTK_LSBRACKET))
         {
                 cparser_consume_token(self);
-                tree_exp* size = NULL;
+                tree_expr* size = NULL;
                 if (!cparser_at(self, CTK_RSBRACKET))
-                        if (!(size = cparse_const_exp(self)))
+                        if (!(size = cparse_const_expr(self)))
                                 return false;
 
                 if (!cprog_build_direct_declarator_array_suffix(
