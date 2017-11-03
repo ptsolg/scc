@@ -9,6 +9,7 @@ extern void cenv_init(cenv* self, FILE* err)
         ctree_context_init(&self->context);
         csource_manager_init(&self->source_manager, &self->context);
         cerror_manager_init(&self->error_manager, &self->source_manager, err);
+        cident_info_init(&self->id_info);
 }
 
 extern void cenv_dispose(cenv* self)
@@ -46,7 +47,7 @@ extern tree_module* cparse_source(cenv* self, csource* source, tree_target_info*
         cparser parser;
 
         clexer_init(&lexer, &self->source_manager, &self->error_manager, &self->context);
-        cprog_init(&prog, &self->context, m, &self->error_manager);
+        cprog_init(&prog, &self->context, &self->id_info, m, &self->error_manager);
         cparser_init(&parser, &lexer, &prog, &self->error_manager);
 
         bool failed = false;

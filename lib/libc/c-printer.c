@@ -23,12 +23,14 @@ extern void cprinter_init(
         cprinter*               self,
         write_cb*               write,
         const tree_context*     context,
+        const cident_info*      id_info,
         const csource_manager*  source_manager,
         const tree_target_info* target)
 {
         self->context        = context;
         self->source_manager = source_manager;
         self->target         = target;
+        self->id_info        = id_info;
         self->indent_level   = 0;
         writebuf_init(&self->buf, write);
         cprinter_opts_init(&self->opts);
@@ -288,7 +290,7 @@ static inline void cprint_comma(cprinter* self)
 
 static inline void cprint_decl_name(cprinter* self, const tree_decl* d)
 {
-        cprint_id(self, tree_get_decl_name(d));
+        cprint_id(self, cident_info_get_orig_decl_name(self->id_info, d));
 }
 
 static void cprint_binop(cprinter* self, const tree_exp* exp)
@@ -765,7 +767,7 @@ static void cprint_typedef(cprinter* self, const tree_decl* decl, int opts)
                 cprintrw(self, CTK_SEMICOLON);
 }
 
-static void cprintsuct_or_union_specifier(cprinter* self, const tree_decl* record, int opts)
+static void cprint_struct_or_union_specifier(cprinter* self, const tree_decl* record, int opts)
 {
         cprintrw(self, (tree_record_is_union(record) ? CTK_UNION : CTK_STRUCT));
         cprint_space(self);
@@ -922,7 +924,7 @@ extern void cprint_decl(cprinter* self, const tree_decl* d, int opts)
         switch (tree_get_decl_kind(d))
         {
                 case TDK_TYPEDEF:    cprint_typedef(self, d, opts); break;
-                case TDK_RECORD:     cprintsuct_or_union_specifier(self, d, opts); break;
+                case TDK_RECORD:     cprint_struct_or_union_specifier(self, d, opts); break;
                 case TDK_ENUM:       cprint_enum_specifier(self, d, opts); break;
                 case TDK_FUNCTION:   cprint_function(self, d, opts); break;
                 case TDK_MEMBER:     cprint_member(self, d, opts); break;

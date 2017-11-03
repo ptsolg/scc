@@ -152,8 +152,10 @@ static serrcode _scc_perform_syntax_analysis(scc_env* self, cenv* env)
                 &p,
                 fwrite_cb_base(&w),
                 ctree_context_base(&env->context),
+                &env->id_info,
                 &env->source_manager,
                 &info);
+
         fwrite_cb_init(&w, out);
         scc_set_printer_opts(self, &p.opts);
         cprint_module(&p, m);
@@ -190,8 +192,10 @@ static serrcode _scc_perform_lexical_analysis(scc_env* self, cenv* env, objgroup
                 &p,
                 fwrite_cb_base(&w),
                 ctree_context_base(&env->context),
+                &env->id_info,
                 &env->source_manager,
                 NULL);
+
         fwrite_cb_init(&w, out);
         scc_set_printer_opts(self, &p.opts);
         cprint_tokens(&p, tokens);

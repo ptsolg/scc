@@ -3,6 +3,35 @@
 #include "c-error.h"
 #include <setjmp.h>
 
+extern void cident_info_init(cident_info* self)
+{
+        self->use_tags = true;
+}
+
+extern tree_id cident_info_to_tag(const cident_info* self, tree_id id)
+{
+        // todo
+        if (self->use_tags)
+                id += 1000;
+        return id;
+}
+
+extern tree_id cident_info_from_tag(const cident_info* self, tree_id tag)
+{
+        // todo
+        if (self->use_tags)
+                tag -= 1000;
+        return tag;
+}
+
+extern tree_id cident_info_get_orig_decl_name(const cident_info* self, const tree_decl* decl)
+{
+        tree_id id = tree_get_decl_name(decl);
+        if (self->use_tags && (tree_decl_is(decl, TDK_RECORD) || tree_decl_is(decl, TDK_ENUM)))
+                id = cident_info_from_tag(self, id);
+        return id;
+}
+
 static void* ctree_context_allocator_allocate(ctree_context_allocator* self, ssize bytes)
 {
         void* p = allocate(self->alloc , bytes);

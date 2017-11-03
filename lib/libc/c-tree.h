@@ -12,6 +12,17 @@ extern "C" {
 #include <libtree/tree.h>
 #include <setjmp.h>
 
+typedef struct _cident_info
+{
+        bool use_tags;
+} cident_info;
+
+extern void    cident_info_init(cident_info* self);
+
+extern tree_id cident_info_to_tag(const cident_info* self, tree_id id);
+extern tree_id cident_info_from_tag(const cident_info* self, tree_id tag);
+extern tree_id cident_info_get_orig_decl_name(const cident_info* self, const tree_decl* decl);
+
 typedef struct _ctree_context_allocator
 {
         allocator  base;

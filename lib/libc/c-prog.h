@@ -17,6 +17,7 @@ typedef struct _cprog
 {
         tree_context*     context;
         ctree_context*    ccontext;
+        cident_info*      id_info;
         cerror_manager*   error_manager;
         tree_decl*        function;
         tree_decl_scope*  globals;
@@ -30,6 +31,7 @@ typedef struct _cprog
 extern void cprog_init(
         cprog*          self,
         ctree_context*  context,
+        cident_info*    id_info,
         tree_module*    module,
         cerror_manager* error_manager);
 
@@ -47,6 +49,9 @@ extern void cprog_exit_function(cprog* self);
 // e.g: to hide for-loop variables from using them outside loop scope
 extern void cprog_push_scope(cprog* self);
 
+extern tree_id cprog_get_decl_name(const cprog* self, const tree_decl* d);
+
+extern tree_decl* cprog_get_local_tag_decl(const cprog* self, tree_id name, bool parent_lookup);
 extern tree_decl* cprog_get_local_decl(const cprog* self, tree_id name);
 extern tree_decl* cprog_get_global_decl(const cprog* self, tree_id name);
 extern tree_decl* cprog_get_label_decl(const cprog* self, tree_id name);
@@ -57,7 +62,7 @@ extern tree_decl* cprog_require_decl(
         tree_location          name_loc,
         tree_decl_kind         kind,
         tree_id                name,
-        bool                   lookup);
+        bool                   parent_lookup);
 
 extern tree_decl* cprog_require_local_decl(
         const cprog* self, tree_location name_loc, tree_decl_kind kind, tree_id name);

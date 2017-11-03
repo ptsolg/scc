@@ -1,14 +1,17 @@
 #include "c-prog.h"
 #include "c-info.h"
+#include <libscl/bit-utils.h>
 
 extern void cprog_init(
         cprog*          self,
         ctree_context*  context,
+        cident_info*    id_info,
         tree_module*    module,
         cerror_manager* error_manager)
 {
         self->ccontext         = context;
         self->context          = ctree_context_base(context);
+        self->id_info          = id_info;
         self->module           = module;
         self->labels           = NULL;
         self->globals          = tree_get_module_globals(module);
@@ -71,9 +74,23 @@ extern void cprog_push_scope(cprog* self)
         cprog_enter_decl_scope(self, tree_new_decl_scope(self->context, self->locals));
 }
 
+extern tree_id cprog_get_decl_name(const cprog* self, const tree_decl* d)
+{
+        return cident_info_get_orig_decl_name(self->id_info, d);
+}
+
 extern void cprog_init_objgroup(cprog* self, objgroup* args)
 {
         objgroup_init_ex(args, tree_get_context_allocator(self->context));
+}
+
+extern tree_decl* cprog_get_local_tag_decl(const cprog* self, tree_id name, bool parent_lookup)
+{
+        if (tree_id_is_empty(name))
+                return NULL;
+
+        return tree_decl_scope_find(self->locals,
+                cident_info_to_tag(self->id_info, name), parent_lookup);
 }
 
 extern tree_decl* cprog_get_local_decl(const cprog* self, tree_id name)
@@ -97,9 +114,9 @@ extern tree_decl* cprog_require_decl(
         tree_location          name_loc,
         tree_decl_kind         kind,
         tree_id                name,
-        bool                   lookup)
+        bool                   parent_lookup)
 {
-        tree_decl* d = tree_symtab_get(tree_get_decl_scope_csymtab(scope), name, lookup);
+        tree_decl* d = tree_symtab_get(tree_get_decl_scope_csymtab(scope), name, parent_lookup);
         if (!d)
         {
                 cerror(self->error_manager, CES_ERROR, name_loc,
