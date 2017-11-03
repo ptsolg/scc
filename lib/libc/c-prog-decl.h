@@ -40,13 +40,14 @@ extern tree_type* cprog_build_type_name(
 extern tree_decl* cprog_build_enumerator(
         cprog* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_exp* value);
 
-extern tree_decl* cprog_build_enum_decl(cprog* self, tree_location kw_loc, tree_id name);
+extern tree_decl* cprog_build_enum_decl(
+        cprog* self, tree_location kw_loc, tree_id name, bool has_body);
 
 extern tree_decl* cprog_build_member_decl(
         cprog* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_exp* bits);
 
 extern tree_decl* cprog_build_record_decl(
-        cprog* self, tree_location kw_loc, tree_id name, bool is_union);
+        cprog* self, tree_location kw_loc, tree_id name, bool is_union, bool has_body);
 
 extern tree_decl* cprog_build_external_decl(
         cprog* self, cdecl_specs* decl_specs, cdeclarator* declarator);

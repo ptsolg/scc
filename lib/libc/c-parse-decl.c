@@ -384,19 +384,20 @@ extern tree_decl* cparse_struct_or_union_specifier(cparser* self, bool* referenc
                 cparser_consume_token(self);
         }
 
-        tree_decl* record = cprog_build_record_decl(self->prog, kw_loc, name, is_union);
+        bool has_body = cparser_at(self, CTK_LBRACE);
+        tree_decl* record = cprog_build_record_decl(self->prog,
+                kw_loc, name, is_union, has_body);
         if (!record)
                 return NULL;
 
-        if (!cparser_at(self, CTK_LBRACE))
+        if (!has_body)
         {
                 if (referenced)
                         *referenced = true;
                 return record;
         }
 
-        if (!cparser_require(self, CTK_LBRACE))
-                return NULL;
+        cparser_consume_token(self);
         if (!cparse_struct_declaration_list(self, record))
                 return NULL;
         tree_location rbrace_loc = cparser_get_loc(self);
@@ -482,19 +483,19 @@ extern tree_decl* cparse_enum_specifier(cparser* self, bool* referenced)
                 cparser_consume_token(self);
         }
 
-        tree_decl* enum_ = cprog_build_enum_decl(self->prog, kw_loc, name);
+        bool has_body = cparser_at(self, CTK_LBRACE);
+        tree_decl* enum_ = cprog_build_enum_decl(self->prog, kw_loc, name, has_body);
         if (!enum_)
                 return NULL;
 
-        if (!cparser_at(self, CTK_LBRACE))
+        if (!has_body)
         {
                 if (referenced)
                         *referenced = true;
                 return enum_;
         }
 
-        if (!cparser_require(self, CTK_LBRACE))
-                return NULL;
+        cparser_consume_token(self);
         if (!cparse_enumerator_list(self, enum_))
                 return NULL;
 

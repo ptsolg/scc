@@ -107,15 +107,26 @@ extern bool cprog_finish_declarator(
         return true;
 }
 
+static void cprog_redefinition(const cprog* self, tree_location loc, tree_id id)
+{
+        cerror(self->error_manager, CES_ERROR, loc, 
+                "redefinition of '%s'", cprog_get_id(self, id));
+}
+
+static void cprog_decl_redifinition(const cprog* self, const tree_decl* decl)
+{
+        cprog_redefinition(self, tree_get_decl_loc_begin(decl), cprog_get_decl_name(self, decl));
+}
+
 extern tree_decl* cprog_export_decl(cprog* self, tree_decl_scope* scope, tree_decl* decl)
 {
+        if (tree_id_is_empty(cprog_get_decl_name(self, decl)))
+                return decl;
+
         tree_symtab* symtab = tree_get_decl_scope_symtab(scope);
         if (tree_symtab_get(symtab, tree_get_decl_name(decl), false))
         {
-                cerror(self->error_manager, CES_ERROR,
-                        tree_get_xloc_begin(tree_get_decl_loc(decl)),
-                        "redefinition of '%s'",
-                        cprog_get_id(self, tree_get_decl_name(decl)));
+                cprog_decl_redifinition(self, decl);
                 return NULL;
         }
         tree_symtab_insert(symtab, decl);
@@ -340,17 +351,38 @@ extern tree_decl* cprog_build_enumerator(
         return e;
 }
 
-extern tree_decl* cprog_build_enum_decl(cprog* self, tree_location kw_loc, tree_id name)
+static void cprog_wrong_kind_of_tag(const cprog* self, tree_location loc, tree_id name)
 {
-        tree_decl* enum_ = cprog_get_local_decl(self, name);
-        if (!enum_)
+        cerror(self->error_manager, CES_ERROR, loc,
+                "'%s' defined as wrong kind of tag", cprog_get_id(self, name));
+}
+
+extern tree_decl* cprog_build_enum_decl(
+        cprog* self, tree_location kw_loc, tree_id name, bool has_body)
+{
+        tree_decl* e = cprog_get_local_tag_decl(self, name, !has_body);
+        if (!e)
         {
-                enum_ = tree_new_enum_decl(self->context,
-                        self->locals, tree_init_xloc(kw_loc, kw_loc), name);
-                if (!cprog_export_decl(self, self->globals, enum_))
+                e = tree_new_enum_decl(self->context,
+                        self->locals, tree_init_xloc(kw_loc, kw_loc),
+                        cident_info_to_tag(self->id_info, name));
+
+                if (!cprog_export_decl(self, self->globals, e))
                         return NULL;
         }
-        return enum_;
+        else if (tree_get_decl_kind(e) != TDK_ENUM)
+        {
+                cprog_wrong_kind_of_tag(self, kw_loc, name);
+                return NULL;
+        }
+        
+        if (has_body && tree_get_decl_scope_size(tree_get_enum_scope(e)))
+        {
+                cprog_redefinition(self, kw_loc, name);
+                return NULL;
+        }
+
+        return e;
 }
 
 extern tree_decl* cprog_build_member_decl(
@@ -412,19 +444,33 @@ extern tree_decl* cprog_build_member_decl(
 }
 
 extern tree_decl* cprog_build_record_decl(
-        cprog* self, tree_location kw_loc, tree_id name, bool is_union)
+        cprog* self, tree_location kw_loc, tree_id name, bool is_union, bool has_body)
 {
-        tree_decl* record = cprog_get_local_decl(self, name);
-        if (!record)
+        tree_decl* d = cprog_get_local_tag_decl(self, name, !has_body);
+        if (!d)
         {
-                
-                record = tree_new_record_decl(self->context,
-                        self->locals, tree_init_xloc(kw_loc, kw_loc), name, is_union);
+                d = tree_new_record_decl(self->context,
+                        self->locals,
+                        tree_init_xloc(kw_loc, kw_loc),
+                        cident_info_to_tag(self->id_info, name),
+                        is_union);
 
-                if (!cprog_export_decl(self, self->globals, record))
+                if (!cprog_export_decl(self, self->locals, d))
                         return NULL;
         }
-        return record;
+        else if (!tree_decl_is(d, TDK_RECORD) || tree_record_is_union(d) != is_union)
+        {
+                cprog_wrong_kind_of_tag(self, kw_loc, name);
+                return NULL;
+        }
+
+        if (has_body && tree_record_is_complete(d))
+        {
+                cprog_redefinition(self, kw_loc, name);
+                return NULL;
+        }
+
+        return d;
 }
 
 static bool cprog_add_function_param(cprog* self, tree_decl* function, cparam* param)
