@@ -1,7 +1,7 @@
-#include "c-prog-type.h"
+#include "c-sema-type.h"
 
-extern tree_type* cprog_build_builtin_type(
-        cprog* self, tree_type_quals q, tree_builtin_type_kind k)
+extern tree_type* csema_new_builtin_type(
+        csema* self, tree_type_quals q, tree_builtin_type_kind k)
 {
         if (k == TBTK_INVALID)
                 return NULL;
@@ -9,7 +9,7 @@ extern tree_type* cprog_build_builtin_type(
         return tree_new_qual_type(self->context, q, tree_new_builtin_type(self->context, k));
 }
 
-extern tree_type* cprog_build_decl_type(cprog* self, tree_decl* d, bool referenced)
+extern tree_type* csema_new_decl_type(csema* self, tree_decl* d, bool referenced)
 {
         if (!d)
                 return NULL;
@@ -23,49 +23,49 @@ extern tree_type* cprog_build_decl_type(cprog* self, tree_decl* d, bool referenc
                 tree_new_decl_type(self->context, d, referenced));
 }
 
-extern tree_type* cprog_build_typedef_name(cprog* self, tree_location name_loc, tree_id name)
+extern tree_type* csema_new_typedef_name(csema* self, tree_location name_loc, tree_id name)
 {
-        tree_decl* d = cprog_require_local_decl(self, name_loc, TDK_TYPEDEF, name);
+        tree_decl* d = csema_require_local_decl(self, name_loc, TDK_TYPEDEF, name);
         if (!d)
                 return NULL;
 
-        return cprog_build_decl_type(self, d, true);
+        return csema_new_decl_type(self, d, true);
 }
 
-extern bool cprog_typedef_name_exists(cprog* self, tree_id name)
+extern bool csema_typedef_name_exists(csema* self, tree_id name)
 {
-        tree_decl* d = cprog_get_local_decl(self, name);
+        tree_decl* d = csema_get_local_decl(self, name);
         if (!d)
                 return false;
 
         return tree_get_decl_kind(d) == TDK_TYPEDEF;
 }
 
-extern tree_type* cprog_build_pointer(cprog* self, tree_type_quals quals, tree_type* target)
+extern tree_type* csema_new_pointer(csema* self, tree_type_quals quals, tree_type* target)
 {
         tree_type* ptr = tree_new_qual_type(self->context, quals,
                 tree_new_pointer_type(self->context, target));
 
-        return cprog_set_pointer_target(self, ptr, target);
+        return csema_set_pointer_target(self, ptr, target);
 }
 
-extern tree_type* cprog_set_pointer_target(cprog* self, tree_type* pointer, tree_type* target)
+extern tree_type* csema_set_pointer_target(csema* self, tree_type* pointer, tree_type* target)
 {
         tree_set_pointer_target(pointer, target);
         return pointer;
 }
 
-extern tree_type* cprog_build_function_type(
-        cprog* self, tree_location loc, tree_type* restype)
+extern tree_type* csema_new_function_type(
+        csema* self, tree_location loc, tree_type* restype)
 {
         tree_type* f = tree_new_qual_type(self->context, TTQ_UNQUALIFIED,
                 tree_new_function_type(self->context, NULL));
 
-        return cprog_set_function_restype(self, loc, f, restype);
+        return csema_set_function_restype(self, loc, f, restype);
 }
 
-extern tree_type* cprog_set_function_restype(
-        cprog* self, tree_location loc, tree_type* func, tree_type* restype)
+extern tree_type* csema_set_function_restype(
+        csema* self, tree_location loc, tree_type* func, tree_type* restype)
 {
         if (!restype)
                 return func;
@@ -88,7 +88,7 @@ extern tree_type* cprog_set_function_restype(
         return func;
 }
 
-extern tree_type* cprog_add_function_type_param(cprog* self, tree_type* func, cparam* param)
+extern tree_type* csema_add_function_type_param(csema* self, tree_type* func, cparam* param)
 {
         // todo
         tree_type* param_type = param->declarator.type.head;
@@ -96,19 +96,19 @@ extern tree_type* cprog_add_function_type_param(cprog* self, tree_type* func, cp
         return func;
 }
 
-extern tree_type* cprog_build_paren_type(cprog* self, tree_type* next)
+extern tree_type* csema_new_paren_type(csema* self, tree_type* next)
 {
-        return cprog_set_paren_type(self, tree_new_paren_type(self->context, NULL), next);
+        return csema_set_paren_type(self, tree_new_paren_type(self->context, NULL), next);
 }
 
-extern tree_type* cprog_set_paren_type(cprog* self, tree_type* paren, tree_type* next)
+extern tree_type* csema_set_paren_type(csema* self, tree_type* paren, tree_type* next)
 {
         tree_set_paren_type(paren, next);
         return paren;
 }
 
-extern tree_type* cprog_build_array_type(
-        cprog* self,
+extern tree_type* csema_new_array_type(
+        csema* self,
         tree_location loc,
         tree_type_quals quals,
         tree_type* eltype,
@@ -117,17 +117,17 @@ extern tree_type* cprog_build_array_type(
         tree_type* arr = tree_new_qual_type(self->context, quals,
                 tree_new_array_type(self->context, NULL, size));
 
-        return cprog_set_array_eltype(self, loc, arr, eltype);
+        return csema_set_array_eltype(self, loc, arr, eltype);
 }
 
-extern tree_type* cprog_set_array_eltype(
-        cprog* self, tree_location loc, tree_type* array, tree_type* eltype)
+extern tree_type* csema_set_array_eltype(
+        csema* self, tree_location loc, tree_type* array, tree_type* eltype)
 {
         tree_set_array_eltype(array, eltype);
         return array;
 }
 
-extern tree_type* cprog_set_type_quals(cprog* self, tree_type* type, tree_type_quals quals)
+extern tree_type* csema_set_type_quals(csema* self, tree_type* type, tree_type_quals quals)
 {
         if (!type)
                 return NULL;

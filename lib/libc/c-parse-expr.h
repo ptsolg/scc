@@ -1,5 +1,5 @@
-#ifndef CPARSE_expr_H
-#define CPARSE_expr_H
+#ifndef CPARSE_EXPR_H
+#define CPARSE_EXPR_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -153,4 +153,4 @@ extern tree_expr* cparse_initializer(cparser* self, tree_decl* decl);
 }
 #endif
 
-#endif // !CPARSE_expr_H
+#endif // !CPARSE_EXPR_H

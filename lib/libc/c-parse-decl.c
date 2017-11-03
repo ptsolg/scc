@@ -1,28 +1,28 @@
 #include "c-parse-decl.h"
 #include "c-info.h"
-#include "c-prog-decl.h"
-#include "c-prog-type.h"
+#include "c-sema-decl.h"
+#include "c-sema-type.h"
 #include "c-parse-stmt.h"
-#include "c-parse-exp.h" // cparse_const_expr
+#include "c-parse-expr.h" // cparse_const_expr
 #include "c-reswords.h"
 
 static tree_decl* cparse_function_or_init_declarator(
         cparser* self, cdecl_specs* specs, bool* is_function_with_body)
 {
         cdeclarator d;
-        cprog_init_declarator(self->prog, &d, CDK_UNKNOWN);
+        csema_init_declarator(self->sema, &d, CDK_UNKNOWN);
         if (!cparse_declarator(self, &d))
         {
                 cdeclarator_dispose(&d);
                 return NULL;
         }
 
-        tree_decl* decl = cprog_build_external_decl(self->prog, specs, &d);
+        tree_decl* decl = csema_new_external_decl(self->sema, specs, &d);
         cdeclarator_dispose(&d);
 
         if (!decl)
                 return NULL;
-        if (!cprog_finish_decl(self->prog, decl))
+        if (!csema_finish_decl(self->sema, decl))
                 return NULL;
 
         if (cparser_at(self, CTK_EQ))
@@ -31,18 +31,18 @@ static tree_decl* cparse_function_or_init_declarator(
                 tree_expr* init = cparse_initializer(self, decl);
                 if (!init)
                         return NULL;
-                if (!cprog_set_var_initializer(self->prog, decl, init))
+                if (!csema_set_var_initializer(self->sema, decl, init))
                         return NULL;
         }
         else if (cparser_at(self, CTK_LBRACE))
         {
-                cprog_enter_function(self->prog, decl);
+                csema_enter_function(self->sema, decl);
                 tree_stmt* body = cparse_block_stmt(self, CSC_NONE);
-                cprog_exit_function(self->prog);
+                csema_exit_function(self->sema);
 
                 if (!body)
                         return NULL;
-                if (!cprog_set_function_body(self->prog, decl, body))
+                if (!csema_set_function_body(self->sema, decl, body))
                         return NULL;
 
                 *is_function_with_body = true;
@@ -76,7 +76,7 @@ static tree_decl* cparse_function_or_init_declarator_list(cparser* self, cdecl_s
                 if (!d)
                         return NULL;
 
-                if (!(list = cprog_add_init_declarator(self->prog, list, d)))
+                if (!(list = csema_add_init_declarator(self->sema, list, d)))
                         return NULL;
 
                 if (is_function_with_body)
@@ -112,7 +112,7 @@ extern tree_decl* cparse_decl(cparser* self)
         if (!cparser_require(self, CTK_SEMICOLON))
                 return NULL;
 
-        return cprog_handle_unused_decl_specs(self->prog, &specs);
+        return csema_handle_unused_decl_specs(self->sema, &specs);
 }
 
 static inline bool cparser_token_is_type_specifier(const cparser* self, const ctoken* t)
@@ -121,7 +121,7 @@ static inline bool cparser_token_is_type_specifier(const cparser* self, const ct
                 return false;
 
         if (ctoken_is(t, CTK_ID))
-                return cprog_typedef_name_exists(self->prog, ctoken_get_string(t));
+                return csema_typedef_name_exists(self->sema, ctoken_get_string(t));
 
         return true;
 }
@@ -151,7 +151,7 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
                         tree_type* typespec = cparse_type_specifier(self);
                         if (!typespec)
                                 return false;
-                        if (!cprog_set_typespec(self->prog, result, typespec))
+                        if (!csema_set_typespec(self->sema, result, typespec))
                                 return false;
                 }
                 else if (ctoken_is_type_qualifier(t))
@@ -159,19 +159,19 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
                 else if (ctoken_is_decl_storage_class(t))
                 {
                         tree_decl_storage_class c = ctoken_to_decl_storage_class(t);
-                        if (!cprog_set_decl_storage_class(self->prog, result, c))
+                        if (!csema_set_decl_storage_class(self->sema, result, c))
                                 return false;
                         cparser_consume_token(self);
                 }
                 else if (cparser_at(self, CTK_TYPEDEF))
                 {
-                        if (!cprog_set_typedef_specifier(self->prog, result))
+                        if (!csema_set_typedef_specifier(self->sema, result))
                                 return false;
                         cparser_consume_token(self);
                 }
                 else if (cparser_at(self, CTK_INLINE))
                 {
-                        if (!cprog_set_inline_specifier(self->prog, result))
+                        if (!csema_set_inline_specifier(self->sema, result))
                                 return false;
                         cparser_consume_token(self);
                 }
@@ -186,7 +186,7 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
                         ctoken* id_tok = cparser_get_token(self);
                         tree_id id = ctoken_get_string(id_tok);
                         cerror(self->error_manager, CES_ERROR, ctoken_get_loc(id_tok),
-                                "unknown type name '%s'", cprog_get_id(self->prog, id));
+                                "unknown type name '%s'", csema_get_id(self->sema, id));
                         return false;
                 }
 
@@ -195,7 +195,7 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
                 return false;
         }
 
-        result->typespec = cprog_set_type_quals(self->prog, result->typespec, quals);
+        result->typespec = csema_set_type_quals(self->sema, result->typespec, quals);
         cdecl_specs_set_end_loc(result, cparser_get_loc(self));
         return true;
 }
@@ -210,7 +210,7 @@ extern tree_type* cparse_type_specifier(cparser* self)
                         ? cparse_enum_specifier(self, &referenced)
                         : cparse_struct_or_union_specifier(self, &referenced);
 
-                return cprog_build_decl_type(self->prog, specifier, referenced);
+                return csema_new_decl_type(self->sema, specifier, referenced);
         }
         else if (k == CTK_ID)
                 return cparse_typedef_name(self);
@@ -259,7 +259,7 @@ extern tree_type* cparse_type_specifier(cparser* self)
                         "expected type specifier");
                 return NULL;
         }
-        return cprog_build_builtin_type(self->prog, TTQ_UNQUALIFIED, btk);
+        return csema_new_builtin_type(self->sema, TTQ_UNQUALIFIED, btk);
 }
 
 extern tree_type_quals cparse_type_qualifier_list_opt(cparser* self)
@@ -285,7 +285,7 @@ extern tree_type* cparse_specifier_qualifier_list(cparser* self)
                 return NULL;
 
         quals |= cparse_type_qualifier_list_opt(self);
-        return cprog_set_type_quals(self->prog, typespec, quals);
+        return csema_set_type_quals(self->sema, typespec, quals);
 }
 
 static const ctoken_kind ctk_semicolon_or_comma[] =
@@ -305,7 +305,7 @@ static bool cparse_struct_declaration(cparser* self)
         while (1)
         {
                 cdeclarator sd;
-                cprog_init_declarator(self->prog, &sd, CDK_MEMBER);
+                csema_init_declarator(self->sema, &sd, CDK_MEMBER);
 
                 if (!cparse_declarator(self, &sd))
                 {
@@ -320,10 +320,10 @@ static bool cparse_struct_declaration(cparser* self)
                         bits = cparse_const_expr(self);
                 }
 
-                tree_decl* m = cprog_build_member_decl(self->prog, &ds, &sd, bits);
+                tree_decl* m = csema_new_member_decl(self->sema, &ds, &sd, bits);
                 cdeclarator_dispose(&sd);
 
-                if (!m || !cprog_finish_decl(self->prog, m))
+                if (!m || !csema_finish_decl(self->sema, m))
                         return false;
 
                 if (cparser_at(self, CTK_SEMICOLON))
@@ -346,14 +346,14 @@ static bool cparse_struct_declaration_list(cparser* self, tree_decl* record)
         }
 
         bool res = true;
-        cprog_enter_decl_scope(self->prog, tree_get_record_scope(record));
+        csema_enter_decl_scope(self->sema, tree_get_record_scope(record));
         while (!cparser_at(self, CTK_RBRACE))
                 if (!cparse_struct_declaration(self))
                 {
                         res = false;
                         break;
                 }
-        cprog_exit_decl_scope(self->prog);
+        csema_exit_decl_scope(self->sema);
         return res;
 }
 
@@ -385,7 +385,7 @@ extern tree_decl* cparse_struct_or_union_specifier(cparser* self, bool* referenc
         }
 
         bool has_body = cparser_at(self, CTK_LBRACE);
-        tree_decl* record = cprog_build_record_decl(self->prog,
+        tree_decl* record = csema_new_record_decl(self->sema,
                 kw_loc, name, is_union, has_body);
         if (!record)
                 return NULL;
@@ -404,7 +404,7 @@ extern tree_decl* cparse_struct_or_union_specifier(cparser* self, bool* referenc
         if (!cparser_require(self, CTK_RBRACE))
                 return NULL;
 
-        return cprog_finish_decl_ex(self->prog, rbrace_loc, record);
+        return csema_finish_decl_ex(self->sema, rbrace_loc, record);
 }
 
 static tree_decl* cparse_enumerator(cparser* self, tree_decl* enum_)
@@ -423,9 +423,9 @@ static tree_decl* cparse_enumerator(cparser* self, tree_decl* enum_)
                         return NULL;
         }
 
-        tree_decl* e = cprog_build_enumerator(self->prog, enum_, id, id_loc, value);
+        tree_decl* e = csema_new_enumerator(self->sema, enum_, id, id_loc, value);
         return e
-                ? cprog_finish_decl(self->prog, e)
+                ? csema_finish_decl(self->sema, e)
                 : NULL;
 }
 
@@ -445,7 +445,7 @@ static bool cparse_enumerator_list(cparser* self, tree_decl* enum_)
                 return false;
         }
         bool res = false;
-        cprog_enter_decl_scope(self->prog, tree_get_enum_scope(enum_));
+        csema_enter_decl_scope(self->sema, tree_get_enum_scope(enum_));
         while (1)
         {
                 tree_decl* enumerator = cparse_enumerator(self, enum_);
@@ -466,7 +466,7 @@ static bool cparse_enumerator_list(cparser* self, tree_decl* enum_)
                         break;
                 }
         }
-        cprog_exit_decl_scope(self->prog);
+        csema_exit_decl_scope(self->sema);
         return res;
 }
 
@@ -484,7 +484,7 @@ extern tree_decl* cparse_enum_specifier(cparser* self, bool* referenced)
         }
 
         bool has_body = cparser_at(self, CTK_LBRACE);
-        tree_decl* enum_ = cprog_build_enum_decl(self->prog, kw_loc, name, has_body);
+        tree_decl* enum_ = csema_new_enum_decl(self->sema, kw_loc, name, has_body);
         if (!enum_)
                 return NULL;
 
@@ -503,7 +503,7 @@ extern tree_decl* cparse_enum_specifier(cparser* self, bool* referenced)
         if (!cparser_require(self, CTK_RBRACE))
                 return NULL;
 
-        return cprog_finish_decl_ex(self->prog, rbrace_loc, enum_);
+        return csema_finish_decl_ex(self->sema, rbrace_loc, enum_);
 }
 
 static bool cparse_pointer_opt(cparser* self, ctype_chain* result)
@@ -513,7 +513,7 @@ static bool cparse_pointer_opt(cparser* self, ctype_chain* result)
                 cparser_consume_token(self);
                 tree_type_quals quals = cparse_type_qualifier_list_opt(self);
 
-                if (!(result->head = cprog_build_pointer(self->prog, quals, result->head)))
+                if (!(result->head = csema_new_pointer(self->sema, quals, result->head)))
                         return false;
                 if (!result->tail)
                         result->tail = result->head;
@@ -523,7 +523,7 @@ static bool cparse_pointer_opt(cparser* self, ctype_chain* result)
 
 static cparam* cparse_param_declaration(cparser* self)
 {
-        cparam* p = cprog_build_param(self->prog);
+        cparam* p = csema_new_param(self->sema);
         if (!cparse_decl_specs(self, &p->specs))
                 return NULL;
 
@@ -531,7 +531,7 @@ static cparam* cparse_param_declaration(cparser* self)
                 if (!cparse_declarator(self, &p->declarator))
                         return NULL;
 
-        return cprog_finish_param(self->prog, p);
+        return csema_finish_param(self->sema, p);
 }
 
 static bool cparse_parameter_type_list_opt(cparser* self, cdeclarator* result)
@@ -545,7 +545,7 @@ static bool cparse_parameter_type_list_opt(cparser* self, cdeclarator* result)
         cparam* p;
         while ((p = cparse_param_declaration(self)))
         {
-                if (!cprog_add_declarator_param(self->prog, result, p))
+                if (!csema_add_declarator_param(self->sema, result, p))
                         return false;
 
                 if (cparser_at(self, CTK_RBRACKET))
@@ -564,7 +564,7 @@ static bool cparse_direct_declarator_suffix_opt(cparser* self, cdeclarator* resu
         if (cparser_at(self, CTK_LBRACKET))
         {
                 cparser_consume_token(self);
-                if (!cprog_build_direct_declarator_function_suffix(self->prog, result))
+                if (!csema_new_direct_declarator_function_suffix(self->sema, result))
                         return false;
                 if (!cparse_parameter_type_list_opt(self, result))
                         return false;
@@ -579,8 +579,8 @@ static bool cparse_direct_declarator_suffix_opt(cparser* self, cdeclarator* resu
                         if (!(size = cparse_const_expr(self)))
                                 return false;
 
-                if (!cprog_build_direct_declarator_array_suffix(
-                        self->prog, result, TTQ_UNQUALIFIED, size))
+                if (!csema_new_direct_declarator_array_suffix(
+                        self->sema, result, TTQ_UNQUALIFIED, size))
                 {
                         return false;
                 }
@@ -599,7 +599,7 @@ static bool cparse_direct_declarator(cparser* self, cdeclarator* result)
         {
                 tree_id id = ctoken_get_string(cparser_get_token(self));
                 tree_location id_loc = cparser_get_loc(self);
-                if (!cprog_set_declarator_name(self->prog, id_loc, result, id))
+                if (!csema_set_declarator_name(self->sema, id_loc, result, id))
                         return false;
 
                 cparser_consume_token(self);
@@ -610,7 +610,7 @@ static bool cparse_direct_declarator(cparser* self, cdeclarator* result)
                         return false;
                 if (!cparser_require(self, CTK_RBRACKET))
                         return false;
-                if (!cprog_add_direct_declarator_parens(self->prog, result))
+                if (!csema_add_direct_declarator_parens(self->sema, result))
                         return false;
         }
         else
@@ -633,7 +633,7 @@ extern bool cparse_declarator(cparser* self, cdeclarator* result)
                         return false;
 
         cdeclarator_set_end_loc(result, cparser_get_loc(self));
-        return cprog_finish_declarator(self->prog, result, &pointer);
+        return csema_finish_declarator(self->sema, result, &pointer);
 }
 
 extern tree_type* cparse_type_name(cparser* self)
@@ -645,14 +645,14 @@ extern tree_type* cparse_type_name(cparser* self)
         if (ctoken_starts_declarator(cparser_get_token(self)))
         {
                 cdeclarator d;
-                cprog_init_declarator(self->prog, &d, CDK_TYPE_NAME);
+                csema_init_declarator(self->sema, &d, CDK_TYPE_NAME);
                 if (!cparse_declarator(self, &d))
                 {
                         cdeclarator_dispose(&d);
                         return NULL;
                 }
 
-                t = cprog_build_type_name(self->prog, &d, t);
+                t = csema_new_type_name(self->sema, &d, t);
                 cdeclarator_dispose(&d);
         }
         return t;
@@ -687,6 +687,6 @@ extern tree_type* cparse_typedef_name(cparser* self)
         if (!cparser_require(self, CTK_ID))
                 return NULL;
 
-        return cprog_build_typedef_name(self->prog,
+        return csema_new_typedef_name(self->sema,
                 ctoken_get_loc(id), ctoken_get_string(id));
 }

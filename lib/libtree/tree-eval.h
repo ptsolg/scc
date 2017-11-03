@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #include "tree-target.h"
-#include "tree-exp.h"
+#include "tree-expr.h"
 #include <libscl/value.h>
 
 typedef struct _tree_eval_info

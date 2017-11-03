@@ -1,5 +1,5 @@
-#ifndef TREE_expr_H
-#define TREE_expr_H
+#ifndef TREE_EXPR_H
+#define TREE_EXPR_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -1303,4 +1303,4 @@ static inline bool tree_expr_is(const tree_expr* self, tree_expr_kind k)
 }
 #endif
 
-#endif // !TREE_expr_H
+#endif // !TREE_EXPR_H

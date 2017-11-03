@@ -12,7 +12,7 @@ extern "C" {
 #include "tree-common.h"
 #include "tree-context.h"
 #include "tree-decl.h"
-#include "tree-exp.h"
+#include "tree-expr.h"
 #include "tree-stmt.h"
 #include "tree-type.h"
 #include "tree-module.h"

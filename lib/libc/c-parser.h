@@ -13,7 +13,7 @@ extern "C" {
 #include "c-lexer.h"
 
 typedef struct _cerror_manager cerror_manager;
-typedef struct _cprog cprog;
+typedef struct _csema csema;
 typedef struct _tree_scope tree_scope;
 typedef struct _tree_decl_scope tree_decl_scope;
 typedef struct _tree_module tree_module;
@@ -23,12 +23,12 @@ typedef struct _cparser
         // prev, current and next
         ctoken* buffer[3];
         clexer* lexer;
-        cprog* prog;
+        csema* sema;
         cerror_manager* error_manager;
         int* on_error;
 } cparser;
 
-extern void cparser_init(cparser* self, clexer* lexer, cprog* prog, cerror_manager* error_manager);
+extern void cparser_init(cparser* self, clexer* lexer, csema* sema, cerror_manager* error_manager);
 
 extern void cparser_dispose(cparser* self);
 extern void cparser_set_on_error(cparser* self, int* b);

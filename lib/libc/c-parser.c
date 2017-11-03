@@ -4,10 +4,10 @@
 #include "c-reswords.h"
 #include <setjmp.h>
 
-extern void cparser_init(cparser* self, clexer* lexer, cprog* prog, cerror_manager* error_manager)
+extern void cparser_init(cparser* self, clexer* lexer, csema* sema, cerror_manager* error_manager)
 {
         self->lexer = lexer;
-        self->prog = prog;
+        self->sema = sema;
         self->error_manager = error_manager;
         self->on_error = NULL;
         self->buffer[0] = NULL;

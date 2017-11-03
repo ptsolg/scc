@@ -2,7 +2,7 @@
 #include "c-info.h"
 #include "c-lexer.h"
 #include "c-parse-module.h"
-#include "c-prog.h"
+#include "c-sema.h"
 
 extern void cenv_init(cenv* self, FILE* err)
 {
@@ -43,12 +43,12 @@ extern tree_module* cparse_source(cenv* self, csource* source, tree_target_info*
         tree_module* m = tree_new_module(ctree_context_base(&self->context), target);
 
         clexer lexer;
-        cprog prog;
+        csema sema;
         cparser parser;
 
         clexer_init(&lexer, &self->source_manager, &self->error_manager, &self->context);
-        cprog_init(&prog, &self->context, &self->id_info, m, &self->error_manager);
-        cparser_init(&parser, &lexer, &prog, &self->error_manager);
+        csema_init(&sema, &self->context, &self->id_info, m, &self->error_manager);
+        cparser_init(&parser, &lexer, &sema, &self->error_manager);
 
         bool failed = false;
         if (S_FAILED(clexer_init_reswords(&lexer)))
@@ -69,7 +69,7 @@ extern tree_module* cparse_source(cenv* self, csource* source, tree_target_info*
                 m = cparse_module(&parser);
         
         clexer_dispose(&lexer);
-        cprog_dispose(&prog);
+        csema_dispose(&sema);
         cparser_dispose(&parser);
 
         return m;

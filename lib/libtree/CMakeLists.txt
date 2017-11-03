@@ -12,8 +12,8 @@ create_module(libtree
 	tree-stmt.c
 	tree-common.h
 	tree-common.c
-	tree-exp.h
-	tree-exp.c
+	tree-expr.h
+	tree-expr.c
 	tree-module.h
 	tree-module.c
 	tree-target.h

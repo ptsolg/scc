@@ -19,24 +19,24 @@ create_module(libc
 	c-parser.c
 	c-parse-module.h
 	c-parse-module.c
-	c-parse-exp.h
-	c-parse-exp.c
+	c-parse-expr.h
+	c-parse-expr.c
 	c-parse-stmt.h
 	c-parse-stmt.c
 	c-parse-decl.h
 	c-parse-decl.c
-	c-prog.h
-	c-prog.c
-	c-prog-conversions.h
-	c-prog-conversions.c
-	c-prog-exp.h
-	c-prog-exp.c
-	c-prog-decl.h
-	c-prog-decl.c
-	c-prog-type.h
-	c-prog-type.c
-	c-prog-stmt.h
-	c-prog-stmt.c
+	c-sema.h
+	c-sema.c
+	c-sema-conv.h
+	c-sema-conv.c
+	c-sema-expr.h
+	c-sema-expr.c
+	c-sema-decl.h
+	c-sema-decl.c
+	c-sema-type.h
+	c-sema-type.c
+	c-sema-stmt.h
+	c-sema-stmt.c
 	c-info.h
 	c-info.c
 	c-env.h

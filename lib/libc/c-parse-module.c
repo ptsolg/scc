@@ -1,6 +1,6 @@
 #include "c-parse-module.h"
 #include "c-parse-decl.h"
-#include "c-prog.h"
+#include "c-sema.h"
 
 extern tree_module* cparse_module(cparser* self)
 {
@@ -8,5 +8,5 @@ extern tree_module* cparse_module(cparser* self)
                 if (!cparse_decl(self))
                         return NULL;
 
-        return cparser_act_on_finish_module(self->prog);
+        return cparser_act_on_finish_module(self->sema);
 }

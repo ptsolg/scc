@@ -1,16 +1,16 @@
-#include "c-prog-decl.h"
-#include "c-prog-type.h"
-#include "c-prog-conversions.h"
-#include "c-prog-exp.h"
+#include "c-sema-decl.h"
+#include "c-sema-type.h"
+#include "c-sema-conv.h"
+#include "c-sema-expr.h"
 #include <libtree/tree-eval.h>
 
-extern void cprog_init_declarator(cprog* self, cdeclarator* declarator, cdeclarator_kind k)
+extern void csema_init_declarator(csema* self, cdeclarator* declarator, cdeclarator_kind k)
 {
         cdeclarator_init(declarator, self->ccontext, k);
 }
 
 // returns declarator type
-static tree_type* cprog_set_declarator_type(cprog* self, cdeclarator* d, tree_type* t)
+static tree_type* csema_set_declarator_type(csema* self, cdeclarator* d, tree_type* t)
 {
         if (!d->type.head)
         {
@@ -25,22 +25,22 @@ static tree_type* cprog_set_declarator_type(cprog* self, cdeclarator* d, tree_ty
 
         if (k == TTK_POINTER)
         {
-                if (!cprog_set_pointer_target(self, tail, t))
+                if (!csema_set_pointer_target(self, tail, t))
                         return NULL;
         }
         else if (k == TTK_FUNCTION)
         {
-                if (!cprog_set_function_restype(self, loc, tail, t))
+                if (!csema_set_function_restype(self, loc, tail, t))
                         return NULL;
         }
         else if (k == TTK_ARRAY)
         {
-                if (!cprog_set_array_eltype(self, loc, tail, t))
+                if (!csema_set_array_eltype(self, loc, tail, t))
                         return NULL;
         }
         else if (k == TTK_PAREN)
         {
-                if (!cprog_set_paren_type(self, tail, t))
+                if (!csema_set_paren_type(self, tail, t))
                         return NULL;
         }
         else
@@ -50,38 +50,38 @@ static tree_type* cprog_set_declarator_type(cprog* self, cdeclarator* d, tree_ty
         return d->type.head;
 }
 
-extern bool cprog_build_direct_declarator_suffix(
-        cprog* self, cdeclarator* declarator, tree_type* suffix)
+extern bool csema_new_direct_declarator_suffix(
+        csema* self, cdeclarator* declarator, tree_type* suffix)
 {
-        return (bool)cprog_set_declarator_type(self, declarator, suffix);
+        return (bool)csema_set_declarator_type(self, declarator, suffix);
 }
 
-extern bool cprog_build_direct_declarator_function_suffix(
-        cprog* self, cdeclarator* declarator)
+extern bool csema_new_direct_declarator_function_suffix(
+        csema* self, cdeclarator* declarator)
 {
-        tree_type* suffix = cprog_build_function_type(self,
+        tree_type* suffix = csema_new_function_type(self,
                 cdeclarator_get_id_loc_or_begin(declarator), NULL);
 
-        return cprog_build_direct_declarator_suffix(self, declarator, suffix);
+        return csema_new_direct_declarator_suffix(self, declarator, suffix);
 }
 
-extern bool cprog_build_direct_declarator_array_suffix(
-        cprog* self, cdeclarator* declarator, tree_type_quals quals, tree_expr* size)
+extern bool csema_new_direct_declarator_array_suffix(
+        csema* self, cdeclarator* declarator, tree_type_quals quals, tree_expr* size)
 {
-        tree_type* suffix = cprog_build_array_type(self,
+        tree_type* suffix = csema_new_array_type(self,
                 cdeclarator_get_id_loc_or_begin(declarator), quals, NULL, size);
 
-        return cprog_build_direct_declarator_suffix(self, declarator, suffix);
+        return csema_new_direct_declarator_suffix(self, declarator, suffix);
 }
 
-extern bool cprog_add_direct_declarator_parens(cprog* self, cdeclarator* declarator)
+extern bool csema_add_direct_declarator_parens(csema* self, cdeclarator* declarator)
 {
-        return (bool)cprog_set_declarator_type(self, declarator,
-                cprog_build_paren_type(self, NULL));
+        return (bool)csema_set_declarator_type(self, declarator,
+                csema_new_paren_type(self, NULL));
 }
 
-extern bool cprog_set_declarator_name(
-        cprog* self, tree_location loc, cdeclarator* declarator, tree_id name)
+extern bool csema_set_declarator_name(
+        csema* self, tree_location loc, cdeclarator* declarator, tree_id name)
 {
         if (declarator->id != tree_get_empty_id())
                 return false;
@@ -90,15 +90,15 @@ extern bool cprog_set_declarator_name(
         return true;
 }
 
-extern bool cprog_finish_declarator(
-        cprog* self, cdeclarator* declarator, ctype_chain* pointer_chain)
+extern bool csema_finish_declarator(
+        csema* self, cdeclarator* declarator, ctype_chain* pointer_chain)
 {
         if (!pointer_chain->head)
                 return true;
 
         if (declarator->type.tail)
         {
-                bool res = (bool)cprog_set_declarator_type(self, declarator, pointer_chain->head);
+                bool res = (bool)csema_set_declarator_type(self, declarator, pointer_chain->head);
                 declarator->type.tail = pointer_chain->tail;
                 return res;
         }
@@ -107,49 +107,49 @@ extern bool cprog_finish_declarator(
         return true;
 }
 
-static void cprog_redefinition(const cprog* self, tree_location loc, tree_id id)
+static void csema_redefinition(const csema* self, tree_location loc, tree_id id)
 {
         cerror(self->error_manager, CES_ERROR, loc, 
-                "redefinition of '%s'", cprog_get_id(self, id));
+                "redefinition of '%s'", csema_get_id(self, id));
 }
 
-static void cprog_decl_redifinition(const cprog* self, const tree_decl* decl)
+static void csema_decl_redifinition(const csema* self, const tree_decl* decl)
 {
-        cprog_redefinition(self, tree_get_decl_loc_begin(decl), cprog_get_decl_name(self, decl));
+        csema_redefinition(self, tree_get_decl_loc_begin(decl), csema_get_decl_name(self, decl));
 }
 
-extern tree_decl* cprog_export_decl(cprog* self, tree_decl_scope* scope, tree_decl* decl)
+extern tree_decl* csema_export_decl(csema* self, tree_decl_scope* scope, tree_decl* decl)
 {
-        if (tree_id_is_empty(cprog_get_decl_name(self, decl)))
+        if (tree_id_is_empty(csema_get_decl_name(self, decl)))
                 return decl;
 
         tree_symtab* symtab = tree_get_decl_scope_symtab(scope);
         if (tree_symtab_get(symtab, tree_get_decl_name(decl), false))
         {
-                cprog_decl_redifinition(self, decl);
+                csema_decl_redifinition(self, decl);
                 return NULL;
         }
         tree_symtab_insert(symtab, decl);
         return decl;
 }
 
-static bool cprog_export_decl_scope(cprog* self, tree_decl_scope* to, tree_decl_scope* from)
+static bool csema_export_decl_scope(csema* self, tree_decl_scope* to, tree_decl_scope* from)
 {
         tree_symtab* tab = tree_get_decl_scope_symtab(from);
         TREE_SYMTAB_FOREACH(tab, it)
-                if (!cprog_export_decl(self, to, hiter_get_val(it)))
+                if (!csema_export_decl(self, to, hiter_get_val(it)))
                         return false;
         return true;
 }
 
-static tree_decl* cprog_finish_member_decl(cprog* self, tree_decl_scope* scope, tree_decl* decl)
+static tree_decl* csema_finish_member_decl(csema* self, tree_decl_scope* scope, tree_decl* decl)
 {
         tree_type* dt = tree_desugar_type(tree_get_decl_type(decl));
         if (tree_type_is(dt, TTK_FUNCTION))
         {
                 cerror(self->error_manager, CES_ERROR, tree_get_decl_loc_begin(decl),
                        "field '%s' declared as function",
-                       cprog_get_id(self, tree_get_decl_name(decl)));
+                       csema_get_id(self, tree_get_decl_name(decl)));
                 return NULL;
         }
         if (!tree_declared_type_is(dt, TDK_RECORD))
@@ -161,35 +161,35 @@ static tree_decl* cprog_finish_member_decl(cprog* self, tree_decl_scope* scope, 
         // if decl is unnamed struct member then add its members to local scope
         if (tree_decl_is_unnamed(decl))
         {
-                if (!cprog_export_decl_scope(self, self->locals, members))
+                if (!csema_export_decl_scope(self, self->locals, members))
                         return NULL;
         }
         return decl;
 }
 
-static bool cprog_check_decl_with_no_linkage(const cprog* self, const tree_decl* decl)
+static bool csema_check_decl_with_no_linkage(const csema* self, const tree_decl* decl)
 {
         tree_location loc = tree_get_xloc_begin(tree_get_decl_loc(decl));
         tree_type* dt = tree_get_decl_type(decl);
 
         if (tree_get_decl_kind(decl) != TDK_FUNCTION)
-                return cprog_require_complete_type(self, loc, dt);
+                return csema_require_complete_type(self, loc, dt);
 
         const tree_decl_scope* params = tree_get_function_cparams(decl);
         TREE_DECL_SCOPE_FOREACH(params, p)
         {
                 tree_location ploc = tree_get_xloc_begin(tree_get_decl_loc(p));
                 tree_type* ptype = tree_get_decl_type(p);
-                if (!cprog_require_complete_type(self, ploc, ptype))
+                if (!csema_require_complete_type(self, ploc, ptype))
                         return false;
         }
 
         dt = tree_get_function_restype(dt);
         return tree_type_is_void(dt)
-                ? true : cprog_require_complete_type(self, loc, dt);
+                ? true : csema_require_complete_type(self, loc, dt);
 }
 
-static bool cprog_check_decl_with_linkage(cprog* self, tree_decl_scope* scope, tree_decl* decl)
+static bool csema_check_decl_with_linkage(csema* self, tree_decl_scope* scope, tree_decl* decl)
 {
         tree_decl_kind dk = tree_get_decl_kind(decl);
         S_ASSERT(dk != TDK_MEMBER);
@@ -198,41 +198,41 @@ static bool cprog_check_decl_with_linkage(cprog* self, tree_decl_scope* scope, t
         tree_id name = tree_get_decl_name(decl);
 
 
-        if (dk == TDK_FUNCTION && cprog_at_block_scope(self))
+        if (dk == TDK_FUNCTION && csema_at_block_scope(self))
         {
                 tree_decl_storage_class sc = tree_get_decl_storage_class(decl);
                 if (sc != TDSC_EXTERN && sc != TDSC_IMPL_EXTERN)
                 {
                         cerror(self->error_manager, CES_ERROR, loc,
                                "invalid storage class for '%s'",
-                               cprog_get_id(self, name));
+                               csema_get_id(self, name));
                         return false;
                 }
         }
 
         tree_decl* orig = tree_decl_scope_find(scope, tree_get_decl_name(decl), false);
         if (!orig)
-                return (bool)cprog_export_decl(self, scope, decl);
+                return (bool)csema_export_decl(self, scope, decl);
 
         if (!tree_decls_have_same_linkage(decl, orig))
         {
                 cerror(self->error_manager, CES_ERROR, loc,
                        "redefinition of '%s' with different storage class",
-                       cprog_get_id(self, name));
+                       csema_get_id(self, name));
                 return false;
         }
 
         if (!tree_types_are_same(tree_get_decl_type(decl), tree_get_decl_type(orig)))
         {
                 cerror(self->error_manager, CES_ERROR, loc,
-                       "conflicting types for '%s'", cprog_get_id(self, name));
+                       "conflicting types for '%s'", csema_get_id(self, name));
                 return false;
         }
         return true;
 }
 
-static tree_decl* cprog_finish_object_or_function_decl(
-        cprog* self, tree_decl_scope* scope, tree_decl* decl, bool allow_incomplete)
+static tree_decl* csema_finish_object_or_function_decl(
+        csema* self, tree_decl_scope* scope, tree_decl* decl, bool allow_incomplete)
 {
         // c99 6.7
         // If an identifier has no linkage, there shall be no more than one
@@ -243,58 +243,58 @@ static tree_decl* cprog_finish_object_or_function_decl(
 
         tree_decl_storage_class sc = tree_get_decl_storage_class(decl);
         if (sc == TDSC_NONE || sc == TDSC_IMPL_EXTERN)
-                if (!allow_incomplete && !cprog_check_decl_with_no_linkage(self, decl))
+                if (!allow_incomplete && !csema_check_decl_with_no_linkage(self, decl))
                         return NULL;
 
         if (sc == TDSC_NONE)
         {
-                if (!cprog_export_decl(self, scope, decl))
+                if (!csema_export_decl(self, scope, decl))
                         return NULL;
                 if (tree_decl_is(decl, TDK_MEMBER))
-                        if (!cprog_finish_member_decl(self, scope, decl))
+                        if (!csema_finish_member_decl(self, scope, decl))
                                 return NULL;
                 return decl;
         }
 
-        if (!cprog_check_decl_with_linkage(self, scope, decl))
+        if (!csema_check_decl_with_linkage(self, scope, decl))
                 return NULL;
 
         return decl;
 }
 
-static tree_decl* _cprog_finish_decl(
-        cprog* self, tree_decl_scope* scope, tree_decl* decl, bool allow_incomplete)
+static tree_decl* _csema_finish_decl(
+        csema* self, tree_decl_scope* scope, tree_decl* decl, bool allow_incomplete)
 {
         tree_decl_kind dk = tree_get_decl_kind(decl);
         if (dk == TDK_VAR || dk == TDK_FUNCTION || dk == TDK_MEMBER)
         {
-                if (!cprog_finish_object_or_function_decl(self, scope, decl, allow_incomplete))
+                if (!csema_finish_object_or_function_decl(self, scope, decl, allow_incomplete))
                         return NULL;
         }
         else if (dk == TDK_RECORD)
                 tree_set_record_complete(decl, true);
         else if (dk == TDK_ENUMERATOR)
-                if (!cprog_export_decl(self, self->globals, decl))
+                if (!csema_export_decl(self, self->globals, decl))
                         return NULL;
 
         tree_decl_scope_insert(scope, decl);
         return decl;
 }
 
-extern tree_type* cprog_build_type_name(
-        cprog* self, cdeclarator* declarator, tree_type* typespec)
+extern tree_type* csema_new_type_name(
+        csema* self, cdeclarator* declarator, tree_type* typespec)
 {
-        return cprog_set_declarator_type(self, declarator, typespec);
+        return csema_set_declarator_type(self, declarator, typespec);
 }
 
-extern tree_decl* cprog_finish_decl(cprog* self, tree_decl* decl)
+extern tree_decl* csema_finish_decl(csema* self, tree_decl* decl)
 {
-        return _cprog_finish_decl(self, self->locals, decl, false);
+        return _csema_finish_decl(self, self->locals, decl, false);
 }
 
-extern tree_decl* cprog_finish_decl_ex(cprog* self, tree_location end_loc, tree_decl* decl)
+extern tree_decl* csema_finish_decl_ex(csema* self, tree_location end_loc, tree_decl* decl)
 {
-        tree_decl* d = cprog_finish_decl(self, decl);
+        tree_decl* d = csema_finish_decl(self, decl);
         if (!d)
                 return NULL;
 
@@ -302,8 +302,8 @@ extern tree_decl* cprog_finish_decl_ex(cprog* self, tree_location end_loc, tree_
         return d;
 }
 
-static void cprog_compute_enumerator_value(
-        cprog* self, tree_decl* enum_, tree_decl* enumerator)
+static void csema_compute_enumerator_value(
+        csema* self, tree_decl* enum_, tree_decl* enumerator)
 {
         int v = 0;
         tree_decl_scope* s = tree_get_enum_scope(enum_);
@@ -318,12 +318,12 @@ static void cprog_compute_enumerator_value(
                 v = int_get_i32(&last_val) + 1;
         }
 
-        tree_expr* val = cprog_build_integer_literal(self, tree_get_decl_loc_begin(enumerator), v, true, false);
+        tree_expr* val = csema_new_integer_literal(self, tree_get_decl_loc_begin(enumerator), v, true, false);
         tree_set_enumerator_value(enumerator, tree_new_impl_init_expr(self->context, val));
 }
 
-extern tree_decl* cprog_build_enumerator(
-        cprog* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_expr* value)
+extern tree_decl* csema_new_enumerator(
+        csema* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_expr* value)
 {
         tree_type* t = tree_new_qual_type(self->context, TTQ_UNQUALIFIED,
                 tree_new_decl_type(self->context, enum_, true));
@@ -332,11 +332,11 @@ extern tree_decl* cprog_build_enumerator(
 
         if (!value)
         {
-                cprog_compute_enumerator_value(self, enum_, e);
+                csema_compute_enumerator_value(self, enum_, e);
                 return e;
         }
 
-        const char* name = cprog_get_id(self, tree_get_decl_name(e));
+        const char* name = csema_get_id(self, tree_get_decl_name(e));
 
         int_value val;
         tree_eval_info i;
@@ -351,44 +351,44 @@ extern tree_decl* cprog_build_enumerator(
         return e;
 }
 
-static void cprog_wrong_kind_of_tag(const cprog* self, tree_location loc, tree_id name)
+static void csema_wrong_kind_of_tag(const csema* self, tree_location loc, tree_id name)
 {
         cerror(self->error_manager, CES_ERROR, loc,
-                "'%s' defined as wrong kind of tag", cprog_get_id(self, name));
+                "'%s' defined as wrong kind of tag", csema_get_id(self, name));
 }
 
-extern tree_decl* cprog_build_enum_decl(
-        cprog* self, tree_location kw_loc, tree_id name, bool has_body)
+extern tree_decl* csema_new_enum_decl(
+        csema* self, tree_location kw_loc, tree_id name, bool has_body)
 {
-        tree_decl* e = cprog_get_local_tag_decl(self, name, !has_body);
+        tree_decl* e = csema_get_local_tag_decl(self, name, !has_body);
         if (!e)
         {
                 e = tree_new_enum_decl(self->context,
                         self->locals, tree_init_xloc(kw_loc, kw_loc),
                         cident_info_to_tag(self->id_info, name));
 
-                if (!cprog_export_decl(self, self->globals, e))
+                if (!csema_export_decl(self, self->globals, e))
                         return NULL;
         }
         else if (tree_get_decl_kind(e) != TDK_ENUM)
         {
-                cprog_wrong_kind_of_tag(self, kw_loc, name);
+                csema_wrong_kind_of_tag(self, kw_loc, name);
                 return NULL;
         }
         
         if (has_body && tree_get_decl_scope_size(tree_get_enum_scope(e)))
         {
-                cprog_redefinition(self, kw_loc, name);
+                csema_redefinition(self, kw_loc, name);
                 return NULL;
         }
 
         return e;
 }
 
-extern tree_decl* cprog_build_member_decl(
-        cprog* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_expr* bits)
+extern tree_decl* csema_new_member_decl(
+        csema* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_expr* bits)
 {
-        tree_type* t = cprog_set_declarator_type(self, struct_declarator, decl_specs->typespec);
+        tree_type* t = csema_set_declarator_type(self, struct_declarator, decl_specs->typespec);
         if (!t)
                 return NULL;
 
@@ -401,7 +401,7 @@ extern tree_decl* cprog_build_member_decl(
                 return m;
 
         tree_location start_loc = tree_get_xloc_begin(loc);
-        const char* name = cprog_get_id(self, id);
+        const char* name = csema_get_id(self, id);
 
         if (!tree_type_is_integer(t))
         {
@@ -443,10 +443,10 @@ extern tree_decl* cprog_build_member_decl(
         return m;
 }
 
-extern tree_decl* cprog_build_record_decl(
-        cprog* self, tree_location kw_loc, tree_id name, bool is_union, bool has_body)
+extern tree_decl* csema_new_record_decl(
+        csema* self, tree_location kw_loc, tree_id name, bool is_union, bool has_body)
 {
-        tree_decl* d = cprog_get_local_tag_decl(self, name, !has_body);
+        tree_decl* d = csema_get_local_tag_decl(self, name, !has_body);
         if (!d)
         {
                 d = tree_new_record_decl(self->context,
@@ -455,25 +455,25 @@ extern tree_decl* cprog_build_record_decl(
                         cident_info_to_tag(self->id_info, name),
                         is_union);
 
-                if (!cprog_export_decl(self, self->locals, d))
+                if (!csema_export_decl(self, self->locals, d))
                         return NULL;
         }
         else if (!tree_decl_is(d, TDK_RECORD) || tree_record_is_union(d) != is_union)
         {
-                cprog_wrong_kind_of_tag(self, kw_loc, name);
+                csema_wrong_kind_of_tag(self, kw_loc, name);
                 return NULL;
         }
 
         if (has_body && tree_record_is_complete(d))
         {
-                cprog_redefinition(self, kw_loc, name);
+                csema_redefinition(self, kw_loc, name);
                 return NULL;
         }
 
         return d;
 }
 
-static bool cprog_add_function_param(cprog* self, tree_decl* function, cparam* param)
+static bool csema_add_function_param(csema* self, tree_decl* function, cparam* param)
 {
         tree_decl* d = tree_new_var_decl(
                 self->context,
@@ -485,12 +485,12 @@ static bool cprog_add_function_param(cprog* self, tree_decl* function, cparam* p
                 NULL);
         
         tree_decl_storage_class sc = tree_get_decl_storage_class(function);
-        return _cprog_finish_decl(self, self->locals, d,
+        return _csema_finish_decl(self, self->locals, d,
                 sc == TDSC_EXTERN || sc == TDSC_STATIC);
 }
 
-static tree_decl* cprog_build_function_decl(
-        cprog* self, cdecl_specs* decl_specs, cdeclarator* declarator)
+static tree_decl* csema_new_function_decl(
+        csema* self, cdecl_specs* decl_specs, cdeclarator* declarator)
 {
         // c99 6.2.2.5
         // If the declaration of an identifier for a function has no storage - class specifier,
@@ -510,20 +510,20 @@ static tree_decl* cprog_build_function_decl(
                 decl_specs->funcspec,
                 NULL);
       
-        cprog_enter_decl_scope(self, tree_get_function_params(func));
+        csema_enter_decl_scope(self, tree_get_function_params(func));
         OBJGROUP_FOREACH(&declarator->params, cparam**, it)
-                if (!cprog_add_function_param(self, func, *it))
+                if (!csema_add_function_param(self, func, *it))
                 {
                         func = NULL;
                         break;
                 }
-        cprog_exit_decl_scope(self);
+        csema_exit_decl_scope(self);
 
         return func;
 }
 
-static tree_decl* cprog_build_typedef_decl(
-        cprog* self, cdecl_specs* decl_specs, cdeclarator* declarator)
+static tree_decl* csema_new_typedef_decl(
+        csema* self, cdecl_specs* decl_specs, cdeclarator* declarator)
 {
         return tree_new_typedef_decl(
                 self->context,
@@ -533,14 +533,14 @@ static tree_decl* cprog_build_typedef_decl(
                 declarator->type.head);
 }
 
-static tree_decl* cprog_build_var_decl(
-        cprog* self, cdecl_specs* decl_specs, cdeclarator* declarator)
+static tree_decl* csema_new_var_decl(
+        csema* self, cdecl_specs* decl_specs, cdeclarator* declarator)
 {
         // c99 6.2.2.5
         // If the declaration of an identifier for an object has file scope
         // and no storage - class specifier, its linkage is external.
         tree_decl_storage_class sc = decl_specs->class_;
-        if (sc == TDSC_NONE && cprog_at_file_scope(self))
+        if (sc == TDSC_NONE && csema_at_file_scope(self))
                 sc = TDSC_IMPL_EXTERN;
 
         return tree_new_var_decl(
@@ -553,29 +553,29 @@ static tree_decl* cprog_build_var_decl(
                 NULL);
 }
 
-extern tree_decl* cprog_build_external_decl(
-        cprog* self, cdecl_specs* decl_specs, cdeclarator* declarator)
+extern tree_decl* csema_new_external_decl(
+        csema* self, cdecl_specs* decl_specs, cdeclarator* declarator)
 {
-        if (!cprog_set_declarator_type(self, declarator, decl_specs->typespec))
+        if (!csema_set_declarator_type(self, declarator, decl_specs->typespec))
                 return NULL;
 
         // todo semantics
         if (decl_specs->is_typedef)
         {
                 //... 
-                return cprog_build_typedef_decl(self, decl_specs, declarator);
+                return csema_new_typedef_decl(self, decl_specs, declarator);
         }
         else if (tree_type_is(declarator->type.head, TTK_FUNCTION))
         {
                 //...
-                return cprog_build_function_decl(self, decl_specs, declarator);
+                return csema_new_function_decl(self, decl_specs, declarator);
         }
 
         //...
-        return cprog_build_var_decl(self, decl_specs, declarator);
+        return csema_new_var_decl(self, decl_specs, declarator);
 }
 
-extern tree_decl* cprog_add_init_declarator(cprog* self, tree_decl* list, tree_decl* d)
+extern tree_decl* csema_add_init_declarator(csema* self, tree_decl* list, tree_decl* d)
 {
         if (!list)
                 return d;
@@ -596,20 +596,20 @@ extern tree_decl* cprog_add_init_declarator(cprog* self, tree_decl* list, tree_d
         return list;
 }
 
-extern bool cprog_set_var_initializer(cprog* self, tree_decl* decl, tree_expr* init)
+extern bool csema_set_var_initializer(csema* self, tree_decl* decl, tree_expr* init)
 {
         if (tree_get_decl_kind(decl) != TDK_VAR)
                 return false;
 
         tree_type* t = tree_get_decl_type(decl);
         if (tree_get_expr_kind(init) != TEK_INIT)
-                init = cprog_build_impl_cast(self, init, t);
+                init = csema_new_impl_cast(self, init, t);
 
         tree_set_var_init(decl, init);
         return true;
 }
 
-extern bool cprog_set_function_body(cprog* self, tree_decl* decl, tree_stmt* body)
+extern bool csema_set_function_body(csema* self, tree_decl* decl, tree_stmt* body)
 {
         if (tree_get_decl_kind(decl) != TDK_FUNCTION)
                 return false;
@@ -618,56 +618,56 @@ extern bool cprog_set_function_body(cprog* self, tree_decl* decl, tree_stmt* bod
         return true;
 }
 
-extern cparam* cprog_build_param(cprog* self)
+extern cparam* csema_new_param(csema* self)
 {
         return cparam_new(self->ccontext);
 }
 
-extern void cprog_handle_unused_param(cprog* self, cparam* p)
+extern void csema_handle_unused_param(csema* self, cparam* p)
 {
         cparam_delete(self->ccontext, p);
 }
 
-extern cparam* cprog_add_declarator_param(cprog* self, cdeclarator* d, cparam* p)
+extern cparam* csema_add_declarator_param(csema* self, cdeclarator* d, cparam* p)
 {
         S_ASSERT(p);
         tree_type* t = d->type.tail;
         S_ASSERT(t && tree_get_type_kind(t) == TTK_FUNCTION);
 
-        if (!cprog_add_function_type_param(self, t, p))
+        if (!csema_add_function_type_param(self, t, p))
                 return NULL;
 
         if (!d->params_initialized)
                 objgroup_push_back(&d->params, p);
         else
-                cprog_handle_unused_param(self, p);
+                csema_handle_unused_param(self, p);
 
         return p;
 }
 
-extern cparam* cprog_finish_param(cprog* self, cparam* p)
+extern cparam* csema_finish_param(csema* self, cparam* p)
 {
-        if (!cprog_set_declarator_type(self, &p->declarator, p->specs.typespec))
+        if (!csema_set_declarator_type(self, &p->declarator, p->specs.typespec))
                 return NULL;
 
         return p;
 }
 
-extern tree_decl* cprog_handle_unused_decl_specs(cprog* self, cdecl_specs* specs)
+extern tree_decl* csema_handle_unused_decl_specs(csema* self, cdecl_specs* specs)
 {
         cdeclarator d;
-        cprog_init_declarator(self, &d, CDK_UNKNOWN);
+        csema_init_declarator(self, &d, CDK_UNKNOWN);
         d.loc = specs->loc;
 
         // todo: warning
-        tree_decl* decl = cprog_build_external_decl(self, specs, &d);
+        tree_decl* decl = csema_new_external_decl(self, specs, &d);
         if (!decl)
                 return NULL;
 
-        return cprog_finish_decl(self, decl);
+        return csema_finish_decl(self, decl);
 }
 
-extern bool cprog_set_typespec(cprog* self, cdecl_specs* specs, tree_type* typespec)
+extern bool csema_set_typespec(csema* self, cdecl_specs* specs, tree_type* typespec)
 {
         if (specs->typespec)
                 return false; // typespec redefinition
@@ -676,17 +676,17 @@ extern bool cprog_set_typespec(cprog* self, cdecl_specs* specs, tree_type* types
         return true;
 }
 
-static void cprog_multiple_storage_classes(const cprog* self, const cdecl_specs* specs)
+static void csema_multiple_storage_classes(const csema* self, const cdecl_specs* specs)
 {
         cerror(self->error_manager, CES_ERROR, cdecl_specs_get_start_loc(specs),
                "multiple storage classes in declaration specifiers");
 }
 
-extern bool cprog_set_typedef_specifier(cprog* self, cdecl_specs* specs)
+extern bool csema_set_typedef_specifier(csema* self, cdecl_specs* specs)
 {
         if (specs->class_ != TDSC_NONE || specs->is_typedef)
         {
-                cprog_multiple_storage_classes(self, specs);
+                csema_multiple_storage_classes(self, specs);
                 return false;
         }
 
@@ -694,18 +694,18 @@ extern bool cprog_set_typedef_specifier(cprog* self, cdecl_specs* specs)
         return true;
 }
 
-extern bool cprog_set_inline_specifier(cprog* self, cdecl_specs* specs)
+extern bool csema_set_inline_specifier(csema* self, cdecl_specs* specs)
 {
         specs->funcspec = TFSK_INLINE;
         return true;
 }
 
-extern bool cprog_set_decl_storage_class(
-        cprog* self, cdecl_specs* specs, tree_decl_storage_class class_)
+extern bool csema_set_decl_storage_class(
+        csema* self, cdecl_specs* specs, tree_decl_storage_class class_)
 {
         if (specs->class_ != TDSC_NONE || specs->is_typedef)
         {
-                cprog_multiple_storage_classes(self, specs);
+                csema_multiple_storage_classes(self, specs);
                 return false;
         }
 

@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #include <libtree/tree-type.h>
-#include <libtree/tree-exp.h>
+#include <libtree/tree-expr.h>
 #include <libtree/tree-decl.h>
 #include "c-token.h"
 

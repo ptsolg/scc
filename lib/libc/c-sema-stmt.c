@@ -1,8 +1,8 @@
-#include "c-prog-stmt.h"
-#include "c-prog-conversions.h"
-#include "c-prog-decl.h"
+#include "c-sema-stmt.h"
+#include "c-sema-conv.h"
+#include "c-sema-decl.h"
 
-extern tree_stmt* cprog_finish_stmt(cprog* self, tree_stmt* s)
+extern tree_stmt* csema_finish_stmt(csema* self, tree_stmt* s)
 {
         if (!s)
                 return NULL;
@@ -40,8 +40,8 @@ extern tree_stmt* cprog_finish_stmt(cprog* self, tree_stmt* s)
         return s;
 }
 
-extern tree_stmt* cprog_build_block_stmt(
-        cprog* self, tree_location lbrace_loc, cstmt_context context)
+extern tree_stmt* csema_new_block_stmt(
+        csema* self, tree_location lbrace_loc, cstmt_context context)
 {
         tree_scope_flags flags = TSF_NONE;
         if (context == CSC_ITERATION)
@@ -52,8 +52,8 @@ extern tree_stmt* cprog_build_block_stmt(
                 tree_init_xloc(lbrace_loc, 0), self->scope, self->locals, flags);
 }
 
-extern tree_stmt* cprog_build_case_stmt(
-        cprog* self,
+extern tree_stmt* csema_new_case_stmt(
+        csema* self,
         tree_location kw_loc,
         tree_location colon_loc,
         tree_expr* value,
@@ -63,35 +63,35 @@ extern tree_stmt* cprog_build_case_stmt(
                 tree_init_xloc(kw_loc, colon_loc), value, body);
 }
 
-extern tree_stmt* cprog_build_default_stmt(
-        cprog* self, tree_location kw_loc, tree_location colon_loc, tree_stmt* body)
+extern tree_stmt* csema_new_default_stmt(
+        csema* self, tree_location kw_loc, tree_location colon_loc, tree_stmt* body)
 {
         return tree_new_default_stmt(self->context,
                 tree_init_xloc(kw_loc, colon_loc), body);
 }
 
-static tree_decl* cprog_finish_label(cprog* self, tree_decl* label)
+static tree_decl* csema_finish_label(csema* self, tree_decl* label)
 {
-        if (!cprog_export_decl(self, self->labels, label))
+        if (!csema_export_decl(self, self->labels, label))
                 return NULL;
 
         tree_decl_scope_insert(self->labels, label);
         return label;
 }
 
-extern tree_stmt* cprog_build_labeled_stmt(
-        cprog* self,
+extern tree_stmt* csema_new_labeled_stmt(
+        csema* self,
         tree_location id_loc,
         tree_location colon_loc,
         tree_id name,
         tree_stmt* target)
 {
-        tree_decl* label = cprog_get_label_decl(self, name);
+        tree_decl* label = csema_get_label_decl(self, name);
         if (label && tree_get_label_decl_stmt(label))
                 return NULL; // label is already defined
         else if (!label)
         {
-                label = cprog_finish_label(self,
+                label = csema_finish_label(self,
                         tree_new_label_decl(self->context, self->labels, 0, name, target));
                 if (!label)
                         return NULL;
@@ -102,15 +102,15 @@ extern tree_stmt* cprog_build_labeled_stmt(
                 tree_init_xloc(id_loc, colon_loc), label);
 }
 
-extern tree_stmt* cprog_build_expr_stmt(
-        cprog* self, tree_location begin_loc, tree_location semicolon_loc, tree_expr* expr)
+extern tree_stmt* csema_new_expr_stmt(
+        csema* self, tree_location begin_loc, tree_location semicolon_loc, tree_expr* expr)
 {
         return tree_new_expr_stmt(self->context,
                 tree_init_xloc(begin_loc, semicolon_loc), expr);
 }
 
-extern tree_stmt* cprog_build_if_stmt(
-        cprog* self,
+extern tree_stmt* csema_new_if_stmt(
+        csema* self,
         tree_location kw_loc,
         tree_location rbracket_loc,
         tree_expr* condition,
@@ -121,15 +121,15 @@ extern tree_stmt* cprog_build_if_stmt(
                 tree_init_xloc(kw_loc, rbracket_loc), condition, body, else_);
 }
 
-extern tree_stmt* cprog_build_decl_stmt(
-        cprog* self, tree_location begin_loc, tree_location semicolon_loc, tree_decl* d)
+extern tree_stmt* csema_new_decl_stmt(
+        csema* self, tree_location begin_loc, tree_location semicolon_loc, tree_decl* d)
 {
         return tree_new_decl_stmt(self->context,
                 tree_init_xloc(begin_loc, semicolon_loc), d);
 }
 
-extern tree_stmt* cprog_build_switch_stmt(
-        cprog* self,
+extern tree_stmt* csema_new_switch_stmt(
+        csema* self,
         tree_location kw_loc,
         tree_location rbracket_loc,
         tree_expr* value,
@@ -139,8 +139,8 @@ extern tree_stmt* cprog_build_switch_stmt(
                 tree_init_xloc(kw_loc, rbracket_loc), body, value);
 }
 
-extern tree_stmt* cprog_build_while_stmt(
-        cprog* self,
+extern tree_stmt* csema_new_while_stmt(
+        csema* self,
         tree_location kw_loc,
         tree_location rbracket_loc,
         tree_expr* condition,
@@ -150,8 +150,8 @@ extern tree_stmt* cprog_build_while_stmt(
                 tree_init_xloc(kw_loc, rbracket_loc), condition, body);
 }
 
-extern tree_stmt* cprog_build_do_while_stmt(
-        cprog* self,
+extern tree_stmt* csema_new_do_while_stmt(
+        csema* self,
         tree_location kw_loc,
         tree_location semicolon_loc,
         tree_expr* condition,
@@ -161,8 +161,8 @@ extern tree_stmt* cprog_build_do_while_stmt(
                 tree_init_xloc(kw_loc, semicolon_loc), condition, body);
 }
 
-extern tree_stmt* cprog_build_for_stmt(
-        cprog* self,
+extern tree_stmt* csema_new_for_stmt(
+        csema* self,
         tree_location kw_loc,
         tree_location rbracket_loc,
         tree_stmt* init,
@@ -174,13 +174,13 @@ extern tree_stmt* cprog_build_for_stmt(
                 tree_init_xloc(kw_loc, rbracket_loc), init, condition, step, body);
 }
 
-extern tree_stmt* cprog_build_goto_stmt(
-        cprog* self, tree_location kw_loc, tree_location semicolon_loc, tree_id label)
+extern tree_stmt* csema_new_goto_stmt(
+        csema* self, tree_location kw_loc, tree_location semicolon_loc, tree_id label)
 {
-        tree_decl* ld = cprog_get_label_decl(self, label);
+        tree_decl* ld = csema_get_label_decl(self, label);
         if (!ld)
         {
-                ld = cprog_finish_label(self,
+                ld = csema_finish_label(self,
                         tree_new_label_decl(self->context, self->labels, 0, label, NULL));
                 if (!ld)
                         return NULL;
@@ -189,25 +189,25 @@ extern tree_stmt* cprog_build_goto_stmt(
                 tree_init_xloc(kw_loc, semicolon_loc), ld);
 }
 
-extern tree_stmt* cprog_build_continue_stmt(
-        cprog* self, tree_location kw_loc, tree_location semicolon_loc)
+extern tree_stmt* csema_new_continue_stmt(
+        csema* self, tree_location kw_loc, tree_location semicolon_loc)
 {
         return tree_new_continue_stmt(self->context,
                 tree_init_xloc(kw_loc, semicolon_loc));
 }
 
-extern tree_stmt* cprog_build_break_stmt(
-        cprog* self, tree_location kw_loc, tree_location semicolon_loc)
+extern tree_stmt* csema_new_break_stmt(
+        csema* self, tree_location kw_loc, tree_location semicolon_loc)
 {
         return tree_new_break_stmt(self->context,
                 tree_init_xloc(kw_loc, semicolon_loc));
 }
 
-extern tree_stmt* cprog_build_return_stmt(
-        cprog* self, tree_location kw_loc, tree_location semicolon_loc, tree_expr* value)
+extern tree_stmt* csema_new_return_stmt(
+        csema* self, tree_location kw_loc, tree_location semicolon_loc, tree_expr* value)
 {
         if (value)
-                value = cprog_build_impl_cast(self, value,
+                value = csema_new_impl_cast(self, value,
                         tree_get_function_restype(tree_get_decl_type(self->function)));
 
         return tree_new_return_stmt(self->context,
