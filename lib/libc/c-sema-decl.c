@@ -21,30 +21,17 @@ static tree_type* csema_set_declarator_type(csema* self, cdeclarator* d, tree_ty
 
         tree_type* tail = d->type.tail;
         tree_type_kind k = tree_get_type_kind(tail);
-        tree_location loc = cdeclarator_get_id_loc_or_begin(d);
 
         if (k == TTK_POINTER)
-        {
-                if (!csema_set_pointer_target(self, tail, t))
-                        return NULL;
-        }
+                csema_set_pointer_target(self, tail, t);
         else if (k == TTK_FUNCTION)
-        {
-                if (!csema_set_function_restype(self, loc, tail, t))
-                        return NULL;
-        }
+                csema_set_function_restype(self, tail, t);
         else if (k == TTK_ARRAY)
-        {
-                if (!csema_set_array_eltype(self, loc, tail, t))
-                        return NULL;
-        }
+                csema_set_array_eltype(self, tail, t);
         else if (k == TTK_PAREN)
-        {
-                if (!csema_set_paren_type(self, tail, t))
-                        return NULL;
-        }
+                csema_set_paren_type(self, tail, t);
         else
-                return NULL; // unkown type kind
+                S_UNREACHABLE();
 
         d->type.tail = t;
         return d->type.head;
@@ -59,17 +46,14 @@ extern bool csema_new_direct_declarator_suffix(
 extern bool csema_new_direct_declarator_function_suffix(
         csema* self, cdeclarator* declarator)
 {
-        tree_type* suffix = csema_new_function_type(self,
-                cdeclarator_get_id_loc_or_begin(declarator), NULL);
-
+        tree_type* suffix = csema_new_function_type(self, NULL);
         return csema_new_direct_declarator_suffix(self, declarator, suffix);
 }
 
 extern bool csema_new_direct_declarator_array_suffix(
         csema* self, cdeclarator* declarator, tree_type_quals quals, tree_expr* size)
 {
-        tree_type* suffix = csema_new_array_type(self,
-                cdeclarator_get_id_loc_or_begin(declarator), quals, NULL, size);
+        tree_type* suffix = csema_new_array_type(self, quals, NULL, size);
 
         return csema_new_direct_declarator_suffix(self, declarator, suffix);
 }
@@ -401,13 +385,24 @@ static bool csema_check_specifiers(
         return true;
 }
 
+static tree_type* csema_finish_decl_type(
+        csema* self, cdecl_specs* decl_specs, cdeclarator* declarator)
+{
+        tree_type* dt = csema_set_declarator_type(self, declarator, decl_specs->typespec);
+        if (!dt)
+                return NULL;
+
+        return csema_check_type(self, dt,
+                cdeclarator_get_id_loc_or_begin(declarator)) ? dt : NULL;
+}
+
 extern tree_decl* csema_new_member_decl(
         csema* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_expr* bits)
 {
         if (!csema_check_specifiers(self, decl_specs, struct_declarator, false))
                 return NULL;
 
-        tree_type* t = csema_set_declarator_type(self, struct_declarator, decl_specs->typespec);
+        tree_type* t = csema_finish_decl_type(self, decl_specs, struct_declarator);
         if (!t)
                 return NULL;
 
@@ -580,7 +575,7 @@ static tree_decl* csema_new_var_decl(
 extern tree_decl* csema_new_external_decl(
         csema* self, cdecl_specs* decl_specs, cdeclarator* declarator)
 {
-        if (!csema_set_declarator_type(self, declarator, decl_specs->typespec))
+        if (!csema_finish_decl_type(self, decl_specs, declarator))
                 return NULL;
 
         if (decl_specs->is_typedef)
@@ -664,7 +659,7 @@ extern cparam* csema_finish_param(csema* self, cparam* p)
 {
         if (!csema_check_specifiers(self, &p->specs, &p->declarator, false))
                 return NULL;
-        if (!csema_set_declarator_type(self, &p->declarator, p->specs.typespec))
+        if (!csema_finish_decl_type(self, &p->specs, &p->declarator))
                 return NULL;
 
         return p;

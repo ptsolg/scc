@@ -195,8 +195,7 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
                 return false;
         }
 
-        result->typespec = csema_set_type_quals(
-                self->sema, result->typespec, quals, cdecl_specs_get_start_loc(result));
+        result->typespec = csema_set_type_quals(self->sema, result->typespec, quals);
 
         cdecl_specs_set_end_loc(result, cparser_get_loc(self));
         return result->typespec != NULL;
@@ -281,14 +280,13 @@ extern tree_type_quals cparse_type_qualifier_list_opt(cparser* self)
 
 extern tree_type* cparse_specifier_qualifier_list(cparser* self)
 {
-        tree_location start_loc = cparser_get_loc(self);
         tree_type_quals quals = cparse_type_qualifier_list_opt(self);
         tree_type* typespec = cparse_type_specifier(self);
         if (!typespec)
                 return NULL;
 
         quals |= cparse_type_qualifier_list_opt(self);
-        return csema_set_type_quals(self->sema, typespec, quals, start_loc);
+        return csema_set_type_quals(self->sema, typespec, quals);
 }
 
 static const ctoken_kind ctk_semicolon_or_comma[] =
