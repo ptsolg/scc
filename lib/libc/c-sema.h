@@ -17,7 +17,7 @@ typedef struct _csema
 {
         tree_context* context;
         ctree_context* ccontext;
-        cident_info* id_info;
+        cident_policy* id_policy;
         cerror_manager* error_manager;
         tree_decl* function;
         tree_decl_scope* globals;
@@ -31,7 +31,7 @@ typedef struct _csema
 extern void csema_init(
         csema* self,
         ctree_context* context,
-        cident_info* id_info,
+        cident_policy* id_policy,
         tree_module* module,
         cerror_manager* error_manager);
 

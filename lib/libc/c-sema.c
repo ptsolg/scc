@@ -5,13 +5,13 @@
 extern void csema_init(
         csema* self,
         ctree_context* context,
-        cident_info* id_info,
+        cident_policy* id_policy,
         tree_module* module,
         cerror_manager* error_manager)
 {
         self->ccontext = context;
         self->context = ctree_context_base(context);
-        self->id_info = id_info;
+        self->id_policy = id_policy;
         self->module = module;
         self->labels = NULL;
         self->globals = tree_get_module_globals(module);
@@ -76,7 +76,7 @@ extern void csema_push_scope(csema* self)
 
 extern tree_id csema_get_decl_name(const csema* self, const tree_decl* d)
 {
-        return cident_info_get_orig_decl_name(self->id_info, d);
+        return cident_policy_get_orig_decl_name(self->id_policy, d);
 }
 
 extern void csema_init_objgroup(csema* self, objgroup* args)
@@ -90,7 +90,7 @@ extern tree_decl* csema_get_local_tag_decl(const csema* self, tree_id name, bool
                 return NULL;
 
         return tree_decl_scope_find(self->locals,
-                cident_info_to_tag(self->id_info, name), parent_lookup);
+                cident_policy_to_tag(self->id_policy, name), parent_lookup);
 }
 
 extern tree_decl* csema_get_local_decl(const csema* self, tree_id name)

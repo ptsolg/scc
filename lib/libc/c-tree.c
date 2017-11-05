@@ -3,12 +3,12 @@
 #include "c-error.h"
 #include <setjmp.h>
 
-extern void cident_info_init(cident_info* self)
+extern void cident_policy_init(cident_policy* self)
 {
         self->use_tags = true;
 }
 
-extern tree_id cident_info_to_tag(const cident_info* self, tree_id id)
+extern tree_id cident_policy_to_tag(const cident_policy* self, tree_id id)
 {
         // todo
         if (self->use_tags)
@@ -16,7 +16,7 @@ extern tree_id cident_info_to_tag(const cident_info* self, tree_id id)
         return id;
 }
 
-extern tree_id cident_info_from_tag(const cident_info* self, tree_id tag)
+extern tree_id cident_policy_from_tag(const cident_policy* self, tree_id tag)
 {
         // todo
         if (self->use_tags)
@@ -24,11 +24,11 @@ extern tree_id cident_info_from_tag(const cident_info* self, tree_id tag)
         return tag;
 }
 
-extern tree_id cident_info_get_orig_decl_name(const cident_info* self, const tree_decl* decl)
+extern tree_id cident_policy_get_orig_decl_name(const cident_policy* self, const tree_decl* decl)
 {
         tree_id id = tree_get_decl_name(decl);
         if (self->use_tags && (tree_decl_is(decl, TDK_RECORD) || tree_decl_is(decl, TDK_ENUM)))
-                id = cident_info_from_tag(self, id);
+                id = cident_policy_from_tag(self, id);
         return id;
 }
 

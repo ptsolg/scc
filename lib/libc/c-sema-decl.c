@@ -349,7 +349,7 @@ extern tree_decl* csema_new_enum_decl(
         {
                 e = tree_new_enum_decl(self->context,
                         self->locals, tree_init_xloc(kw_loc, kw_loc),
-                        cident_info_to_tag(self->id_info, name));
+                        cident_policy_to_tag(self->id_policy, name));
 
                 if (!csema_export_decl(self, self->globals, e))
                         return NULL;
@@ -466,7 +466,7 @@ extern tree_decl* csema_new_record_decl(
                 d = tree_new_record_decl(self->context,
                         self->locals,
                         tree_init_xloc(kw_loc, kw_loc),
-                        cident_info_to_tag(self->id_info, name),
+                        cident_policy_to_tag(self->id_policy, name),
                         is_union);
 
                 if (!csema_export_decl(self, self->locals, d))

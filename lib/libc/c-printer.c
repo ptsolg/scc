@@ -23,14 +23,14 @@ extern void cprinter_init(
         cprinter* self,
         write_cb* write,
         const tree_context* context,
-        const cident_info* id_info,
+        const cident_policy* id_policy,
         const csource_manager* source_manager,
         const tree_target_info* target)
 {
         self->context = context;
         self->source_manager = source_manager;
         self->target = target;
-        self->id_info = id_info;
+        self->id_policy = id_policy;
         self->indent_level = 0;
         writebuf_init(&self->buf, write);
         cprinter_opts_init(&self->opts);
@@ -290,7 +290,7 @@ static inline void cprint_comma(cprinter* self)
 
 static inline void cprint_decl_name(cprinter* self, const tree_decl* d)
 {
-        cprint_id(self, cident_info_get_orig_decl_name(self->id_info, d));
+        cprint_id(self, cident_policy_get_orig_decl_name(self->id_policy, d));
 }
 
 static void cprint_binop(cprinter* self, const tree_expr* expr)

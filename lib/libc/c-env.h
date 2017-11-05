@@ -18,7 +18,7 @@ typedef struct _cenv
         ctree_context context;
         csource_manager source_manager;
         cerror_manager error_manager;
-        cident_info id_info;
+        cident_policy id_policy;
 } cenv;
 
 extern void cenv_init(cenv* self, FILE* err);

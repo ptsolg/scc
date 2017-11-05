@@ -152,7 +152,7 @@ static serrcode _scc_perform_syntax_analysis(scc_env* self, cenv* env)
                 &p,
                 fwrite_cb_base(&w),
                 ctree_context_base(&env->context),
-                &env->id_info,
+                &env->id_policy,
                 &env->source_manager,
                 &info);
 
@@ -192,7 +192,7 @@ static serrcode _scc_perform_lexical_analysis(scc_env* self, cenv* env, objgroup
                 &p,
                 fwrite_cb_base(&w),
                 ctree_context_base(&env->context),
-                &env->id_info,
+                &env->id_policy,
                 &env->source_manager,
                 NULL);
 
