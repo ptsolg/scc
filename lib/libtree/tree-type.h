@@ -184,6 +184,7 @@ union _tree_unqualified_type
         struct _tree_pointer_type _pointer;
         struct _tree_array_type _array;
         struct _tree_decl_type _decl;
+        struct _tree_paren_type _paren;
 };
 
 typedef enum
