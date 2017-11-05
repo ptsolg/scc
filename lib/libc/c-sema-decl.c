@@ -159,18 +159,7 @@ static bool csema_check_decl_with_no_linkage(const csema* self, const tree_decl*
         if (tree_get_decl_kind(decl) != TDK_FUNCTION)
                 return csema_require_complete_type(self, loc, dt);
 
-        const tree_decl_scope* params = tree_get_function_cparams(decl);
-        TREE_DECL_SCOPE_FOREACH(params, p)
-        {
-                tree_location ploc = tree_get_xloc_begin(tree_get_decl_loc(p));
-                tree_type* ptype = tree_get_decl_type(p);
-                if (!csema_require_complete_type(self, ploc, ptype))
-                        return false;
-        }
-
-        dt = tree_get_function_restype(dt);
-        return tree_type_is_void(dt)
-                ? true : csema_require_complete_type(self, loc, dt);
+        return true;
 }
 
 static bool csema_check_decl_with_linkage(csema* self, tree_decl_scope* scope, tree_decl* decl)
@@ -188,8 +177,7 @@ static bool csema_check_decl_with_linkage(csema* self, tree_decl_scope* scope, t
                 if (sc != TDSC_EXTERN && sc != TDSC_IMPL_EXTERN)
                 {
                         cerror(self->error_manager, CES_ERROR, loc,
-                               "invalid storage class for '%s'",
-                               csema_get_id(self, name));
+                               "invalid storage class for '%s'", csema_get_id(self, name));
                         return false;
                 }
         }
@@ -499,8 +487,7 @@ static bool csema_add_function_param(csema* self, tree_decl* function, cparam* p
                 NULL);
         
         tree_decl_storage_class sc = tree_get_decl_storage_class(function);
-        return _csema_finish_decl(self, self->locals, d,
-                sc == TDSC_EXTERN || sc == TDSC_STATIC);
+        return _csema_finish_decl(self, self->locals, d, true);
 }
 
 static tree_decl* csema_new_function_decl(
@@ -619,10 +606,48 @@ extern bool csema_set_var_initializer(csema* self, tree_decl* decl, tree_expr* i
         return true;
 }
 
+extern bool csema_check_function_definition_location(csema* self, tree_decl* decl)
+{
+        if (self->function)
+        {
+                cerror(self->error_manager, CES_ERROR, tree_get_decl_loc_begin(decl),
+                        "function definition is not allowed here");
+                return false;
+        }
+        return true;
+}
+
 extern bool csema_set_function_body(csema* self, tree_decl* decl, tree_stmt* body)
 {
-        if (tree_get_decl_kind(decl) != TDK_FUNCTION)
+        S_ASSERT(tree_decl_is(decl, TDK_FUNCTION));
+        if (tree_get_function_body(decl))
+        {
+                csema_decl_redifinition(self, decl);
+                return NULL;
+        }
+
+        if (!body)
+                return true;
+
+        tree_location loc = tree_get_decl_loc_begin(decl);
+        tree_type* restype = tree_get_function_restype(tree_get_decl_type(decl));
+        if (!tree_type_is_void(restype) && !csema_require_complete_type(self, loc, restype))
                 return false;
+
+        const tree_decl_scope* params = tree_get_function_cparams(decl);
+        TREE_DECL_SCOPE_FOREACH(params, p)
+        {
+                tree_location ploc = tree_get_decl_loc_begin(p);
+                if (tree_get_decl_name(p) == tree_get_empty_id())
+                {
+                        cerror(self->error_manager, CES_ERROR, ploc, "parameter name omitted");
+                        return false;
+                }
+
+                tree_type* ptype = tree_get_decl_type(p);
+                if (!csema_require_complete_type(self, ploc, ptype))
+                        return false;
+        }
 
         tree_set_function_body(decl, body);
         return true;
@@ -657,10 +682,18 @@ extern cparam* csema_add_declarator_param(csema* self, cdeclarator* d, cparam* p
 
 extern cparam* csema_finish_param(csema* self, cparam* p)
 {
-        if (!csema_check_specifiers(self, &p->specs, &p->declarator, false))
+        cdeclarator* d = &p->declarator;
+        if (!csema_check_specifiers(self, &p->specs, d, false))
                 return NULL;
-        if (!csema_finish_decl_type(self, &p->specs, &p->declarator))
+        if (!csema_finish_decl_type(self, &p->specs, d))
                 return NULL;
+
+        if (p->specs.class_ != TDSC_REGISTER && p->specs.class_ != TDSC_NONE)
+        {
+                cerror(self->error_manager, CES_ERROR, d->id_loc,
+                        "invalid storage class for parameter '%s'", csema_get_id(self, d->id));
+                return NULL;
+        }
 
         return p;
 }
