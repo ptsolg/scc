@@ -170,7 +170,6 @@ static bool csema_check_decl_with_linkage(csema* self, tree_decl_scope* scope, t
         tree_location loc = tree_get_xloc_begin(tree_get_decl_loc(decl));
         tree_id name = tree_get_decl_name(decl);
 
-
         if (dk == TDK_FUNCTION && csema_at_block_scope(self))
         {
                 tree_decl_storage_class sc = tree_get_decl_storage_class(decl);
@@ -182,24 +181,38 @@ static bool csema_check_decl_with_linkage(csema* self, tree_decl_scope* scope, t
                 }
         }
 
-        tree_decl* orig = tree_decl_scope_find(scope, tree_get_decl_name(decl), false);
+        tree_decl* orig = tree_decl_scope_find(scope, tree_get_decl_name(decl), true);
         if (!orig)
-                return (bool)csema_export_decl(self, scope, decl);
+        {
+                if (!csema_export_decl(self, scope, decl))
+                        return false;
+                tree_decl_scope_insert(scope, decl);
+                return true;
+        }
+
+        const char* sname = csema_get_id(self, name);
+        if (tree_get_decl_kind(decl) != tree_get_decl_kind(orig))
+        {
+                cerror(self->error_manager, CES_ERROR, loc,
+                        "'%s' redeclared as different kind of symbol", sname);
+                return false;
+        }
 
         if (!tree_decls_have_same_linkage(decl, orig))
         {
                 cerror(self->error_manager, CES_ERROR, loc,
-                       "redefinition of '%s' with different storage class",
-                       csema_get_id(self, name));
+                       "redefinition of '%s' with different storage class", sname);
                 return false;
         }
 
         if (!tree_types_are_same(tree_get_decl_type(decl), tree_get_decl_type(orig)))
         {
                 cerror(self->error_manager, CES_ERROR, loc,
-                       "conflicting types for '%s'", csema_get_id(self, name));
+                       "conflicting types for '%s'", sname);
                 return false;
         }
+
+        tree_decl_scope_add(scope, decl);
         return true;
 }
 
@@ -222,6 +235,8 @@ static tree_decl* csema_finish_object_or_function_decl(
         {
                 if (!csema_export_decl(self, scope, decl))
                         return NULL;
+                tree_decl_scope_insert(scope, decl);
+
                 if (tree_decl_is(decl, TDK_MEMBER))
                         if (!csema_finish_member_decl(self, scope, decl))
                                 return NULL;
@@ -239,10 +254,7 @@ static tree_decl* _csema_finish_decl(
 {
         tree_decl_kind dk = tree_get_decl_kind(decl);
         if (dk == TDK_VAR || dk == TDK_FUNCTION || dk == TDK_MEMBER)
-        {
-                if (!csema_finish_object_or_function_decl(self, scope, decl, allow_incomplete))
-                        return NULL;
-        }
+                return csema_finish_object_or_function_decl(self, scope, decl, allow_incomplete);
         else if (dk == TDK_RECORD)
                 tree_set_record_complete(decl, true);
         else if (dk == TDK_ENUMERATOR)
@@ -602,6 +614,13 @@ extern bool csema_set_var_initializer(csema* self, tree_decl* decl, tree_expr* i
         if (tree_get_expr_kind(init) != TEK_INIT)
                 init = csema_new_impl_cast(self, init, t);
 
+        tree_decl* orig = csema_get_local_decl(self, tree_get_decl_name(decl));
+        if (tree_get_var_init(orig))
+        {
+                csema_decl_redifinition(self, decl);
+                return false;
+        }
+
         tree_set_var_init(decl, init);
         return true;
 }
@@ -620,10 +639,14 @@ extern bool csema_check_function_definition_location(csema* self, tree_decl* dec
 extern bool csema_set_function_body(csema* self, tree_decl* decl, tree_stmt* body)
 {
         S_ASSERT(tree_decl_is(decl, TDK_FUNCTION));
-        if (tree_get_function_body(decl))
+        tree_decl* orig = csema_get_global_decl(self, tree_get_decl_name(decl));
+        if (!orig)
+                orig = decl;
+
+        if (tree_get_function_body(orig))
         {
                 csema_decl_redifinition(self, decl);
-                return NULL;
+                return false;
         }
 
         if (!body)

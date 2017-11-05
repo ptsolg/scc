@@ -62,6 +62,9 @@ extern bool tree_decl_scopes_are_same(const tree_decl_scope* a, const tree_decl_
 
 // if decl is group then its content will not be added to symtab
 extern serrcode tree_decl_scope_insert(tree_decl_scope* self, tree_decl* decl);
+// adds decl to the decl scope, but not to the symbol table
+extern void tree_decl_scope_add(tree_decl_scope* self, tree_decl* decl);
+
 extern tree_decl* tree_decl_scope_find(
         const tree_decl_scope* self, tree_id id, bool parent_lookup);
 

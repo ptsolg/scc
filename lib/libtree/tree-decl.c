@@ -98,9 +98,14 @@ extern serrcode tree_decl_scope_insert(tree_decl_scope* self, tree_decl* decl)
         if (S_FAILED(tree_symtab_insert(&self->_symtab, decl)))
                 return S_ERROR;
 
+        tree_decl_scope_add(self, decl);
+        return S_NO_ERROR;
+}
+
+extern void tree_decl_scope_add(tree_decl_scope* self, tree_decl* decl)
+{
         list_push_back(&self->_decls, &_tree_get_decl(decl)->_node);
         self->_ndecls++;
-        return S_NO_ERROR;
 }
 
 extern tree_decl* tree_decl_scope_find(
