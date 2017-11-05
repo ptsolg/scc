@@ -84,6 +84,9 @@ extern void tree_dispose_decl_scope(tree_decl_scope* self)
 
 extern bool tree_decl_scopes_are_same(const tree_decl_scope* a, const tree_decl_scope* b)
 {
+        if (tree_get_decl_scope_parent(a) != tree_get_decl_scope_parent(b))
+                return false;
+
         return tree_symtabs_are_same(
                 tree_get_decl_scope_csymtab(a), tree_get_decl_scope_csymtab(b));
 }
