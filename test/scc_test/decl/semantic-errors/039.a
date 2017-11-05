@@ -1,1 +1,1 @@
-039.t:1:1: error: invalid use of 'restrict'
+039.t:1:14: error: invalid use of 'restrict'
