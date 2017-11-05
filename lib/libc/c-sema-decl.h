@@ -55,6 +55,7 @@ extern tree_decl* csema_new_external_decl(
 extern tree_decl* csema_add_init_declarator(csema* self, tree_decl* list, tree_decl* d);
 
 extern bool csema_set_var_initializer(csema* self, tree_decl* decl, tree_expr* init);
+extern bool csema_check_function_definition_location(csema* self, tree_decl* decl);
 extern bool csema_set_function_body(csema* self, tree_decl* decl, tree_stmt* body);
 
 extern cparam* csema_new_param(csema* self);

@@ -36,6 +36,9 @@ static tree_decl* cparse_function_or_init_declarator(
         }
         else if (cparser_at(self, CTK_LBRACE))
         {
+                if (!csema_check_function_definition_location(self->sema, decl))
+                        return NULL;
+
                 csema_enter_function(self->sema, decl);
                 tree_stmt* body = cparse_block_stmt(self, CSC_NONE);
                 csema_exit_function(self->sema);
