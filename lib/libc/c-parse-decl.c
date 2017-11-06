@@ -5,6 +5,7 @@
 #include "c-parse-stmt.h"
 #include "c-parse-expr.h" // cparse_const_expr
 #include "c-reswords.h"
+#include "c-tree.h"
 
 static tree_decl* cparse_function_or_init_declarator(
         cparser* self, cdecl_specs* specs, bool* is_function_with_body)
@@ -149,7 +150,7 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
         while (1)
         {
                 const ctoken* t = cparser_get_token(self);
-                if (cparser_at_type_specifier(self))
+                if (cparser_at_type_specifier(self) && !result->typespec)
                 {
                         tree_type* typespec = cparse_type_specifier(self);
                         if (!typespec)
