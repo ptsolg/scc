@@ -198,7 +198,7 @@ static bool csema_check_decl_with_linkage(csema* self, tree_decl_scope* scope, t
                 return false;
         }
 
-        if (!tree_decls_have_same_linkage(decl, orig))
+        if (!tree_decl_is(decl, TDK_TYPEDEF) && !tree_decls_have_same_linkage(decl, orig))
         {
                 cerror(self->error_manager, CES_ERROR, loc,
                        "redefinition of '%s' with different storage class", sname);
@@ -257,6 +257,8 @@ static tree_decl* _csema_finish_decl(
                 return csema_finish_object_or_function_decl(self, scope, decl, allow_incomplete);
         else if (dk == TDK_RECORD)
                 tree_set_record_complete(decl, true);
+        else if (dk == TDK_TYPEDEF)
+                return csema_check_decl_with_linkage(self, scope, decl) ? decl : NULL;
         else if (dk == TDK_ENUMERATOR)
                 if (!csema_export_decl(self, self->globals, decl))
                         return NULL;
