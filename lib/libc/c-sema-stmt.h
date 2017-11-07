@@ -40,7 +40,7 @@ extern tree_stmt* csema_new_if_stmt(
         tree_stmt* else_);
 
 extern tree_stmt* csema_new_decl_stmt(
-        csema* self,tree_location begin_loc, tree_location semicolon_loc, tree_decl* d);
+        csema* self, tree_location begin_loc, tree_location semicolon_loc, tree_decl* d);
 
 extern tree_stmt* csema_new_switch_stmt(
         csema* self,
@@ -48,6 +48,14 @@ extern tree_stmt* csema_new_switch_stmt(
         tree_location rbracket_loc,
         tree_expr* value,
         tree_stmt* body);
+
+extern tree_stmt* csema_start_switch_stmt(
+        csema* self,
+        tree_location kw_loc,
+        tree_location rbracket_loc,
+        tree_expr* value);
+
+extern tree_stmt* csema_finish_switch_stmt(csema* self, tree_stmt* switch_, tree_stmt* body);
 
 extern tree_stmt* csema_new_while_stmt(
         csema* self,
@@ -73,7 +81,11 @@ extern tree_stmt* csema_new_for_stmt(
         tree_stmt* body);
 
 extern tree_stmt* csema_new_goto_stmt(
-        csema* self, tree_location kw_loc, tree_location semicolon_loc, tree_id label);
+        csema* self,
+        tree_location kw_loc,
+        tree_location id_loc,
+        tree_id id,
+        tree_location semicolon_loc);
 
 extern tree_stmt* csema_new_continue_stmt(
         csema* self, tree_location kw_loc, tree_location semicolon_loc);
