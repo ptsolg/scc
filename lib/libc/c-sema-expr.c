@@ -853,7 +853,7 @@ static tree_type* csema_check_log_or_expr(
 
 // returns false if pointee of lt has less qualifiers than pointee of rt
 static bool csema_check_pointer_qualifier_discartion(
-        csema* self, tree_type* lt, tree_type* rt, tree_location loc)
+        csema* self, tree_type* lt, tree_type* rt, tree_location loc, bool assignment)
 {
         lt = tree_get_pointer_target(lt);
         rt = tree_get_pointer_target(rt);
@@ -878,12 +878,12 @@ static bool csema_check_pointer_qualifier_discartion(
         char quals[64];
         cqet_qual_string(diff, quals);
         cerror(self->error_manager, CES_ERROR, loc,
-                "assignment discards '%s' qualifier", quals);
+                "%s discards '%s' qualifier", (assignment ? "assignment" : "return"), quals);
         return false;
 }
 
-static bool csema_check_assignment_pointer_types(
-        csema* self, tree_type* lt, tree_type* rt, tree_location loc)
+static bool csema_check_assignment_or_return_pointer_types(
+        csema* self, tree_type* lt, tree_type* rt, tree_location loc, bool assignment)
 {
         S_ASSERT(tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt));
         tree_type* ltarget = tree_get_unqualified_type(tree_get_pointer_target(lt));
@@ -893,12 +893,59 @@ static bool csema_check_assignment_pointer_types(
             || (tree_type_is_incomplete(ltarget) && tree_type_is_void(rtarget))
             || (tree_type_is_incomplete(rtarget) && tree_type_is_void(ltarget)))
         {
-                return csema_check_pointer_qualifier_discartion(self, lt, rt, loc);
+                return csema_check_pointer_qualifier_discartion(
+                        self, lt, rt, loc, assignment);
         }
 
         cerror(self->error_manager, CES_ERROR, loc,
-               "assignment from incompatible pointer type");
+               "%s from incompatible pointer type", (assignment ? "assignment" : "return"));
         return false;
+}
+
+extern tree_type* csema_check_simple_assignment_or_return(
+        csema* self,
+        tree_type* lt,
+        tree_expr** rhs,
+        tree_location eq_loc,
+        bool assignment)
+{
+        tree_type* rt = csema_unary_conversion(self, rhs);
+        tree_location rl = tree_get_expr_loc(*rhs);
+        tree_location loc = assignment ? eq_loc : rl;
+
+        if (tree_type_is_arithmetic(lt))
+        {
+                if (!csema_require_arithmetic_expr_type(self, rt, rl))
+                        return NULL;
+        }
+        else if (tree_type_is_record(lt))
+        {
+                if (!csema_require_record_expr_type(self, rt, rl))
+                        return NULL;
+                if (!csema_require_compatible_expr_types(self, lt, rt, loc))
+                        return NULL;
+        }
+        else if (tree_type_is_object_pointer(lt) && tree_expr_is_null_pointer_constant(*rhs))
+                ; // nothing to check
+        else if (tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt))
+        {
+                if (!csema_check_assignment_or_return_pointer_types(self, lt, rt, loc, assignment))
+                        return NULL;
+        }
+        else if (assignment)
+        {
+                csema_invalid_binop_operands(self, TBK_ASSIGN, loc);
+                return NULL;
+        }
+        else
+        {
+                cerror(self->error_manager, CES_ERROR, loc,
+                        "return type does not match the function type");
+                return NULL;
+        }
+
+        *rhs = csema_new_impl_cast(self, *rhs, lt);
+        return lt;
 }
 
 // 6.5.16.1 Simple assignment
@@ -919,39 +966,10 @@ static tree_type* csema_check_assign_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
         tree_type* lt = csema_array_function_to_pointer_conversion(self, lhs);
-        tree_type* rt = csema_unary_conversion(self, rhs);
-        tree_location rl = tree_get_expr_loc(*rhs);
-
         if (!csema_require_modifiable_lvalue(self, *lhs))
                 return NULL;
 
-        if (tree_type_is_arithmetic(lt))
-        {
-                if (!csema_require_arithmetic_expr_type(self, rt, rl))
-                        return NULL;
-        }
-        else if (tree_type_is_record(lt))
-        {
-                if (!csema_require_record_expr_type(self, rt, rl))
-                        return NULL;
-                if (!csema_require_compatible_expr_types(self, lt, rt, loc))
-                        return NULL;
-        }
-        else if (tree_type_is_object_pointer(lt) && tree_expr_is_null_pointer_constant(*rhs))
-                ; // nothing to check
-        else if (tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt))
-        {
-                if (!csema_check_assignment_pointer_types(self, lt, rt, loc))
-                        return NULL;
-        }
-        else
-        {
-                csema_invalid_binop_operands(self, TBK_ASSIGN, loc);
-                return NULL;
-        }
-
-        *rhs = csema_new_impl_cast(self, *rhs, lt);
-        return lt;
+        return csema_check_simple_assignment_or_return(self, lt, rhs, loc, true);
 }
 
 static tree_type* csema_check_add_assign_expr(
