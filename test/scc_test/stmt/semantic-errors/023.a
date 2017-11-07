@@ -1,0 +1,1 @@
+023.t:3:10: error: declaration of 'extern' variable 'a' in 'for' loop initial declaration

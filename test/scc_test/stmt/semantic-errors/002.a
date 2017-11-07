@@ -1,0 +1,1 @@
+002.t:4:9: error: a case statement may only be used within a switch

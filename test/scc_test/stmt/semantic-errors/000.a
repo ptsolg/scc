@@ -1,0 +1,1 @@
+000.t:3:5: error: a case statement may only be used within a switch

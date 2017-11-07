@@ -1,0 +1,1 @@
+022.t:3:10: error: declaration of 'static' variable 'a' in 'for' loop initial declaration

@@ -1,0 +1,1 @@
+006.t:4:9: error: a default statement may only be used within a switch

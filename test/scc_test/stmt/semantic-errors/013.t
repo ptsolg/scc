@@ -1,0 +1,6 @@
+void test()
+{
+    label:
+        default:
+            ;
+}

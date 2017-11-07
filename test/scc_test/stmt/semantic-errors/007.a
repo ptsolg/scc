@@ -1,0 +1,1 @@
+007.t:3:5: error: a default statement may only be used within a switch

@@ -6,7 +6,7 @@ int test()
 
 
 	out:
-
+		;
 	int kind = 20;
 	switch(kind)
 	{
