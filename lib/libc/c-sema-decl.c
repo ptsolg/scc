@@ -557,12 +557,12 @@ extern tree_decl* csema_new_label_decl(
                 self->labels, tree_init_xloc(id_loc, colon_loc), id, NULL);
 }
 
-extern tree_decl* csema_forward_label_decl(csema* self, tree_id name)
+extern tree_decl* csema_forward_label_decl(csema* self, tree_id name, tree_id name_loc)
 {
         tree_decl* l = csema_get_label_decl(self, name);
         if (!l)
         {
-                l = csema_new_label_decl(self, TREE_INVALID_LOC, name, TREE_INVALID_LOC);
+                l = csema_new_label_decl(self, name_loc, name, name_loc);
                 if (!csema_export_decl(self, self->labels, l))
                         return NULL;
         }
@@ -570,19 +570,20 @@ extern tree_decl* csema_forward_label_decl(csema* self, tree_id name)
 }
 
 extern tree_decl* csema_def_label_decl(
-        csema* self, tree_location id_loc, tree_id id, tree_location colon_loc)
+        csema* self, tree_location id_loc, tree_id id, tree_location colon_loc, tree_stmt* stmt)
 {
-        tree_decl* l = csema_forward_label_decl(self, id);
+        tree_decl* l = csema_forward_label_decl(self, id, id_loc);
         if (!l)
                 return NULL;
 
-        if (tree_get_decl_loc(l) != TREE_INVALID_XLOC)
+        if (tree_get_label_decl_stmt(l))
         {
                 csema_redefinition(self, id_loc, id);
                 return NULL;
         }
 
         tree_set_decl_loc(l, tree_init_xloc(id_loc, colon_loc));
+        tree_set_label_decl_stmt(l, stmt);
         return l;
 }
 

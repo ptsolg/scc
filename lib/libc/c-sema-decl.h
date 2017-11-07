@@ -79,10 +79,10 @@ extern tree_decl* csema_def_member_decl(
 extern tree_decl* csema_new_label_decl(
         csema* self, tree_location id_loc, tree_id id, tree_location colon_loc);
 
-extern tree_decl* csema_forward_label_decl(csema* self, tree_id name);
+extern tree_decl* csema_forward_label_decl(csema* self, tree_id name, tree_id name_loc);
 
 extern tree_decl* csema_def_label_decl(
-        csema* self, tree_location id_loc, tree_id id, tree_location colon_loc);
+        csema* self, tree_location id_loc, tree_id id, tree_location colon_loc, tree_stmt* stmt);
 
 extern tree_decl* csema_new_external_decl(
         csema* self, cdecl_specs* decl_specs, cdeclarator* declarator);
