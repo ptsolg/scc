@@ -11,7 +11,7 @@ extern "C" {
 
 #include "c-sema.h"
 
-extern tree_stmt* csema_finish_stmt(csema* self, tree_stmt* s);
+extern tree_stmt* csema_add_stmt(csema* self, tree_stmt* s);
 
 extern tree_stmt* csema_new_block_stmt(
         csema* self, tree_location lbrace_loc, cstmt_context context);
@@ -26,12 +26,7 @@ extern tree_stmt* csema_new_case_stmt(
 extern tree_stmt* csema_new_default_stmt(
         csema* self, tree_location kw_loc, tree_location colon_loc, tree_stmt* body);
 
-extern tree_stmt* csema_new_labeled_stmt(
-        csema* self,
-        tree_location id_loc,
-        tree_location colon_loc,
-        tree_id name,
-        tree_stmt* target);
+extern tree_stmt* csema_new_labeled_stmt(csema* self, tree_decl* label, tree_stmt* stmt);
 
 extern tree_stmt* csema_new_expr_stmt(
         csema* self, tree_location begin_loc, tree_location semicolon_loc, tree_expr* expr);
@@ -88,6 +83,8 @@ extern tree_stmt* csema_new_break_stmt(
 
 extern tree_stmt* csema_new_return_stmt(
         csema* self, tree_location kw_loc, tree_location semicolon_loc, tree_expr* value);
+
+extern bool csema_check_stmt(const csema* self, const tree_stmt* s, cstmt_context c);
 
 #ifdef __cplusplus
 }

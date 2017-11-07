@@ -2,40 +2,9 @@
 #include "c-sema-conv.h"
 #include "c-sema-decl.h"
 
-extern tree_stmt* csema_finish_stmt(csema* self, tree_stmt* s)
+extern tree_stmt* csema_add_stmt(csema* self, tree_stmt* s)
 {
-        if (!s)
-                return NULL;
-    
-        bool is_top_level = self->scope == NULL;
-        tree_stmt_kind sk = tree_get_stmt_kind(s);
-        tree_scope_flags flags = tree_get_scope_flags(self->scope);
-        tree_location kw_loc = tree_get_xloc_begin(tree_get_stmt_loc(s));
-
-        if (sk == TSK_BREAK && !(flags & TSF_BREAK))
-        {
-                cerror(self->error_manager, CES_ERROR, kw_loc,
-                        "a break statement may only be used within a loop or switch");
-                return NULL;
-        }
-        else if (sk == TSK_CONTINUE && !(flags & TSF_CONTINUE))
-        {
-                cerror(self->error_manager, CES_ERROR, kw_loc,
-                        "a continue statement may only be used within a loop");
-                return NULL;
-        }
-        else if (sk == TSK_CASE && !(flags & TSF_SWITCH))
-        {
-                cerror(self->error_manager, CES_ERROR, kw_loc,
-                        "a case statement may only be used within a switch");
-                return NULL;
-        }
-        else if (sk == TSK_COMPOUND && is_top_level)
-        {
-                // check for unknown labels
-                return s;
-        }
-
+        S_ASSERT(s);
         tree_scope_add(self->scope, s);
         return s;
 }
@@ -43,11 +12,7 @@ extern tree_stmt* csema_finish_stmt(csema* self, tree_stmt* s)
 extern tree_stmt* csema_new_block_stmt(
         csema* self, tree_location lbrace_loc, cstmt_context context)
 {
-        tree_scope_flags flags = TSF_NONE;
-        if (context == CSC_ITERATION)
-                flags = TSF_ITERATION;
-        else if (context == CSC_SWITCH)
-                flags = TSF_SWITCH;
+        tree_scope_flags flags = cstmt_context_to_scope_flags(context);
         return tree_new_compound_stmt_ex(self->context,
                 tree_init_xloc(lbrace_loc, 0), self->scope, self->locals, flags);
 }
@@ -70,36 +35,10 @@ extern tree_stmt* csema_new_default_stmt(
                 tree_init_xloc(kw_loc, colon_loc), body);
 }
 
-static tree_decl* csema_finish_label(csema* self, tree_decl* label)
+extern tree_stmt* csema_new_labeled_stmt(csema* self, tree_decl* label, tree_stmt* stmt)
 {
-        if (!csema_export_decl(self, self->labels, label))
-                return NULL;
-
-        tree_decl_scope_insert(self->labels, label);
-        return label;
-}
-
-extern tree_stmt* csema_new_labeled_stmt(
-        csema* self,
-        tree_location id_loc,
-        tree_location colon_loc,
-        tree_id name,
-        tree_stmt* target)
-{
-        tree_decl* label = csema_get_label_decl(self, name);
-        if (label && tree_get_label_decl_stmt(label))
-                return NULL; // label is already defined
-        else if (!label)
-        {
-                label = csema_finish_label(self,
-                        tree_new_label_decl(self->context, self->labels, 0, name, target));
-                if (!label)
-                        return NULL;
-        }
-
-        tree_set_label_decl_stmt(label, target);
-        return tree_new_labeled_stmt(self->context,
-                tree_init_xloc(id_loc, colon_loc), label);
+        tree_set_label_decl_stmt(label, stmt);
+        return tree_new_labeled_stmt(self->context, tree_get_decl_loc(label), label);
 }
 
 extern tree_stmt* csema_new_expr_stmt(
@@ -177,16 +116,11 @@ extern tree_stmt* csema_new_for_stmt(
 extern tree_stmt* csema_new_goto_stmt(
         csema* self, tree_location kw_loc, tree_location semicolon_loc, tree_id label)
 {
-        tree_decl* ld = csema_get_label_decl(self, label);
-        if (!ld)
-        {
-                ld = csema_finish_label(self,
-                        tree_new_label_decl(self->context, self->labels, 0, label, NULL));
-                if (!ld)
-                        return NULL;
-        }
-        return tree_new_goto_stmt(self->context,
-                tree_init_xloc(kw_loc, semicolon_loc), ld);
+        tree_decl* l = csema_forward_label_decl(self, label);
+        if (!l)
+                return NULL;
+
+        return tree_new_goto_stmt(self->context, tree_init_xloc(kw_loc, semicolon_loc), l);
 }
 
 extern tree_stmt* csema_new_continue_stmt(
@@ -212,4 +146,40 @@ extern tree_stmt* csema_new_return_stmt(
 
         return tree_new_return_stmt(self->context,
                 tree_init_xloc(kw_loc, semicolon_loc), value);
+}
+
+extern bool csema_check_stmt(const csema* self, const tree_stmt* s, cstmt_context c)
+{
+        if (!s)
+                return false;
+
+        tree_scope_flags flags = cstmt_context_to_scope_flags(c);
+        bool is_top_level = self->scope == NULL;
+        tree_stmt_kind sk = tree_get_stmt_kind(s);
+        tree_location kw_loc = tree_get_xloc_begin(tree_get_stmt_loc(s));
+
+        if (sk == TSK_BREAK && !(flags & TSF_BREAK))
+        {
+                cerror(self->error_manager, CES_ERROR, kw_loc,
+                       "a break statement may only be used within a loop or switch");
+                return false;
+        }
+        else if (sk == TSK_CONTINUE && !(flags & TSF_CONTINUE))
+        {
+                cerror(self->error_manager, CES_ERROR, kw_loc,
+                       "a continue statement may only be used within a loop");
+                return false;
+        }
+        else if ((sk == TSK_CASE || sk == TSK_DEFAULT) && (flags & TSF_SWITCH) != TSF_SWITCH)
+        {
+                cerror(self->error_manager, CES_ERROR, kw_loc,
+                       "a %s statement may only be used within a switch",
+                       (sk == TSK_CASE ? "case" : "default"));
+                return false;
+        }
+        else if (sk == TSK_COMPOUND && is_top_level)
+        {
+                // check for unknown labels
+        }
+        return true;
 }
