@@ -176,6 +176,8 @@ typedef enum _cstmt_context
         CSC_SWITCH = 2,
 } cstmt_context;
 
+extern tree_scope_flags cstmt_context_to_scope_flags(cstmt_context c);
+
 #ifdef __cplusplus
 }
 #endif

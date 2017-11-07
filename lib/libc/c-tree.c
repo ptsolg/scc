@@ -361,3 +361,13 @@ extern tree_xlocation cparam_get_loc(const cparam* self)
 {
         return self->specs.loc;
 }
+
+extern tree_scope_flags cstmt_context_to_scope_flags(cstmt_context c)
+{
+        tree_scope_flags flags = TSF_NONE;
+        if (c == CSC_ITERATION)
+                flags |= TSF_ITERATION;
+        else if (c == CSC_SWITCH)
+                flags |= TSF_SWITCH;
+        return flags;
+}
