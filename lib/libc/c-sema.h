@@ -23,6 +23,7 @@ typedef struct _csema
         tree_decl_scope* globals;
         tree_decl_scope* labels;
         tree_decl_scope* locals;
+        objgroup switch_stack;
         tree_scope* scope;
         tree_module* module;
         tree_target_info* target;

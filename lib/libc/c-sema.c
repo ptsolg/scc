@@ -20,6 +20,7 @@ extern void csema_init(
         self->scope = NULL;
         self->function = NULL;
         self->error_manager = error_manager;
+        csema_init_objgroup(self, &self->switch_stack);
 }
 
 extern void csema_dispose(csema* self)
