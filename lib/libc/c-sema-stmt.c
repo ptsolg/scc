@@ -249,13 +249,15 @@ extern tree_stmt* csema_new_return_stmt(
         if (tree_type_is_void(restype) && value)
         {
                 cerror(self->error_manager, CES_ERROR, tree_get_expr_loc(value),
-                        "'return' with a value, in function returning void");
+                        "return with a value, in function returning void");
                 return NULL;
         }
 
-        if (value)
-                value = csema_new_impl_cast(self, value,
-                        tree_get_function_restype(tree_get_decl_type(self->function)));
+        if (value && !csema_check_simple_assignment_or_return(
+                self, restype, &value, TREE_INVALID_LOC, false))
+        {
+                return NULL;
+        }
 
         return tree_new_return_stmt(self->context,
                 tree_init_xloc(kw_loc, semicolon_loc), value);
