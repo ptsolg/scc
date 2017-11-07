@@ -1151,7 +1151,7 @@ extern void cprint_stmt(cprinter* self, const tree_stmt* s)
                 case TSK_CASE: cprint_case_stmt(self, s); break;
                 case TSK_DEFAULT: cprint_default_stmt(self, s); break;
                 case TSK_COMPOUND: cprint_compound_stmt(self, s); break;
-                case TSK_expr: cprint_expr_stmt(self, s); break;
+                case TSK_EXPR: cprint_expr_stmt(self, s); break;
                 case TSK_IF: cprint_if_stmt(self, s); break;
                 case TSK_SWITCH: cprint_switch_stmt(self, s); break;
                 case TSK_WHILE: cprint_while_stmt(self, s); break;

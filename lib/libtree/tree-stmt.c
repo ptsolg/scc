@@ -113,7 +113,7 @@ extern tree_stmt* tree_new_decl_stmt(tree_context* context, tree_xlocation loc, 
 
 extern tree_stmt* tree_new_expr_stmt(tree_context* context, tree_xlocation loc, tree_expr* root)
 {
-        tree_stmt* s = tree_new_stmt(context, TSK_expr, loc, sizeof(struct _tree_expr_stmt));
+        tree_stmt* s = tree_new_stmt(context, TSK_EXPR, loc, sizeof(struct _tree_expr_stmt));
         if (!s)
                 return NULL;
 

@@ -68,7 +68,7 @@ typedef enum _tree_stmt_kind
         TSK_CASE,
         TSK_DEFAULT,
         TSK_COMPOUND,
-        TSK_expr,
+        TSK_EXPR,
         TSK_IF,
         TSK_SWITCH,
         TSK_WHILE,
@@ -594,13 +594,13 @@ static inline void tree_set_decl_stmt_entity(tree_stmt* self, tree_decl* d)
 
 static inline struct _tree_expr_stmt* _tree_get_expr_stmt(tree_stmt* self)
 {
-        TREE_ASSERT_STMT(self, TSK_expr);
+        TREE_ASSERT_STMT(self, TSK_EXPR);
         return (struct _tree_expr_stmt*)self;
 }
 
 static inline const struct _tree_expr_stmt* _tree_get_expr_cstmt(const tree_stmt* self)
 {
-        TREE_ASSERT_STMT(self, TSK_expr);
+        TREE_ASSERT_STMT(self, TSK_EXPR);
         return (const struct _tree_expr_stmt*)self;
 }
 
