@@ -1,9 +1,10 @@
 #include "c-parse-stmt.h"
 #include "c-parse-expr.h"
 #include "c-sema-stmt.h"
+#include "c-sema-decl.h"
 #include "c-parse-decl.h"
 
-static tree_stmt* _cparse_stmt(cparser* self, cstmt_context context)
+static tree_stmt* _cparse_stmt_no_check(cparser* self, cstmt_context context)
 {
         switch (ctoken_get_kind(cparser_get_token(self)))
         {
@@ -28,6 +29,15 @@ static tree_stmt* _cparse_stmt(cparser* self, cstmt_context context)
                                 ? cparse_decl_stmt(self)
                                 : cparse_expr_stmt(self);
         }
+}
+
+static tree_stmt* _cparse_stmt(cparser* self, cstmt_context context)
+{
+        tree_stmt* s = _cparse_stmt_no_check(self, context);
+        if (!s || !csema_check_stmt(self->sema, s, context))
+                return NULL;
+
+        return s;
 }
 
 extern tree_stmt* cparse_stmt(cparser* self)
@@ -84,11 +94,15 @@ extern tree_stmt* cparse_labeled_stmt(cparser* self, cstmt_context context)
         if (!cparser_require(self, CTK_COLON))
                 return NULL;
 
-        tree_stmt* target = _cparse_stmt(self, context);
-        if (!target)
+        tree_decl* label = csema_def_label_decl(self->sema, id_loc, name, colon_loc);
+        if (!label)
                 return NULL;
 
-        return csema_new_labeled_stmt(self->sema, id_loc, colon_loc, name, target);
+        tree_stmt* stmt = _cparse_stmt(self, context);
+        if (!stmt)
+                return NULL;
+
+        return csema_new_labeled_stmt(self->sema, label, stmt);
 }
 
 extern tree_stmt* cparse_block_stmt(cparser* self, cstmt_context context)
@@ -105,7 +119,7 @@ extern tree_stmt* cparse_block_stmt(cparser* self, cstmt_context context)
         while (!cparser_at(self, CTK_RBRACE))
         {
                 tree_stmt* s = _cparse_stmt(self, context);
-                if (!s || !csema_finish_stmt(self->sema, s))
+                if (!s || !csema_add_stmt(self->sema, s))
                 {
                         csema_exit_scope(self->sema);
                         return NULL;
