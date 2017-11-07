@@ -174,6 +174,7 @@ typedef enum _cstmt_context
         CSC_NONE = 0,
         CSC_ITERATION = 1,
         CSC_SWITCH = 2,
+        CSC_DECL = 4,
 } cstmt_context;
 
 extern tree_scope_flags cstmt_context_to_scope_flags(cstmt_context c);
