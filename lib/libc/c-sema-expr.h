@@ -20,6 +20,8 @@ extern bool csema_require_function_pointer_expr_type(
 extern bool csema_require_integral_expr_type(
         const csema* self, const tree_type* t, tree_location l);
 
+extern bool csema_require_integer_expr(const csema* self, const tree_expr* e);
+
 extern bool csema_require_real_expr_type(
         const csema* self, const tree_type* t, tree_location l);
 
@@ -31,6 +33,8 @@ extern bool csema_require_array_expr_type(
 
 extern bool csema_require_scalar_expr_type(
         const csema* self, const tree_type* t, tree_location l);
+
+extern bool csema_require_scalar_expr(const csema* self, const tree_expr* e);
 
 extern bool csema_require_arithmetic_expr_type(
         const csema* self, const tree_type* t, tree_location l);

@@ -38,6 +38,12 @@ extern bool csema_require_integral_expr_type(
         return true;
 }
 
+extern bool csema_require_integer_expr(const csema* self, const tree_expr* e)
+{
+        return csema_require_integral_expr_type(self,
+                tree_get_expr_type(e), tree_get_expr_loc(e));
+}
+
 extern bool csema_require_real_expr_type(
         const csema* self, const tree_type* t, tree_location l)
 {
@@ -84,6 +90,12 @@ extern bool csema_require_scalar_expr_type(
                 return false;
         }
         return true;
+}
+
+extern bool csema_require_scalar_expr(const csema* self, const tree_expr* e)
+{
+        return csema_require_scalar_expr_type(self,
+                tree_get_expr_type(e), tree_get_expr_loc(e));
 }
 
 extern bool csema_require_arithmetic_expr_type(
@@ -550,7 +562,7 @@ static tree_type* csema_check_log_expr(
         return csema_new_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
 }
 
-static void csema_invalid_binop_exprerands(
+static void csema_invalid_binop_operands(
         const csema* self, tree_binop_kind opcode, tree_location loc)
 {
         cerror(self->error_manager, CES_ERROR, loc,
@@ -583,7 +595,7 @@ static tree_type* csema_check_relational_expr(
         }
         else
         {
-                csema_invalid_binop_exprerands(self, opcode, loc);
+                csema_invalid_binop_operands(self, opcode, loc);
                 return NULL;
         }
 
@@ -627,7 +639,7 @@ static tree_type* csema_check_compare_expr(
         }
         else
         {
-                csema_invalid_binop_exprerands(self, opcode, loc);
+                csema_invalid_binop_operands(self, opcode, loc);
                 return NULL;
         }
         return csema_new_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
@@ -659,7 +671,7 @@ static tree_type* csema_check_add_sub_assign_expr(
         }
         else
         {
-                csema_invalid_binop_exprerands(self, opcode, loc);
+                csema_invalid_binop_operands(self, opcode, loc);
                 return NULL;
         }
 
@@ -727,7 +739,7 @@ static tree_type* csema_check_add_expr(
 
                 return rt;
         }
-        csema_invalid_binop_exprerands(self, TBK_ADD, loc);
+        csema_invalid_binop_operands(self, TBK_ADD, loc);
         return NULL;
 }
 
@@ -757,7 +769,7 @@ static tree_type* csema_check_sub_expr(
 
                 return lt;
         }
-        csema_invalid_binop_exprerands(self, TBK_SUB, loc);
+        csema_invalid_binop_operands(self, TBK_SUB, loc);
         return NULL;
 }
 
@@ -934,7 +946,7 @@ static tree_type* csema_check_assign_expr(
         }
         else
         {
-                csema_invalid_binop_exprerands(self, TBK_ASSIGN, loc);
+                csema_invalid_binop_operands(self, TBK_ASSIGN, loc);
                 return NULL;
         }
 
@@ -1084,7 +1096,7 @@ extern tree_expr* csema_new_binary_expr(
         return tree_new_binop(self->context, TVK_RVALUE, t, loc, opcode, lhs, rhs);
 }
 
-static tree_type* csema_check_conditional_exprerator_pointer_types(
+static tree_type* csema_check_conditional_operator_pointer_types(
         csema* self, tree_expr* lhs, tree_expr* rhs, tree_location loc)
 {
         tree_type* lt = tree_get_expr_type(lhs);
@@ -1173,7 +1185,7 @@ extern tree_expr* csema_new_conditional_expr(
         }
         else if (tree_type_is_void(lt) && tree_type_is_void(rt))
                 t = lt;
-        else if ((t = csema_check_conditional_exprerator_pointer_types(self, lhs, rhs, loc)))
+        else if ((t = csema_check_conditional_operator_pointer_types(self, lhs, rhs, loc)))
                 ;
         else
         {
