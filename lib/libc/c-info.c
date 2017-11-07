@@ -148,6 +148,19 @@ extern const char* cget_unop_string(tree_unop_kind k)
         return cget_unop_info(k)->string;
 }
 
+extern const char* cget_decl_storage_class_string(tree_decl_storage_class sc)
+{
+        if (sc == TDSC_NONE || sc == TDSC_IMPL_EXTERN)
+                return "";
+        else if (sc == TDSC_EXTERN)
+                return "extern";
+        else if (sc == TDSC_REGISTER)
+                return "register";
+        else if (sc == TDSC_STATIC)
+                return "static";
+        return "";
+}
+
 extern void cqet_qual_string(tree_type_quals q, char* buf)
 {
         *buf = '\0';

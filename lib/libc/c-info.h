@@ -45,6 +45,7 @@ extern int cget_operator_precedence(const ctoken* self);
 extern int cget_binop_precedence(tree_binop_kind k);
 extern const char* cget_binop_string(tree_binop_kind k);
 extern const char* cget_unop_string(tree_unop_kind k);
+extern const char* cget_decl_storage_class_string(tree_decl_storage_class sc);
 extern void cqet_qual_string(tree_type_quals q, char* buf);
 
 extern tree_binop_kind ctoken_to_binop(const ctoken* self);
