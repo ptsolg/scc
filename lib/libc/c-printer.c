@@ -1048,7 +1048,7 @@ static void cprint_if_stmt(cprinter* self, const tree_stmt* s)
 {
         cprintrw(self, CTK_IF);
         cprint_space(self);
-        cprint_expr(self, tree_get_if_condition(s));
+        _cprint_expr(self, tree_get_if_condition(s), true);
         cprint_stmt_with_indent(self, tree_get_if_body(s));
 
         const tree_stmt* else_ = tree_get_if_else(s);
@@ -1068,7 +1068,7 @@ static void cprint_switch_stmt(cprinter* self, const tree_stmt* s)
 {
         cprintrw(self, CTK_SWITCH);
         cprint_space(self);
-        cprint_expr(self, tree_get_switch_expr(s));
+        _cprint_expr(self, tree_get_switch_expr(s), true);
         cprint_stmt_with_indent(self, tree_get_switch_body(s));
 }
 
@@ -1076,7 +1076,7 @@ static void cprint_while_stmt(cprinter* self, const tree_stmt* s)
 {
         cprintrw(self, CTK_WHILE);
         cprint_space(self);
-        cprint_expr(self, tree_get_while_condition(s));
+        _cprint_expr(self, tree_get_while_condition(s), true);
         cprint_stmt_with_indent(self, tree_get_while_body(s));
 }
 
@@ -1088,7 +1088,7 @@ static void cprint_do_while_stmt(cprinter* self, const tree_stmt* s)
         cprint_endl(self);
         cprintrw(self, CTK_WHILE);
         cprint_space(self);
-        cprint_expr(self, tree_get_do_while_condition(s));
+        _cprint_expr(self, tree_get_do_while_condition(s), true);
         cprintrw(self, CTK_SEMICOLON);
 }
 

@@ -33,6 +33,19 @@ static tree_stmt* _cparse_stmt_no_check(cparser* self, cstmt_context context)
 
 static tree_stmt* _cparse_stmt(cparser* self, cstmt_context context)
 {
+        context &= ~CSC_DECL;
+
+        tree_stmt* s = _cparse_stmt_no_check(self, context);
+        if (!s || !csema_check_stmt(self->sema, s, context))
+                return NULL;
+
+        return s;
+}
+
+static tree_stmt* _cparse_block_item(cparser* self, cstmt_context context)
+{
+        context |= CSC_DECL;
+
         tree_stmt* s = _cparse_stmt_no_check(self, context);
         if (!s || !csema_check_stmt(self->sema, s, context))
                 return NULL;
@@ -94,7 +107,9 @@ extern tree_stmt* cparse_labeled_stmt(cparser* self, cstmt_context context)
         if (!cparser_require(self, CTK_COLON))
                 return NULL;
 
-        tree_decl* label = csema_def_label_decl(self->sema, id_loc, name, colon_loc);
+        tree_stmt placeholder;
+        tree_decl* label = csema_def_label_decl(
+                self->sema,id_loc, name, colon_loc, &placeholder);
         if (!label)
                 return NULL;
 
@@ -118,7 +133,7 @@ extern tree_stmt* cparse_block_stmt(cparser* self, cstmt_context context)
         csema_enter_scope(self->sema, tree_get_compound_scope(block));
         while (!cparser_at(self, CTK_RBRACE))
         {
-                tree_stmt* s = _cparse_stmt(self, context);
+                tree_stmt* s = _cparse_block_item(self, context);
                 if (!s || !csema_add_stmt(self->sema, s))
                 {
                         csema_exit_scope(self->sema);
@@ -161,13 +176,16 @@ extern tree_stmt* cparse_expr_stmt(cparser* self)
 extern tree_stmt* cparse_if_stmt(cparser* self, cstmt_context context)
 {
         tree_location kw_loc = cparser_get_loc(self);
-        if (!cparser_require(self, CTK_IF))
+        if (!cparser_require(self, CTK_IF) || !cparser_require(self, CTK_LBRACKET))
                 return NULL;
 
-        tree_expr* condition = cparse_paren_expr(self);
+        tree_expr* condition = cparse_expr(self);
         if (!condition)
                 return NULL;
-        tree_location rbracket_loc = ctoken_get_loc(cparser_get_prev(self));
+
+        tree_location rbracket_loc = cparser_get_loc(self);
+        if (!cparser_require(self, CTK_RBRACKET))
+                return NULL;
 
         tree_stmt* body = _cparse_stmt(self, context);
         if (!body)
@@ -187,31 +205,41 @@ extern tree_stmt* cparse_if_stmt(cparser* self, cstmt_context context)
 extern tree_stmt* cparse_switch_stmt(cparser* self, cstmt_context context)
 {
         tree_location kw_loc = cparser_get_loc(self);
-        if (!cparser_require(self, CTK_SWITCH))
+        if (!cparser_require(self, CTK_SWITCH) || !cparser_require(self, CTK_LBRACKET))
                 return NULL;
 
-        tree_expr* value = cparse_paren_expr(self);
+        tree_expr* value = cparse_expr(self);
         if (!value)
                 return NULL;
-        tree_location rbracket_loc = ctoken_get_loc(cparser_get_prev(self));
 
-        tree_stmt* body = _cparse_stmt(self, context | CSC_SWITCH);
-        if (!body)
+        tree_location rbracket_loc = cparser_get_loc(self);
+        if (!cparser_require(self, CTK_RBRACKET))
                 return NULL;
 
-        return csema_new_switch_stmt(self->sema, kw_loc, rbracket_loc, value, body);
+        tree_stmt* switch_ = csema_start_switch_stmt(self->sema, kw_loc, rbracket_loc, value);
+        if (!switch_)
+                return NULL;
+
+        tree_stmt* body = _cparse_stmt(self, context | CSC_SWITCH);
+        if (!csema_finish_switch_stmt(self->sema, switch_, body))
+                return NULL;
+
+        return switch_;
 }
 
 extern tree_stmt* cparse_while_stmt(cparser* self, cstmt_context context)
 {
         tree_location kw_loc = cparser_get_loc(self);
-        if (!cparser_require(self, CTK_WHILE))
+        if (!cparser_require(self, CTK_WHILE) || !cparser_require(self, CTK_LBRACKET))
                 return NULL;
 
-        tree_expr* condition = cparse_paren_expr(self);
+        tree_expr* condition = cparse_expr(self);
         if (!condition)
                 return NULL;
-        tree_location rbracket_loc = ctoken_get_loc(cparser_get_prev(self));
+
+        tree_location rbracket_loc = cparser_get_loc(self);
+        if (!cparser_require(self, CTK_RBRACKET))
+                return NULL;
 
         tree_stmt* body = _cparse_stmt(self, context | CSC_ITERATION);
         if (!body)
@@ -227,11 +255,11 @@ extern tree_stmt* cparse_do_while_stmt(cparser* self, cstmt_context context)
                 return NULL;
 
         tree_stmt* body = _cparse_stmt(self, context | CSC_ITERATION);
-        if (!body || !cparser_require(self, CTK_WHILE))
+        if (!body || !cparser_require(self, CTK_WHILE) || !cparser_require(self, CTK_LBRACKET))
                 return NULL;
 
-        tree_expr* condition = cparse_paren_expr(self);
-        if (!condition)
+        tree_expr* condition = cparse_expr(self);
+        if (!condition || !cparser_require(self, CTK_RBRACKET))
                 return NULL;
 
         tree_location semicolon_loc = cparser_get_loc(self);
@@ -287,15 +315,19 @@ extern tree_stmt* cparse_for_stmt(cparser* self, cstmt_context context)
 extern tree_stmt* cparse_goto_stmt(cparser* self)
 {
         tree_location kw_loc = cparser_get_loc(self);
-        if (!cparser_require(self, CTK_GOTO) || !cparser_require(self, CTK_ID))
+        if (!cparser_require(self, CTK_GOTO))
                 return NULL;
 
-        tree_id label = ctoken_get_string(cparser_get_prev(self));
+        tree_location id_loc = cparser_get_loc(self);
+        if (!cparser_require(self, CTK_ID))
+                return NULL;
+
+        tree_id id = ctoken_get_string(cparser_get_prev(self));
         tree_location semicolon_loc = cparser_get_loc(self);
         if (!cparser_require(self, CTK_SEMICOLON))
                 return NULL;
 
-        return csema_new_goto_stmt(self->sema, kw_loc, semicolon_loc, label);
+        return csema_new_goto_stmt(self->sema, kw_loc, id_loc, id, semicolon_loc);
 }
 
 extern tree_stmt* cparse_continue_stmt(cparser* self)
