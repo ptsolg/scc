@@ -7,6 +7,21 @@
 #include "c-reswords.h"
 #include "c-tree.h"
 
+static bool cparse_function_definition(cparser* self, tree_decl* func)
+{
+        if (!csema_check_function_def_loc(self->sema, func))
+                return false;
+
+        csema_enter_function(self->sema, func);
+        tree_stmt* body = cparse_stmt(self);
+        csema_exit_function(self->sema);
+
+        if (!body || !csema_def_function_decl(self->sema, func, body))
+                return false;
+
+        return true;
+}
+
 static tree_decl* cparse_function_or_init_declarator(
         cparser* self, cdecl_specs* specs, bool* is_function_with_body)
 {
@@ -35,16 +50,7 @@ static tree_decl* cparse_function_or_init_declarator(
         }
         else if (cparser_at(self, CTK_LBRACE))
         {
-                if (!csema_check_function_def_loc(self->sema, decl))
-                        return NULL;
-
-                csema_enter_function(self->sema, decl);
-                tree_stmt* body = cparse_block_stmt(self, CSC_NONE);
-                csema_exit_function(self->sema);
-
-                if (!body)
-                        return NULL;
-                if (!csema_def_function_decl(self->sema, decl, body))
+                if (!cparse_function_definition(self, decl))
                         return NULL;
 
                 *is_function_with_body = true;
