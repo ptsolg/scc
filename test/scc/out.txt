@@ -1,0 +1,1 @@
+051.t:4:12: error: return from incompatible pointer type

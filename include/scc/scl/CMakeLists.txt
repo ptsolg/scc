@@ -1,0 +1,20 @@
+add_scc_target_sources(scl
+	alloc.h
+	common.h
+	error.h
+	file.h
+	hash.h
+	htab.h
+	malloc.h
+	misc.h
+	arg-parser.h
+	membuf.h
+	sstring.h
+	target.h
+	char-info.h
+	heap-debug.h
+	read-write.h
+	objgroup.h
+	value.h
+	list.h
+)

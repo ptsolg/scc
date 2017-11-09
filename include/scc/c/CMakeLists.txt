@@ -1,0 +1,26 @@
+add_scc_target_sources(c
+	c-reswords.h
+	c-token-kind.h
+	c-limits.h
+	c-error.h
+	c-token.h
+	c-source.h
+	c-lexer.h
+	c-tree.h
+	c-parser.h
+	c-parse-module.h
+	c-parse-expr.h
+	c-parse-stmt.h
+	c-parse-decl.h
+	c-sema.h
+	c-sema-conv.h
+	c-sema-expr.h
+	c-sema-decl.h
+	c-sema-type.h
+	c-sema-stmt.h
+	c-info.h
+	c-env.h
+	c-preprocessor.h
+	c-printer.h
+	c-token-kind.inc
+)

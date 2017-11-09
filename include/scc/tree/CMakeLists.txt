@@ -1,0 +1,12 @@
+add_scc_target_sources(tree
+	tree-target.h
+	tree-module.h
+	tree-eval.h
+	tree-common.h
+	tree-context.h
+	tree-decl.h
+	tree-stmt.h
+	tree-expr.h
+	tree.h
+	tree-type.h
+)
