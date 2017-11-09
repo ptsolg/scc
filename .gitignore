@@ -4,8 +4,6 @@
 !.gitignore
 !*.txt
 !*.c
-!*.t
-!*.a
 !*.h
 !*.inc
 !*.py
@@ -20,3 +18,5 @@ CMakeFiles/
 
 # tests
 test/scc_test/*.txt
+!test/**/*.t
+!test/**/*.a
