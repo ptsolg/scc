@@ -26,7 +26,7 @@ extern void __cdecl hd_free(void* block)
 
 #else
 
-#include "malloc.h"
+#include "scc/scl/malloc.h"
 
 extern void* __cdecl hd_malloc(size_t size)
 {
