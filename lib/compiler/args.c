@@ -1,4 +1,5 @@
 #include "scc/compiler/args.h"
+#include "scc/scl/file.h"
 
 extern scc_arg_handler* scc_new_arg_handler(
         allocator* alloc,
