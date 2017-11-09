@@ -6,7 +6,7 @@
 #include "scc/scl/file.h"
 
 static bool scc_add_handler(
-        scc_env* self,
+        scc_instance* self,
         const char* arg,
         void(*const fn)(scc_arg_handler*, aparser*))
 {
@@ -24,7 +24,7 @@ static bool scc_add_handler(
         return true;
 }
 
-static bool scc_add_default_handler(scc_env* self)
+static bool scc_add_default_handler(scc_instance* self)
 {
         scc_arg_handler* h = scc_new_arg_handler(get_std_alloc(), &scc_default, self, NULL);
         if (!h)
@@ -34,7 +34,7 @@ static bool scc_add_default_handler(scc_env* self)
         return true;
 }
 
-static serrcode scc_init_args(scc_env* self)
+static serrcode scc_init_args(scc_instance* self)
 {
         return scc_add_default_handler(self)
                 && scc_add_handler(self, "-syntax-only", &scc_syntax_only)
@@ -54,7 +54,7 @@ static serrcode scc_init_args(scc_env* self)
                 ? S_NO_ERROR : S_ERROR;
 }
 
-extern serrcode scc_init(scc_env* self, FILE* err, int argc, const char** argv)
+extern serrcode scc_init(scc_instance* self, FILE* err, int argc, const char** argv)
 {
         objgroup_init(&self->input);
         objgroup_init(&self->handlers);
@@ -77,7 +77,7 @@ extern serrcode scc_init(scc_env* self, FILE* err, int argc, const char** argv)
         return scc_init_args(self);
 }
 
-static void scc_print_help(scc_env* self)
+static void scc_print_help(scc_instance* self)
 {
         const char* d =
                 "Options:\n"
@@ -99,7 +99,7 @@ static void scc_print_help(scc_env* self)
         fprintf(self->err, "%s", d);
 }
 
-static FILE* scc_open_output(scc_env* self)
+static FILE* scc_open_output(scc_instance* self)
 {
         char path[S_MAX_PATH_LEN];
         path_get_cd(path);
@@ -111,7 +111,7 @@ static FILE* scc_open_output(scc_env* self)
         return out;
 }
 
-static void scc_set_printer_opts(const scc_env* self, cprinter_opts* opts)
+static void scc_set_printer_opts(const scc_instance* self, cprinter_opts* opts)
 {
         opts->double_precision = self->opts.double_precision;
         opts->float_precision = self->opts.float_precision;
@@ -122,7 +122,7 @@ static void scc_set_printer_opts(const scc_env* self, cprinter_opts* opts)
         opts->print_impl_casts = self->opts.print_impl_casts;
 }
 
-static serrcode scc_init_cenv(scc_env* self, cenv* env)
+static serrcode scc_init_cenv(scc_instance* self, cenv* env)
 {
         cenv_init(env, self->err);
         OBJGROUP_FOREACH(&self->include, char**, it)
@@ -131,7 +131,7 @@ static serrcode scc_init_cenv(scc_env* self, cenv* env)
         return S_NO_ERROR;
 }
 
-static serrcode _scc_perform_syntax_analysis(scc_env* self, cenv* env)
+static serrcode _scc_perform_syntax_analysis(scc_instance* self, cenv* env)
 {
         tree_target_info info;
         tree_init_target_info(&info, self->opts.x32 ? TTARGET_X32 : TTARGET_X64);
@@ -163,7 +163,7 @@ static serrcode _scc_perform_syntax_analysis(scc_env* self, cenv* env)
         return S_NO_ERROR;
 }
 
-static serrcode scc_perform_syntax_analysis(scc_env* self)
+static serrcode scc_perform_syntax_analysis(scc_instance* self)
 {
         cenv env;
         if (S_FAILED(scc_init_cenv(self, &env)))
@@ -174,7 +174,7 @@ static serrcode scc_perform_syntax_analysis(scc_env* self)
         return res;
 }
 
-static serrcode _scc_perform_lexical_analysis(scc_env* self, cenv* env, objgroup* tokens)
+static serrcode _scc_perform_lexical_analysis(scc_instance* self, cenv* env, objgroup* tokens)
 {
         if (S_FAILED(clex_file(env, objgroup_first(&self->input), tokens)))
                 return S_ERROR;
@@ -203,7 +203,7 @@ static serrcode _scc_perform_lexical_analysis(scc_env* self, cenv* env, objgroup
         return S_NO_ERROR;
 }
 
-static serrcode scc_perform_lexical_analysis(scc_env* self)
+static serrcode scc_perform_lexical_analysis(scc_instance* self)
 {
         cenv env;
         objgroup tokens;
@@ -216,7 +216,7 @@ static serrcode scc_perform_lexical_analysis(scc_env* self)
         return res;
 }
 
-extern serrcode scc_run(scc_env* self)
+extern serrcode scc_run(scc_instance* self)
 {
         if (!aparser_args_remain(&self->parser))
         {
@@ -242,12 +242,12 @@ extern serrcode scc_run(scc_env* self)
         return self->return_code;
 }
 
-extern void scc_dispose(scc_env* self)
+extern void scc_dispose(scc_instance* self)
 {
         fclose(self->err);
 }
 
-extern serrcode scc_add_lookup_directory(scc_env* self, const char* dir)
+extern serrcode scc_add_lookup_directory(scc_instance* self, const char* dir)
 {
         char* copy = allocate(get_std_alloc(), strlen(dir) + 1);
         if (!copy)
@@ -262,7 +262,7 @@ extern serrcode scc_add_lookup_directory(scc_env* self, const char* dir)
         return S_NO_ERROR;
 }
 
-extern serrcode scc_add_input(scc_env* self, const char* file)
+extern serrcode scc_add_input(scc_instance* self, const char* file)
 {
         char* copy = allocate(get_std_alloc(), strlen(file) + 1);
         if (!copy)

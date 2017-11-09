@@ -14,14 +14,14 @@ extern "C" {
 typedef struct
 {
         aparser_cb base;
-        scc_env* scc;
+        scc_instance* scc;
         const char* arg;
 } scc_arg_handler;
 
 extern scc_arg_handler* scc_new_arg_handler(
         allocator* alloc,
         void(*const fn)(scc_arg_handler*, aparser*),
-        scc_env* scc,
+        scc_instance* scc,
         const char* arg);
 
 extern void scc_syntax_only(scc_arg_handler* self, aparser* p);
