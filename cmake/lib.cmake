@@ -36,6 +36,13 @@ function(add_scc_target name)
 		PRIVATE _CRT_SECURE_NO_WARNINGS
 	)
 	
+	set_target_properties(${name}
+		PROPERTIES
+		ARCHIVE_OUTPUT_DIRECTORY ${SCC_BIN_DIR}
+		LIBRARY_OUTPUT_DIRECTORY ${SCC_BIN_DIR}
+		RUNTIME_OUTPUT_DIRECTORY ${SCC_BIN_DIR}
+	)
+	
 	foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
 		string(TOUPPER ${cfg} cfg)
 		set_target_properties(${name}
