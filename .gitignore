@@ -17,6 +17,6 @@ CMakeCache.txt
 CMakeFiles/
 
 # tests
-test/scc_test/*.txt
+test/scc/*.txt
 !test/**/*.t
 !test/**/*.a
