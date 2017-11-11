@@ -85,7 +85,7 @@ extern tree_module* cparse_string(cenv* self, const char* str, tree_target_info*
         return cparse_source(self, csource_emulate(&self->source_manager, "", str), target);
 }
 
-extern serrcode clex_source(cenv* self, csource* source, objgroup* result)
+extern serrcode clex_source(cenv* self, csource* source, dseq* result)
 {
         if (!source)
                 return false;
@@ -102,7 +102,7 @@ extern serrcode clex_source(cenv* self, csource* source, objgroup* result)
         while (!failed)
         {
                 ctoken* t = clex(&lexer);
-                if (!t || S_FAILED(objgroup_push_back(result, t)))
+                if (!t || S_FAILED(dseq_append_ptr(result, t)))
                 {
                         failed = true;
                         break;
@@ -115,12 +115,12 @@ extern serrcode clex_source(cenv* self, csource* source, objgroup* result)
         return failed ? S_ERROR : S_NO_ERROR;
 }
 
-extern serrcode clex_file(cenv* self, const char* file, objgroup* result)
+extern serrcode clex_file(cenv* self, const char* file, dseq* result)
 {
         return clex_source(self, cenv_open_file(self, file), result);
 }
 
-extern serrcode clex_string(cenv* self, const char* str, objgroup* result)
+extern serrcode clex_string(cenv* self, const char* str, dseq* result)
 {
         return clex_source(self, csource_emulate(&self->source_manager, "", str), result);
 }

@@ -56,7 +56,7 @@ extern tree_expr* cparse_primary_expr(cparser* self)
         return NULL;
 }
 
-static bool cparse_argument_expr_list_opt(cparser* self, objgroup* args)
+static bool cparse_argument_expr_list_opt(cparser* self, dseq* args)
 {
         if (cparser_at(self, CTK_RBRACKET))
                 return true;
@@ -64,7 +64,7 @@ static bool cparse_argument_expr_list_opt(cparser* self, objgroup* args)
         tree_expr* e;
         while ((e = cparse_assignment_expr(self)))
         {
-                objgroup_push_back(args, e);
+                dseq_append_ptr(args, e);
 
                 if (cparser_at(self, CTK_RBRACKET))
                         return true;
@@ -97,8 +97,8 @@ static tree_expr* cparse_rhs_of_postfix_expr(cparser* self, tree_expr* lhs)
         else if (k == CTK_LBRACKET)
         {
                 cparser_consume_token(self);
-                objgroup args;
-                csema_init_objgroup(self->sema, &args);
+                dseq args;
+                csema_init_dseq_ptr(self->sema, &args);
                 if (!cparse_argument_expr_list_opt(self, &args))
                         return NULL;
 

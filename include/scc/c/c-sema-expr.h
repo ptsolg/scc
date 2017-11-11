@@ -64,7 +64,7 @@ extern tree_expr* csema_new_subscript_expr(
         csema* self, tree_location loc, tree_expr* lhs, tree_expr* rhs);
 
 extern tree_expr* csema_new_call_expr(
-        csema* self, tree_location loc, tree_expr* lhs, objgroup* args);
+        csema* self, tree_location loc, tree_expr* lhs, dseq* args);
 
 extern tree_expr* csema_new_member_expr(
         csema* self,

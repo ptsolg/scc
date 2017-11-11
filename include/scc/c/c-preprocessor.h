@@ -176,7 +176,7 @@ typedef struct
 
 typedef struct _cpproc
 {
-        objgroup expansion;
+        dseq expansion;
         cpproc_state* state;
         cpproc_state files[CMAX_INCLUDE_NESTING];
         const creswords* reswords;

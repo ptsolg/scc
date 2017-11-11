@@ -591,7 +591,7 @@ extern void cpproc_init(
         self->source_manager = source_manager;
         self->error_manager = error_manager;
         self->context = context;
-        objgroup_init_ex(&self->expansion,
+        dseq_init_ex_ptr(&self->expansion,
                 tree_get_context_allocator(ctree_context_base(context)));
 }
 
@@ -742,8 +742,8 @@ static ctoken* cpproc_lex_directive(cpproc* self)
 
 static ctoken* cpproc_lex_macro_id(cpproc* self)
 {
-        if (objgroup_size(&self->expansion))
-                return (ctoken*)objgroup_pop_back(&self->expansion);
+        if (dseq_size(&self->expansion))
+                return dseq_pop_ptr(&self->expansion);
 
         ctoken* t = cpproc_lex_directive(self);
         if (!t)
@@ -763,7 +763,7 @@ static ctoken* cpproc_lex_macro_id(cpproc* self)
 
 static inline void cpproc_unget_macro_id(cpproc* self, ctoken* t)
 {
-        objgroup_push_back(&self->expansion, t);
+        dseq_append_ptr(&self->expansion, t);
 }
 
 static ctoken* cpproc_lex_string(cpproc* self)
@@ -775,11 +775,11 @@ static ctoken* cpproc_lex_string(cpproc* self)
         if (!ctoken_is(t, CTK_CONST_STRING))
                 return t;
 
-        objgroup buf;
-        objgroup_init_ex(&buf, tree_get_context_allocator(ctree_context_base(self->context)));
+        dseq buf;
+        dseq_init_ex_ptr(&buf, tree_get_context_allocator(ctree_context_base(self->context)));
         while (ctoken_is(t, CTK_CONST_STRING))
         {
-                objgroup_push_back(&buf, t);
+                dseq_append_ptr(&buf, t);
                 if (!(t = cpproc_lex_macro_id(self)))
                         return NULL;
                 if (!ctoken_is(t, CTK_CONST_STRING))
@@ -792,17 +792,17 @@ static ctoken* cpproc_lex_string(cpproc* self)
         //todo:
         char concat[4096];
         *concat = '\0';
-        OBJGROUP_FOREACH(&buf, ctoken**, it)
+        for (ssize i = 0; i < dseq_size(&buf); i++)
         {
-                tree_id ref = ctoken_get_string(*it);
+                tree_id ref = ctoken_get_string(dseq_get_ptr(&buf, i));
                 const char* s = tree_context_get_id(ctree_context_base(self->context), ref);
                 strcat(concat, s);
         }
 
         tree_id ref = ctree_context_add_string(self->context, concat, strlen(concat));
-        t = (ctoken*)objgroup_first(&buf);
+        t = dseq_first_ptr(&buf);
         ctoken_set_string(t, ref);
-        objgroup_dispose(&buf);
+        dseq_dispose(&buf);
         return t;
 }
 

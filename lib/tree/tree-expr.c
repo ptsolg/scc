@@ -105,20 +105,20 @@ extern tree_expr* tree_new_call_expr(
                 return NULL;
 
         tree_set_call_lhs(e, lhs);
-        objgroup_init_ex(&_tree_get_call(e)->_args, tree_get_context_allocator(context));
+        dseq_init_ex_ptr(&_tree_get_call(e)->_args, tree_get_context_allocator(context));
         return e;
 }
 
-extern void tree_set_call_args(tree_expr* self, objgroup* args)
+extern void tree_set_call_args(tree_expr* self, dseq* args)
 {
-        objgroup* this_args = &_tree_get_call(self)->_args;
-        objgroup_dispose(this_args);
-        objgroup_move(this_args, args);
+        dseq* this_args = &_tree_get_call(self)->_args;
+        dseq_dispose(this_args);
+        dseq_move(this_args, args);
 }
 
 extern void tree_add_call_arg(tree_expr* self, tree_expr* arg)
 {
-        objgroup_push_back(&_tree_get_call(self)->_args, arg);
+        dseq_append_ptr(&_tree_get_call(self)->_args, arg);
 }
 
 extern tree_expr* tree_new_subscript_expr(

@@ -217,7 +217,7 @@ struct _tree_call_expr
 {
         struct _tree_expr_base _base;
         tree_expr* _lhs;
-        objgroup _args;
+        dseq _args;
 };
 
 extern tree_expr* tree_new_call_expr(
@@ -227,7 +227,7 @@ extern tree_expr* tree_new_call_expr(
         tree_location loc,
         tree_expr* lhs);
 
-extern void tree_set_call_args(tree_expr* self, objgroup* args);
+extern void tree_set_call_args(tree_expr* self, dseq* args);
 extern void tree_add_call_arg(tree_expr* self, tree_expr* arg);
 
 static inline struct _tree_call_expr* _tree_get_call(tree_expr* self);
@@ -806,7 +806,7 @@ static inline const struct _tree_call_expr* _tree_get_ccall(const tree_expr* sel
 
 static inline ssize tree_get_call_nargs(const tree_expr* self)
 {
-        return objgroup_size(&_tree_get_ccall(self)->_args);
+        return dseq_size(&_tree_get_ccall(self)->_args);
 }
 
 static inline tree_expr* tree_get_call_lhs(const tree_expr* self)
@@ -816,12 +816,12 @@ static inline tree_expr* tree_get_call_lhs(const tree_expr* self)
 
 static inline tree_expr** tree_get_call_begin(const tree_expr* self)
 {
-        return (tree_expr**)objgroup_begin(&_tree_get_ccall(self)->_args);
+        return (tree_expr**)dseq_begin_ptr(&_tree_get_ccall(self)->_args);
 }
 
 static inline tree_expr** tree_get_call_end(const tree_expr* self)
 {
-        return (tree_expr**)objgroup_end(&_tree_get_ccall(self)->_args);
+        return (tree_expr**)dseq_end_ptr(&_tree_get_ccall(self)->_args);
 }
 
 static inline void tree_set_call_lhs(tree_expr* self, tree_expr* lhs)

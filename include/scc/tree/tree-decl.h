@@ -396,7 +396,7 @@ static inline void tree_set_label_decl_stmt(tree_decl* self, tree_stmt* stmt);
 struct _tree_decl_group
 {
         struct _tree_decl_base _base;
-        objgroup _group;
+        dseq _group;
 };
 
 extern tree_decl* tree_new_decl_group(
@@ -887,12 +887,12 @@ static inline const struct _tree_decl_group* _tree_get_decl_cgroup(const tree_de
 
 static inline tree_decl** tree_get_decl_group_begin(const tree_decl* self)
 {
-        return (tree_decl**)objgroup_begin(&_tree_get_decl_cgroup(self)->_group);
+        return (tree_decl**)dseq_begin_ptr(&_tree_get_decl_cgroup(self)->_group);
 }
 
 static inline tree_decl** tree_get_decl_group_end(const tree_decl* self)
 {
-        return (tree_decl**)objgroup_end(&_tree_get_decl_cgroup(self)->_group);
+        return (tree_decl**)dseq_end_ptr(&_tree_get_decl_cgroup(self)->_group);
 }
 
 #ifdef __cplusplus

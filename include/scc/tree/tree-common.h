@@ -12,7 +12,7 @@ extern "C" {
 #include "scc/scl/common.h"
 #include "scc/scl/sstring.h"
 #include "scc/scl/list.h"
-#include "scc/scl/objgroup.h"
+#include "scc/scl/dseq-ext.h"
 
 #define TREE_INVALID_ID STRREF_INVALID
 #define TREE_INVALID_LOC ((tree_location)-1)

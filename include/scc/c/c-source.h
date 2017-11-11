@@ -21,7 +21,7 @@ typedef struct _csource
         tree_location _begin;
         tree_location _end;
         bool _opened;
-        objgroup _lines;
+        dseq _lines;
         bool _emulated;
         char* _content;
         FILE* _file;
@@ -72,8 +72,8 @@ static inline const char* csource_get_name(const csource* self)
 typedef struct _csource_manager
 {
         htab source_lookup;
-        objgroup sources;
-        objgroup lookup;
+        dseq sources;
+        dseq lookup;
         allocator* alloc;
 } csource_manager;
 

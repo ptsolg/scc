@@ -26,8 +26,8 @@ extern void cenv_dispose(cenv* self);
 extern serrcode cenv_add_lookup(cenv* self, const char* dir);
 extern tree_module* cparse_file(cenv* self, const char* file, tree_target_info* target);
 extern tree_module* cparse_string(cenv* self, const char* str, tree_target_info* target);
-extern serrcode clex_file(cenv* self, const char* file, objgroup* result);
-extern serrcode clex_string(cenv* self, const char* str, objgroup* result);
+extern serrcode clex_file(cenv* self, const char* file, dseq* result);
+extern serrcode clex_string(cenv* self, const char* str, dseq* result);
 
 #ifdef __cplusplus
 }

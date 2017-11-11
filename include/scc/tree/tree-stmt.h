@@ -422,7 +422,7 @@ static inline void tree_set_scope_flags(tree_scope* self, tree_scope_flags f)
 
 static inline void tree_add_scope_flags(tree_scope* self, tree_scope_flags f)
 {
-        self->_flags |= f;
+        self->_flags = (tree_scope_flags)(self->_flags | f);
 }
 
 #define TREE_ASSERT_STMT(S) S_ASSERT(S)

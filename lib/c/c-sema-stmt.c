@@ -26,7 +26,7 @@ extern tree_stmt* csema_new_case_stmt(
         tree_expr* value,
         tree_stmt* body)
 {
-        if (!objgroup_size(&self->switch_stack))
+        if (!dseq_size(&self->switch_stack))
         {
                 cerror(self->error_manager, CES_ERROR, kw_loc,
                         "a case statement may only be used within a switch");
@@ -36,7 +36,7 @@ extern tree_stmt* csema_new_case_stmt(
         if (!csema_require_integer_expr(self, value))
                 return NULL;
 
-        tree_stmt* switch_ = objgroup_last(&self->switch_stack);
+        tree_stmt* switch_ = dseq_last_ptr(&self->switch_stack);
         value = csema_new_impl_cast(self, value,
                 tree_get_expr_type(tree_get_switch_expr(switch_)));
 
@@ -47,7 +47,7 @@ extern tree_stmt* csema_new_case_stmt(
 extern tree_stmt* csema_new_default_stmt(
         csema* self, tree_location kw_loc, tree_location colon_loc, tree_stmt* body)
 {
-        if (!objgroup_size(&self->switch_stack))
+        if (!dseq_size(&self->switch_stack))
         {
                 cerror(self->error_manager, CES_ERROR, kw_loc,
                         "a default statement may only be used within a switch");
@@ -118,7 +118,7 @@ extern tree_stmt* csema_start_switch_stmt(
         if (!s)
                 return NULL;
 
-        objgroup_push_back(&self->switch_stack, s);
+        dseq_append_ptr(&self->switch_stack, s);
         return s;
 }
 
@@ -128,7 +128,7 @@ extern tree_stmt* csema_finish_switch_stmt(csema* self, tree_stmt* switch_, tree
                 return NULL;
 
         tree_set_switch_body(switch_, body);
-        objgroup_pop_back(&self->switch_stack);
+        dseq_pop_ptr(&self->switch_stack);
         return switch_;
 }
 

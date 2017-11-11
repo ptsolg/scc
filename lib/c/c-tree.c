@@ -307,7 +307,7 @@ extern void cdeclarator_init(cdeclarator* self, ctree_context* context, cdeclara
         self->id_loc = TREE_INVALID_LOC;
 
         ctype_chain_init(&self->type);
-        objgroup_init_ex(&self->params,
+        dseq_init_ex_ptr(&self->params,
                 tree_get_context_allocator(ctree_context_base(context)));
 }
 

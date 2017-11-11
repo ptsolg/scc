@@ -214,14 +214,14 @@ extern void cprint_token(cprinter* self, const ctoken* token, const ctoken_print
         cprint_token_value(self, token);
 }
 
-extern void cprint_tokens(cprinter* self, const objgroup* tokens)
+extern void cprint_tokens(cprinter* self, const dseq* tokens)
 {
         ctoken_print_info info;
         ctoken_print_info_init(&info);
 
-        for (ssize i = 0; i < objgroup_size(tokens); i++)
+        for (ssize i = 0; i < dseq_size(tokens); i++)
         {
-                const ctoken* token = objgroup_nth(tokens, i);
+                const ctoken* token = dseq_get_ptr(tokens, i);
                 clocation loc;
                 csource_find_loc(self->source_manager, &loc, ctoken_get_loc(token));
 
@@ -238,8 +238,8 @@ extern void cprint_tokens(cprinter* self, const objgroup* tokens)
                 if (len > info.max_kind_len)
                         info.max_kind_len = len;
         }
-        for (ssize i = 0; i < objgroup_size(tokens); i++)
-                cprint_token(self, objgroup_nth(tokens, i), &info);
+        for (ssize i = 0; i < dseq_size(tokens); i++)
+                cprint_token(self, dseq_get_ptr(tokens, i), &info);
 }
 
 static inline void cprint_lbracket(cprinter* self)

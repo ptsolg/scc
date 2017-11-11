@@ -180,7 +180,7 @@ extern cparam* csema_add_declarator_param(csema* self, cdeclarator* d, cparam* p
                 return NULL;
 
         if (!d->params_initialized)
-                objgroup_push_back(&d->params, p);
+                dseq_append_ptr(&d->params, p);
         else
                 csema_handle_unused_param(self, p);
 
@@ -618,12 +618,12 @@ static tree_decl* csema_def_param_decl(csema* self, cparam* p)
         return csema_finish_decl(self, self->locals, d);
 }
 
-static bool csema_set_function_params(csema* self, tree_decl* func, objgroup* params)
+static bool csema_set_function_params(csema* self, tree_decl* func, dseq* params)
 {
         csema_enter_decl_scope(self, tree_get_function_params(func));
 
-        OBJGROUP_FOREACH(params, cparam**, it)
-                if (!csema_def_param_decl(self, *it))
+        for (ssize i = 0; i < dseq_size(params); i++)
+                if (!csema_def_param_decl(self, dseq_get_ptr(params, i)))
                 {
                         csema_exit_decl_scope(self);
                         return false;

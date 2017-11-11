@@ -11,7 +11,7 @@ extern "C" {
 
 #include <stdio.h>
 #include "scc/scl/read-write.h"
-#include "scc/scl/objgroup.h"
+#include "scc/scl/dseq-ext.h"
 
 typedef struct _ctoken ctoken;
 typedef struct _csource_manager csource_manager;
@@ -72,7 +72,7 @@ typedef struct
 extern void ctoken_print_info_init(ctoken_print_info* self);
 
 extern void cprint_token(cprinter* self, const ctoken* token, const ctoken_print_info* info);
-extern void cprint_tokens(cprinter* self, const objgroup* tokens);
+extern void cprint_tokens(cprinter* self, const dseq* tokens);
 
 extern void cprint_expr(cprinter* self, const tree_expr* expr);
 

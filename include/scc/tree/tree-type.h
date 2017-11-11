@@ -95,11 +95,11 @@ static inline void tree_set_builtin_type_kind(tree_type* self, tree_builtin_type
 struct _tree_function_type
 {
         struct _tree_chain_type _base;
-        objgroup _params;
+        dseq _params;
 };
 
 extern tree_type* tree_new_function_type(tree_context* context, tree_type* restype);
-extern void tree_set_function_type_params(tree_type* self, objgroup* params);
+extern void tree_set_function_type_params(tree_type* self, dseq* params);
 extern void tree_add_function_type_param(tree_type* self, tree_type* param);
 
 static inline struct _tree_function_type* _tree_get_function_type(tree_type* self);
@@ -360,7 +360,7 @@ static inline const struct _tree_function_type* _tree_get_function_ctype(const t
 
 static inline ssize tree_get_function_type_nparams(const tree_type* self)
 {
-        return objgroup_size(&_tree_get_function_ctype(self)->_params);
+        return dseq_size(&_tree_get_function_ctype(self)->_params);
 }
 
 static inline tree_type* tree_get_function_restype(const tree_type* self)
@@ -370,17 +370,17 @@ static inline tree_type* tree_get_function_restype(const tree_type* self)
 
 static inline tree_type* tree_get_function_type_param(const tree_type* self, ssize n)
 {
-        return objgroup_nth(&_tree_get_function_ctype(self)->_params, n);
+        return (tree_type*)dseq_get_ptr(&_tree_get_function_ctype(self)->_params, n);
 }
 
 static inline tree_type** tree_get_function_type_begin(const tree_type* self)
 {
-        return (tree_type**)objgroup_begin(&_tree_get_function_ctype(self)->_params);
+        return (tree_type**)dseq_begin_ptr(&_tree_get_function_ctype(self)->_params);
 }
 
 static inline tree_type** tree_get_function_type_end(const tree_type* self)
 {
-        return (tree_type**)objgroup_end(&_tree_get_function_ctype(self)->_params);
+        return (tree_type**)dseq_end_ptr(&_tree_get_function_ctype(self)->_params);
 }
 
 static inline void tree_set_function_restype(tree_type* self, tree_type* restype)
@@ -538,7 +538,7 @@ static inline tree_type* tree_get_unqualified_type(tree_type* self)
 
 static inline void tree_add_type_quals(tree_type* self, tree_type_quals q)
 {
-        _tree_get_qtype(self)->_quals |= q;
+        tree_set_type_quals(self, (tree_type_quals)(tree_get_type_quals(self) | q));
 }
 
 static inline void tree_set_type_quals(tree_type* self, tree_type_quals q)

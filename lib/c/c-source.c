@@ -9,16 +9,16 @@ extern bool csource_has(const csource* self, tree_location loc)
 extern int csource_get_line(const csource* self, tree_location loc)
 {
         // todo: log(n) search
-        ssize nlines = objgroup_size(&self->_lines);
+        ssize nlines = dseq_size(&self->_lines);
         if (!nlines)
                 return 0;
 
         for (ssize i = 0; i < nlines; i++)
         {
-                tree_location cur = (tree_location)objgroup_nth(&self->_lines, i);
+                tree_location cur = dseq_get_u32(&self->_lines, i);
                 tree_location next = csource_end(self);
                 if (i + 1 < nlines)
-                        next = (tree_location)objgroup_nth(&self->_lines, i + 1);
+                        next = dseq_get_u32(&self->_lines, i + 1);
 
                 if (loc >= cur && loc < next)
                         return (int)(i + 1);
@@ -33,20 +33,18 @@ extern int csource_get_col(const csource* self, tree_location loc)
         if (line == 0)
                 return 0;
 
-        tree_location line_loc = (tree_location)objgroup_nth(
-                &self->_lines, (ssize)(line - 1));
-
+        tree_location line_loc = dseq_get_u32(&self->_lines, (ssize)(line - 1));
         return loc - line_loc + 1;
 }
 
 extern serrcode csource_save_line_loc(csource* self, tree_location loc)
 {
-        return objgroup_push_back(&self->_lines, (void*)loc);
+        return dseq_append_u32(&self->_lines, loc);
 }
 
 extern readbuf* csource_open(csource* self)
 {
-        objgroup_dispose(&self->_lines);
+        dseq_dispose(&self->_lines);
 
         read_cb* read;
         if (self->_emulated)
@@ -75,8 +73,8 @@ extern void csource_close(csource* self)
 extern void csource_manager_init(csource_manager* self, ctree_context* context)
 {
         self->alloc = tree_get_context_allocator(ctree_context_base(context));
-        objgroup_init_ex(&self->sources, self->alloc);
-        objgroup_init_ex(&self->lookup, self->alloc);
+        dseq_init_ex_ptr(&self->sources, self->alloc);
+        dseq_init_ex_ptr(&self->lookup, self->alloc);
         htab_init_ex(&self->source_lookup, self->alloc);
 }
 
@@ -87,14 +85,14 @@ static void csource_delete(allocator* alloc, csource* source)
 
 extern void csource_manager_dispose(csource_manager* self)
 {
-        OBJGROUP_FOREACH(&self->sources, csource**, it)
-                csource_delete(self->alloc, *it);
-        OBJGROUP_FOREACH(&self->lookup, char**, it)
-                deallocate(self->alloc, *it);
+        for (ssize i = 0; i < dseq_size(&self->sources); i++)
+                csource_delete(self->alloc, dseq_get_ptr(&self->sources, i));
+        for (ssize i = 0; i < dseq_size(&self->lookup); i++)
+                deallocate(self->alloc, dseq_get_ptr(&self->sources, i));
 
         htab_dispose(&self->source_lookup);
-        objgroup_dispose(&self->sources);
-        objgroup_dispose(&self->lookup);
+        dseq_dispose(&self->sources);
+        dseq_dispose(&self->lookup);
 }
 
 extern serrcode csource_manager_add_lookup(csource_manager* self, const char* path)
@@ -104,7 +102,7 @@ extern serrcode csource_manager_add_lookup(csource_manager* self, const char* pa
                 return S_ERROR;
 
         strcpy(copy, path);
-        if (S_FAILED(objgroup_push_back(&self->lookup, copy)))
+        if (S_FAILED(dseq_append_ptr(&self->lookup, copy)))
         {
                 deallocate(self->alloc, copy);
                 return S_ERROR;
@@ -139,7 +137,7 @@ static csource* _csource_new(allocator* alloc, const char* path)
         source->_emulated = false;
         source->_content = NULL;
         source->_file = NULL;
-        objgroup_init_ex(&source->_lines, alloc);
+        dseq_init_ex_u32(&source->_lines, alloc);
         return source;
 }
 
@@ -150,9 +148,9 @@ static csource* csource_new(
         if (!source)
                 return NULL;
 
-        objgroup* sources = &source_manager->sources;
-        if (objgroup_size(sources))
-                source->_begin = csource_end(objgroup_last(sources));
+        dseq* sources = &source_manager->sources;
+        if (dseq_size(sources))
+                source->_begin = csource_end(dseq_last_ptr(sources));
 
         if (content)
         {
@@ -174,7 +172,7 @@ static csource* csource_new(
                 source->_end = source->_begin + (tree_location)path_get_size(path) + 1;
         }
 
-        if (S_FAILED(objgroup_push_back(sources, source)))
+        if (S_FAILED(dseq_append_ptr(sources, source)))
         {
                 csource_delete(source_manager->alloc, source);
                 return NULL;
@@ -194,9 +192,9 @@ extern csource* csource_find(csource_manager* self, const char* path)
         if (path_is_file(abs))
                 return csource_new(self, abs, NULL);
 
-        OBJGROUP_FOREACH(&self->lookup, char**, it)
+        for (ssize i = 0; i < dseq_size(&self->lookup); i++)
         {
-                path_get_abs(abs, *it);
+                path_get_abs(abs, dseq_get_ptr(&self->lookup, i));
                 path_join(abs, path);
                 path_fix_delimeter(abs);
 
@@ -215,13 +213,14 @@ extern serrcode csource_find_loc(const csource_manager* self, clocation* res, tr
 {
         //todo: log(n) search
 
-        OBJGROUP_FOREACH(&self->sources, csource**, it)
+        for (ssize i = 0; i < dseq_size(&self->sources); i++)
         {
-                if (csource_has(*it, loc))
+                csource* s = dseq_get_ptr(&self->sources, i);
+                if (csource_has(s, loc))
                 {
-                        res->file = csource_get_name(*it);
-                        res->line = csource_get_line(*it, loc);
-                        res->column = csource_get_col(*it, loc);
+                        res->file = csource_get_name(s);
+                        res->line = csource_get_line(s, loc);
+                        res->column = csource_get_col(s, loc);
                         return S_NO_ERROR;
                 }
         }

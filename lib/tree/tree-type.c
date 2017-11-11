@@ -40,20 +40,21 @@ extern tree_type* tree_new_function_type(tree_context* context, tree_type* resty
         if (!t)
                 return NULL;
 
-        objgroup_init_ex(&_tree_get_function_type(t)->_params, tree_get_context_allocator(context));
+        dseq_init_ex_ptr(&_tree_get_function_type(t)->_params,
+                tree_get_context_allocator(context));
         return t;
 }
 
-extern void tree_set_function_type_params(tree_type* self, objgroup* params)
+extern void tree_set_function_type_params(tree_type* self, dseq* params)
 {
-        objgroup* this_group = &_tree_get_function_type(self)->_params;
-        objgroup_dispose(this_group);
-        objgroup_move(this_group, params);
+        dseq* this_group = &_tree_get_function_type(self)->_params;
+        dseq_dispose(this_group);
+        dseq_move(this_group, params);
 }
 
 extern void tree_add_function_type_param(tree_type* self, tree_type* param)
 {
-        objgroup_push_back(&_tree_get_function_type(self)->_params, param);
+        dseq_append_ptr(&_tree_get_function_type(self)->_params, param);
 }
 
 extern tree_type* tree_new_array_type(

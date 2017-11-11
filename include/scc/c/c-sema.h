@@ -23,7 +23,7 @@ typedef struct _csema
         tree_decl_scope* globals;
         tree_decl_scope* labels;
         tree_decl_scope* locals;
-        objgroup switch_stack;
+        dseq switch_stack;
         tree_scope* scope;
         tree_module* module;
         tree_target_info* target;
@@ -80,7 +80,7 @@ extern tree_decl* csema_require_member_decl(
 extern bool csema_require_complete_type(
         const csema* self, tree_location loc, const tree_type* type);
 
-extern void csema_init_objgroup(csema* self, objgroup* group);
+extern void csema_init_dseq_ptr(csema* self, dseq* group);
 extern tree_module* cparser_act_on_finish_module(csema* self);
 
 extern const char* csema_get_id(const csema* self, tree_id id);

@@ -144,7 +144,7 @@ typedef struct _cdeclarator
         tree_id id;
         tree_xlocation loc;
         tree_location id_loc;
-        objgroup params;
+        dseq params;
         bool params_initialized;
 } cdeclarator;
 

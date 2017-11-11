@@ -268,7 +268,7 @@ extern tree_expr* csema_new_subscript_expr(
 // have a type such that its value may be assigned to an object with the unqualified version
 // of the type of its corresponding parameter.
 extern tree_expr* csema_new_call_expr(
-        csema* self, tree_location loc, tree_expr* lhs, objgroup* args)
+        csema* self, tree_location loc, tree_expr* lhs, dseq* args)
 {
         if (!lhs || !args)
                 return NULL;
@@ -278,16 +278,16 @@ extern tree_expr* csema_new_call_expr(
                 return NULL;
 
         t = tree_get_pointer_target(tree_desugar_ctype(t));
-        if (tree_get_function_type_nparams(t) != objgroup_size(args))
+        if (tree_get_function_type_nparams(t) != dseq_size(args))
                 return NULL;
   
         tree_expr* call = tree_new_call_expr(self->context, TVK_RVALUE,
                 tree_get_function_restype(t), loc, lhs);
 
         tree_type** typeit = tree_get_function_type_begin(t);
-        OBJGROUP_FOREACH(args, tree_expr**, it)
+        for (ssize i = 0; i < dseq_size(args); i++)
         {
-                tree_expr* arg = csema_new_impl_cast(self, *it, *typeit);
+                tree_expr* arg = csema_new_impl_cast(self, dseq_get_ptr(args, i), *typeit);
                 tree_add_call_arg(call, arg);
                 typeit++;
         }

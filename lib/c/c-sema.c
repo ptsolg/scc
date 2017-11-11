@@ -20,7 +20,7 @@ extern void csema_init(
         self->scope = NULL;
         self->function = NULL;
         self->error_manager = error_manager;
-        csema_init_objgroup(self, &self->switch_stack);
+        csema_init_dseq_ptr(self, &self->switch_stack);
 }
 
 extern void csema_dispose(csema* self)
@@ -80,9 +80,9 @@ extern tree_id csema_get_decl_name(const csema* self, const tree_decl* d)
         return cident_policy_get_orig_decl_name(self->id_policy, d);
 }
 
-extern void csema_init_objgroup(csema* self, objgroup* args)
+extern void csema_init_dseq_ptr(csema* self, dseq* args)
 {
-        objgroup_init_ex(args, tree_get_context_allocator(self->context));
+        dseq_init_ex_ptr(args, tree_get_context_allocator(self->context));
 }
 
 extern tree_decl* csema_get_local_tag_decl(const csema* self, tree_id name, bool parent_lookup)

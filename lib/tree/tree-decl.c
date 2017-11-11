@@ -387,7 +387,8 @@ extern tree_decl* tree_new_decl_group(
         if (!d)
                 return NULL;
 
-        objgroup_init_ex(&_tree_get_decl_group(d)->_group, tree_get_context_allocator(context));
+        dseq_init_ex_ptr(&_tree_get_decl_group(d)->_group,
+                tree_get_context_allocator(context));
         return d;
 }
 
@@ -395,7 +396,7 @@ extern serrcode tree_decl_group_add(tree_decl* self, tree_decl* d)
 {
         S_ASSERT(d);
         S_ASSERT(tree_get_decl_kind(d) != TDK_GROUP && "Decl group cannot contain other decl group");
-        return objgroup_push_back(&_tree_get_decl_group(self)->_group, d);
+        return dseq_append_ptr(&_tree_get_decl_group(self)->_group, d);
 }
 
 extern bool tree_decls_have_same_name(const tree_decl* a, const tree_decl* b)
