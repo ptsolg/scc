@@ -15,7 +15,7 @@ static bool scc_add_handler(
                 return false;
 
         if (S_FAILED(aparser_add_handler(&self->parser, arg, &h->base))
-         || S_FAILED(objgroup_push_back(&self->handlers, h)))
+         || S_FAILED(dseq_append_ptr(&self->handlers, h)))
         {
                 deallocate(get_std_alloc(), h);
                 return false;
@@ -56,9 +56,9 @@ static serrcode scc_init_args(scc_instance* self)
 
 extern serrcode scc_init(scc_instance* self, FILE* err, int argc, const char** argv)
 {
-        objgroup_init(&self->input);
-        objgroup_init(&self->handlers);
-        objgroup_init(&self->include);
+        dseq_init_ptr(&self->input);
+        dseq_init_ptr(&self->handlers);
+        dseq_init_ptr(&self->include);
         aparser_init(&self->parser, argc, argv);
 
         self->output = NULL;
@@ -125,8 +125,8 @@ static void scc_set_printer_opts(const scc_instance* self, cprinter_opts* opts)
 static serrcode scc_init_cenv(scc_instance* self, cenv* env)
 {
         cenv_init(env, self->err);
-        OBJGROUP_FOREACH(&self->include, char**, it)
-                if (S_FAILED(cenv_add_lookup(env, *it)))
+        for (ssize i = 0; i < dseq_size(&self->include); i++)
+                if (S_FAILED(cenv_add_lookup(env, dseq_get_ptr(&self->include, i))))
                         return S_ERROR;
         return S_NO_ERROR;
 }
@@ -135,7 +135,7 @@ static serrcode _scc_perform_syntax_analysis(scc_instance* self, cenv* env)
 {
         tree_target_info info;
         tree_init_target_info(&info, self->opts.x32 ? TTARGET_X32 : TTARGET_X64);
-        tree_module* m = cparse_file(env, objgroup_first(&self->input), &info);
+        tree_module* m = cparse_file(env, dseq_first_ptr(&self->input), &info);
         if (!m)
                 return S_ERROR;
         if (!self->output)
@@ -174,9 +174,9 @@ static serrcode scc_perform_syntax_analysis(scc_instance* self)
         return res;
 }
 
-static serrcode _scc_perform_lexical_analysis(scc_instance* self, cenv* env, objgroup* tokens)
+static serrcode _scc_perform_lexical_analysis(scc_instance* self, cenv* env, dseq* tokens)
 {
-        if (S_FAILED(clex_file(env, objgroup_first(&self->input), tokens)))
+        if (S_FAILED(clex_file(env, dseq_first_ptr(&self->input), tokens)))
                 return S_ERROR;
         if (!self->output)
                 return S_NO_ERROR;
@@ -206,12 +206,12 @@ static serrcode _scc_perform_lexical_analysis(scc_instance* self, cenv* env, obj
 static serrcode scc_perform_lexical_analysis(scc_instance* self)
 {
         cenv env;
-        objgroup tokens;
+        dseq tokens;
         if (S_FAILED(scc_init_cenv(self, &env)))
                 return S_ERROR;
-        objgroup_init(&tokens);
+        dseq_init_ptr(&tokens);
         serrcode res = _scc_perform_lexical_analysis(self, &env, &tokens);
-        objgroup_dispose(&tokens);
+        dseq_dispose(&tokens);
         cenv_dispose(&env);
         return res;
 }
@@ -225,7 +225,7 @@ extern serrcode scc_run(scc_instance* self)
         }
         aparse(&self->parser);
         
-        if (!objgroup_size(&self->input))
+        if (!dseq_size(&self->input))
         {
                 fprintf(self->err, "Please specify input file.\n");
                 return S_ERROR;
@@ -254,7 +254,7 @@ extern serrcode scc_add_lookup_directory(scc_instance* self, const char* dir)
                 return S_ERROR;
 
         strcpy(copy, dir);
-        if (S_FAILED(objgroup_push_back(&self->include, copy)))
+        if (S_FAILED(dseq_append_ptr(&self->include, copy)))
         {
                 deallocate(get_std_alloc(), copy);
                 return S_NO_ERROR;
@@ -269,7 +269,7 @@ extern serrcode scc_add_input(scc_instance* self, const char* file)
                 return S_ERROR;
 
         strcpy(copy, file);
-        if (S_FAILED(objgroup_push_back(&self->input, copy)))
+        if (S_FAILED(dseq_append_ptr(&self->input, copy)))
         {
                 deallocate(get_std_alloc(), copy);
                 return S_NO_ERROR;

@@ -10,7 +10,7 @@ extern "C" {
 #endif
   
 #include <stdio.h>
-#include "scc/scl/objgroup.h"
+#include "scc/scl/dseq.h"
 #include "scc/scl/arg-parser.h"
 
 typedef enum
@@ -23,9 +23,9 @@ typedef struct _scc_instance
 {
         scc_run_mode mode;
         aparser parser;
-        objgroup handlers;
-        objgroup input;
-        objgroup include;
+        dseq handlers;
+        dseq input;
+        dseq include;
         const char* output;
         FILE* err;
         serrcode return_code;
