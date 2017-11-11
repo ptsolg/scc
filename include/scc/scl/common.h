@@ -31,7 +31,7 @@
 #error // todo
 #endif
 
-#define S_ARRAY_SIZE(arr, type) (sizeof(arr) / sizeof(type))
+#define S_ARRAY_SIZE(A) (sizeof(A) / sizeof(*(A)))
 
 typedef signed char sint8;
 typedef unsigned char suint8;
