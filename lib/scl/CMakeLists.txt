@@ -9,8 +9,8 @@ add_scc_lib(scl
 	char-info.c
 	heap-debug.c
 	read-write.c
-	objgroup.c
 	value.c
+	dseq.c
 
 	INCLUDE
 	${SCC_INC_DIR}

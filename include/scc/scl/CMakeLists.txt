@@ -14,7 +14,9 @@ add_scc_target_sources(scl
 	char-info.h
 	heap-debug.h
 	read-write.h
-	objgroup.h
 	value.h
 	list.h
+	dseq.h
+	dseq-ext.h
+	dseq-types.inc
 )
