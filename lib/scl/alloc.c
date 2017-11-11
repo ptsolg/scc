@@ -125,9 +125,9 @@ static void std_deallocate(void* p, void* block)
 
 static allocator std_alloc =
 {
-        ._allocate = &std_allocate,
-        ._allocate_ex = &std_allocate_ex,
-        ._deallocate = &std_deallocate
+        ._allocate = (alloc_fn)&std_allocate,
+        ._allocate_ex = (alloc_ex_fn)&std_allocate_ex,
+        ._deallocate = (dealloc_fn)&std_deallocate
 };
 
 extern allocator* get_std_alloc()
