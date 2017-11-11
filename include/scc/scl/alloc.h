@@ -14,29 +14,30 @@ extern "C" {
 #include "error.h"
 #include "misc.h"
 
+typedef void*(*alloc_fn)(void*, ssize);
+typedef void*(*alloc_ex_fn)(void*, ssize, ssize);
+typedef void*(*dealloc_fn)(void*, void*);
+
 // an allocator for 'heavy' allocations that is used by various data structures
 typedef struct _allocator
 {
-        // passes itself as first argument
-        void*(*_allocate)(void*, ssize);
-        void*(*_allocate_ex)(void*, ssize, ssize);
-        void (*_deallocate)(void*, void*);
+        alloc_fn _allocate;
+        alloc_ex_fn _allocate_ex;
+        dealloc_fn _deallocate;
 } allocator;
-
-static inline void allocator_init(
-        allocator* self, void* alloc, void* dealloc)
-{
-        self->_allocate = alloc;
-        self->_allocate_ex = NULL;
-        self->_deallocate = dealloc;
-}
 
 static inline void allocator_init_ex(
         allocator* self, void* alloc, void* alloc_ex, void* dealloc)
 {
-        self->_allocate = alloc;
-        self->_allocate_ex = alloc_ex;
-        self->_deallocate = dealloc;
+        self->_allocate = (alloc_fn)alloc;
+        self->_allocate_ex = (alloc_ex_fn)alloc_ex;
+        self->_deallocate = (dealloc_fn)dealloc;
+}
+
+static inline void allocator_init(
+        allocator* self, void* alloc, void* dealloc)
+{
+        allocator_init_ex(self, alloc, NULL, dealloc);
 }
 
 static inline void* allocate(allocator* self, ssize bytes)
