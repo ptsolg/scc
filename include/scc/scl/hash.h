@@ -14,7 +14,7 @@ extern "C" {
 
 static inline suint32 murmurhash3_86_32(const void* data, suint32 seed, int len)
 {
-        const suint8* bytes = data;
+        const suint8* bytes = (const suint8*)data;
         const int nblocks = len / 4;
         int i;
 
