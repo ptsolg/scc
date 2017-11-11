@@ -42,6 +42,7 @@ extern serrcode membuf_resize_ex(membuf* self, ssize mul, ssize cst)
 
         ssize cpy_size = SMIN(old_size, new_size);
         memcpy(new_buf, self->_begin, cpy_size);
+        deallocate(self->_alloc, self->_begin);
 
         self->_begin = new_buf;
         self->_end = new_buf + new_size;
