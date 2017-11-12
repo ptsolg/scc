@@ -2,12 +2,14 @@
 #include "scc/scl/sstring.h"
 #include <stdlib.h> // strtoi
 
+#include "scc/compiler/args.h"
+
 extern void aparser_init(aparser* self, int argc, const char** argv)
 {
         self->_argv = argv;
         self->_argc = argc;
         self->_pos = 1;
-        htab_init(&self->_handlers);
+        htab_init_ptr(&self->_handlers);
 }
 
 extern void aparser_dispose(aparser* self)
@@ -20,13 +22,16 @@ extern void aparse(aparser* self)
         while (self->_pos < self->_argc)
         {
                 const char* arg = self->_argv[self->_pos++];
-                aparser_cb* handler = htab_find(&self->_handlers, STRREF(arg));
+                aparser_cb* handler = NULL;
 
-                if (!handler)
+                hiter res;
+                if (!htab_find(&self->_handlers, STRREF(arg), &res))
                 {
                         handler = self->_default;
                         self->_pos--;
                 }
+                else
+                        handler = hiter_get_ptr(&res);
 
                 if (handler)
                         handler->_fn(handler, self);
@@ -41,7 +46,7 @@ extern int aparser_args_remain(const aparser* self)
 
 extern serrcode aparser_add_handler(aparser* self, const char* arg, aparser_cb* cb)
 {
-        return htab_insert(&self->_handlers, STRREF(arg), cb);
+        return htab_insert_ptr(&self->_handlers, STRREF(arg), cb);
 }
 
 extern void aparser_add_default_handler(aparser* self, aparser_cb* cb)

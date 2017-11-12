@@ -1,147 +1,162 @@
 #include "scc/scl/htab.h"
+#include "scc/scl/misc.h"
+#include <memory.h>
 
-static const ssize primes[] =
-{
-        7,
-        13,
-        31,
-        61,
-        127,
-        251,
-        509,
-        1021,
-        2039,
-        4093,
-        8191,
-        16381,
-        32749,
-        65521,
-        131071,
-        262139,
-        524287,
-        1048573,
-        2097143,
-        4194301,
-        8388593,
-        16777213,
-        33554393,
-        67108859,
-        134217689,
-        268435399,
-        536870909,
-        1073741789,
-        2147483647,
-};
+#define HVAL_EMPTY ((hval)-1)
 
 typedef struct
 {
-        void* val;
         hval key;
+        char data[0];
 } hentry;
 
-extern void htab_init(htab* self)
+extern void htab_init(htab* self, ssize obsize)
 {
-        htab_init_ex(self, get_std_alloc());
+        htab_init_ex(self, obsize, get_std_alloc());
 }
 
-extern void htab_init_ex(htab* self, allocator* alloc)
+extern void htab_init_ex(htab* self, ssize obsize, allocator* alloc)
 {
+        S_ASSERT(obsize);
         membuf_init_ex(&self->_entries, alloc);
+        self->_size = 0;
         self->_used = 0;
-        self->_critical = 0; 
-        self->_prime_lvl = 0;
+        self->_obsize = (ssize)align_pointer((void*)obsize, HTAB_ALIGN);
 }
 
 extern void htab_dispose(htab* self)
 {
         membuf_dispose(&self->_entries);
+        self->_size = 0;
         self->_used = 0;
-        self->_critical = 0;
-        self->_prime_lvl = 0;
+}
+
+extern void htab_move(htab* to, htab* from)
+{
+        membuf_move(&to->_entries, &from->_entries);
+        to->_used = from->_used;
+        to->_obsize = from->_obsize;
+        to->_size = from->_size;
+}
+
+static inline hval fix_hval(hval h)
+{
+        return h == HVAL_EMPTY ? h + 1 : h;
 }
 
 extern void htab_clear(htab* self)
 {
-        if (!membuf_size(&self->_entries))
-                return;
-
         HTAB_FOREACH(self, it)
-                hiter_set_val(it, NULL);
+                ((hentry*)it._entry)->key = HVAL_EMPTY;
 
         self->_used = 0;
 }
 
-static inline serrcode htab_grow(htab* self)
+static inline bool htab_maybe_grow(htab* self)
 {
-        ssize new_size = primes[self->_prime_lvl + 1];
-        membuf new_buf;
-        membuf old_buf = self->_entries;
+        ssize size = self->_size;
+        ssize critical = size >> 1;
+        if (self->_used < critical)
+                return true;
 
-        membuf_init_ex(&new_buf, membuf_alloc(&old_buf));
-        if (S_FAILED(membuf_resize(&new_buf, new_size * sizeof(hentry))))
-                return S_ERROR;
-        
-        self->_prime_lvl++;
-        self->_critical = (ssize)(new_size * 0.5) + 1;
-        self->_entries = new_buf;
-        htab_clear(self);
+        if (!size)
+                size = 2;
 
-        MEMBUF_FOREACH(&old_buf, hentry*, entry)
-                if (entry->val)
-                        htab_insert(self, entry->key, entry->val);
+        ssize new_size = size << 1;
+        ssize entry_size = htab_obsize(self) + sizeof(hentry);
 
-        membuf_dispose(&old_buf);
-        return S_NO_ERROR;
+        htab new_tab;
+        htab_init_ex(&new_tab, htab_obsize(self), htab_alloc(self));
+        if (S_FAILED(membuf_resize(&new_tab._entries, new_size * entry_size)))
+                return false;
+        new_tab._size = new_size;
+        htab_clear(&new_tab);
+
+        HTAB_FOREACH(self, it)
+                htab_insert(&new_tab, hiter_get_key(&it), hiter_get_val(&it));
+
+        htab_dispose(self);
+        htab_move(self, &new_tab);
+        return true;
 }
 
-static inline hiter htab_find_existing_or_empty_entry(const htab* self, hval key)
+static inline hiter hiter_create(hentry* entry, const htab* tab)
 {
-        hiter begin = membuf_begin(&self->_entries);
-        hiter end = membuf_end(&self->_entries);
-        hiter sep = (hentry*)begin + key % primes[self->_prime_lvl];
-
-        for (hiter it = sep; it != end; it = (hentry*)it + 1)
-                if (!hiter_get_val(it) || hiter_get_key(it) == key)
-                        return it;
-
-        for (hiter it = begin; it != sep; it = (hentry*)it + 1)
-                if (!hiter_get_val(it) || hiter_get_key(it) == key)
-                        return it;
-
-        // if we are here, then hash table has 0 free slots which is imposible
-        S_UNREACHABLE();
-        return NULL;
+        hiter it = { (void*)entry, tab };
+        return it;
 }
 
-extern serrcode htab_insert(htab* self, hval key, void* val)
+static inline hentry* htab_find_existing_or_empty_entry(const htab* self, hval key)
 {
-        if (self->_used >= self->_critical)
-                if (S_FAILED(htab_grow(self)))
-                        return S_ERROR;
+        const ssize size = self->_size;
+        const ssize entry_size = htab_obsize(self) + sizeof(hentry);
+        suint8* data = (suint8*)membuf_begin(&self->_entries);
+        if (!data)
+                return NULL;
 
-        hiter it = htab_find_existing_or_empty_entry(self, key);
-        if (!hiter_get_val(it))
+        ssize i = 1;
+        ssize start = key & (size - 1);
+        ssize entry_no = start;
+
+        while (1)
+        {
+                hentry* entry = (hentry*)(data + entry_size * entry_no);
+                if (entry->key == key || entry->key == HVAL_EMPTY)
+                        return entry;
+
+                entry_no += i++;
+                entry_no &= (size - 1);
+
+                if (entry_no == start)
+                {
+                        // if we are here, then hash table has 0 free slots
+                        return NULL;
+                }
+        }
+}
+
+static inline hentry* htab_insert_key(htab* self, hval key)
+{
+        if (!htab_maybe_grow(self))
+                return NULL;
+
+        key = fix_hval(key);
+        hentry* entry = htab_find_existing_or_empty_entry(self, key);
+        if (!entry)
+                return NULL;
+
+        if (entry->key == HVAL_EMPTY)
                 self->_used++;
 
-        hiter_set_val(it, val);
-        hiter_set_key(it, key);
+        entry->key = key;
+        return entry;
+}
+
+extern serrcode htab_insert(htab* self, hval key, const void* object)
+{
+        S_ASSERT(object);
+        hentry* entry = htab_insert_key(self, key);
+        if (!entry)
+                return S_ERROR;
+
+        memcpy(entry->data, object, htab_obsize(self));
         return S_NO_ERROR;
 }
 
-extern serrcode htab_merge(htab* self, htab* other)
+extern serrcode htab_merge(htab* self, const htab* other)
 {
         htab result;
-        htab_init_ex(&result, htab_alloc(self));
+        htab_init_ex(&result, htab_obsize(self), htab_alloc(self));
 
         HTAB_FOREACH(other, it)
-                if (S_FAILED(htab_insert(&result, hiter_get_key(it), hiter_get_val(it))))
+                if (S_FAILED(htab_insert(&result, hiter_get_key(&it), hiter_get_val(&it))))
                         goto error;
         HTAB_FOREACH(self, it)
-                if (S_FAILED(htab_insert(&result, hiter_get_key(it), hiter_get_val(it))))
+                if (S_FAILED(htab_insert(&result, hiter_get_key(&it), hiter_get_val(&it))))
                         goto error;
 
         htab_dispose(self);
-        *self = result;
+        htab_move(self, &result);
         return S_NO_ERROR;
 
 error:
@@ -156,79 +171,90 @@ extern bool htabs_are_same(const htab* a, const htab* b)
 
         ssize matches = 0;
         HTAB_FOREACH(a, it)
-                if (htab_exists(b, hiter_get_key(it)))
+                if (htab_exists(b, hiter_get_key(&it)))
                         matches++;
         return matches == htab_size(a);
 }
 
 extern serrcode htab_reserve(htab* self, hval key)
 {
-        return htab_insert(self, key, (void*)-1);
+        return htab_insert_key(self, key) ? S_NO_ERROR : S_ERROR;
 }
 
 extern bool htab_exists(const htab* self, hval key)
 {
-        return htab_find(self, key) != NULL;
+        hiter placeholder;
+        return htab_find(self, key, &placeholder);
 }
 
 extern bool htab_erase(htab* self, hval key)
 {
-        S_UNREACHABLE();// todo
+        S_UNREACHABLE(); // todo
         return false;
 }
 
-extern void* htab_find(const htab* self, hval key)
+extern bool htab_find(const htab* self, hval key, hiter* it)
 {
-        if (!membuf_size(&self->_entries))
-                return NULL;
+        key = fix_hval(key);
+        hentry* entry = htab_find_existing_or_empty_entry(self, key);
+        if (!entry || entry->key != key)
+                return false;
 
-        hentry* e = htab_find_existing_or_empty_entry(self, key);
-        return e->val ? e->val : NULL;
+        it->_entry = entry;
+        it->_tab = self;
+        return true;
 }
 
-extern hiter htab_begin(const htab* self)
+extern hiter htab_begin(const htab* tab)
 {
-        hiter begin = membuf_begin(&self->_entries);
-        hiter end = htab_end(self);
+        ssize entry_size = htab_obsize(tab) + sizeof(hentry);
+        hentry* it = membuf_begin(&tab->_entries);
+        hentry* end = membuf_end(&tab->_entries);
 
-        for (hiter it = begin; it != end; it = (hentry*)it + 1)
-                if (hiter_get_val(it))
-                        return it;
+        while (it != end && it->key == HVAL_EMPTY)
+                it = (hentry*)((suint8*)it + entry_size);
 
-        return end;
+        return hiter_create(it, tab);
 }
 
-extern hiter htab_end(const htab* self)
+extern bool hiter_valid(const hiter* self)
 {
-        return (hiter)membuf_end(&self->_entries);
+        return (suint8*)self->_entry != (suint8*)membuf_end(&self->_tab->_entries);
 }
 
-extern hiter hiter_get_next(hiter self, const htab* tab)
+extern void hiter_advance(hiter* self)
 {
-        hiter next = (hentry*)self + 1;
-        hiter end = htab_end(tab);
-        for (hiter it = next; it != end; it = (hentry*)it + 1)
-                if (hiter_get_val(it))
-                        return it;
-        return end;
+        hentry* end = membuf_end(&self->_tab->_entries);
+        hentry* it = self->_entry;
+        if (it == end)
+                return;
+
+        do
+                it = (hentry*)((suint8*)it + htab_obsize(self->_tab) + sizeof(hentry));
+        while (it != end && it->key == HVAL_EMPTY);
+
+        self->_entry = it;
+        return;
 }
 
-extern hval hiter_get_key(const_hiter self)
+extern hval hiter_get_key(const hiter* self)
 {
-        return ((const hentry*)self)->key;
+        return ((hentry*)self->_entry)->key;
 }
 
-extern void* hiter_get_val(const_hiter self)
+extern void* hiter_get_val(const hiter* self)
 {
-        return ((const hentry*)self)->val;
+        S_ASSERT(hiter_valid(self));
+        return ((hentry*)self->_entry)->data;
 }
 
-extern void hiter_set_key(hiter self, hval key)
+extern void hiter_set_key(const hiter* self, hval key)
 {
-        ((hentry*)self)->key = key;
+        key = fix_hval(key);
+        ((hentry*)self->_entry)->key = key;
 }
 
-extern void hiter_set_val(hiter self, void* val)
+extern void hiter_set_val(const hiter* self, const void* object)
 {
-        ((hentry*)self)->val = val;
+        memcpy(hiter_get_val(self), object, htab_obsize(self->_tab));
 }

@@ -35,13 +35,10 @@ extern bool tree_symtabs_are_same(const tree_symtab* a, const tree_symtab* b);
 static inline ssize tree_get_symtab_size(const tree_symtab* self);
 static inline tree_symtab* tree_get_symtab_parent(const tree_symtab* self);
 static inline hiter tree_get_symtab_begin(const tree_symtab* self);
-static inline hiter tree_get_symtab_end(const tree_symtab* self);
-static inline hiter tree_get_symtab_next(hiter self, const tree_symtab* tab);
 
 #define TREE_SYMTAB_FOREACH(PTAB, ITNAME) \
         for (hiter ITNAME = tree_get_symtab_begin(PTAB); \
-                ITNAME != tree_get_symtab_end(PTAB); \
-                ITNAME = tree_get_symtab_next(ITNAME, PTAB))
+                hiter_valid(&ITNAME); hiter_advance(&ITNAME))
 
 typedef struct _tree_decl_scope
 {
@@ -443,16 +440,6 @@ static inline ssize tree_get_symtab_size(const tree_symtab* self)
 static inline hiter tree_get_symtab_begin(const tree_symtab* self)
 {
         return htab_begin(&self->_symbols);
-}
-
-static inline hiter tree_get_symtab_end(const tree_symtab* self)
-{
-        return htab_end(&self->_symbols);
-}
-
-static inline hiter tree_get_symtab_next(hiter self, const tree_symtab* tab)
-{
-        return hiter_get_next(self, &tab->_symbols);
 }
 
 static inline tree_symtab* tree_get_symtab_parent(const tree_symtab* self)

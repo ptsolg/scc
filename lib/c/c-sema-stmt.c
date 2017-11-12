@@ -296,7 +296,7 @@ extern bool csema_check_stmt(const csema* self, const tree_stmt* s, cstmt_contex
                 tree_symtab* labels = tree_get_decl_scope_symtab(self->labels);
                 TREE_SYMTAB_FOREACH(labels, it)
                 {
-                        tree_decl* label = hiter_get_val(it);
+                        tree_decl* label = hiter_get_ptr(&it);
                         if (!tree_get_label_decl_stmt(label))
                         {
                                 tree_location l = tree_get_decl_loc_begin(label);

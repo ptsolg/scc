@@ -5,6 +5,7 @@ add_scc_target_sources(scl
 	file.h
 	hash.h
 	htab.h
+	htab-ext.h
 	malloc.h
 	misc.h
 	arg-parser.h
@@ -18,5 +19,5 @@ add_scc_target_sources(scl
 	list.h
 	dseq.h
 	dseq-ext.h
-	dseq-types.inc
+	def-type.inc
 )

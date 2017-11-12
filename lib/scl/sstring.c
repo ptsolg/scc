@@ -8,7 +8,7 @@ extern void strpool_init(strpool* self)
 
 extern void strpool_init_ex(strpool* self, allocator* alloc)
 {
-        htab_init_ex(&self->_strings, alloc);
+        htab_init_ex_ptr(&self->_strings, alloc);
         bpa_init_ex(&self->_alloc, alloc);
 }
 
@@ -20,7 +20,11 @@ extern void strpool_dispose(strpool* self)
 
 extern const char* strpool_get(const strpool* self, strref ref)
 {
-        return htab_find(&self->_strings, ref);
+        hiter str;
+        if (!htab_find(&self->_strings, ref, &str))
+                return NULL;
+
+        return hiter_get_ptr(&str);
 }
 
 extern bool strpooled(const strpool* self, strref ref)
@@ -53,7 +57,7 @@ extern strref strpool_insertl(strpool* self, const char* string, ssize len)
         memcpy(cpy, string, len);
         cpy[len] = '\0';
 
-        htab_insert(&self->_strings, r, cpy);
+        htab_insert_ptr(&self->_strings, r, cpy);
         return r;
 }
 

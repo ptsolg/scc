@@ -11,27 +11,40 @@ extern "C" {
 
 #include "membuf.h"
 
+#ifndef HTAB_ALIGN
+#if S_X32
+#define HTAB_ALIGN 4
+#else
+#define HTAB_ALIGN 8
+#endif
+#endif
+
 // a prime-sized hash table that grows almost exponentially
 typedef struct _htab
 {
         membuf _entries;
-        int _prime_lvl;
         ssize _used;
-        ssize _critical;
+        ssize _obsize;
+        ssize _size;
 } htab;
 
-// note: htab assumes that NULL is empty entry, and can write non-NULL value in it
+typedef struct _hiter
+{
+        void* _entry;
+        const htab* _tab;
+} hiter;
 
 typedef uint hval;
 
-extern void htab_init(htab* self);
-extern void htab_init_ex(htab* self, allocator* alloc);
+extern void htab_init(htab* self, ssize obsize);
+extern void htab_init_ex(htab* self, ssize obsize, allocator* alloc);
 extern void htab_dispose(htab* self);
+extern void htab_move(htab* to, htab* from);
 
 // marks all buckets as empty, doesn't change size
 extern void htab_clear(htab* self);
-extern serrcode htab_insert(htab* self, hval key, void* val);
-extern serrcode htab_merge(htab* self, htab* other);
+extern serrcode htab_insert(htab* self, hval key, const void* object);
+extern serrcode htab_merge(htab* self, const htab* other);
 extern bool htabs_are_same(const htab* a, const htab* b);
 
 // reserves slot for an element
@@ -40,7 +53,8 @@ extern bool htab_exists(const htab* self, hval key);
 
 // returns true if element was erased
 extern bool htab_erase(htab* self, hval key);
-extern void* htab_find(const htab* self, hval key);
+// returns true if element was found
+extern bool htab_find(const htab* self, hval key, hiter* it);
 
 static inline allocator* htab_alloc(const htab* self)
 {
@@ -52,25 +66,24 @@ static inline ssize htab_size(const htab* self)
         return self->_used;
 }
 
-typedef void* hiter;
-typedef const void* const_hiter;
+static inline ssize htab_obsize(const htab* self)
+{
+        return self->_obsize;
+}
 
-// returns first non-empty slot
-extern hiter htab_begin(const htab* self);
-extern hiter htab_end(const htab* self);
+extern hiter htab_begin(const htab* tab);
 
-// moves iterator to the next non-empty slot
-extern hiter hiter_get_next(hiter self, const htab* tab);
-extern hval hiter_get_key(const_hiter self);
-extern void* hiter_get_val(const_hiter self);
+extern bool hiter_valid(const hiter* self);
+extern void hiter_advance(hiter* self);
 
-extern void hiter_set_key(hiter self, hval key);
-extern void hiter_set_val(hiter self, void* val);
+extern hval hiter_get_key(const hiter* self);
+extern void* hiter_get_val(const hiter* self);
 
-#define HTAB_FOREACH(PTAB, ITNAME) \
-        for (hiter ITNAME = htab_begin(PTAB); \
-                ITNAME != htab_end(PTAB); \
-                ITNAME = hiter_get_next(ITNAME, PTAB))
+extern void hiter_set_key(const hiter* self, hval key);
+extern void hiter_set_val(const hiter* self, const void* object);
+
+#define HTAB_FOREACH(PTAP, ITNAME) \
+        for (hiter ITNAME = htab_begin(PTAP); hiter_valid(&ITNAME); hiter_advance(&ITNAME))
 
 #ifdef __cplusplus
 }

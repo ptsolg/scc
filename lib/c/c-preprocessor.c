@@ -6,8 +6,8 @@
 
 extern void creswords_init(creswords* self)
 {
-        htab_init(&self->reswords);
-        htab_init(&self->pp_reswords);
+        htab_init_i32(&self->reswords);
+        htab_init_i32(&self->pp_reswords);
 }
 
 extern void creswords_dispose(creswords* self)
@@ -18,12 +18,12 @@ extern void creswords_dispose(creswords* self)
 
 extern serrcode creswords_add(creswords* self, const char* string, ctoken_kind k)
 {
-        return htab_insert(&self->reswords, STRREF(string), (void*)k);
+        return htab_insert_i32(&self->reswords, STRREF(string), k);
 }
 
 extern serrcode creswords_add_pp(creswords* self, const char* string, ctoken_kind k)
 {
-        return htab_insert(&self->pp_reswords, STRREF(string), (void*)k);
+        return htab_insert_i32(&self->pp_reswords, STRREF(string), k);
 }
 
 extern ctoken_kind creswords_get(const creswords* self, const char* string, ssize len)
@@ -33,7 +33,11 @@ extern ctoken_kind creswords_get(const creswords* self, const char* string, ssiz
 
 extern ctoken_kind creswords_get_h(const creswords* self, hval h)
 {
-        return (ctoken_kind)htab_find(&self->reswords, h);
+        hiter res;
+        if (!htab_find(&self->reswords, h, &res))
+                return CTK_UNKNOWN;
+
+        return hiter_get_i32(&res);
 }
 
 extern ctoken_kind creswords_get_pp(const creswords* self, const char* string, ssize len)
@@ -43,7 +47,11 @@ extern ctoken_kind creswords_get_pp(const creswords* self, const char* string, s
 
 extern ctoken_kind creswords_get_pp_h(const creswords* self, hval h)
 {
-        return (ctoken_kind)htab_find(&self->pp_reswords, h);
+        hiter res;
+        if (!htab_find(&self->pp_reswords, h, &res))
+                return CTK_UNKNOWN;
+
+        return hiter_get_i32(&res);
 }
 
 static inline tree_location cpplexer_loc(const cpplexer* self)

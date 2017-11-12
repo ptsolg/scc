@@ -4,7 +4,7 @@
 
 extern void tree_symtab_init(tree_symtab* self, tree_context* context, tree_symtab* parent)
 {
-        htab_init_ex(&self->_symbols, tree_get_context_allocator(context));
+        htab_init_ex_ptr(&self->_symbols, tree_get_context_allocator(context));
         self->_parent = parent;
 }
 
@@ -17,7 +17,7 @@ extern serrcode tree_symtab_insert(tree_symtab* self, tree_decl* symbol)
 {
         return tree_id_is_empty(tree_get_decl_name(symbol))
                 ? S_NO_ERROR
-                : htab_insert(&self->_symbols, tree_get_decl_name(symbol), symbol);
+                : htab_insert_ptr(&self->_symbols, tree_get_decl_name(symbol), symbol);
 }
 
 extern tree_decl* tree_symtab_get(const tree_symtab* self, tree_id name, bool parent_lookup)
@@ -25,7 +25,11 @@ extern tree_decl* tree_symtab_get(const tree_symtab* self, tree_id name, bool pa
         const tree_symtab* it = self;
         while (it)
         {
-                tree_decl* d = htab_find(&it->_symbols, name);
+                tree_decl* d = NULL;
+                hiter res;
+                if (htab_find(&it->_symbols, name, &res))
+                        d = hiter_get_ptr(&res);
+
                 if (d || !parent_lookup)
                         return d;
 
@@ -42,16 +46,16 @@ extern bool tree_symtabs_are_same(const tree_symtab* a, const tree_symtab* b)
                 return false;
 
         ssize matches = 0;
-        HTAB_FOREACH(ah, it)
+        HTAB_FOREACH(ah, ait)
         {
-                tree_id aname = hiter_get_key(it);
-                tree_decl* bdecl = htab_find(bh, aname);
-                if (!bdecl)
+                tree_id aname = hiter_get_key(&ait);
+                hiter bit;
+                if (!htab_find(bh, aname, &bit))
                         return false;
 
-                tree_decl* adecl = hiter_get_val(it);
-                if (!tree_decls_are_same(adecl, bdecl))
+                if (!tree_decls_are_same(hiter_get_ptr(&ait), hiter_get_ptr(&bit)))
                         return false;
+
                 matches++;
         }
         return matches == htab_size(ah);

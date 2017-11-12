@@ -268,7 +268,7 @@ static bool csema_export_decl_scope(csema* self, tree_decl_scope* to, tree_decl_
 {
         tree_symtab* tab = tree_get_decl_scope_symtab(from);
         TREE_SYMTAB_FOREACH(tab, it)
-                if (!csema_export_decl(self, to, hiter_get_val(it)))
+                if (!csema_export_decl(self, to, hiter_get_ptr(&it)))
                         return false;
         return true;
 }

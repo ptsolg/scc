@@ -75,7 +75,7 @@ extern void csource_manager_init(csource_manager* self, ctree_context* context)
         self->alloc = tree_get_context_allocator(ctree_context_base(context));
         dseq_init_ex_ptr(&self->sources, self->alloc);
         dseq_init_ex_ptr(&self->lookup, self->alloc);
-        htab_init_ex(&self->source_lookup, self->alloc);
+        htab_init_ex_ptr(&self->source_lookup, self->alloc);
 }
 
 static void csource_delete(allocator* alloc, csource* source)
@@ -185,9 +185,9 @@ extern csource* csource_find(csource_manager* self, const char* path)
         char abs[S_MAX_PATH_LEN];
         path_get_abs(abs, path);
 
-        csource* source;
-        if ((source = htab_find(&self->source_lookup, STRREF(abs))))
-                return source;
+        hiter res;
+        if (htab_find(&self->source_lookup, STRREF(abs), &res))
+                return hiter_get_ptr(&res);
 
         if (path_is_file(abs))
                 return csource_new(self, abs, NULL);

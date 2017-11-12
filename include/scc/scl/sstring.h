@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #include "hash.h"
-#include "htab.h"
+#include "htab-ext.h"
 #include <string.h>
 
 typedef hval strref;
