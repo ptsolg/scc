@@ -32,7 +32,7 @@ struct _ssa_value_base
 };
 
 extern ssa_value* ssa_new_value_base(
-        ssa_context* context, tree_value_kind kind, tree_type* type, ssize size);
+        ssa_context* context, ssa_value_kind kind, tree_type* type, ssize size);
 
 static inline struct _ssa_value_base* _ssa_get_value_base(ssa_value* self);
 static inline const struct _ssa_value_base* _ssa_get_value_cbase(const ssa_value* self);

@@ -43,7 +43,7 @@ extern void ssaizer_exit_block(ssaizer* self)
 
 extern void ssaizer_set_def(ssaizer* self, const tree_decl* var, ssa_value* val)
 {
-        htab_insert_ptr(&self->defs, tree_get_decl_name(var), val);
+        htab_insert_ptr(self->defs, tree_get_decl_name(var), val);
 }
 
 extern ssa_value* ssaizer_get_def(ssaizer* self, const tree_decl* var)
@@ -72,7 +72,7 @@ extern ssa_block* ssaize_function(ssaizer* self, const tree_decl* func)
                 return NULL;
 
         S_ASSERT(dseq_size(&self->block_info) == 0);
-        return ssaize_stmt(self, body);
+        return ssaize_compound_stmt(self, body);
 }
 
 extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module)
@@ -87,7 +87,7 @@ extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module)
                 ssa_block* b = ssaize_function(self, func);
                 if (!b)
                         ; // todo
-                if (S_FAILED(ssa_module_add_func_def(self, func, b)))
+                if (S_FAILED(ssa_module_add_func_def(m, func, b)))
                         ; // todo
         }
 

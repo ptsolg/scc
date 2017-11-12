@@ -22,11 +22,11 @@ extern ssa_block* ssaize_compound_stmt(ssaizer* self, const tree_stmt* stmt)
         TREE_FOREACH_STMT(s, it)
                 if (!ssaize_stmt(self, it))
                 {
-                        ssaizer_exit_block(self, b);
+                        ssaizer_exit_block(self);
                         return NULL;
                 }
 
-        ssaizer_exit_block(self, b);
+        ssaizer_exit_block(self);
         return b;
 }
 

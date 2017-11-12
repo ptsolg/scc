@@ -2,7 +2,7 @@
 #include "scc/ssa/ssa-context.h"
 
 extern ssa_value* ssa_new_value_base(
-        ssa_context* context, tree_value_kind kind, tree_type* type, ssize size)
+        ssa_context* context, ssa_value_kind kind, tree_type* type, ssize size)
 {
         ssa_value* v = ssa_allocate(context, size);
         if (!v)
