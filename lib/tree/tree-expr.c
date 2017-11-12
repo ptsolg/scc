@@ -60,14 +60,14 @@ extern tree_expr* tree_new_unop(
         return e;
 }
 
-extern tree_expr* tree_new_exprlicit_cast_expr(
+extern tree_expr* tree_new_EXPLIcit_cast_expr(
         tree_context* context,
         tree_value_kind value_kind,
         tree_location loc,
         tree_type* type,
         tree_expr* expr)
 {
-        tree_expr* e = tree_new_expr(context, TEK_exprLICIT_CAST, value_kind, type, loc,
+        tree_expr* e = tree_new_expr(context, TEK_EXPLICIT_CAST, value_kind, type, loc,
                 sizeof(struct _tree_cast_expr));
         if (!e)
                 return NULL;
@@ -375,7 +375,7 @@ extern bool tree_expr_is_literal(const tree_expr* self)
 
 extern const tree_expr* tree_ignore_ccasts(const tree_expr* self)
 {
-        while (tree_expr_is(self, TEK_exprLICIT_CAST)
+        while (tree_expr_is(self, TEK_EXPLICIT_CAST)
             || tree_expr_is(self, TEK_IMPLICIT_CAST))
                 self = tree_get_cast_expr(self);
         return self;
@@ -430,7 +430,7 @@ extern bool tree_expr_is_null_pointer_constant(const tree_expr* self)
         while (tree_type_is_void_pointer(tree_get_expr_type(self)))
         {
                 if (tree_expr_is(self, TEK_IMPLICIT_CAST)
-                 || tree_expr_is(self, TEK_exprLICIT_CAST))
+                 || tree_expr_is(self, TEK_EXPLICIT_CAST))
                 {
                         self = tree_get_cast_expr(self);
                 }

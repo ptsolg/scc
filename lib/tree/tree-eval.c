@@ -370,7 +370,7 @@ static bool(*const tree_eval_table[TEK_SIZE])(
         NULL, // TEK_STRING_LITERAL
         &tree_eval_decl, // TEK_DECL
         NULL, // TEK_MEMBER
-        &tree_eval_cast, // TEK_exprLICIT_CAST
+        &tree_eval_cast, // TEK_EXPLICIT_CAST
         &tree_eval_cast, // TEK_IMPLICIT_CAST
         &tree_eval_sizeof, // TEK_SIZEOF
         &tree_eval_paren, // TEK_PAREN

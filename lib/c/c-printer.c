@@ -424,7 +424,7 @@ static void cprint_cast_expr(cprinter* self, const tree_expr* expr)
 {
         const tree_expr* e = tree_get_cast_expr(expr);
         tree_expr_kind k = tree_get_expr_kind(expr);
-        if (k == TEK_exprLICIT_CAST || self->opts.print_impl_casts)
+        if (k == TEK_EXPLICIT_CAST || self->opts.print_impl_casts)
         {
                 cprint_lbracket(self);
                 int opts = k == TEK_IMPLICIT_CAST ? CPRINT_IMPL_TYPE_BRACKETS : CPRINT_OPTS_NONE;
@@ -526,7 +526,7 @@ static void _cprint_expr(cprinter* self, const tree_expr* e, bool print_brackets
                 case TEK_DECL: cprint_decl_expr(self, e); break;
                 case TEK_MEMBER: cprint_member_expr(self, e); break;
                 case TEK_IMPLICIT_CAST:
-                case TEK_exprLICIT_CAST: cprint_cast_expr(self, e); break;
+                case TEK_EXPLICIT_CAST: cprint_cast_expr(self, e); break;
                 case TEK_SIZEOF: cprint_sizeof_expr(self, e); break;
                 case TEK_PAREN: cprint_paren_expr(self, e); break;
                 case TEK_INIT: cprint_initializer(self, e); break;

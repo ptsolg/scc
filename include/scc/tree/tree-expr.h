@@ -34,7 +34,7 @@ typedef enum
         // var-decl, enumerator, unresolved
         TEK_DECL, 
         TEK_MEMBER,
-        TEK_exprLICIT_CAST,
+        TEK_EXPLICIT_CAST,
         TEK_IMPLICIT_CAST,
         TEK_SIZEOF,
         TEK_PAREN,
@@ -193,7 +193,7 @@ struct _tree_cast_expr
         tree_expr* _expr;
 };
 
-extern tree_expr* tree_new_exprlicit_cast_expr(
+extern tree_expr* tree_new_EXPLIcit_cast_expr(
         tree_context* context,
         tree_value_kind value_kind,
         tree_location loc,
@@ -767,7 +767,7 @@ static inline void tree_set_unop_expr(tree_expr* self, tree_expr* expr)
 }
 
 #define TREE_ASSERT_CAST(P) \
-        S_ASSERT((P) && tree_get_expr_kind(P) == TEK_exprLICIT_CAST \
+        S_ASSERT((P) && tree_get_expr_kind(P) == TEK_EXPLICIT_CAST \
                      || tree_get_expr_kind(P) == TEK_IMPLICIT_CAST)
 
 static inline struct _tree_cast_expr* _tree_get_cast(tree_expr* self)

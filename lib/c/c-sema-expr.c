@@ -511,7 +511,7 @@ extern tree_expr* csema_new_cast_expr(
         }
 
         tree_value_kind vk = tree_get_expr_value_kind(expr);
-        return tree_new_exprlicit_cast_expr(self->context, vk, loc, type, expr);
+        return tree_new_EXPLIcit_cast_expr(self->context, vk, loc, type, expr);
 }
 
 // 6.5.5 multiplicative
