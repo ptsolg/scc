@@ -21,7 +21,7 @@ extern void htab_init_ex(htab* self, ssize obsize, allocator* alloc)
         membuf_init_ex(&self->_entries, alloc);
         self->_size = 0;
         self->_used = 0;
-        self->_obsize = (ssize)align_pointer((void*)obsize, HTAB_ALIGN);
+        self->_obsize = obsize;
 }
 
 extern void htab_dispose(htab* self)

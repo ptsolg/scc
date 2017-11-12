@@ -12,14 +12,6 @@ extern "C" {
 #include "membuf.h"
 #include <memory.h>
 
-#ifndef DSEQ_ALIGNMENT
-#if S_X32
-#define DSEQ_ALIGNMENT 4
-#else
-#define DSEQ_ALIGNMENT 8
-#endif
-#endif
-
 // a dynamic array
 typedef struct _dseq
 {

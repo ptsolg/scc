@@ -11,14 +11,6 @@ extern "C" {
 
 #include "membuf.h"
 
-#ifndef HTAB_ALIGN
-#if S_X32
-#define HTAB_ALIGN 4
-#else
-#define HTAB_ALIGN 8
-#endif
-#endif
-
 // a prime-sized hash table that grows almost exponentially
 typedef struct _htab
 {

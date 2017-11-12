@@ -12,7 +12,7 @@ extern void dseq_init_ex(dseq* self, ssize obsize, allocator* alloc)
 
         membuf_init_ex(dseq_base(self), alloc);
         self->_size = 0;
-        self->_obsize = (ssize)align_pointer((void*)obsize, DSEQ_ALIGNMENT);
+        self->_obsize = obsize;
 }
 extern void dseq_dispose(dseq* self)
 {
