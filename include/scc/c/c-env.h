@@ -21,7 +21,7 @@ typedef struct _cenv
         cident_policy id_policy;
 } cenv;
 
-extern void cenv_init(cenv* self, FILE* err);
+extern void cenv_init(cenv* self, FILE* err, jmp_buf* fatal);
 extern void cenv_dispose(cenv* self);
 extern serrcode cenv_add_lookup(cenv* self, const char* dir);
 extern tree_module* cparse_file(cenv* self, const char* file, tree_target_info* target);

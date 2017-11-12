@@ -1,5 +1,6 @@
 #include "scc/scl/alloc.h"
 #include "scc/scl/malloc.h"
+#include <setjmp.h>
 
 static void deallocate_plug(allocator* self, void* p)
 {
@@ -106,6 +107,48 @@ extern serrcode _obj_allocator_grow(obj_allocator* self)
 
         _bpa_use_chunk(obj_allocator_base(self), c);
         return S_NO_ERROR;
+}
+
+extern void nnull_alloc_init(nnull_allocator* self, void* handler, void* fatal)
+{
+        nnull_alloc_init_ex(self, handler, fatal, get_std_alloc());
+}
+
+static void* nnull_allocate_ex(nnull_allocator* self, ssize bytes, ssize align)
+{
+        S_ASSERT(self->_jbuf);
+        void* block = allocate_ex(self->_alloc, bytes, align);
+        if (block)
+                return block;
+
+        if (self->_handler)
+                if ((block = self->_handler(self, bytes, align)))
+                        return block;
+
+        longjmp(self->_jbuf, S_ERROR);
+        return NULL;
+}
+
+static void* nnull_allocate(nnull_allocator* self, ssize bytes)
+{
+        return nnull_allocate_ex(self, bytes, BPA_ALIGN);
+}
+
+static void nnull_deallocate(nnull_allocator* self, void* block)
+{
+        deallocate(self->_alloc, block);
+}
+
+extern void nnull_alloc_init_ex(
+        nnull_allocator* self, void* handler, void* fatal, allocator* alloc)
+{
+        allocator_init_ex(nnull_alloc_base(self),
+                &nnull_allocate,
+                &nnull_allocate_ex,
+                &nnull_deallocate);
+        self->_alloc = alloc;
+        self->_jbuf = fatal;
+        self->_handler = handler;
 }
 
 static void* std_allocate(void* p, ssize bytes)

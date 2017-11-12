@@ -32,49 +32,22 @@ extern tree_id cident_policy_get_orig_decl_name(const cident_policy* self, const
         return id;
 }
 
-static void* ctree_context_allocator_allocate(ctree_context_allocator* self, ssize bytes)
+extern void ctree_context_init(ctree_context* self, jmp_buf* on_fatal)
 {
-        void* p = allocate(self->alloc , bytes);
-        if (!p)
-        {
-                // todo: handle allocation error
-                longjmp(*self->on_out_of_memory, S_ERROR);
-        }
-        return p;
+        ctree_context_init_ex(self, on_fatal, get_std_alloc());
 }
 
-static void ctree_context_allocator_deallocate(ctree_context_allocator* self, void* p)
+extern void ctree_context_init_ex(ctree_context* self, jmp_buf* on_fatal, allocator* alloc)
 {
-        deallocate(self->alloc, p);
-}
-
-extern void ctree_context_allocator_init(ctree_context_allocator* self, allocator* alloc)
-{
-        allocator_init(&self->base,
-                &ctree_context_allocator_allocate, &ctree_context_allocator_deallocate);
-        self->on_out_of_memory = NULL;
-        self->alloc = alloc;
-}
-
-extern void ctree_context_init(ctree_context* self)
-{
-        ctree_context_init_ex(self, get_std_alloc());
-}
-
-extern void ctree_context_init_ex(ctree_context* self, allocator* alloc)
-{
-        ctree_context_allocator_init(&self->alloc, alloc);
-        tree_init_context_ex(ctree_context_base(self), &self->alloc.base);
+        S_ASSERT(on_fatal);
+        nnull_alloc_init_ex(&self->alloc, NULL, on_fatal, alloc);
+        tree_init_context_ex(ctree_context_base(self),
+                nnull_alloc_base(&self->alloc));
 }
 
 extern void ctree_context_dispose(ctree_context* self)
 {
         tree_dispose_context(ctree_context_base(self));
-}
-
-extern void ctree_context_set_on_out_of_memory(ctree_context* self, jmp_buf* b)
-{
-        self->alloc.on_out_of_memory = b;
 }
 
 extern tree_id ctree_context_add_string(ctree_context* self, const char* s, ssize len)

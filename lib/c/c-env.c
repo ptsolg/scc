@@ -4,9 +4,10 @@
 #include "scc/c/c-parse-module.h"
 #include "scc/c/c-sema.h"
 
-extern void cenv_init(cenv* self, FILE* err)
+extern void cenv_init(cenv* self, FILE* err, jmp_buf* fatal)
 {
-        ctree_context_init(&self->context);
+        S_ASSERT(fatal);
+        ctree_context_init(&self->context, fatal);
         csource_manager_init(&self->source_manager, &self->context);
         cerror_manager_init(&self->error_manager, &self->source_manager, err);
         cident_policy_init(&self->id_policy);

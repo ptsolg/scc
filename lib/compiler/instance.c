@@ -122,9 +122,9 @@ static void scc_set_printer_opts(const scc_instance* self, cprinter_opts* opts)
         opts->print_impl_casts = self->opts.print_impl_casts;
 }
 
-static serrcode scc_init_cenv(scc_instance* self, cenv* env)
+static serrcode scc_init_cenv(scc_instance* self, cenv* env, jmp_buf* fatal)
 {
-        cenv_init(env, self->err);
+        cenv_init(env, self->err, fatal);
         for (ssize i = 0; i < dseq_size(&self->include); i++)
                 if (S_FAILED(cenv_add_lookup(env, dseq_get_ptr(&self->include, i))))
                         return S_ERROR;
@@ -165,8 +165,15 @@ static serrcode _scc_perform_syntax_analysis(scc_instance* self, cenv* env)
 
 static serrcode scc_perform_syntax_analysis(scc_instance* self)
 {
+        jmp_buf fatal;
+        if (setjmp(fatal))
+        {
+                fprintf(self->err, "Fatal error happened");
+                return S_ERROR;
+        }
+
         cenv env;
-        if (S_FAILED(scc_init_cenv(self, &env)))
+        if (S_FAILED(scc_init_cenv(self, &env, &fatal)))
                 return S_ERROR;
 
         serrcode res = _scc_perform_syntax_analysis(self, &env);
@@ -205,10 +212,18 @@ static serrcode _scc_perform_lexical_analysis(scc_instance* self, cenv* env, dse
 
 static serrcode scc_perform_lexical_analysis(scc_instance* self)
 {
+        jmp_buf fatal;
+        if (setjmp(fatal))
+        {
+                fprintf(self->err, "Fatal error happened");
+                return S_ERROR;
+        }
+
         cenv env;
         dseq tokens;
-        if (S_FAILED(scc_init_cenv(self, &env)))
+        if (S_FAILED(scc_init_cenv(self, &env, &fatal)))
                 return S_ERROR;
+
         dseq_init_ptr(&tokens);
         serrcode res = _scc_perform_lexical_analysis(self, &env, &tokens);
         dseq_dispose(&tokens);

@@ -180,6 +180,32 @@ static inline void* obj_allocate(obj_allocator* self)
         return top->_bytes;
 }
 
+typedef void*(*null_alloc_handler)(void*, ssize, ssize);
+
+// never returns NULL
+typedef struct _nnull_allocator
+{
+        allocator _base;
+        null_alloc_handler _handler;
+        void* _jbuf;
+        allocator* _alloc;
+} nnull_allocator;
+
+extern void nnull_alloc_init(nnull_allocator* self, void* jbuf, void* fatal);
+
+extern void nnull_alloc_init_ex(
+        nnull_allocator* self, void* handler, void* jbuf, allocator* alloc);
+
+static inline void nnull_alloc_set_buf(nnull_allocator* self, void* buf)
+{
+        self->_jbuf = buf;
+}
+
+static inline allocator* nnull_alloc_base(nnull_allocator* self)
+{
+        return &self->_base;
+}
+
 extern allocator* get_std_alloc();
 
 #ifdef __cplusplus

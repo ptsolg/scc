@@ -23,25 +23,15 @@ extern tree_id cident_policy_to_tag(const cident_policy* self, tree_id id);
 extern tree_id cident_policy_from_tag(const cident_policy* self, tree_id tag);
 extern tree_id cident_policy_get_orig_decl_name(const cident_policy* self, const tree_decl* decl);
 
-typedef struct _ctree_context_allocator
-{
-        allocator base;
-        allocator* alloc;
-        jmp_buf* on_out_of_memory;
-} ctree_context_allocator;
-
-extern void ctree_context_allocator_init(ctree_context_allocator* self, allocator* alloc);
-
 typedef struct _ctree_context
 {
         tree_context base;
-        ctree_context_allocator alloc;
+        nnull_allocator alloc;
 } ctree_context;
 
-extern void ctree_context_init(ctree_context* self);
-extern void ctree_context_init_ex(ctree_context* self, allocator* alloc);
+extern void ctree_context_init(ctree_context* self, jmp_buf* on_fatal);
+extern void ctree_context_init_ex(ctree_context* self, jmp_buf* on_fatal, allocator* alloc);
 extern void ctree_context_dispose(ctree_context* self);
-extern void ctree_context_set_on_out_of_memory(ctree_context* self, jmp_buf* b);
 extern tree_id ctree_context_add_string(ctree_context* self, const char* s, ssize len);
 
 static inline tree_context* ctree_context_base(ctree_context* self)
