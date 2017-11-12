@@ -18,7 +18,7 @@ typedef struct _tree_decl tree_decl;
 typedef struct _tree_module tree_module;
 typedef struct _ssa_value ssa_value;
 
-typedef struct _ssa_def_info
+typedef struct _ssa_block_info
 {
         ssa_block* block;
         htab defs;
