@@ -85,15 +85,12 @@ extern "C" {
         }
 
 
-
 #define DSEQ_GEN_SET(SUFFIX, TYPE)                                          \
-        static inline TYPE dseq_set_##SUFFIX(dseq* self, ssize i, TYPE val) \
+        static inline void dseq_set_##SUFFIX(dseq* self, ssize i, TYPE val) \
         {                                                                   \
                 DSEQ_CHECK_TYPE_AND_INDEX(self, TYPE, i);                   \
                 (DSEQ_BEGIN(SUFFIX)(self))[i] = val;                        \
         }
-
-
 
 #define DSEQ_GEN_POP(SUFFIX, TYPE)\
         static inline TYPE dseq_pop_##SUFFIX(dseq* self) \
@@ -102,7 +99,6 @@ extern "C" {
                 self->_size--;                           \
                 return *DSEQ_END(SUFFIX)(self);          \
         }
-
 
 #define DSEQ_GEN(SUFFIX, TYPE)         \
         DSEQ_GEN_INIT_EX(SUFFIX, TYPE) \
