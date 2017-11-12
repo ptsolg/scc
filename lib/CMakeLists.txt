@@ -1,4 +1,6 @@
 add_subdirectory(scl)
 add_subdirectory(tree)
 add_subdirectory(c)
+add_subdirectory(ssa)
+add_subdirectory(codegen)
 add_subdirectory(compiler)

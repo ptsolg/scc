@@ -1,0 +1,16 @@
+add_scc_target_sources(ssa
+	ssa.h
+	ssa-builder.h
+	ssa-context.h
+	ssa-common.h
+	ssa-instr.h
+	ssa-value.h
+	ssa-block.h
+	ssa-branch.h
+	ssa-printer.h
+	ssa-module.h
+	ssaizer.h
+	ssaize-expr.h
+	ssaize-stmt.h
+	ssaize-decl.h
+)

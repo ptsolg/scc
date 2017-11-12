@@ -1,0 +1,20 @@
+add_scc_lib(ssa
+	ssa-builder.c
+	ssa-printer.c
+	ssa-context.c
+	ssa-instr.c
+	ssa-value.c
+	ssa-block.c
+	ssa-branch.c
+	ssa-module.c
+	ssaizer.c
+	ssaize-expr.c
+	ssaize-stmt.c
+	ssaize-decl.c
+
+	DEPENDS
+	tree
+
+	INCLUDE
+	${SCC_INC_DIR}
+)
