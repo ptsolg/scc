@@ -4,6 +4,7 @@ add_scc_lib(compiler
 
 	DEPENDS
 	c
+	ssa
 
 	INCLUDE
 	${SCC_INC_DIR}
