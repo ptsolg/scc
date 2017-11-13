@@ -48,6 +48,9 @@ extern ssa_value* ssa_build_getaddr(ssa_builder* self, ssa_value* operand, ssize
 extern ssa_value* ssa_build_getptrval(
         ssa_builder* self, ssa_value* operand, ssize index, ssize offset);
 
+extern ssa_value* ssa_build_init(ssa_builder* self, ssa_value* operand);
+extern ssa_value* ssa_build_empty_init(ssa_builder* self, tree_type* value_type);
+
 static inline void ssa_set_builder_uid(ssa_builder* self, ssa_id uid)
 {
         self->uid = uid;

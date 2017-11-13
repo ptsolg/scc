@@ -12,14 +12,14 @@ extern ssa_module* ssa_new_module(ssa_context* context)
         return m;
 }
 
-extern serrcode ssa_module_add_def(ssa_module* self, tree_id id, ssa_block* def)
+extern void ssa_module_add_def(ssa_module* self, tree_id id, ssa_block* def)
 {
-        return htab_insert_ptr(&self->_defs, id, def);
+        htab_insert_ptr(&self->_defs, id, def);
 }
 
-extern serrcode ssa_module_add_func_def(ssa_module* self, const tree_decl* func, ssa_block* def)
+extern void ssa_module_add_func_def(ssa_module* self, const tree_decl* func, ssa_block* def)
 {
-        return ssa_module_add_def(self, tree_get_decl_name(func), def);
+        ssa_module_add_def(self, tree_get_decl_name(func), def);
 }
 
 extern ssa_block* ssa_module_find_def(ssa_module* self, tree_id id)

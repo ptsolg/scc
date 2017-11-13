@@ -12,3 +12,9 @@ extern ssa_block* ssa_new_block(ssa_context* context, ssa_id entry_id, ssa_branc
         dseq_init_ex_ptr(&b->_values, ssa_get_context_alloc(context));
         return b;
 }
+
+extern void ssa_add_block_value(ssa_block* self, ssa_value* val)
+{
+        S_ASSERT(val);
+        dseq_append_ptr(&self->_values, val);
+}

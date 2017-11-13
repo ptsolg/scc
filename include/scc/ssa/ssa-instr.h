@@ -19,13 +19,20 @@ typedef struct _tree_decl tree_decl;
 
 typedef enum
 {
+        SIK_INVALID,
+
         SIK_BINARY,
         SIK_CAST,
         SIK_CALL,
         SIK_GETADDR,
         SIK_GETPTRVAL,
         SIK_PHI,
+        SIK_INIT,
+
+        SIK_SIZE,
 } ssa_instr_kind;
+
+#define SSA_CHECK_INSTR_KIND(K) S_ASSERT((K) > SIK_INVALID && (K) < SIK_SIZE)
 
 struct _ssa_instr_base
 {
@@ -42,6 +49,8 @@ static inline void ssa_set_instr_kind(ssa_instr* self, ssa_instr_kind kind);
 
 typedef enum
 {
+        SBIK_INVALID,
+
         SBIK_MUL,
         SBIK_DIV,
         SBIK_MOD,
@@ -58,7 +67,11 @@ typedef enum
         SBIK_GEQ,
         SBIK_EQ,
         SBIK_NEQ,
+
+        SBIK_SIZE,
 } ssa_binary_instr_kind;
+
+#define SSA_CHECK_BINARY_INSTR_KIND(K) S_ASSERT((K) > SBIK_INVALID && (K) < SBIK_SIZE)
 
 struct _ssa_binary_instr
 {
@@ -165,6 +178,21 @@ struct _ssa_phi_instr
 
 extern ssa_instr* ssa_new_phi(ssa_context* context);
 
+struct _ssa_init_instr
+{
+        struct _ssa_instr_base _base;
+        ssa_value* _val;
+};
+
+extern ssa_instr* ssa_new_init(ssa_context* context, ssa_value* operand);
+
+static inline struct _ssa_init_instr* _ssa_get_init(ssa_instr* self);
+static inline const struct _ssa_init_instr* _ssa_get_cinit(const ssa_instr* self);
+
+static inline ssa_value* ssa_get_init_value(const ssa_instr* self);
+
+static inline void ssa_set_init_value(ssa_instr* self, ssa_value* val);
+
 typedef struct _ssa_instr
 {
         union
@@ -175,6 +203,7 @@ typedef struct _ssa_instr
                 struct _ssa_getaddr_instr _getaddr;
                 struct _ssa_getptrval_instr _getptrval;
                 struct _ssa_phi_instr _phi;
+                struct _ssa_init_instr _init;
         };
 } ssa_instr;
 
@@ -372,6 +401,28 @@ static inline void ssa_set_getptrval_index(ssa_instr* self, ssize index)
 static inline void ssa_set_getptrval_offset(ssa_instr* self, ssize offset)
 {
         _ssa_get_getptrval(self)->_offset = offset;
+}
+
+static inline struct _ssa_init_instr* _ssa_get_init(ssa_instr* self)
+{
+        SSA_ASSERT_INSTR(self, SIK_INIT);
+        return (struct _ssa_init_instr*)self;
+}
+
+static inline const struct _ssa_init_instr* _ssa_get_cinit(const ssa_instr* self)
+{
+        SSA_ASSERT_INSTR(self, SIK_INIT);
+        return (const struct _ssa_init_instr*)self;
+}
+
+static inline ssa_value* ssa_get_init_value(const ssa_instr* self)
+{
+        return _ssa_get_cinit(self)->_val;
+}
+
+static inline void ssa_set_init_value(ssa_instr* self, ssa_value* val)
+{
+        _ssa_get_init(self)->_val = val;
 }
 
 #ifdef __cplusplus

@@ -10,7 +10,5 @@ add_scc_target_sources(ssa
 	ssa-printer.h
 	ssa-module.h
 	ssaizer.h
-	ssaize-expr.h
-	ssaize-stmt.h
-	ssaize-decl.h
+	ssa-ir.h
 )

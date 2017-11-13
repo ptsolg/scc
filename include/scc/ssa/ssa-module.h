@@ -22,10 +22,15 @@ typedef struct _ssa_module
 
 extern ssa_module* ssa_new_module(ssa_context* context);
 
-extern serrcode ssa_module_add_def(ssa_module* self, tree_id id, ssa_block* def);
-extern serrcode ssa_module_add_func_def(ssa_module* self, const tree_decl* func, ssa_block* def);
+extern void ssa_module_add_def(ssa_module* self, tree_id id, ssa_block* def);
+extern void ssa_module_add_func_def(ssa_module* self, const tree_decl* func, ssa_block* def);
 extern ssa_block* ssa_module_find_def(ssa_module* self, tree_id id);
 extern ssa_block* ssa_module_find_func_def(ssa_module* self, const tree_decl* func);
+
+static inline hiter ssa_get_module_begin(const ssa_module* self)
+{
+        return htab_begin(&self->_defs);
+}
 
 #ifdef __cplusplus
 }

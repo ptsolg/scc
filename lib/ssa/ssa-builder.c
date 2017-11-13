@@ -1,4 +1,5 @@
 #include "scc/ssa/ssa-builder.h"
+#include "scc/ssa/ssa-block.h"
 #include "scc/ssa/ssa-value.h"
 #include "scc/ssa/ssa-instr.h"
 
@@ -22,6 +23,7 @@ extern ssa_value* ssa_build_value(ssa_builder* self, tree_type* type, ssa_instr*
                 return NULL;
         // todo
         self->uid++;
+        ssa_add_block_value(self->block, v);
         return v;
 }
 
@@ -197,4 +199,23 @@ extern ssa_value* ssa_build_getptrval(
 {
         S_UNREACHABLE();
         return NULL;
+}
+
+extern ssa_value* ssa_build_init(ssa_builder* self, ssa_value* operand)
+{
+        S_ASSERT(operand);
+        ssa_instr* i = ssa_new_init(self->context, operand);
+        if (!i)
+                return NULL;
+
+        return ssa_build_value(self, ssa_get_value_type(operand), i);
+}
+
+extern ssa_value* ssa_build_empty_init(ssa_builder* self, tree_type* value_type)
+{
+        ssa_instr* i = ssa_new_init(self->context, NULL);
+        if (!i)
+                return NULL;
+
+        return ssa_build_value(self, value_type, i);
 }

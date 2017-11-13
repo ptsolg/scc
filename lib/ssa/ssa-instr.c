@@ -81,3 +81,13 @@ extern ssa_instr* ssa_new_phi(ssa_context* context)
 
         return i;
 }
+
+extern ssa_instr* ssa_new_init(ssa_context* context, ssa_value* operand)
+{
+        ssa_instr* i = ssa_new_instr(context, SIK_INIT, sizeof(struct _ssa_init_instr));
+        if (!i)
+                return NULL;
+
+        ssa_set_init_value(i, operand);
+        return i;
+}
