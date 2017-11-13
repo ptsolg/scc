@@ -620,17 +620,17 @@ extern const tree_expr* tree_desugar_cexp(const tree_expr* self);
 extern bool tree_expr_is_null_pointer_constant(const tree_expr* self);
 extern bool tree_expr_designates_bitfield(const tree_expr* self);
 
-#define TREE_ASSERT_expr(E) S_ASSERT(E)
+#define TREE_ASSERT_EXPR(E) S_ASSERT(E)
 
 static inline struct _tree_expr_base* _tree_get_expr(tree_expr* self)
 {
-        TREE_ASSERT_expr(self);
+        TREE_ASSERT_EXPR(self);
         return (struct _tree_expr_base*)self;
 }
 
 static inline const struct _tree_expr_base* _tree_get_cexp(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self);
+        TREE_ASSERT_EXPR(self);
         return (const struct _tree_expr_base*)self;
 }
 
@@ -685,18 +685,18 @@ static inline void tree_set_expr_loc(tree_expr* self, tree_location loc)
         _tree_get_expr(self)->_loc = loc;
 }
 
-#undef TREE_ASSERT_expr
-#define TREE_ASSERT_expr(E, K) S_ASSERT((E) && tree_get_expr_kind(E) == (K))
+#undef TREE_ASSERT_EXPR
+#define TREE_ASSERT_EXPR(E, K) S_ASSERT((E) && tree_get_expr_kind(E) == (K))
 
 static inline struct _tree_binop* _tree_get_binop(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_BINARY);
+        TREE_ASSERT_EXPR(self, TEK_BINARY);
         return (struct _tree_binop*)self;
 }
 
 static inline const struct _tree_binop* _tree_get_cbinop(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_BINARY);
+        TREE_ASSERT_EXPR(self, TEK_BINARY);
         return (const struct _tree_binop*)self;
 }
 
@@ -737,13 +737,13 @@ static inline void tree_set_binop_rhs(tree_expr* self, tree_expr* rhs)
 
 static inline struct _tree_unop* _tree_get_unop(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_UNARY);
+        TREE_ASSERT_EXPR(self, TEK_UNARY);
         return (struct _tree_unop*)self;
 }
 
 static inline const struct _tree_unop* _tree_get_cunop(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_UNARY);
+        TREE_ASSERT_EXPR(self, TEK_UNARY);
         return (const struct _tree_unop*)self;
 }
 
@@ -800,13 +800,13 @@ static inline void tree_set_cast_expr(tree_expr* self, tree_expr* expr)
 
 static inline struct _tree_call_expr* _tree_get_call(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_CALL);
+        TREE_ASSERT_EXPR(self, TEK_CALL);
         return (struct _tree_call_expr*)self;
 }
 
 static inline const struct _tree_call_expr* _tree_get_ccall(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_CALL);
+        TREE_ASSERT_EXPR(self, TEK_CALL);
         return (const struct _tree_call_expr*)self;
 }
 
@@ -837,13 +837,13 @@ static inline void tree_set_call_lhs(tree_expr* self, tree_expr* lhs)
 
 static inline struct _tree_subscript_expr* _tree_get_subscript(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_SUBSCRIPT);
+        TREE_ASSERT_EXPR(self, TEK_SUBSCRIPT);
         return (struct _tree_subscript_expr*)self;
 }
 
 static inline const struct _tree_subscript_expr* _tree_get_csubscript(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_SUBSCRIPT);
+        TREE_ASSERT_EXPR(self, TEK_SUBSCRIPT);
         return (const struct _tree_subscript_expr*)self;
 }
 
@@ -869,13 +869,13 @@ static inline void tree_set_subscript_rhs(tree_expr* self, tree_expr* rhs)
 
 static inline struct _tree_conditional_expr* _tree_get_conditional(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_CONDITIONAL);
+        TREE_ASSERT_EXPR(self, TEK_CONDITIONAL);
         return (struct _tree_conditional_expr*)self;
 }
 
 static inline const struct _tree_conditional_expr* _tree_get_cconditional(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_CONDITIONAL);
+        TREE_ASSERT_EXPR(self, TEK_CONDITIONAL);
         return (const struct _tree_conditional_expr*)self;
 }
 
@@ -911,13 +911,13 @@ static inline void tree_set_conditional_condition(tree_expr* self, tree_expr* co
 
 static inline struct _tree_integer_literal_expr* _tree_get_integer_literal(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_INTEGER_LITERAL);
+        TREE_ASSERT_EXPR(self, TEK_INTEGER_LITERAL);
         return (struct _tree_integer_literal_expr*)self;
 }
 
 static inline const struct _tree_integer_literal_expr* _tree_get_cinteger_literal(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_INTEGER_LITERAL);
+        TREE_ASSERT_EXPR(self, TEK_INTEGER_LITERAL);
         return (const struct _tree_integer_literal_expr*)self;
 }
 
@@ -933,13 +933,13 @@ static inline void tree_set_integer_literal(tree_expr* self, suint64 value)
 
 static inline struct _tree_character_literal_expr* _tree_get_character_literal(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_CHARACTER_LITERAL);
+        TREE_ASSERT_EXPR(self, TEK_CHARACTER_LITERAL);
         return (struct _tree_character_literal_expr*)self;
 }
 
 static inline const struct _tree_character_literal_expr* _tree_get_ccharacter_literal(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_CHARACTER_LITERAL);
+        TREE_ASSERT_EXPR(self, TEK_CHARACTER_LITERAL);
         return (const struct _tree_character_literal_expr*)self;
 }
 
@@ -955,13 +955,13 @@ static inline void tree_set_character_literal(tree_expr* self, int value)
 
 static inline struct _tree_floating_literal_expr* _tree_get_floating_literal(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_FLOATING_LITERAL);
+        TREE_ASSERT_EXPR(self, TEK_FLOATING_LITERAL);
         return (struct _tree_floating_literal_expr*)self;
 }
 
 static inline const struct _tree_floating_literal_expr* _tree_get_cfloating_literal(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_FLOATING_LITERAL);
+        TREE_ASSERT_EXPR(self, TEK_FLOATING_LITERAL);
         return (const struct _tree_floating_literal_expr*)self;
 }
 
@@ -987,13 +987,13 @@ static inline void tree_set_floating_lliteral(tree_expr* self, ldouble value)
 
 static inline struct _tree_string_literal_expr* _tree_get_string_literal(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_STRING_LITERAL);
+        TREE_ASSERT_EXPR(self, TEK_STRING_LITERAL);
         return (struct _tree_string_literal_expr*)self;
 }
 
 static inline const struct _tree_string_literal_expr* _tree_get_cstring_literal(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_STRING_LITERAL);
+        TREE_ASSERT_EXPR(self, TEK_STRING_LITERAL);
         return (const struct _tree_string_literal_expr*)self;
 }
 
@@ -1009,13 +1009,13 @@ static inline void tree_set_string_literal(tree_expr* self, tree_id ref)
 
 static inline struct _tree_decl_expr* _tree_get_decl_expr(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_DECL);
+        TREE_ASSERT_EXPR(self, TEK_DECL);
         return (struct _tree_decl_expr*)self;
 }
 
 static inline const struct _tree_decl_expr* _tree_get_decl_cexp(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_DECL);
+        TREE_ASSERT_EXPR(self, TEK_DECL);
         return (const struct _tree_decl_expr*)self;
 }
 
@@ -1031,13 +1031,13 @@ static inline void tree_set_decl_expr_entity(tree_expr* self, tree_decl* decl)
 
 static inline struct _tree_member_expr* _tree_get_member_expr(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_MEMBER);
+        TREE_ASSERT_EXPR(self, TEK_MEMBER);
         return (struct _tree_member_expr*)self;
 }
 
 static inline const struct _tree_member_expr* _tree_get_member_cexp(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_MEMBER);
+        TREE_ASSERT_EXPR(self, TEK_MEMBER);
         return (const struct _tree_member_expr*)self;
 }
 
@@ -1073,13 +1073,13 @@ static inline void tree_set_member_expr_arrow(tree_expr* self, bool val)
 
 static inline struct _tree_sizeof_expr* _tree_get_sizeof(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_SIZEOF);
+        TREE_ASSERT_EXPR(self, TEK_SIZEOF);
         return (struct _tree_sizeof_expr*)self;
 }
 
 static inline const struct _tree_sizeof_expr* _tree_get_csizeof(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_SIZEOF);
+        TREE_ASSERT_EXPR(self, TEK_SIZEOF);
         return (const struct _tree_sizeof_expr*)self;
 }
 
@@ -1115,13 +1115,13 @@ static inline void tree_set_sizeof_unary(tree_expr* self, bool val)
 
 static inline struct _tree_paren_expr* _tree_get_paren_expr(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_PAREN);
+        TREE_ASSERT_EXPR(self, TEK_PAREN);
         return (struct _tree_paren_expr*)self;
 }
 
 static inline const struct _tree_paren_expr* _tree_get_paren_cexp(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_PAREN);
+        TREE_ASSERT_EXPR(self, TEK_PAREN);
         return (const struct _tree_paren_expr*)self;
 }
 
@@ -1137,12 +1137,12 @@ static inline void tree_set_paren_expr(tree_expr* self, tree_expr* expr)
 
 static inline struct _tree_init_expr* _tree_get_init_expr(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_INIT);
+        TREE_ASSERT_EXPR(self, TEK_INIT);
         return (struct _tree_init_expr*)self;
 }
 static inline const struct _tree_init_expr* _tree_get_init_cexp(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_INIT);
+        TREE_ASSERT_EXPR(self, TEK_INIT);
         return (const struct _tree_init_expr*)self;
 }
 
@@ -1280,13 +1280,13 @@ static inline void tree_set_designation_initializer(tree_designation* self, tree
 
 static inline struct _tree_impl_init_expr* _tree_get_impl_init_expr(tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_IMPL_INIT);
+        TREE_ASSERT_EXPR(self, TEK_IMPL_INIT);
         return (struct _tree_impl_init_expr*)self;
 }
 
 static inline const struct _tree_impl_init_expr* _tree_get_impl_init_cexp(const tree_expr* self)
 {
-        TREE_ASSERT_expr(self, TEK_IMPL_INIT);
+        TREE_ASSERT_EXPR(self, TEK_IMPL_INIT);
         return (const struct _tree_impl_init_expr*)self;
 }
 
