@@ -43,6 +43,8 @@ typedef enum
         TEK_SIZE,
 } tree_expr_kind;
 
+#define TREE_CHECK_EXPR_KIND(K) S_ASSERT((K) > TEK_UNKNOWN && (K) < TEK_SIZE)
+
 typedef enum
 {
         TVK_LVALUE,
@@ -117,6 +119,8 @@ typedef enum
         TBK_SIZE,
 } tree_binop_kind;
 
+#define TREE_CHECK_BINOP_KIND(K) S_ASSERT((K) > TBK_UNKNOWN && (K) < TBK_SIZE)
+
 struct _tree_binop
 {
         struct _tree_expr_base _base;
@@ -161,6 +165,8 @@ typedef enum
         TUK_ADDRESS,
         TUK_SIZE,
 } tree_unop_kind;
+
+#define TREE_CHECK_UNOP_KIND(K) S_ASSERT((K) > TUK_UNKNOWN && (K) < TUK_SIZE)
 
 struct _tree_unop
 {

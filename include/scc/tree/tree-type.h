@@ -27,7 +27,11 @@ typedef enum _tree_type_kind
         // record, typedef, enum
         TTK_DECL,
         TTK_PAREN,
+
+        TTK_SIZE,
 } tree_type_kind;
+
+#define TREE_CHECK_TYPE_KIND(K) S_ASSERT((K) > TTK_UNKNOWN && (K) < TTK_SIZE)
 
 struct _tree_type_base
 {

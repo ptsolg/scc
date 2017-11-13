@@ -186,7 +186,7 @@ static bool tree_eval_binop(tree_eval_info* info, const tree_expr* expr, avalue*
                 return false;
 
         tree_binop_kind k = tree_get_binop_kind(expr);
-        S_ASSERT(k >= 0 && k < TBK_SIZE);
+        TREE_CHECK_BINOP_KIND(k);
 
         if (!tree_binop_eval_table[k] || !tree_binop_eval_table[k](result, &rr))
         {
@@ -240,7 +240,7 @@ static bool tree_eval_unop(tree_eval_info* info, const tree_expr* expr, avalue* 
                 return false;
 
         tree_unop_kind k = tree_get_unop_kind(expr);
-        S_ASSERT(k >= 0 && k < TUK_SIZE);
+        TREE_CHECK_UNOP_KIND(k);
 
         if (!tree_eval_as_arithmetic(info, tree_get_unop_expr(expr), result))
                 return false;
@@ -384,7 +384,7 @@ extern bool tree_eval_as_arithmetic(tree_eval_info* info, const tree_expr* expr,
                 return false;
 
         tree_expr_kind k = tree_get_expr_kind(expr);
-        S_ASSERT(k >= 0 && k < TEK_SIZE);
+        TREE_CHECK_EXPR_KIND(k);
 
         if (!tree_eval_table[k])
         {

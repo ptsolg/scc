@@ -79,7 +79,10 @@ typedef enum _tree_stmt_kind
         TSK_BREAK,
         TSK_DECL,
         TSK_RETURN,
+        TSK_SIZE,
 } tree_stmt_kind;
+
+#define TREE_CHECK_STMT_KIND(K) S_ASSERT((K) > TSK_UNKNOWN && (K) < TSK_SIZE)
 
 struct _tree_stmt_base
 {

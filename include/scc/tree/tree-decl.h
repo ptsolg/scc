@@ -101,7 +101,11 @@ typedef enum _tree_decl_kind
         TDK_LABEL,
 
         TDK_GROUP,
+
+        TDK_SIZE,
 } tree_decl_kind;
+
+#define TREE_CHECK_DECL_KIND(K) S_ASSERT((K) > TDK_UNKNOWN && (K) < TDK_SIZE)
 
 struct _tree_decl_base
 {

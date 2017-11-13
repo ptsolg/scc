@@ -81,7 +81,7 @@ extern ssa_value* ssaize_impl_init_expr(ssaizer* self, const tree_expr* expr)
         return NULL;
 }
 
-S_STATIC_ASSERT(TEK_SIZE == 18, "ssaize_expr_table needs update");
+S_STATIC_ASSERT(TEK_SIZE == 18, "ssaize_expr_table needs an update");
 static ssa_value* (*ssaize_expr_table[TEK_SIZE])(ssaizer*, const tree_expr*) =
 {
         NULL, // TEK_UNKNOWN
