@@ -120,3 +120,8 @@ extern void scc_default(scc_arg_handler* self, aparser* p)
         const char* file = aparser_get_string(p);
         scc_add_input(self->scc, file);
 }
+
+extern void scc_emit_ssa(scc_arg_handler* self, aparser* p)
+{
+        self->scc->opts.emit_ssa = true;
+}

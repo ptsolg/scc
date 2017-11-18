@@ -15,6 +15,7 @@ extern "C" {
 
 typedef enum
 {
+        SRM_DEFAULT,
         SRM_SYNTAX_ONLY,
         SRM_LEX_ONLY,
 } scc_run_mode;
@@ -38,6 +39,7 @@ typedef struct _scc_instance
                 bool print_impl_casts;
                 bool print_eval_result;
                 bool force_brackets;
+                bool emit_ssa;
                 int float_precision;
                 int double_precision;
         } opts;

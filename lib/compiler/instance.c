@@ -3,6 +3,7 @@
 #include "scc/c/c-env.h"
 #include "scc/c/c-info.h"
 #include "scc/c/c-printer.h"
+#include "scc/ssa/ssa.h"
 #include "scc/scl/file.h"
 
 static bool scc_add_handler(
@@ -42,6 +43,7 @@ static serrcode scc_init_args(scc_instance* self)
                 && scc_add_handler(self, "-log", &scc_log)
                 && scc_add_handler(self, "-o", &scc_o)
                 && scc_add_handler(self, "-i", &scc_i)
+                && scc_add_handler(self, "-emit-ssa", &scc_emit_ssa)
                 && scc_add_handler(self, "-print-eval-result", &scc_print_eval_result)
                 && scc_add_handler(self, "-print-expr-value", &scc_print_expr_value)
                 && scc_add_handler(self, "-print-expr-type", &scc_print_expr_type)
@@ -62,7 +64,7 @@ extern serrcode scc_init(scc_instance* self, FILE* err, int argc, const char** a
         aparser_init(&self->parser, argc, argv);
 
         self->output = NULL;
-        self->mode = SRM_SYNTAX_ONLY;
+        self->mode = SRM_DEFAULT;
         self->err = err;
         self->return_code = S_NO_ERROR;
         self->opts.x32 = true;
@@ -73,6 +75,7 @@ extern serrcode scc_init(scc_instance* self, FILE* err, int argc, const char** a
         self->opts.print_eval_result = false;
         self->opts.float_precision = 4;
         self->opts.double_precision = 4;
+        self->opts.emit_ssa = false;
 
         return scc_init_args(self);
 }
@@ -86,6 +89,7 @@ static void scc_print_help(scc_instance* self)
                 " -log <file>        Specify the log file\n"
                 " -o <file>          Specify the output file\n"
                 " -i <dir>           Specify the include directory\n"
+                " -emit-ssa          Use the SSA representation for output files\n"
                 " -print-eval-result Print constant expression value\n"
                 " -print-expr-value  Print expression value (lvalue or rvalue)\n"
                 " -print-expr-type   Print expression type\n"
@@ -231,6 +235,60 @@ static serrcode scc_perform_lexical_analysis(scc_instance* self)
         return res;
 }
 
+static serrcode _scc_compile(scc_instance* self, cenv* env, jmp_buf* fatal)
+{
+        tree_target_info info;
+        tree_init_target_info(&info, self->opts.x32 ? TTARGET_X32 : TTARGET_X64);
+        tree_module* m = cparse_file(env, dseq_first_ptr(&self->input), &info);
+        if (!m)
+                return S_ERROR;
+
+        if (!self->output || !self->opts.emit_ssa)
+                return S_NO_ERROR;
+
+        FILE* out = scc_open_output(self);
+        if (!out)
+                return S_ERROR;
+
+        fwrite_cb fw;
+        fwrite_cb_init(&fw, out);
+
+        // redo
+        ssa_context sc;
+        ssa_init_context(&sc, ctree_context_base(&env->context), &info, fatal);
+
+        ssaizer sr;
+        ssaizer_init(&sr, &sc);
+
+        ssa_module* sm = ssaize_module(&sr, m);
+        if (!sm)
+                return S_ERROR;
+
+        ssa_printer sp;
+        ssa_init_printer(&sp, fwrite_cb_base(&fw), &sc);
+        ssa_print_module(&sp, sm);
+        ssa_dispose_printer(&sp);
+        return S_NO_ERROR;
+}
+
+static serrcode scc_compile(scc_instance* self)
+{
+        jmp_buf fatal;
+        if (setjmp(fatal))
+        {
+                fprintf(self->err, "Fatal error happened");
+                return S_ERROR;
+        }
+
+        cenv env;
+        if (S_FAILED(scc_init_cenv(self, &env, &fatal)))
+                return S_ERROR;
+
+        serrcode res = _scc_compile(self, &env, &fatal);
+        cenv_dispose(&env);
+        return res;
+}
+
 extern serrcode scc_run(scc_instance* self)
 {
         if (!aparser_args_remain(&self->parser))
@@ -246,7 +304,9 @@ extern serrcode scc_run(scc_instance* self)
                 return S_ERROR;
         }
 
-        if (self->mode == SRM_SYNTAX_ONLY)
+        if (self->mode == SRM_DEFAULT)
+                return scc_compile(self);
+        else if (self->mode == SRM_SYNTAX_ONLY)
                 return scc_perform_syntax_analysis(self);
         else if (self->mode == SRM_LEX_ONLY)
                 return scc_perform_lexical_analysis(self);

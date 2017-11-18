@@ -39,6 +39,7 @@ extern void scc_double_precision(scc_arg_handler* self, aparser* p);
 extern void scc_x32(scc_arg_handler* self, aparser* p);
 extern void scc_x64(scc_arg_handler* self, aparser* p);
 extern void scc_default(scc_arg_handler* self, aparser* p);
+extern void scc_emit_ssa(scc_arg_handler* self, aparser* p);
 
 #ifdef __cplusplus
 }
