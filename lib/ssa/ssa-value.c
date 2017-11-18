@@ -1,38 +1,40 @@
 #include "scc/ssa/ssa-value.h"
 #include "scc/ssa/ssa-context.h"
 
-extern ssa_value* ssa_new_value_base(
-        ssa_context* context, ssa_value_kind kind, tree_type* type, ssize size)
+extern void ssa_init_value_base(ssa_value* self, ssa_value_kind k, ssa_id id)
 {
-        ssa_value* v = ssa_allocate(context, size);
-        if (!v)
-                return NULL;
-
-        ssa_set_value_kind(v, kind);
-        ssa_set_value_type(v, type);
-        return v;
+        ssa_set_value_kind(self, k);
+        ssa_set_value_id(self, id);
 }
 
-extern ssa_value* ssa_new_constant(ssa_context* context, tree_type* type, avalue val)
+extern void ssa_init_label(ssa_value* self, ssa_id id)
 {
-        ssa_value* v = ssa_new_value_base(context,
-                SVK_CONSTANT, type, sizeof(struct _ssa_constant));
-        if (!v)
-                return NULL;
-
-        ssa_set_constant_value(v, val);
-        return v;
+        ssa_init_value_base(self, SVK_LABEL, id);
 }
 
-extern ssa_value* ssa_new_var(
-        ssa_context* context, tree_type* type, ssa_id id, ssa_instr* init)
+extern void ssa_init_typed_value(ssa_value* self, ssa_value_kind k, ssa_id id, tree_type* t)
 {
-        ssa_value* v = ssa_new_value_base(context,
-                SVK_VARIABLE, type, sizeof(struct _ssa_var));
-        if (!v)
+        ssa_init_value_base(self, k, id);
+        ssa_set_value_type(self, t);
+}
+
+extern void ssa_init_variable(ssa_value* self, ssa_id id, tree_type* t)
+{
+        ssa_init_typed_value(self, SVK_VARIABLE, id, t);
+}
+
+extern void ssa_init_constant(ssa_value* self, tree_type* t, avalue val)
+{
+        ssa_init_typed_value(self, SVK_CONSTANT, 0, t);
+        ssa_set_constant_value(self, val);
+}
+
+extern ssa_value* ssa_new_constant(ssa_context* context, tree_type* t, avalue val)
+{
+        ssa_value* c = ssa_allocate(context, sizeof(ssa_constant));
+        if (!c)
                 return NULL;
 
-        ssa_set_var_id(v, id);
-        ssa_set_var_init(v, init);
-        return v;
+        ssa_init_constant(c, t, val);
+        return c;
 }

@@ -7,8 +7,11 @@ add_scc_lib(ssa
 	ssa-block.c
 	ssa-branch.c
 	ssa-module.c
+	ssa-function.c
 	ssaizer.c
-	ssa-ir.c
+	ssaize-expr.c
+	ssaize-stmt.c
+	ssaize-decl.c
 
 	DEPENDS
 	tree

@@ -12,7 +12,7 @@ extern ssa_branch* ssa_new_branch(ssa_context* context, ssa_branch_kind kind, ss
 }
 
 extern ssa_branch* ssa_new_if_branch(
-        ssa_context* context, ssa_value* cond, ssa_block* if_true, ssa_block* if_false)
+        ssa_context* context, ssa_value* cond, ssa_value* if_true, ssa_value* if_false)
 {
         ssa_branch* br = ssa_new_branch(context, SBK_IF, sizeof(struct _ssa_if_branch));
         if (!br)
@@ -34,7 +34,7 @@ extern ssa_branch* ssa_new_return_branch(ssa_context* context, ssa_value* val)
         return br;
 }
 
-extern ssa_branch* ssa_new_jump_branch(ssa_context* context, ssa_block* dest)
+extern ssa_branch* ssa_new_jump_branch(ssa_context* context, ssa_value* dest)
 {
         ssa_branch* br = ssa_new_branch(context, SBK_JUMP, sizeof(struct _ssa_jump_branch));
         if (!br)

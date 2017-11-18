@@ -1,5 +1,6 @@
 #include "scc/ssa/ssa-block.h"
 #include "scc/ssa/ssa-context.h"
+#include "scc/ssa/ssa-instr.h"
 
 extern ssa_block* ssa_new_block(ssa_context* context, ssa_id entry_id, ssa_branch* exit)
 {
@@ -7,14 +8,24 @@ extern ssa_block* ssa_new_block(ssa_context* context, ssa_id entry_id, ssa_branc
         if (!b)
                 return NULL;
 
-        ssa_set_block_entry_id(b, entry_id);
+        ssa_init_label(ssa_get_block_value(b), entry_id);
         ssa_set_block_exit(b, exit);
-        dseq_init_ex_ptr(&b->_values, ssa_get_context_alloc(context));
+        list_init(&b->_instr_list);
+        list_node_init(&b->_node);
         return b;
 }
 
-extern void ssa_add_block_value(ssa_block* self, ssa_value* val)
+extern void ssa_add_block_instr(ssa_block* self, ssa_instr* i)
 {
-        S_ASSERT(val);
-        dseq_append_ptr(&self->_values, val);
+        S_ASSERT(i);
+        list_push_back(&self->_instr_list, (list_node*)i);
+}
+
+extern ssa_instr* ssa_block_get_first_phi(const ssa_block* self)
+{
+        SSA_FOREACH_BLOCK_INSTR(self, instr)
+                if (ssa_get_instr_kind(instr) == SIK_PHI)
+                        return instr;
+
+        return NULL;
 }

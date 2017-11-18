@@ -14,6 +14,7 @@ extern "C" {
 typedef struct _ssa_context ssa_context;
 typedef struct _ssa_value ssa_value;
 typedef struct _ssa_block ssa_block;
+typedef struct _ssa_branch ssa_branch;
 typedef struct _tree_type tree_type;
 
 typedef struct _ssa_builder
@@ -48,17 +49,57 @@ extern ssa_value* ssa_build_getaddr(ssa_builder* self, ssa_value* operand, ssize
 extern ssa_value* ssa_build_getptrval(
         ssa_builder* self, ssa_value* operand, ssize index, ssize offset);
 
-extern ssa_value* ssa_build_init(ssa_builder* self, ssa_value* operand);
-extern ssa_value* ssa_build_empty_init(ssa_builder* self, tree_type* value_type);
+extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type);
+extern ssa_value* ssa_build_load(ssa_builder* self, ssa_value* what);
+extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value* where);
 
-static inline void ssa_set_builder_uid(ssa_builder* self, ssa_id uid)
+extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, suint64 val);
+extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, float val);
+extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, double val);
+
+extern ssa_value* ssa_build_inc(ssa_builder* self, ssa_value* operand);
+extern ssa_value* ssa_build_dec(ssa_builder* self, ssa_value* operand);
+
+extern ssa_value* ssa_build_not(ssa_builder* self, ssa_value* operand);
+extern ssa_value* ssa_build_log_not(ssa_builder* self, ssa_value* operand);
+extern ssa_value* ssa_build_neg(ssa_builder* self, ssa_value* operand);
+
+extern ssa_value* ssa_build_phi(ssa_builder* self, tree_type* type);
+
+extern ssa_branch* ssa_build_jmp(ssa_builder* self, ssa_value* dest);
+extern ssa_branch* ssa_build_if(
+        ssa_builder* self, ssa_value* cond, ssa_value* if_true, ssa_value* if_false);
+
+extern ssa_branch* ssa_build_return(ssa_builder* self, ssa_value* val);
+
+static inline void ssa_builder_set_uid(ssa_builder* self, ssa_id uid)
 {
         self->uid = uid;
 }
 
-static inline ssa_id ssa_get_builder_uid(const ssa_builder* self)
+static inline ssa_id ssa_builder_get_uid(const ssa_builder* self)
 {
         return self->uid;
+}
+
+static inline ssa_id ssa_builder_gen_uid(ssa_builder* self)
+{
+        return self->uid++;
+}
+
+static inline void ssa_builder_set_block(ssa_builder* self, ssa_block* block)
+{
+        self->block = block;
+}
+
+static inline ssa_block* ssa_builder_get_block(const ssa_builder* self)
+{
+        return self->block;
+}
+
+static inline ssa_context* ssa_get_builder_context(const ssa_builder* self)
+{
+        return self->context;
 }
 
 #ifdef __cplusplus

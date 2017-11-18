@@ -12,7 +12,7 @@ extern "C" {
 #include "ssa-common.h"
 
 typedef struct _ssa_context ssa_context;
-typedef struct _ssa_block ssa_block;
+typedef struct _ssa_function ssa_function;
 typedef struct _tree_decl tree_decl;
 
 typedef struct _ssa_module
@@ -22,10 +22,8 @@ typedef struct _ssa_module
 
 extern ssa_module* ssa_new_module(ssa_context* context);
 
-extern void ssa_module_add_def(ssa_module* self, tree_id id, ssa_block* def);
-extern void ssa_module_add_func_def(ssa_module* self, const tree_decl* func, ssa_block* def);
-extern ssa_block* ssa_module_find_def(ssa_module* self, tree_id id);
-extern ssa_block* ssa_module_find_func_def(ssa_module* self, const tree_decl* func);
+extern void ssa_module_add_func_def(ssa_module* self, ssa_function* func);
+extern ssa_function* ssa_module_find_func_def(ssa_module* self, const tree_decl* func);
 
 static inline hiter ssa_get_module_begin(const ssa_module* self)
 {

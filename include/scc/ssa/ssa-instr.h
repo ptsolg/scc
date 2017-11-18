@@ -10,9 +10,9 @@ extern "C" {
 #endif
 
 #include "ssa-common.h"
+#include "ssa-value.h"
 
 typedef struct _tree_type tree_type;
-typedef struct _ssa_value ssa_value;
 typedef struct _ssa_instr ssa_instr;
 typedef struct _ssa_context ssa_context;
 typedef struct _tree_decl tree_decl;
@@ -27,7 +27,9 @@ typedef enum
         SIK_GETADDR,
         SIK_GETPTRVAL,
         SIK_PHI,
-        SIK_INIT,
+        SIK_ALLOCA,
+        SIK_LOAD,
+        SIK_STORE,
 
         SIK_SIZE,
 } ssa_instr_kind;
@@ -36,15 +38,26 @@ typedef enum
 
 struct _ssa_instr_base
 {
+        list_node _node;
         ssa_instr_kind _kind;
+        ssa_variable _val;
 };
 
-extern ssa_instr* ssa_new_instr(ssa_context* context, ssa_instr_kind kind, ssize size);
+extern ssa_instr* ssa_new_instr(
+        ssa_context* context, ssa_instr_kind kind, ssa_id id, tree_type* type, ssize size);
 
 static inline struct _ssa_instr_base* _ssa_get_instr_base(ssa_instr* self);
 static inline const struct _ssa_instr_base* _ssa_get_instr_cbase(const ssa_instr* self);
 
+static inline ssa_instr* ssa_get_var_instr(ssa_value* self);
+static inline const ssa_instr* ssa_get_var_cinstr(const ssa_value* self);
+
 static inline ssa_instr_kind ssa_get_instr_kind(const ssa_instr* self);
+static inline ssa_value* ssa_get_instr_value(ssa_instr* self);
+static inline const ssa_value* ssa_get_instr_cvalue(const ssa_instr* self);
+static inline ssa_instr* ssa_get_next_instr(const ssa_instr* self);
+static inline ssa_instr* ssa_get_prev_instr(const ssa_instr* self);
+
 static inline void ssa_set_instr_kind(ssa_instr* self, ssa_instr_kind kind);
 
 typedef enum
@@ -82,7 +95,12 @@ struct _ssa_binary_instr
 };
 
 extern ssa_instr* ssa_new_binop(
-        ssa_context* context, ssa_binary_instr_kind opcode, ssa_value* lhs, ssa_value* rhs);
+        ssa_context* context,
+        ssa_id id,
+        tree_type* restype,
+        ssa_binary_instr_kind opcode,
+        ssa_value* lhs,
+        ssa_value* rhs);
 
 static inline struct _ssa_binary_instr* _ssa_get_binop(ssa_instr* self);
 static inline const struct _ssa_binary_instr* _ssa_get_cbinop(const ssa_instr* self);
@@ -98,19 +116,16 @@ static inline void ssa_set_binop_rhs(ssa_instr* self, ssa_value* rhs);
 struct _ssa_cast_instr
 {
         struct _ssa_instr_base _base;
-        tree_type* _type;
         ssa_value* _operand;
 };
 
-extern ssa_instr* ssa_new_cast(ssa_context* context, tree_type* type, ssa_value* operand);
+extern ssa_instr* ssa_new_cast(ssa_context* context, ssa_id id, tree_type* type, ssa_value* operand);
 
 static inline struct _ssa_cast_instr* _ssa_get_cast(ssa_instr* self);
 static inline const struct _ssa_cast_instr* _ssa_get_ccast(const ssa_instr* self);
 
-static inline tree_type* ssa_get_cast_type(const ssa_instr* self);
 static inline ssa_value* ssa_get_cast_operand(const ssa_instr* self);
 
-static inline void ssa_set_cast_type(ssa_instr* self, tree_type* type);
 static inline void ssa_set_cast_operand(ssa_instr* self, ssa_value* operand);
 
 struct _ssa_call_instr
@@ -120,7 +135,7 @@ struct _ssa_call_instr
         dseq _args;
 };
 
-extern ssa_instr* ssa_new_call(ssa_context* context, tree_decl* func);
+extern ssa_instr* ssa_new_call(ssa_context* context, ssa_id id, tree_type* restype, tree_decl* func);
 
 static inline struct _ssa_call_instr* _ssa_get_call(ssa_instr* self);
 static inline const struct _ssa_call_instr* _ssa_get_ccall(const ssa_instr* self);
@@ -137,7 +152,7 @@ struct _ssa_getaddr_instr
 };
 
 extern ssa_instr* ssa_new_getaddr(
-        ssa_context* context, ssa_value* operand, ssize offset);
+        ssa_context* context, ssa_id id, tree_type* ptr, ssa_value* operand, ssize offset);
 
 static inline struct _ssa_getaddr_instr* _ssa_get_getaddr(ssa_instr* self);
 static inline const struct _ssa_getaddr_instr* _ssa_get_cgetaddr(const ssa_instr* self);
@@ -157,7 +172,7 @@ struct _ssa_getptrval_instr
 };
 
 extern ssa_instr* ssa_new_getptrval(
-        ssa_context* context, ssa_value* pointer, ssize index, ssize offset);
+        ssa_context* context, ssa_id id, tree_type* restype, ssa_value* pointer, ssize index, ssize offset);
 
 static inline struct _ssa_getptrval_instr* _ssa_get_getptrval(ssa_instr* self);
 static inline const struct _ssa_getptrval_instr* _ssa_get_cgetptrval(const ssa_instr* self);
@@ -173,25 +188,63 @@ static inline void ssa_set_getptrval_offset(ssa_instr* self, ssize offset);
 struct _ssa_phi_instr
 {
         struct _ssa_instr_base _base;
-        // todo
+        dseq _params;
 };
 
-extern ssa_instr* ssa_new_phi(ssa_context* context);
+extern ssa_instr* ssa_new_phi(ssa_context* context, ssa_id id, tree_type* restype);
 
-struct _ssa_init_instr
+extern void ssa_add_phi_var(ssa_instr* self, ssa_value* var);
+
+static inline struct _ssa_phi_instr* _ssa_get_phi(ssa_instr* self);
+static inline const struct _ssa_phi_instr* _ssa_get_cphi(const ssa_instr* self);
+
+static inline ssa_value** ssa_get_phi_begin(const ssa_instr* self);
+static inline ssa_value** ssa_get_phi_end(const ssa_instr* self);
+
+#define SSA_FOREACH_PHI_VAR(PPHI, ITNAME)\
+        for (ssa_value** ITNAME = ssa_get_phi_begin(PPHI);\
+                ITNAME != ssa_get_phi_end(PPHI); ITNAME++)
+
+struct _ssa_alloca_instr
 {
         struct _ssa_instr_base _base;
-        ssa_value* _val;
 };
 
-extern ssa_instr* ssa_new_init(ssa_context* context, ssa_value* operand);
+extern ssa_instr* ssa_new_alloca(ssa_context* context, ssa_id id, tree_type* type);
 
-static inline struct _ssa_init_instr* _ssa_get_init(ssa_instr* self);
-static inline const struct _ssa_init_instr* _ssa_get_cinit(const ssa_instr* self);
+struct _ssa_load_instr
+{
+        struct _ssa_instr_base _base;
+        ssa_value* _what;
+};
 
-static inline ssa_value* ssa_get_init_value(const ssa_instr* self);
+extern ssa_instr* ssa_new_load(ssa_context* context,
+        ssa_id id, tree_type* type, ssa_value* what);
 
-static inline void ssa_set_init_value(ssa_instr* self, ssa_value* val);
+static inline struct _ssa_load_instr* _ssa_get_load(ssa_instr* self);
+static inline const struct _ssa_load_instr* _ssa_get_cload(const ssa_instr* self);
+
+static inline ssa_value* ssa_get_load_what(const ssa_instr* self);
+
+static inline void ssa_set_load_what(ssa_instr* self, ssa_value* what);
+
+struct _ssa_store_instr
+{
+        struct _ssa_instr_base _base;
+        ssa_value* _what;
+        ssa_value* _where;
+};
+
+extern ssa_instr* ssa_new_store(ssa_context* context, ssa_value* what, ssa_value* where);
+
+static inline struct _ssa_store_instr* _ssa_get_store(ssa_instr* self);
+static inline const struct _ssa_store_instr* _ssa_get_cstore(const ssa_instr* self);
+
+static inline ssa_value* ssa_get_store_what(const ssa_instr* self);
+static inline ssa_value* ssa_get_store_where(const ssa_instr* self);
+
+static inline void ssa_set_store_what(ssa_instr* self, ssa_value* what);
+static inline void ssa_set_store_where(ssa_instr* self, ssa_value* where);
 
 typedef struct _ssa_instr
 {
@@ -203,7 +256,9 @@ typedef struct _ssa_instr
                 struct _ssa_getaddr_instr _getaddr;
                 struct _ssa_getptrval_instr _getptrval;
                 struct _ssa_phi_instr _phi;
-                struct _ssa_init_instr _init;
+                struct _ssa_alloca_instr _alloca;
+                struct _ssa_store_instr _store;
+                struct _ssa_load_instr _load;
         };
 } ssa_instr;
 
@@ -221,9 +276,42 @@ static inline const struct _ssa_instr_base* _ssa_get_instr_cbase(const ssa_instr
         return (const struct _ssa_instr_base*)self;
 }
 
+static inline ssa_instr* ssa_get_var_instr(ssa_value* self)
+{
+        S_ASSERT(ssa_get_value_kind(self) == SVK_VARIABLE);
+        return (ssa_instr*)((suint8*)self - offsetof(struct _ssa_instr_base, _val));
+}
+
+static inline const ssa_instr* ssa_get_var_cinstr(const ssa_value* self)
+{
+        S_ASSERT(ssa_get_value_kind(self) == SVK_VARIABLE);
+        return (const ssa_instr*)(
+                (const suint8*)self - offsetof(struct _ssa_instr_base, _val));
+}
+
 static inline ssa_instr_kind ssa_get_instr_kind(const ssa_instr* self)
 {
         return _ssa_get_instr_cbase(self)->_kind;
+}
+
+static inline ssa_value* ssa_get_instr_value(ssa_instr* self)
+{
+        return (ssa_value*)&_ssa_get_instr_base(self)->_val;
+}
+
+static inline const ssa_value* ssa_get_instr_cvalue(const ssa_instr* self)
+{
+        return (const ssa_value*)&_ssa_get_instr_cbase(self)->_val;
+}
+
+static inline ssa_instr* ssa_get_next_instr(const ssa_instr* self)
+{
+        return (ssa_instr*)list_node_next(&_ssa_get_instr_cbase(self)->_node);
+}
+
+static inline ssa_instr* ssa_get_prev_instr(const ssa_instr* self)
+{
+        return (ssa_instr*)list_node_prev(&_ssa_get_instr_cbase(self)->_node);
 }
 
 static inline void ssa_set_instr_kind(ssa_instr* self, ssa_instr_kind kind)
@@ -287,19 +375,9 @@ static inline const struct _ssa_cast_instr* _ssa_get_ccast(const ssa_instr* self
         return (const struct _ssa_cast_instr*)self;
 }
 
-static inline tree_type* ssa_get_cast_type(const ssa_instr* self)
-{
-        return _ssa_get_ccast(self)->_type;
-}
-
 static inline ssa_value* ssa_get_cast_operand(const ssa_instr* self)
 {
         return _ssa_get_ccast(self)->_operand;
-}
-
-static inline void ssa_set_cast_type(ssa_instr* self, tree_type* type)
-{
-        _ssa_get_cast(self)->_type = type;
 }
 
 static inline void ssa_set_cast_operand(ssa_instr* self, ssa_value* operand)
@@ -403,26 +481,80 @@ static inline void ssa_set_getptrval_offset(ssa_instr* self, ssize offset)
         _ssa_get_getptrval(self)->_offset = offset;
 }
 
-static inline struct _ssa_init_instr* _ssa_get_init(ssa_instr* self)
+static inline struct _ssa_phi_instr* _ssa_get_phi(ssa_instr* self)
 {
-        SSA_ASSERT_INSTR(self, SIK_INIT);
-        return (struct _ssa_init_instr*)self;
+        SSA_ASSERT_INSTR(self, SIK_PHI);
+        return (struct _ssa_phi_instr*)self;
 }
 
-static inline const struct _ssa_init_instr* _ssa_get_cinit(const ssa_instr* self)
+static inline const struct _ssa_phi_instr* _ssa_get_cphi(const ssa_instr* self)
 {
-        SSA_ASSERT_INSTR(self, SIK_INIT);
-        return (const struct _ssa_init_instr*)self;
+        SSA_ASSERT_INSTR(self, SIK_PHI);
+        return (const struct _ssa_phi_instr*)self;
 }
 
-static inline ssa_value* ssa_get_init_value(const ssa_instr* self)
+static inline ssa_value** ssa_get_phi_begin(const ssa_instr* self)
 {
-        return _ssa_get_cinit(self)->_val;
+        return (ssa_value**)dseq_begin_ptr(&_ssa_get_cphi(self)->_params);
 }
 
-static inline void ssa_set_init_value(ssa_instr* self, ssa_value* val)
+static inline ssa_value** ssa_get_phi_end(const ssa_instr* self)
 {
-        _ssa_get_init(self)->_val = val;
+        return (ssa_value**)dseq_end_ptr(&_ssa_get_cphi(self)->_params);
+}
+
+static inline struct _ssa_load_instr* _ssa_get_load(ssa_instr* self)
+{
+        SSA_ASSERT_INSTR(self, SIK_LOAD);
+        return (struct _ssa_load_instr*)self;
+}
+
+static inline const struct _ssa_load_instr* _ssa_get_cload(const ssa_instr* self)
+{
+        SSA_ASSERT_INSTR(self, SIK_LOAD);
+        return (const struct _ssa_load_instr*)self;
+}
+
+static inline ssa_value* ssa_get_load_what(const ssa_instr* self)
+{
+        return _ssa_get_cload(self)->_what;
+}
+
+static inline void ssa_set_load_what(ssa_instr* self, ssa_value* what)
+{
+        _ssa_get_load(self)->_what = what;
+}
+
+static inline struct _ssa_store_instr* _ssa_get_store(ssa_instr* self)
+{
+        SSA_ASSERT_INSTR(self, SIK_STORE);
+        return (struct _ssa_store_instr*)self;
+}
+
+static inline const struct _ssa_store_instr* _ssa_get_cstore(const ssa_instr* self)
+{
+        SSA_ASSERT_INSTR(self, SIK_STORE);
+        return (const struct _ssa_store_instr*)self;
+}
+
+static inline ssa_value* ssa_get_store_what(const ssa_instr* self)
+{
+        return _ssa_get_cstore(self)->_what;
+}
+
+static inline ssa_value* ssa_get_store_where(const ssa_instr* self)
+{
+        return _ssa_get_cstore(self)->_where;
+}
+
+static inline void ssa_set_store_what(ssa_instr* self, ssa_value* what)
+{
+        _ssa_get_store(self)->_what = what;
+}
+
+static inline void ssa_set_store_where(ssa_instr* self, ssa_value* where)
+{
+        _ssa_get_store(self)->_where = where;
 }
 
 #ifdef __cplusplus

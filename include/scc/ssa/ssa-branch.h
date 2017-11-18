@@ -11,7 +11,6 @@ extern "C" {
 
 #include "ssa-common.h"
 
-typedef struct _ssa_block ssa_block;
 typedef struct _ssa_value ssa_value;
 typedef struct _ssa_context ssa_context;
 typedef struct _ssa_branch ssa_branch;
@@ -43,23 +42,23 @@ struct _ssa_if_branch
 {
         struct _ssa_branch_base _base;
         ssa_value* _cond;
-        ssa_block* _true;
-        ssa_block* _false;
+        ssa_value* _true;
+        ssa_value* _false;
 };
 
 extern ssa_branch* ssa_new_if_branch(
-        ssa_context* context, ssa_value* cond, ssa_block* if_true, ssa_block* if_false);
+        ssa_context* context, ssa_value* cond, ssa_value* if_true, ssa_value* if_false);
 
 static inline struct _ssa_if_branch* _ssa_get_if(ssa_branch* self);
 static inline const struct _ssa_if_branch* _ssa_get_cif(const ssa_branch* self);
 
 static inline ssa_value* ssa_get_if_cond(const ssa_branch* self);
-static inline ssa_block* ssa_get_if_true_block(const ssa_branch* self);
-static inline ssa_block* ssa_get_if_false_block(const ssa_branch* self);
+static inline ssa_value* ssa_get_if_true_block(const ssa_branch* self);
+static inline ssa_value* ssa_get_if_false_block(const ssa_branch* self);
 
 static inline void ssa_set_if_cond(ssa_branch* self, ssa_value* val);
-static inline void ssa_set_if_true_block(ssa_branch* self, ssa_block* true_block);
-static inline void ssa_set_if_false_block(ssa_branch* self, ssa_block* false_block);
+static inline void ssa_set_if_true_block(ssa_branch* self, ssa_value* true_block);
+static inline void ssa_set_if_false_block(ssa_branch* self, ssa_value* false_block);
 
 struct _ssa_return_branch
 {
@@ -78,16 +77,16 @@ static inline void ssa_set_return_value(ssa_branch* self, ssa_value* value);
 struct _ssa_jump_branch
 {
         struct _ssa_branch_base _base;
-        ssa_block* _dest;
+        ssa_value* _dest;
 };
 
-extern ssa_branch* ssa_new_jump_branch(ssa_context* context, ssa_block* dest);
+extern ssa_branch* ssa_new_jump_branch(ssa_context* context, ssa_value* dest);
 
 static inline struct _ssa_jump_branch* _ssa_get_jump(ssa_branch* self);
 static inline const struct _ssa_jump_branch* _ssa_get_cjump(const ssa_branch* self);
 
-static inline ssa_block* ssa_get_jump_dest(const ssa_branch* self);
-static inline void ssa_set_jump_dest(ssa_branch* self, ssa_block* dest);
+static inline ssa_value* ssa_get_jump_dest(const ssa_branch* self);
+static inline void ssa_set_jump_dest(ssa_branch* self, ssa_value* dest);
 
 typedef struct _ssa_branch
 {
@@ -142,12 +141,12 @@ static inline ssa_value* ssa_get_if_cond(const ssa_branch* self)
         return _ssa_get_cif(self)->_cond;
 }
 
-static inline ssa_block* ssa_get_if_true_block(const ssa_branch* self)
+static inline ssa_value* ssa_get_if_true_block(const ssa_branch* self)
 {
         return _ssa_get_cif(self)->_true;
 }
 
-static inline ssa_block* ssa_get_if_false_block(const ssa_branch* self)
+static inline ssa_value* ssa_get_if_false_block(const ssa_branch* self)
 {
         return _ssa_get_cif(self)->_false;
 }
@@ -157,12 +156,12 @@ static inline void ssa_set_if_cond(ssa_branch* self, ssa_value* val)
         _ssa_get_if(self)->_cond = val;
 }
 
-static inline void ssa_set_if_true_block(ssa_branch* self, ssa_block* true_block)
+static inline void ssa_set_if_true_block(ssa_branch* self, ssa_value* true_block)
 {
         _ssa_get_if(self)->_true = true_block;
 }
 
-static inline void ssa_set_if_false_block(ssa_branch* self, ssa_block* false_block)
+static inline void ssa_set_if_false_block(ssa_branch* self, ssa_value* false_block)
 {
         _ssa_get_if(self)->_false = false_block;
 }
@@ -201,12 +200,12 @@ static inline const struct _ssa_jump_branch* _ssa_get_cjump(const ssa_branch* se
         return (const struct _ssa_jump_branch*)self;
 }
 
-static inline ssa_block* ssa_get_jump_dest(const ssa_branch* self)
+static inline ssa_value* ssa_get_jump_dest(const ssa_branch* self)
 {
         return _ssa_get_cjump(self)->_dest;
 }
 
-static inline void ssa_set_jump_dest(ssa_branch* self, ssa_block* dest)
+static inline void ssa_set_jump_dest(ssa_branch* self, ssa_value* dest)
 {
         _ssa_get_jump(self)->_dest = dest;
 }

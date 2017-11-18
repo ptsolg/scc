@@ -1,6 +1,6 @@
 #include "scc/ssa/ssa-module.h"
 #include "scc/ssa/ssa-context.h"
-#include "scc/tree/tree-decl.h"
+#include "scc/ssa/ssa-function.h"
 
 extern ssa_module* ssa_new_module(ssa_context* context)
 {
@@ -12,25 +12,17 @@ extern ssa_module* ssa_new_module(ssa_context* context)
         return m;
 }
 
-extern void ssa_module_add_def(ssa_module* self, tree_id id, ssa_block* def)
+extern void ssa_module_add_func_def(ssa_module* self, ssa_function* func)
 {
-        htab_insert_ptr(&self->_defs, id, def);
+        tree_decl* entity = ssa_get_function_entity(func);
+        S_ASSERT(entity);
+        htab_insert_ptr(&self->_defs, tree_get_decl_name(entity), func);
 }
 
-extern void ssa_module_add_func_def(ssa_module* self, const tree_decl* func, ssa_block* def)
-{
-        ssa_module_add_def(self, tree_get_decl_name(func), def);
-}
-
-extern ssa_block* ssa_module_find_def(ssa_module* self, tree_id id)
+extern ssa_function* ssa_module_find_func_def(ssa_module* self, const tree_decl* func)
 {
         hiter res;
-        return htab_find(&self->_defs, id, &res)
+        return htab_find(&self->_defs, tree_get_decl_name(func), &res)
                 ? hiter_get_ptr(&res)
                 : NULL;
-}
-
-extern ssa_block* ssa_module_find_func_def(ssa_module* self, const tree_decl* func)
-{
-        return ssa_module_find_def(self, tree_get_decl_name(func));
 }
