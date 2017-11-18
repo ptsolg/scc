@@ -6,11 +6,11 @@ extern tree_expr* csema_new_impl_cast(csema* self, tree_expr* e, tree_type* t)
 {
         tree_type* et = tree_desugar_type(tree_get_expr_type(e));
 
-        if (et == t)
+        if (et == t || tree_types_are_same(tree_get_unqualified_type(et),
+                                           tree_get_unqualified_type(t)))
+        {
                 return e;
-        if (tree_type_is(et, TTK_BUILTIN) && tree_type_is(t, TTK_BUILTIN))
-                if (tree_get_builtin_type_kind(et) == tree_get_builtin_type_kind(t))
-                        return e;
+        }
   
         return tree_new_implicit_cast_expr(self->context,
                 tree_get_expr_value_kind(e), tree_get_expr_loc(e), t, e);
