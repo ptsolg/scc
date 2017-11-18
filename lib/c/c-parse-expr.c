@@ -259,9 +259,14 @@ extern tree_expr* cparse_expr(cparser* self)
 extern tree_expr* cparse_expr_ex(cparser* self, int min_prec)
 {
         tree_expr* lhs = cparse_cast_expr(self);
-        return lhs
-                ? cparse_rhs_of_binary_expr(self, lhs, min_prec)
-                : NULL;
+        if (!lhs)
+                return NULL;
+
+        tree_expr* expr = cparse_rhs_of_binary_expr(self, lhs, min_prec);
+        if (!expr)
+                return NULL;
+
+        return csema_finish_expr(self->sema, expr);
 }
 
 extern tree_expr* cparse_const_expr(cparser* self)

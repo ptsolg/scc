@@ -122,6 +122,8 @@ extern tree_type* csema_get_designator_type(csema* self, tree_designator* d);
 
 extern tree_expr* csema_new_init_expr(csema* self, tree_location loc);
 
+extern tree_expr* csema_finish_expr(csema* self, tree_expr* expr);
+
 #ifdef __cplusplus
 }
 #endif
