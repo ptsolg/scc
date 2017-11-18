@@ -80,6 +80,8 @@ extern sint16 float_get_i16(const float_value* val);
 extern sint32 float_get_i32(const float_value* val);
 extern sint64 float_get_i64(const float_value* val);
 
+extern int float_print(const float_value* val, char* buf, ssize count, int precision);
+
 typedef struct _int_value
 {
         suint64 _val;
@@ -127,6 +129,8 @@ extern double int_get_dp(const int_value* val);
 extern void int_resize(int_value* val, uint bits);
 extern float_value int_to_sp(const int_value* val);
 extern float_value int_to_dp(const int_value* val);
+
+extern int int_print(const int_value* val, char* buf, ssize count);
 
 typedef struct _value
 {
@@ -178,6 +182,8 @@ extern float_value avalue_get_float(const avalue* val);
 extern void avalue_to_int(avalue* val, uint bits, bool signed_);
 extern void avalue_to_sp(avalue* val);
 extern void avalue_to_dp(avalue* val);
+
+extern int avalue_print(const avalue* self, char* buf, ssize count, int precision);
 
 #ifdef __cplusplus
 }

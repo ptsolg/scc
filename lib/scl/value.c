@@ -1,6 +1,7 @@
 #include "scc/scl/value.h"
 #include "scc/scl/misc.h"
 #include <math.h>
+#include <stdio.h>
 
 extern void float_init_sp(float_value* self, float v)
 {
@@ -222,6 +223,14 @@ extern sint64 float_get_i64(const float_value* val)
                 return (sint64)val->_float;
         else
                 return (sint64)val->_double;
+}
+
+extern int float_print(const float_value* val, char* buf, ssize count, int precision)
+{
+        if (float_is_sp(val))
+                return snprintf(buf, count, "%.*f", precision, float_get_sp(val));
+        else
+                return snprintf(buf, count, "%.*lf", precision, float_get_dp(val));
 }
 
 extern void int_init(int_value* self, uint bits, bool signed_, suint64 val)
@@ -464,6 +473,12 @@ extern float_value int_to_dp(const int_value* val)
         float_value fv;
         float_init_dp(&fv, int_get_dp(val));
         return fv;
+}
+
+extern int int_print(const int_value* val, char* buf, ssize count)
+{
+        return snprintf(buf, count,
+                (int_is_signed(val) ? "%lld" : "%llu"), int_get_u64(val));
 }
 
 extern void avalue_init_int(avalue* self, uint bits, bool signed_, suint64 val)
@@ -773,4 +788,12 @@ extern void avalue_to_dp(avalue* val)
                 val->_integer = false;
                 val->_float = int_to_dp(&val->_int);
         }
+}
+
+extern int avalue_print(const avalue* self, char* buf, ssize count, int precision)
+{
+        if (avalue_is_float(self))
+                return float_print(&self->_float, buf, count, precision);
+        else
+                return int_print(&self->_int, buf, count);
 }
