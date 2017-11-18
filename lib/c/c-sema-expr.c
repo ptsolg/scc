@@ -517,9 +517,11 @@ extern tree_expr* csema_new_cast_expr(
 // 6.5.5 multiplicative
 // Each of the operands shall have arithmetic type.
 static tree_type* csema_check_mul_div_expr(
-        csema* self, tree_binop_kind opcode, tree_location loc, tree_expr** lhs, tree_expr** rhs)
+        csema* self, tree_location loc, tree_expr** lhs, tree_expr** rhs, bool is_assign)
 {
-        tree_type* lt = csema_unary_conversion(self, lhs);
+        tree_type* lt = is_assign
+                ? tree_get_expr_type(*lhs)
+                : csema_unary_conversion(self, lhs);
         tree_type* rt = csema_unary_conversion(self, rhs);
 
         if (!csema_require_arithmetic_expr_type(self, lt, tree_get_expr_loc(*lhs)))
@@ -533,9 +535,11 @@ static tree_type* csema_check_mul_div_expr(
 // 6.5.7/6.5.10-13
 // Each of the operands shall have integer type.
 static tree_type* csema_check_bitwise_expr(
-        csema* self, tree_binop_kind opcode, tree_location loc, tree_expr** lhs, tree_expr** rhs)
+        csema* self, tree_location loc, tree_expr** lhs, tree_expr** rhs, bool is_assign)
 {
-        tree_type* lt = csema_unary_conversion(self, lhs);
+        tree_type* lt = is_assign
+                ? tree_get_expr_type(*lhs)
+                : csema_unary_conversion(self, lhs);
         tree_type* rt = csema_unary_conversion(self, rhs);
 
         if (!csema_require_integral_expr_type(self, rt, tree_get_expr_loc(*rhs)))
@@ -681,21 +685,23 @@ static tree_type* csema_check_add_sub_assign_expr(
 static tree_type* csema_check_mul_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
-        return csema_check_mul_div_expr(self, TBK_MUL, loc, lhs, rhs);
+        return csema_check_mul_div_expr(self, loc, lhs, rhs, false);
 }
 
 static tree_type* csema_check_div_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
-        return csema_check_mul_div_expr(self, TBK_DIV, loc, lhs, rhs);
+        return csema_check_mul_div_expr(self, loc, lhs, rhs, false);
 }
 
 // 6.5.5 multiplicative
 // The operands of the % operator shall have integer type
 static tree_type* csema_check_mod_expr_ex(
-        csema* self, tree_binop_kind opcode, tree_location loc, tree_expr** lhs, tree_expr** rhs)
+        csema* self, tree_location loc, tree_expr** lhs, tree_expr** rhs, bool is_assign)
 {
-        tree_type* lt = csema_unary_conversion(self, lhs);
+        tree_type* lt = is_assign
+                ? tree_get_expr_type(*lhs)
+                : csema_unary_conversion(self, lhs);
         tree_type* rt = csema_unary_conversion(self, rhs);
 
         if (!csema_require_integral_expr_type(self, lt, tree_get_expr_loc(*lhs)))
@@ -709,7 +715,7 @@ static tree_type* csema_check_mod_expr_ex(
 static tree_type* csema_check_mod_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
-        return csema_check_mod_expr_ex(self, TBK_MOD, loc, lhs, rhs);
+        return csema_check_mod_expr_ex(self, loc, lhs, rhs, false);
 }
 
 // 6.5.6 additive
@@ -776,13 +782,13 @@ static tree_type* csema_check_sub_expr(
 static tree_type* csema_check_shl_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
-        return csema_check_bitwise_expr(self, TBK_SHL, loc, lhs, rhs);
+        return csema_check_bitwise_expr(self, loc, lhs, rhs, false);
 }
 
 static tree_type* csema_check_shr_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
-        return csema_check_bitwise_expr(self, TBK_SHR, loc, lhs, rhs);
+        return csema_check_bitwise_expr(self, loc, lhs, rhs, false);
 }
 
 static tree_type* csema_check_le_expr(
@@ -824,19 +830,19 @@ static tree_type* csema_check_neq_expr(
 static tree_type* csema_check_and_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
-        return csema_check_bitwise_expr(self, TBK_AND, loc, lhs, rhs);
+        return csema_check_bitwise_expr(self, loc, lhs, rhs, false);
 }
 
 static tree_type* csema_check_xor_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
-        return csema_check_bitwise_expr(self, TBK_XOR, loc, lhs, rhs);
+        return csema_check_bitwise_expr(self, loc, lhs, rhs, false);
 }
 
 static tree_type* csema_check_or_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
-        return csema_check_bitwise_expr(self, TBK_OR, loc, lhs, rhs);
+        return csema_check_bitwise_expr(self, loc, lhs, rhs, false);
 }
 
 static tree_type* csema_check_log_and_expr(
@@ -988,7 +994,7 @@ static tree_type* csema_check_mul_assign_expr(
         csema* self, tree_expr**lhs, tree_expr** rhs, tree_location loc)
 {
         return csema_require_modifiable_lvalue(self, *lhs)
-                ? csema_check_mul_div_expr(self, TBK_MUL_ASSIGN, loc, lhs, rhs)
+                ? csema_check_mul_div_expr(self, loc, lhs, rhs, true)
                 : NULL;
 }
 
@@ -996,7 +1002,7 @@ static tree_type* csema_check_div_assign_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
         return csema_require_modifiable_lvalue(self, *lhs)
-                ? csema_check_mul_div_expr(self, TBK_DIV_ASSIGN, loc, lhs, rhs)
+                ? csema_check_mul_div_expr(self, loc, lhs, rhs, true)
                 : NULL;
 }
 
@@ -1004,7 +1010,7 @@ static tree_type* csema_check_mod_assign_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
         return csema_require_modifiable_lvalue(self, *lhs)
-                ? csema_check_mod_expr_ex(self, TBK_MOD_ASSIGN, loc, lhs, rhs)
+                ? csema_check_mod_expr_ex(self, loc, lhs, rhs, true)
                 : NULL;
 }
 
@@ -1012,7 +1018,7 @@ static tree_type* csema_check_shl_assign_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
         return csema_require_modifiable_lvalue(self, *lhs)
-                ? csema_check_bitwise_expr(self, TBK_SHL_ASSIGN, loc, lhs, rhs)
+                ? csema_check_bitwise_expr(self, loc, lhs, rhs, true)
                 : NULL;
 }
 
@@ -1020,7 +1026,7 @@ static tree_type* csema_check_shr_assign_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
         return csema_require_modifiable_lvalue(self, *lhs)
-                ? csema_check_bitwise_expr(self, TBK_SHR_ASSIGN, loc, lhs, rhs)
+                ? csema_check_bitwise_expr(self, loc, lhs, rhs, true)
                 : NULL;
 }
 
@@ -1028,7 +1034,7 @@ static tree_type* csema_check_and_assign_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
         return csema_require_modifiable_lvalue(self, *lhs)
-                ? csema_check_bitwise_expr(self, TBK_AND_ASSIGN, loc, lhs, rhs)
+                ? csema_check_bitwise_expr(self, loc, lhs, rhs, true)
                 : NULL;
 }
 
@@ -1036,7 +1042,7 @@ static tree_type* csema_check_xor_assign_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
         return csema_require_modifiable_lvalue(self, *lhs)
-                ? csema_check_bitwise_expr(self, TBK_XOR_ASSIGN, loc, lhs, rhs)
+                ? csema_check_bitwise_expr(self, loc, lhs, rhs, true)
                 : NULL;
 }
 
@@ -1044,7 +1050,7 @@ static tree_type* csema_check_or_assign_expr(
         csema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
         return csema_require_modifiable_lvalue(self, *lhs)
-                ? csema_check_bitwise_expr(self, TBK_OR_ASSIGN, loc, lhs, rhs)
+                ? csema_check_bitwise_expr(self, loc, lhs, rhs, true)
                 : NULL;
 }
 
@@ -1186,13 +1192,13 @@ extern tree_expr* csema_new_conditional_expr(
         if (!condition || !lhs || !rhs)
                 return NULL;
 
-        tree_type* ct = tree_get_expr_type(condition);
+        tree_type* ct = csema_unary_conversion(self, &condition);
         if (!csema_require_scalar_expr_type(self, ct, tree_get_expr_loc(condition)))
                 return NULL;
 
         tree_type* t = NULL;
-        tree_type* lt = tree_get_expr_type(lhs);
-        tree_type* rt = tree_get_expr_type(rhs);
+        tree_type* lt = csema_unary_conversion(self, &lhs);
+        tree_type* rt = csema_unary_conversion(self, &rhs);
         if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
                 t = csema_usual_arithmetic_conversion(self, &lhs, &rhs);
         else if (tree_type_is_record(lt) && tree_type_is_record(rt))
@@ -1290,4 +1296,12 @@ extern tree_type* csema_get_designator_type(csema* self, tree_designator* d)
 extern tree_expr* csema_new_init_expr(csema* self, tree_location loc)
 {
         return tree_new_init_expr(self->context, loc);
+}
+
+extern tree_expr* csema_finish_expr(csema* self, tree_expr* expr)
+{
+        if (expr && tree_expr_is(expr, TEK_DECL))
+                tree_set_expr_value_kind(expr, TVK_RVALUE);
+
+        return expr;
 }
