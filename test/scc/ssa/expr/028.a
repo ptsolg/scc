@@ -1,0 +1,10 @@
+; Definition for test
+@0:
+    $1 = alloca 4
+    $2 = alloca 4
+    $3 = alloca 4
+    $4 = load $1
+    $5 = load $2
+    $6 = or $4, $5
+    store $6, $3
+    ret
