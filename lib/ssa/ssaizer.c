@@ -18,7 +18,6 @@ DSEQ_GEN(htab, htab);
 extern void ssaizer_init(ssaizer* self, ssa_context* context)
 {
         self->context = context;
-        self->br_expr_exit = NULL;
         self->function = NULL;
 
         self->block = NULL;
@@ -51,19 +50,6 @@ extern void ssaizer_finish_current_block(ssaizer* self)
 extern ssa_block* ssaizer_new_block(ssaizer* self)
 {
         return ssa_new_block(self->context, ssa_builder_gen_uid(&self->builder), NULL);
-}
-
-extern ssa_block* ssaizer_new_br_exit_block(ssaizer* self, tree_type* phi_type)
-{
-        ssa_block* exit = ssaizer_new_block(self);
-
-        ssa_block* prev = ssa_builder_get_block(&self->builder);
-        ssa_builder_set_block(&self->builder, exit);
-        ssa_build_phi(&self->builder, phi_type);
-        ssa_builder_set_block(&self->builder, prev);
-
-        self->br_expr_exit = exit;
-        return exit;
 }
 
 static inline htab* ssaizer_get_last_scope(const ssaizer* self)

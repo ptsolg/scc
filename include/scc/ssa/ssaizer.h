@@ -32,9 +32,6 @@ typedef struct _ssaizer
 
         // stack of htab's used for tracking the last definition of the variable
         dseq defs;
-
-        // exit block for conditional expressions (log-and, log-or, ternary)
-        ssa_block* br_expr_exit;
 } ssaizer;
 
 extern void ssaizer_init(ssaizer* self, ssa_context* context);
@@ -45,7 +42,6 @@ extern void ssaizer_finish_block(ssaizer* self, ssa_block* block);
 extern void ssaizer_finish_current_block(ssaizer* self);
 
 extern ssa_block* ssaizer_new_block(ssaizer* self);
-extern ssa_block* ssaizer_new_br_exit_block(ssaizer* self, tree_type* phi_type);
 
 extern void ssaizer_push_scope(ssaizer* self);
 extern void ssaizer_pop_scope(ssaizer* self);

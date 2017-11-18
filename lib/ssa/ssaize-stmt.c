@@ -55,7 +55,6 @@ extern bool ssaize_compound_stmt(ssaizer* self, const tree_stmt* stmt)
 extern bool ssaize_expr_stmt(ssaizer* self, const tree_stmt* stmt)
 {
         bool res = (bool)ssaize_expr(self, tree_get_expr_stmt_root(stmt));
-        self->br_expr_exit = NULL;
         return res;
 }
 
