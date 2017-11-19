@@ -299,7 +299,7 @@ extern ssa_value* ssa_build_log_not(ssa_builder* self, ssa_value* operand)
         if (!zero)
                 return NULL;
 
-        return ssa_build_neq(self, operand, zero);
+        return ssa_build_eq(self, operand, zero);
 }
 
 extern ssa_value* ssa_build_neg(ssa_builder* self, ssa_value* operand)
@@ -309,6 +309,15 @@ extern ssa_value* ssa_build_neg(ssa_builder* self, ssa_value* operand)
                 return NULL;
 
         return ssa_build_sub(self, zero, operand);
+}
+
+extern ssa_value* ssa_build_neq_zero(ssa_builder* self, ssa_value* operand)
+{
+        ssa_value* zero = ssa_build_int_constant(self, ssa_get_value_type(operand), 0);
+        if (!zero)
+                return NULL;
+
+        return ssa_build_neq(self, operand, zero);
 }
 
 static ssa_branch* ssa_build_block_exit(ssa_builder* self, ssa_branch* br)

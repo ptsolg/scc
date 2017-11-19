@@ -63,6 +63,7 @@ extern ssa_value* ssa_build_dec(ssa_builder* self, ssa_value* operand);
 extern ssa_value* ssa_build_not(ssa_builder* self, ssa_value* operand);
 extern ssa_value* ssa_build_log_not(ssa_builder* self, ssa_value* operand);
 extern ssa_value* ssa_build_neg(ssa_builder* self, ssa_value* operand);
+extern ssa_value* ssa_build_neq_zero(ssa_builder* self, ssa_value* operand);
 
 extern ssa_value* ssa_build_phi(ssa_builder* self, tree_type* type);
 

@@ -260,22 +260,20 @@ static void ssa_br_expr_info_add_phi_var(ssa_br_expr_info* self, ssa_value* var)
         ssa_add_phi_var(self->phi, var);
 }
 
-static ssa_value* ssaize_log_not(ssaizer*, ssa_value*);
-
-static inline ssa_value* ssaize_condition(ssaizer* self, const tree_expr* cond)
+static inline ssa_value* ssaize_expr_as_condition(ssaizer* self, const tree_expr* cond)
 {
         ssa_value* v = ssaize_expr(self, cond);
         if (!v)
                 return NULL;
 
-        return ssaize_log_not(self, v);
+        return ssa_build_neq_zero(&self->builder, v);
 }
 
 static inline ssa_value* ssaize_log_expr_lhs(
         ssaizer* self, ssa_br_expr_info* info, const tree_expr* expr)
 {
         if (!tree_expr_is(expr, TEK_BINARY))
-                return ssaize_condition(self, expr);
+                return ssaize_expr_as_condition(self, expr);
 
         tree_binop_kind kind = tree_get_binop_kind(expr);
         S_ASSERT(kind == TBK_LOG_AND || kind == TBK_LOG_OR);
@@ -298,7 +296,7 @@ static inline ssa_value* ssaize_log_expr_lhs(
 
         ssaizer_enter_block(self, current);
 
-        return ssaize_condition(self, tree_get_binop_rhs(expr));
+        return ssaize_expr_as_condition(self, tree_get_binop_rhs(expr));
 }
 
 static ssa_value* ssaize_log_expr(ssaizer* self, const tree_expr* expr)
@@ -475,7 +473,7 @@ static bool ssaize_conditional_expr_branch(
 
 extern ssa_value* ssaize_conditional_expr(ssaizer* self, const tree_expr* expr)
 {
-        ssa_value* cond = ssaize_condition(self, tree_get_conditional_condition(expr));
+        ssa_value* cond = ssaize_expr_as_condition(self, tree_get_conditional_condition(expr));
         if (!cond)
                 return NULL;
         
