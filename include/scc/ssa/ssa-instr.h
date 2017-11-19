@@ -74,6 +74,7 @@ typedef enum
         SBIK_AND,
         SBIK_OR,
         SBIK_XOR,
+
         SBIK_LE,
         SBIK_GR,
         SBIK_LEQ,

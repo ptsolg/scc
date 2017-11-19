@@ -32,6 +32,10 @@ typedef struct _ssaizer
 
         // stack of htab's used for tracking the last definition of the variable
         dseq defs;
+        htab labels;
+
+        dseq break_stack;
+        dseq continue_stack;
 } ssaizer;
 
 extern void ssaizer_init(ssaizer* self, ssa_context* context);
@@ -46,11 +50,17 @@ extern ssa_block* ssaizer_new_block(ssaizer* self);
 extern void ssaizer_push_scope(ssaizer* self);
 extern void ssaizer_pop_scope(ssaizer* self);
 
-extern void ssaizer_set_lvalue_def(ssaizer* self, const tree_decl* var, ssa_value* def);
-extern ssa_value* ssaizer_get_lvalue_def(ssaizer* self, const tree_decl* var);
+extern void ssaizer_set_def(ssaizer* self, const tree_decl* var, ssa_value* def);
+extern ssa_value* ssaizer_get_def(ssaizer* self, const tree_decl* var);
 
-extern void ssaizer_set_rvalue_def(ssaizer* self, const tree_decl* var, ssa_value* def);
-extern ssa_value* ssaizer_get_rvalue_def(ssaizer* self, const tree_decl* var);
+extern ssa_block* ssaizer_get_label_block(ssaizer* self, const tree_decl* label);
+
+extern void ssaizer_push_continue_dest(ssaizer* self, ssa_block* block);
+extern void ssaizer_push_break_dest(ssaizer* self, ssa_block* block);
+extern void ssaizer_pop_continue_dest(ssaizer* self);
+extern void ssaizer_pop_break_dest(ssaizer* self);
+extern ssa_block* ssaizer_get_continue_dest(ssaizer* self);
+extern ssa_block* ssaizer_get_break_dest(ssaizer* self);
 
 extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module);
 

@@ -11,6 +11,11 @@ extern "C" {
 
 #include "ssaizer.h"
 
+extern bool ssaizer_build_jmp(ssaizer* self, ssa_block* dest);
+extern bool ssaizer_maybe_build_jmp(ssaizer* self, ssa_block* dest);
+extern bool ssaizer_build_if(ssaizer* self,
+        ssa_value* cond, ssa_block* on_true, ssa_block* on_false);
+
 extern bool ssaize_labeled_stmt(ssaizer* self, const tree_stmt* stmt);
 extern bool ssaize_default_stmt(ssaizer* self, const tree_stmt* stmt);
 extern bool ssaize_case_stmt(ssaizer* self, const tree_stmt* stmt);

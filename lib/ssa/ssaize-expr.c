@@ -1,4 +1,5 @@
 #include "scc/ssa/ssaize-expr.h"
+#include "scc/ssa/ssaize-stmt.h"
 #include "scc/ssa/ssa-context.h"
 #include "scc/ssa/ssa-instr.h"
 #include "scc/ssa/ssa-block.h"
@@ -260,15 +261,6 @@ static void ssa_br_expr_info_add_phi_var(ssa_br_expr_info* self, ssa_value* var)
         ssa_add_phi_var(self->phi, var);
 }
 
-static inline ssa_value* ssaize_expr_as_condition(ssaizer* self, const tree_expr* cond)
-{
-        ssa_value* v = ssaize_expr(self, cond);
-        if (!v)
-                return NULL;
-
-        return ssa_build_neq_zero(&self->builder, v);
-}
-
 static inline ssa_value* ssaize_log_expr_lhs(
         ssaizer* self, ssa_br_expr_info* info, const tree_expr* expr)
 {
@@ -288,15 +280,12 @@ static inline ssa_value* ssaize_log_expr_lhs(
         // finish prev block
         ssa_block* on_true = kind == TBK_LOG_OR ? exit : current;
         ssa_block* on_false = kind == TBK_LOG_OR ? current : exit;
-        ssa_build_if(&self->builder, lhs_cond,
-                ssa_get_block_value(on_true),
-                ssa_get_block_value(on_false));
+        if (!ssaizer_build_if(self, lhs_cond, on_true, on_false))
+                return false;
+
         ssa_br_expr_info_add_phi_var(info, lhs_cond);
-        ssaizer_finish_current_block(self);
-
         ssaizer_enter_block(self, current);
-
-        return ssaize_expr_as_condition(self, tree_get_binop_rhs(expr));
+        return ssaize_expr_as_condition(self, tree_get_binop_rhs(expr));;
 }
 
 static ssa_value* ssaize_log_expr(ssaizer* self, const tree_expr* expr)
@@ -309,13 +298,12 @@ static ssa_value* ssaize_log_expr(ssaizer* self, const tree_expr* expr)
                 return NULL;
 
         ssa_block* exit = ssa_br_expr_info_get_exit(&info);
-        ssa_build_jmp(&self->builder, ssa_get_block_value(exit));
-        ssa_br_expr_info_add_phi_var(&info, last_cond);
-        ssaizer_finish_current_block(self);
+        if (!ssaizer_build_jmp(self, exit))
+                return false;
 
+        ssa_br_expr_info_add_phi_var(&info, last_cond);
         ssaizer_enter_block(self, exit);
         ssaizer_finish_block(self, exit);
-
         return ssa_get_instr_value(info.phi);
 }
 
@@ -466,9 +454,7 @@ static bool ssaize_conditional_expr_branch(
                 return false;
 
         ssa_br_expr_info_add_phi_var(info, val);
-        ssa_build_jmp(&self->builder, ssa_get_block_value(ssa_br_expr_info_get_exit(info)));
-        ssaizer_finish_current_block(self);
-        return true;
+        return ssaizer_build_jmp(self, ssa_br_expr_info_get_exit(info));
 }
 
 extern ssa_value* ssaize_conditional_expr(ssaizer* self, const tree_expr* expr)
@@ -483,11 +469,8 @@ extern ssa_value* ssaize_conditional_expr(ssaizer* self, const tree_expr* expr)
 
         ssa_block* lblock = ssaizer_new_block(self);
         ssa_block* rblock = ssaizer_new_block(self);
-
-        ssa_build_if(&self->builder, cond,
-                ssa_get_block_value(lblock),
-                ssa_get_block_value(rblock));
-        ssaizer_finish_current_block(self);
+        if (!ssaizer_build_if(self, cond, lblock, rblock))
+                return false;
 
         ssaizer_enter_block(self, lblock);
         if (!ssaize_conditional_expr_branch(self, &info, tree_get_conditional_lhs(expr)))
@@ -531,22 +514,11 @@ extern ssa_value* ssaize_decl_expr(ssaizer* self, const tree_expr* expr)
         if (!var)
                 return NULL;
 
-        if (tree_expr_is_lvalue(expr))
-                return ssaizer_get_lvalue_def(self, var);
-
-        ssa_value* def = ssaizer_get_rvalue_def(self, var);
-        if (def)
-                return def;
-
-        def = ssaizer_get_lvalue_def(self, var);
+        ssa_value* def = ssaizer_get_def(self, var);
         S_ASSERT(def);
-
-        ssa_value* val = ssaize_dereference(self, def);
-        if (!val)
-                return NULL;
-
-        ssaizer_set_rvalue_def(self, var, val);
-        return val;
+        return tree_expr_is_lvalue(expr)
+                ? def
+                : ssaize_dereference(self, def);
 }
 
 extern ssa_value* ssaize_member_expr(ssaizer* self, const tree_expr* expr)
@@ -619,4 +591,32 @@ extern ssa_value* ssaize_expr(ssaizer* self, const tree_expr* expr)
         tree_expr_kind k = tree_get_expr_kind(expr);
         TREE_CHECK_EXPR_KIND(k);
         return ssaize_expr_table[k](self, expr);
+}
+
+extern ssa_value* ssaize_expr_as_condition(ssaizer* self, const tree_expr* cond)
+{
+        ssa_value* v = ssaize_expr(self, cond);
+        if (!v)
+                return NULL;
+
+        if (ssa_get_value_kind(v) != SVK_VARIABLE)
+                return v;
+
+        ssa_instr* i = ssa_get_var_instr(v);
+        if (ssa_get_instr_kind(i) != SIK_BINARY)
+                return ssa_build_neq_zero(&self->builder, v);
+
+        switch (ssa_get_binop_opcode(i))
+        {
+                case SBIK_LE:
+                case SBIK_GR:
+                case SBIK_LEQ:
+                case SBIK_GEQ:
+                case SBIK_EQ:
+                case SBIK_NEQ:
+                        return v;
+
+                default:
+                        return ssa_build_neq_zero(&self->builder, v);
+        }
 }

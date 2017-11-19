@@ -8,7 +8,7 @@ extern bool ssaize_var_decl(ssaizer* self, const tree_decl* decl)
         if (!alloca)
                 return false;
 
-        ssaizer_set_lvalue_def(self, decl, alloca);
+        ssaizer_set_def(self, decl, alloca);
         tree_expr* init = tree_get_var_init(decl);
         ssa_value* init_value = NULL;
         if (init && !(init_value = ssaize_expr(self, init)))

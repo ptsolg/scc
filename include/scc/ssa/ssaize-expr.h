@@ -28,6 +28,7 @@ extern ssa_value* ssaize_paren_expr(ssaizer* self, const tree_expr* expr);
 extern ssa_value* ssaize_init_expr(ssaizer* self, const tree_expr* expr);
 extern ssa_value* ssaize_impl_init_expr(ssaizer* self, const tree_expr* expr);
 extern ssa_value* ssaize_expr(ssaizer* self, const tree_expr* expr);
+extern ssa_value* ssaize_expr_as_condition(ssaizer* self, const tree_expr* expr);
 
 #ifdef __cplusplus
 }

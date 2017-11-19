@@ -24,6 +24,8 @@ typedef struct _ssa_function
 extern ssa_function* ssa_new_function(ssa_context* context, tree_decl* func);
 extern void ssa_add_function_block(ssa_function* self, ssa_block* block);
 
+extern void ssa_fix_function_content_uids(ssa_function* self);
+
 static inline tree_decl* ssa_get_function_entity(const ssa_function* self);
 static inline ssa_block* ssa_get_function_begin(const ssa_function* self);
 static inline ssa_block* ssa_get_function_end(ssa_function* self);

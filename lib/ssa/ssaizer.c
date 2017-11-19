@@ -6,13 +6,6 @@
 #include "scc/ssa/ssa-instr.h"
 #include "scc/tree/tree-module.h"
 
-typedef struct
-{
-        ssa_value* as_lvalue;
-        ssa_value* as_rvalue;
-} ssa_var_def;
-
-HTAB_GEN(svd, ssa_var_def);
 DSEQ_GEN(htab, htab);
 
 extern void ssaizer_init(ssaizer* self, ssa_context* context)
@@ -22,7 +15,12 @@ extern void ssaizer_init(ssaizer* self, ssa_context* context)
 
         self->block = NULL;
         ssa_init_builder(&self->builder, self->context, NULL);
-        dseq_init_ex_htab(&self->defs, ssa_get_context_alloc(context));
+
+        allocator* alloc = ssa_get_context_alloc(context);
+        dseq_init_ex_htab(&self->defs, alloc);
+        htab_init_ex_ptr(&self->labels, alloc);
+        dseq_init_ex_ptr(&self->continue_stack, alloc);
+        dseq_init_ex_ptr(&self->break_stack, alloc);
 }
 
 extern void ssaizer_dispose(ssaizer* self)
@@ -61,7 +59,7 @@ static inline htab* ssaizer_get_last_scope(const ssaizer* self)
 extern void ssaizer_push_scope(ssaizer* self)
 {
         dseq_resize(&self->defs, dseq_size(&self->defs) + 1);
-        htab_init_ex_svd(ssaizer_get_last_scope(self),
+        htab_init_ex_ptr(ssaizer_get_last_scope(self),
                 ssa_get_context_alloc(self->context));
 }
 
@@ -71,53 +69,108 @@ extern void ssaizer_pop_scope(ssaizer* self)
         dseq_resize(&self->defs, dseq_size(&self->defs) - 1);
 }
 
-extern void ssaizer_set_lvalue_def(ssaizer* self, const tree_decl* var, ssa_value* def)
+extern void ssaizer_set_def(ssaizer* self, const tree_decl* var, ssa_value* def)
 {
+        S_ASSERT(def);
         hiter it;
         htab* last = ssaizer_get_last_scope(self);
         tree_id id = tree_get_decl_name(var);
 
-        if (htab_find(last, id, &it))
-        {
-                ((ssa_var_def*)hiter_get_val(&it))->as_lvalue = def;
-                return;
-        }
-
-        ssa_var_def vd = { .as_lvalue = def, .as_rvalue = NULL };
-        htab_insert_svd(last, id, vd);
+        S_ASSERT(!htab_find(last, id, &it));
+        htab_insert_ptr(last, id, def);
 }
 
-extern ssa_value* ssaizer_get_lvalue_def(ssaizer* self, const tree_decl* var)
+extern ssa_value* ssaizer_get_def(ssaizer* self, const tree_decl* var)
 {
-        hiter it;
-        return htab_find(ssaizer_get_last_scope(self), tree_get_decl_name(var), &it)
-                ? ((ssa_var_def*)hiter_get_val(&it))->as_lvalue
-                : NULL;
-
-}
-
-extern void ssaizer_set_rvalue_def(ssaizer* self, const tree_decl* var, ssa_value* def)
-{
-        hiter it;
-        htab* last = ssaizer_get_last_scope(self);
+        htab* first = dseq_begin_htab(&self->defs);
+        htab* it = ssaizer_get_last_scope(self);
         tree_id id = tree_get_decl_name(var);
+        hiter res;
 
-        if (htab_find(last, id, &it))
+        while (it >= first)
         {
-                ((ssa_var_def*)hiter_get_val(&it))->as_rvalue = def;
-                return;
+                if (htab_find(it, id, &res))
+                        return hiter_get_ptr(&res);
+                it--;
         }
-
-        ssa_var_def vd = { .as_lvalue = NULL, .as_rvalue = def };
-        htab_insert_svd(last, id, vd);
+        return NULL;
 }
 
-extern ssa_value* ssaizer_get_rvalue_def(ssaizer* self, const tree_decl* var)
+extern ssa_block* ssaizer_get_label_block(ssaizer* self, const tree_decl* label)
 {
-        hiter it;
-        return htab_find(ssaizer_get_last_scope(self), tree_get_decl_name(var), &it)
-                ? ((ssa_var_def*)hiter_get_val(&it))->as_rvalue
-                : NULL;
+        tree_id id = tree_get_decl_name(label);
+        hiter res;
+        if (htab_find(&self->labels, id, &res))
+                return hiter_get_ptr(&res);
+
+        ssa_block* b = ssaizer_new_block(self);
+        htab_insert_ptr(&self->labels, id, b);
+        return b;
+}
+
+extern void ssaizer_push_continue_dest(ssaizer* self, ssa_block* block)
+{
+        dseq_append_ptr(&self->continue_stack, block);
+}
+
+extern void ssaizer_push_break_dest(ssaizer* self, ssa_block* block)
+{
+        dseq_append_ptr(&self->break_stack, block);
+}
+
+extern void ssaizer_pop_continue_dest(ssaizer* self)
+{
+        ssize size = dseq_size(&self->continue_stack);
+        S_ASSERT(size);
+        dseq_resize(&self->continue_stack, size - 1);
+}
+
+extern void ssaizer_pop_break_dest(ssaizer* self)
+{
+        ssize size = dseq_size(&self->break_stack);
+        S_ASSERT(size);
+        dseq_resize(&self->break_stack, size - 1);
+}
+
+extern ssa_block* ssaizer_get_continue_dest(ssaizer* self)
+{
+        return dseq_last_ptr(&self->continue_stack);
+}
+
+extern ssa_block* ssaizer_get_break_dest(ssaizer* self)
+{
+        return dseq_last_ptr(&self->break_stack);
+}
+
+static bool ssaizer_maybe_insert_return(ssaizer* self)
+{
+        if (!self->block)
+        {
+                self->block = ssaizer_new_block(self);
+                ssaizer_enter_block(self, self->block);
+        }
+
+        if (ssa_get_block_exit(self->block))
+                return true;
+
+        tree_type* restype = tree_get_function_restype(
+                tree_get_decl_type(ssa_get_function_entity(self->function)));
+
+        ssa_value* val = NULL;
+        if (!tree_type_is_void(restype))
+        {
+                ssa_value* alloca = ssa_build_alloca(&self->builder, restype);
+                val = ssa_build_load(&self->builder, alloca);
+        }
+
+        ssa_build_return(&self->builder, val);
+        ssaizer_finish_current_block(self);
+        return true;
+}
+
+static void ssaizer_function_cleanup(ssaizer* self)
+{
+        htab_clear(&self->labels);
 }
 
 static ssa_function* ssaize_function(ssaizer* self, tree_decl* func)
@@ -127,14 +180,20 @@ static ssa_function* ssaize_function(ssaizer* self, tree_decl* func)
                 return NULL;
 
         self->function = ssa_new_function(self->context, func);
-        self->block = ssa_new_block(self->context, 0, NULL);
-        ssaizer_enter_block(self, self->block);
-        ssa_builder_set_uid(&self->builder, 1);
+        ssa_builder_set_uid(&self->builder, 0);
 
-        if (!ssaize_compound_stmt(self, body))
-                return NULL;
+        if (!ssaize_stmt(self, body))
+                goto error;
+        if (!ssaizer_maybe_insert_return(self))
+                goto error;
 
+        ssaizer_function_cleanup(self);
+        ssa_fix_function_content_uids(self->function);
         return self->function;
+
+error:
+        ssaizer_function_cleanup(self);
+        return NULL;
 }
 
 extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module)
