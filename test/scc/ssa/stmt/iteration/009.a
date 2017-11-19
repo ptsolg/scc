@@ -1,0 +1,28 @@
+; Definition for test
+@0:
+    $1 = alloca 4
+    store 0, $1
+    $2 = alloca 4
+    store 100, $2
+    br @3
+
+@3:
+    $4 = load $1
+    $5 = load $2
+    $6 = cmp neq $4, $5
+    br $6, @7, @13
+
+@7:
+    br @8
+
+@8:
+    $9 = load $1
+    $10 = add $9, 1
+    store $10, $1
+    $11 = load $2
+    $12 = sub $11, 1
+    store $12, $2
+    br @3
+
+@13:
+    ret

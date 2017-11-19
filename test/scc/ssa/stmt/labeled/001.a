@@ -1,0 +1,25 @@
+; Definition for test
+@0:
+    $1 = alloca 4
+    br @2
+
+@2:
+    $3 = load $1
+    $4 = add $3, 1
+    store $4, $1
+    br @5
+
+@5:
+    $6 = load $1
+    $7 = add $6, 1
+    store $7, $1
+    br @8
+
+@8:
+    $9 = load $1
+    $10 = add $9, 1
+    store $10, $1
+    $11 = load $1
+    $12 = add $11, 1
+    store $12, $1
+    ret

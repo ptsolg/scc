@@ -1,0 +1,15 @@
+; Definition for test
+@0:
+    br @1
+
+@1:
+    br @2
+
+@2:
+    br @3
+
+@3:
+    br @1
+
+@4:
+    ret
