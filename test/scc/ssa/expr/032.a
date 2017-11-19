@@ -5,14 +5,14 @@
     $3 = alloca 4
     $4 = load $1
     $5 = cmp neq $4, 0
-    br $5, @6, @7
+    br $5, @6, @9
 
 @6:
-    $9 = load $2
-    $10 = cmp neq $9, 0
-    br @7
+    $7 = load $2
+    $8 = cmp neq $7, 0
+    br @9
 
-@7:
-    $8 = phi $5, $10
-    store $8, $3
+@9:
+    $10 = phi $5, $8
+    store $10, $3
     ret
