@@ -11,7 +11,7 @@ extern tree_expr* tree_new_expr(
         ssize size)
 {
         S_ASSERT(size >= sizeof(struct _tree_expr_base));
-        tree_expr* e = tree_context_fast_allocate(context, size);
+        tree_expr* e = tree_allocate(context, size);
         if (!e)
                 return NULL;
 
@@ -306,7 +306,7 @@ extern void tree_add_init_designation(tree_expr* self, tree_designation* d)
 
 extern tree_designator* tree_new_member_designator(tree_context* context, tree_decl* member)
 {
-        tree_designator* d = tree_context_fast_allocate(context, sizeof(tree_designator));
+        tree_designator* d = tree_allocate(context, sizeof(tree_designator));
         if (!d)
                 return NULL;
 
@@ -319,7 +319,7 @@ extern tree_designator* tree_new_member_designator(tree_context* context, tree_d
 extern tree_designator* tree_new_array_designator(
         tree_context* context, tree_type* eltype, tree_expr* index)
 {
-        tree_designator* d = tree_context_fast_allocate(context, sizeof(tree_designator));
+        tree_designator* d = tree_allocate(context, sizeof(tree_designator));
         if (!d)
                 return NULL;
 
@@ -332,7 +332,7 @@ extern tree_designator* tree_new_array_designator(
 
 extern tree_designation* tree_new_designation(tree_context* context, tree_expr* initializer)
 {
-        tree_designation* d = tree_context_fast_allocate(context, sizeof(tree_designation));
+        tree_designation* d = tree_allocate(context, sizeof(tree_designation));
         if (!d)
                 return NULL;
 

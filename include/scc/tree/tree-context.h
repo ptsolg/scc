@@ -32,7 +32,7 @@ static inline strpool* tree_get_context_strings(tree_context* self)
         return &self->_strings;
 }
 
-static inline void* tree_context_fast_allocate(tree_context* self, ssize bytes)
+static inline void* tree_allocate(tree_context* self, ssize bytes)
 {
         return bp_allocate(&self->_base, bytes);
 }

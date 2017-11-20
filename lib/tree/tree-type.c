@@ -4,7 +4,7 @@
 
 extern tree_type* tree_new_type(tree_context* context, tree_type_kind kind, ssize size)
 {
-        tree_type* t = tree_context_fast_allocate(context, size);
+        tree_type* t = tree_allocate(context, size);
         if (!t)
                 return NULL;
 
@@ -397,7 +397,7 @@ extern tree_type* tree_new_qual_type(
         if (tree_type_is_qualified(type))
                 type = tree_get_unqualified_type(type);
         
-        tree_type* qt = tree_context_fast_allocate(context, sizeof(struct _tree_qualified_type));
+        tree_type* qt = tree_allocate(context, sizeof(struct _tree_qualified_type));
         if (!qt)
                 return NULL;
 

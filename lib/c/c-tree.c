@@ -319,7 +319,7 @@ extern tree_location cdeclarator_get_id_loc_or_begin(const cdeclarator* self)
 
 extern cparam* cparam_new(ctree_context* context)
 {
-        cparam* p = tree_context_fast_allocate(ctree_context_base(context), sizeof(cparam));
+        cparam* p = tree_allocate(ctree_context_base(context), sizeof(cparam));
         cdecl_specs_init(&p->specs);
         cdeclarator_init(&p->declarator, context, CDK_PARAM);
         return p;

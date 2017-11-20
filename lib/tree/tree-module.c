@@ -3,7 +3,7 @@
 
 extern tree_module* tree_new_module(tree_context* context, tree_target_info* target)
 {
-        tree_module* m = tree_context_fast_allocate(context, sizeof(*m));
+        tree_module* m = tree_allocate(context, sizeof(*m));
         if (!m)
                 return NULL;
 

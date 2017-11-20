@@ -72,7 +72,7 @@ extern void tree_init_decl_scope(
 
 extern tree_decl_scope* tree_new_decl_scope(tree_context* context, tree_decl_scope* parent)
 {
-        tree_decl_scope* ds = tree_context_fast_allocate(context, sizeof(*ds));
+        tree_decl_scope* ds = tree_allocate(context, sizeof(*ds));
         if (!ds)
                 return NULL;
 
@@ -125,7 +125,7 @@ extern tree_decl* tree_new_decl(
         tree_xlocation loc,
         ssize size)
 {
-        tree_decl* d = tree_context_fast_allocate(context, size);
+        tree_decl* d = tree_allocate(context, size);
         if (!d)
                 return NULL;
 

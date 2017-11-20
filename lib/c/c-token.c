@@ -9,7 +9,7 @@ extern ctoken* ctoken_new(ctree_context* context, ctoken_kind kind, tree_locatio
 extern ctoken* ctoken_new_ex(
         ctree_context* context, ctoken_kind kind, tree_location loc, ssize size)
 {
-        ctoken* t = tree_context_fast_allocate(ctree_context_base(context), size);
+        ctoken* t = tree_allocate(ctree_context_base(context), size);
         if (!t)
                 return NULL;
 
