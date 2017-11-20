@@ -144,6 +144,27 @@ extern tree_type* csema_usual_arithmetic_conversion(
         return counterpart;
 }
 
+extern tree_type* csema_default_argument_promotion(csema* self, tree_expr** e)
+{
+        tree_type* t = tree_desugar_type(tree_get_expr_type(*e));
+        if (!tree_type_is(t, TTK_BUILTIN))
+                return t;
+
+        if (tree_type_is_integer(t))
+                return csema_integer_promotion(self, e);
+
+        if (tree_builtin_type_is(t, TBTK_FLOAT))
+        {
+                tree_type* double_type = csema_new_builtin_type(self,
+                        TTQ_UNQUALIFIED, TBTK_DOUBLE);
+
+                *e = csema_new_impl_cast(self, *e, double_type);
+                return double_type;
+        }
+
+        return t;
+}
+
 static bool csema_check_pointer_qualifier_discartion(
         csema* self, tree_type* lt, tree_type* rt, cassign_conv_result* r)
 {
