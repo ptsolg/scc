@@ -23,7 +23,7 @@ static bool cparse_function_definition(cparser* self, tree_decl* func)
 }
 
 static tree_decl* cparse_function_or_init_declarator(
-        cparser* self, cdecl_specs* specs, bool* is_function_with_body)
+        cparser* self, cdecl_specs* specs, bool func_def_expected, bool* func_has_def)
 {
         cdeclarator d;
         csema_init_declarator(self->sema, &d, CDK_UNKNOWN);
@@ -48,12 +48,12 @@ static tree_decl* cparse_function_or_init_declarator(
                 if (!csema_def_var_decl(self->sema, decl, init))
                         return NULL;
         }
-        else if (cparser_at(self, CTK_LBRACE))
+        else if (func_def_expected && cparser_at(self, CTK_LBRACE))
         {
                 if (!cparse_function_definition(self, decl))
                         return NULL;
 
-                *is_function_with_body = true;
+                *func_has_def = true;
         }
 
         return decl;
@@ -77,17 +77,19 @@ static const ctoken_kind ctk_comma_eq_semicolon_lbracket[] =
 static tree_decl* cparse_function_or_init_declarator_list(cparser* self, cdecl_specs* specs)
 {
         tree_decl* list = NULL;
+        bool func_def_expected = true;
         while (1)
         {
-                bool is_function_with_body = false;
-                tree_decl* d = cparse_function_or_init_declarator(self, specs, &is_function_with_body);
+                bool func_has_def = false;
+                tree_decl* d = cparse_function_or_init_declarator(
+                        self, specs, func_def_expected, &func_has_def);
                 if (!d)
                         return NULL;
 
                 if (!(list = csema_add_init_declarator(self->sema, list, d)))
                         return NULL;
 
-                if (is_function_with_body)
+                if (func_has_def)
                         return list;
                 else if (cparser_at(self, CTK_SEMICOLON))
                 {
@@ -104,6 +106,8 @@ static tree_decl* cparse_function_or_init_declarator_list(cparser* self, cdecl_s
                                         : ctk_comma_eq_semicolon_lbracket);
                         return NULL;
                 }
+
+                func_def_expected = false;
         }
 }
 
