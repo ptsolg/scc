@@ -59,7 +59,7 @@ extern void clexer_dispose(clexer* self)
 
 static inline const char* clexer_get_string(clexer* self, tree_id ref)
 {
-        return tree_context_get_id(ctree_context_base(self->pp.context), ref);
+        return tree_get_id_cstr(ctree_context_base(self->pp.context), ref);
 }
 
 static inline bool clexer_pp_num_is_floating_constant(clexer* self, const ctoken* pp)

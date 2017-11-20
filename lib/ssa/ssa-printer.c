@@ -236,7 +236,7 @@ extern void ssa_print_block(ssa_printer* self, const ssa_block* block)
 extern void ssa_print_function(ssa_printer* self, const ssa_function* func)
 {
         tree_decl* entity = ssa_get_function_entity(func);
-        const char* name = tree_context_get_id(
+        const char* name = tree_get_id_cstr(
                 ssa_get_context_tree(self->context), tree_get_decl_name(entity));
         ssa_printf(self, "; Definition for %s", name);
 

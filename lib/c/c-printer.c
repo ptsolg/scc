@@ -104,7 +104,7 @@ static inline void cprintcn(cprinter* self, int c, int n)
 
 static inline void cprint_id(cprinter* self, tree_id id)
 {
-        cprints(self, tree_context_get_id(self->context, id));
+        cprints(self, tree_get_id_cstr(self->context, id));
 }
 
 static inline void cprint_space(cprinter* self)

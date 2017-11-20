@@ -122,7 +122,7 @@ extern tree_decl* csema_require_decl(
         {
                 cerror(self->error_manager, CES_ERROR, name_loc,
                         "undeclared identifier '%s'",
-                        tree_context_get_id(self->context, name));
+                        tree_get_id_cstr(self->context, name));
                 return NULL;
         }
 
@@ -176,7 +176,7 @@ extern tree_module* cparser_act_on_finish_module(csema* self)
 
 extern const char* csema_get_id(const csema* self, tree_id id)
 {
-        return tree_context_get_id(self->context, id);
+        return tree_get_id_cstr(self->context, id);
 }
 
 extern bool csema_at_file_scope(const csema* self)

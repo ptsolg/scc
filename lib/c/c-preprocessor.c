@@ -687,7 +687,7 @@ static ctoken* cpproc_lex_include(cpproc* self)
         }
 
         tree_id ref = ctoken_get_string(t);
-        const char* filename = tree_context_get_id(ctree_context_base(self->context), ref);
+        const char* filename = tree_get_id_cstr(ctree_context_base(self->context), ref);
         S_ASSERT(filename);
 
         if (!*filename)
@@ -803,7 +803,7 @@ static ctoken* cpproc_lex_string(cpproc* self)
         for (ssize i = 0; i < dseq_size(&buf); i++)
         {
                 tree_id ref = ctoken_get_string(dseq_get_ptr(&buf, i));
-                const char* s = tree_context_get_id(ctree_context_base(self->context), ref);
+                const char* s = tree_get_id_cstr(ctree_context_base(self->context), ref);
                 strcat(concat, s);
         }
 

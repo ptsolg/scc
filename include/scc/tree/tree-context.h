@@ -37,7 +37,7 @@ static inline void* tree_allocate(tree_context* self, ssize bytes)
         return bp_allocate(&self->_base, bytes);
 }
 
-static inline const char* tree_context_get_id(const tree_context* self, tree_id id)
+static inline const char* tree_get_id_cstr(const tree_context* self, tree_id id)
 {
         return strpool_get(&self->_strings, id);
 }
