@@ -41,6 +41,8 @@ extern cparam* csema_new_param(csema* self);
 extern void csema_handle_unused_param(csema* self, cparam* p);
 extern cparam* csema_add_declarator_param(csema* self, cdeclarator* d, cparam* p);
 extern cparam* csema_finish_param(csema* self, cparam* p);
+extern bool csema_set_declarator_has_vararg(
+        csema* self, cdeclarator* declarator, tree_location ellipsis_loc);
 
 extern tree_decl* csema_export_decl(csema* self, tree_decl_scope* scope, tree_decl* decl);
 

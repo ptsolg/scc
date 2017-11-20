@@ -580,6 +580,7 @@ typedef struct
         int nsuffixes;
         tree_id name;
         bool name_printed;
+        bool params_vararg;
         const tree_decl_scope* params;
         const tree_type* type_parts[100]; // todo: size
         const tree_type* suffixes[100];
@@ -589,6 +590,7 @@ static void ctype_name_info_init(
         ctype_name_info* self,
         const tree_type* type,
         tree_id name,
+        bool params_vararg,
         const tree_decl_scope* params)
 {
         self->ntype_parts = 0;
@@ -596,6 +598,7 @@ static void ctype_name_info_init(
         self->name = name;
         self->name_printed = false;
         self->params = params;
+        self->params_vararg = params_vararg;
 
         const tree_type* it = type;
         while (it)
@@ -672,6 +675,11 @@ static void cprint_type_parts(cprinter* self, ctype_name_info* info, int opts)
                                 if (next != tree_get_decl_scope_cend(info->params))
                                         cprint_comma(self);
                         }
+                        if (info->params_vararg)
+                        {
+                                cprint_comma(self);
+                                cprintrw(self, CTK_ELLIPSIS);
+                        }
                         cprint_rbracket(self);
                 }
         }
@@ -696,6 +704,11 @@ static void cprint_suffix_endings(cprinter* self, ctype_name_info* info, int opt
                                 if (param + 1 != tree_get_function_type_end(t))
                                         cprint_comma(self);
                         }
+                        if (tree_function_type_is_vararg(t))
+                        {
+                                cprint_comma(self);
+                                cprintrw(self, CTK_ELLIPSIS);
+                        }
                         cprint_rbracket(self);
                 }
                 else if (k == TTK_ARRAY)
@@ -713,6 +726,7 @@ static void _cprint_type_name(
         cprinter* self,
         const tree_type* type,
         tree_id name,
+        bool params_vararg,
         const tree_decl_scope* params,
         int opts)
 {
@@ -720,14 +734,14 @@ static void _cprint_type_name(
                 return;
 
         ctype_name_info info;
-        ctype_name_info_init(&info, type, name, params);
+        ctype_name_info_init(&info, type, name, params_vararg, params);
         cprint_type_parts(self, &info, opts);
         cprint_suffix_endings(self, &info, opts);
 }
 
 extern void cprint_type_name(cprinter* self, const tree_type* type, int opts)
 {
-        _cprint_type_name(self, type, TREE_INVALID_ID, NULL, opts);
+        _cprint_type_name(self, type, TREE_INVALID_ID, false, NULL, opts);
 }
 
 static void cprint_decl_scope(cprinter* self, const tree_decl_scope* scope, bool braces, int opts)
@@ -762,7 +776,7 @@ static void cprint_typedef(cprinter* self, const tree_decl* decl, int opts)
                 cprint_space(self);
         }
 
-        _cprint_type_name(self, tree_get_decl_type(decl), name, NULL, opts);
+        _cprint_type_name(self, tree_get_decl_type(decl), name, false, NULL, opts);
         if (!(opts & CPRINTER_IGNORE_DECL_ENDING))
                 cprintrw(self, CTK_SEMICOLON);
 }
@@ -829,9 +843,11 @@ static void cprint_function(cprinter* self, const tree_decl* f, int opts)
 
         cprint_function_specifier(self, tree_get_function_specifier(f));
 
+        const tree_type* func_type = tree_get_decl_type(f);
         // since we have param-list we skip first function type
-        const tree_type* t = tree_get_function_restype(tree_get_decl_type(f));
-        _cprint_type_name(self, t, tree_get_decl_name(f), tree_get_function_cparams(f), opts);
+        const tree_type* restype = tree_get_function_restype(func_type);
+        _cprint_type_name(self, restype, tree_get_decl_name(f),
+                tree_function_type_is_vararg(func_type), tree_get_function_cparams(f), opts);
 
         const tree_stmt* body = tree_get_function_body(f);
         if (body)
@@ -848,7 +864,7 @@ static void cprint_member(cprinter* self, const tree_decl* m, int opts)
                 return;
         }
 
-        _cprint_type_name(self, tree_get_decl_type(m), tree_get_decl_name(m), NULL, opts);
+        _cprint_type_name(self, tree_get_decl_type(m), tree_get_decl_name(m), false, NULL, opts);
         const tree_expr* bits = tree_get_member_bits(m);
         if (bits)
         {
@@ -870,7 +886,7 @@ static void cprint_var_decl(cprinter* self, const tree_decl* v, int opts)
         }
 
         cprint_decl_storage_class(self, tree_get_decl_storage_class(v));
-        _cprint_type_name(self, tree_get_decl_type(v), tree_get_decl_name(v), NULL, opts);
+        _cprint_type_name(self, tree_get_decl_type(v), tree_get_decl_name(v), false, NULL, opts);
 
         const tree_expr* init = tree_get_var_init(v);
         if (init)

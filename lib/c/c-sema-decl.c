@@ -232,6 +232,22 @@ extern cparam* csema_finish_param(csema* self, cparam* p)
         return p;
 }
 
+extern bool csema_set_declarator_has_vararg(
+        csema* self, cdeclarator* declarator, tree_location ellipsis_loc)
+{
+        tree_type* t = declarator->type.tail;
+        S_ASSERT(t && tree_get_type_kind(t) == TTK_FUNCTION);
+
+        if (dseq_size(&declarator->params) == 0)
+        {
+                cerror(self->error_manager, CES_ERROR, ellipsis_loc,
+                        "ISO C requires a named argument before '...'");
+        }
+        
+        tree_set_function_type_vararg(t, true);
+        return true;
+}
+
 static void csema_redefinition(const csema* self, tree_location loc, tree_id id)
 {
         cerror(self->error_manager, CES_ERROR, loc, 

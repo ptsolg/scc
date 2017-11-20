@@ -548,10 +548,21 @@ static bool cparse_parameter_type_list_opt(cparser* self, cdeclarator* result)
                 return true;
         }
 
-        cparam* p;
-        while ((p = cparse_param_declaration(self)))
+        while (1)
         {
-                if (!csema_add_declarator_param(self->sema, result, p))
+                if (cparser_at(self, CTK_ELLIPSIS))
+                {
+                        tree_location loc = cparser_get_loc(self);
+                        if (!csema_set_declarator_has_vararg(self->sema, result, loc))
+                                return false;
+                        
+                        cparser_consume_token(self);
+                        cdeclarator_set_initialized(result);
+                        return true;
+                }
+
+                cparam* p = cparse_param_declaration(self);
+                if (!p || !csema_add_declarator_param(self->sema, result, p))
                         return false;
 
                 if (cparser_at(self, CTK_RBRACKET))
@@ -562,6 +573,7 @@ static bool cparse_parameter_type_list_opt(cparser* self, cdeclarator* result)
                 else if (!cparser_require_ex(self, CTK_COMMA, ctk_rbracket_or_comma))
                         return false;
         }
+        S_UNREACHABLE();
         return false;
 }
 

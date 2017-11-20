@@ -100,6 +100,7 @@ struct _tree_function_type
 {
         struct _tree_chain_type _base;
         dseq _params;
+        bool _vararg;
 };
 
 extern tree_type* tree_new_function_type(tree_context* context, tree_type* restype);
@@ -114,8 +115,10 @@ static inline tree_type* tree_get_function_restype(const tree_type* self);
 static inline tree_type* tree_get_function_type_param(const tree_type* self, ssize n);
 static inline tree_type** tree_get_function_type_begin(const tree_type* self);
 static inline tree_type** tree_get_function_type_end(const tree_type* self);
+static inline bool tree_function_type_is_vararg(const tree_type* self);
 
 static inline void tree_set_function_restype(tree_type* self, tree_type* restype);
+static inline void tree_set_function_type_vararg(tree_type* self, bool vararg);
 
 #define TREE_FOREACH_FUNC_PARAM(PFUNC, ITNAME) \
         for (tree_type** ITNAME = tree_get_function_type_begin(PFUNC); \
@@ -387,9 +390,19 @@ static inline tree_type** tree_get_function_type_end(const tree_type* self)
         return (tree_type**)dseq_end_ptr(&_tree_get_function_ctype(self)->_params);
 }
 
+static inline bool tree_function_type_is_vararg(const tree_type* self)
+{
+        return _tree_get_function_ctype(self)->_vararg;
+}
+
 static inline void tree_set_function_restype(tree_type* self, tree_type* restype)
 {
         tree_set_chain_type_next(self, restype);
+}
+
+static inline void tree_set_function_type_vararg(tree_type* self, bool vararg)
+{
+        _tree_get_function_type(self)->_vararg = vararg;
 }
 
 static inline struct _tree_array_type* _tree_get_array_type(tree_type* self)

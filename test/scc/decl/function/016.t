@@ -1,0 +1,1 @@
+int (*(*foo(int, ...))(int, double, float, ...))(int, char, ...);
