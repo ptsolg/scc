@@ -185,7 +185,7 @@ static inline bool csequence_append(csequence* self, const cpplexer* lexer, int 
 
 static tree_id cpplexer_pool_seq(cpplexer* self, csequence* seq)
 {
-        tree_id id = ctree_context_add_string(self->context, seq->val, seq->size);
+        tree_id id = tree_get_id(ctree_context_base(self->context), seq->val, seq->size);
         S_ASSERT(id != TREE_INVALID_ID);
         return id;
 }
@@ -807,7 +807,7 @@ static ctoken* cpproc_lex_string(cpproc* self)
                 strcat(concat, s);
         }
 
-        tree_id ref = ctree_context_add_string(self->context, concat, strlen(concat));
+        tree_id ref = tree_get_id(ctree_context_base(self->context), concat, strlen(concat));
         t = dseq_first_ptr(&buf);
         ctoken_set_string(t, ref);
         dseq_dispose(&buf);

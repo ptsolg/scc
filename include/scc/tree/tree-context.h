@@ -42,6 +42,11 @@ static inline const char* tree_get_id_cstr(const tree_context* self, tree_id id)
         return strpool_get(&self->_strings, id);
 }
 
+static inline tree_id tree_get_id(tree_context* self, const char* string, ssize len)
+{
+        return strpool_insertl(&self->_strings, string, len);
+}
+
 #ifdef __cplusplus
 }
 #endif

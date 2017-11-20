@@ -50,11 +50,6 @@ extern void ctree_context_dispose(ctree_context* self)
         tree_dispose_context(ctree_context_base(self));
 }
 
-extern tree_id ctree_context_add_string(ctree_context* self, const char* s, ssize len)
-{
-        return strpool_insertl(tree_get_context_strings(ctree_context_base(self)), s, len);
-}
-
 extern void csizeof_expr_init(csizeof_rhs* self, tree_expr* e)
 {
         self->unary = true;

@@ -32,7 +32,6 @@ typedef struct _ctree_context
 extern void ctree_context_init(ctree_context* self, jmp_buf* on_fatal);
 extern void ctree_context_init_ex(ctree_context* self, jmp_buf* on_fatal, allocator* alloc);
 extern void ctree_context_dispose(ctree_context* self);
-extern tree_id ctree_context_add_string(ctree_context* self, const char* s, ssize len);
 
 static inline tree_context* ctree_context_base(ctree_context* self)
 {
