@@ -411,7 +411,7 @@ static inline const struct _tree_decl_group* _tree_get_decl_cgroup(const tree_de
 static inline tree_decl** tree_get_decl_group_begin(const tree_decl* self);
 static inline tree_decl** tree_get_decl_group_end(const tree_decl* self);
 
-#define TREE_FOREACH_DECL_GROUP(PGROUP, ITNAME) \
+#define TREE_FOREACH_DECL_IN_GROUP(PGROUP, ITNAME) \
         for (tree_decl** ITNAME = tree_get_decl_group_begin(PGROUP); \
                 ITNAME != tree_get_decl_group_end(PGROUP); ITNAME++)
 

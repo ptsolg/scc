@@ -903,7 +903,7 @@ static void cprint_enumerator(cprinter* self, const tree_decl* e, int opts)
 static void cprint_decl_group(cprinter* self, const tree_decl* g, int opts)
 {
         bool first_printed = false;
-        TREE_FOREACH_DECL_GROUP(g, it)
+        TREE_FOREACH_DECL_IN_GROUP(g, it)
         {
                 int o = first_printed ? CPRINTER_IGNORE_SPECS : CPRINT_OPTS_NONE;
                 cprint_decl(self, *it, o | CPRINTER_IGNORE_DECL_ENDING);

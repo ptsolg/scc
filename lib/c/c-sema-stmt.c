@@ -188,7 +188,7 @@ static bool csema_check_iteration_stmt_decl(const csema* self, const tree_decl* 
         if (!tree_decl_is(d, TDK_GROUP))
                 return _csema_check_iteration_stmt_decl(self, d);
 
-        TREE_FOREACH_DECL_GROUP(d, it)
+        TREE_FOREACH_DECL_IN_GROUP(d, it)
                 if (!_csema_check_iteration_stmt_decl(self, *it))
                         return false;
         return true;

@@ -22,7 +22,7 @@ extern bool ssaize_var_decl(ssaizer* self, const tree_decl* decl)
 
 extern bool ssaize_decl_group(ssaizer* self, const tree_decl* decl)
 {
-        TREE_FOREACH_DECL_GROUP(decl, it)
+        TREE_FOREACH_DECL_IN_GROUP(decl, it)
                 if (!ssaize_decl(self, *it))
                         return false;
         return true;
