@@ -333,7 +333,7 @@ static void cprint_call_expr(cprinter* self, const tree_expr* expr)
         _cprint_expr(self, lhs, cprinter_postfix_expr_needs_wrapping(self, lhs));
 
         cprint_lbracket(self);
-        TREE_FOREACH_CALL(expr, arg)
+        TREE_FOREACH_CALL_ARG(expr, arg)
         {
                 cprint_expr(self, *arg);
                 if (arg + 1 != tree_get_call_end(expr))

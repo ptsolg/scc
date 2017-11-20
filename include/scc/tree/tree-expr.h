@@ -246,7 +246,7 @@ static inline tree_expr** tree_get_call_end(const tree_expr* self);
 
 static inline void tree_set_call_lhs(tree_expr* self, tree_expr* lhs);
 
-#define TREE_FOREACH_CALL(PEXP, ITNAME) \
+#define TREE_FOREACH_CALL_ARG(PEXP, ITNAME) \
         for (tree_expr** ITNAME = tree_get_call_begin(PEXP); \
                 ITNAME != tree_get_call_end(PEXP); ITNAME++)
 
