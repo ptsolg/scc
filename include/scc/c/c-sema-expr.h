@@ -82,13 +82,6 @@ extern tree_expr* csema_new_sizeof_expr(csema* self, tree_location loc, csizeof_
 extern tree_expr* csema_new_cast_expr(
         csema* self, tree_location loc, tree_type* type, tree_expr* expr);
 
-extern tree_type* csema_check_simple_assignment_or_return(
-        csema* self,
-        tree_type* lt,
-        tree_expr** rhs,
-        tree_location eq_loc,
-        bool assignment);
-
 extern tree_expr* csema_new_binary_expr(
         csema* self, tree_location loc, tree_binop_kind opcode, tree_expr* lhs, tree_expr* rhs);
 

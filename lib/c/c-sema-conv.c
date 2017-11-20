@@ -143,3 +143,90 @@ extern tree_type* csema_usual_arithmetic_conversion(
 
         return counterpart;
 }
+
+static bool csema_check_pointer_qualifier_discartion(
+        csema* self, tree_type* lt, tree_type* rt, cassign_conv_result* r)
+{
+        lt = tree_get_pointer_target(lt);
+        rt = tree_get_pointer_target(rt);
+
+        tree_type_quals rq = tree_get_type_quals(rt);
+        if (rq == TTQ_UNQUALIFIED)
+                return true;
+
+        tree_type_quals diff = TTQ_UNQUALIFIED;
+        tree_type_quals lq = tree_get_type_quals(lt);
+
+        if ((rq & TTQ_CONST) && !(lq & TTQ_CONST))
+                diff |= TTQ_CONST;
+        if ((rq & TTQ_VOLATILE) && !(lq & TTQ_VOLATILE))
+                diff |= TTQ_VOLATILE;
+        if ((rq & TTQ_RESTRICT) && !(lq & TTQ_RESTRICT))
+                diff |= TTQ_RESTRICT;
+
+        if (diff == TTQ_UNQUALIFIED)
+                return true;
+
+        r->discarded_quals = diff;
+        r->kind = CACRK_QUAL_DISCARTION;
+        return false;
+}
+
+static bool csema_check_assignment_pointer_types(
+        csema* self, tree_type* lt, tree_type* rt, cassign_conv_result* r)
+{
+        S_ASSERT(tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt));
+
+        tree_type* ltarget = tree_get_unqualified_type(tree_get_pointer_target(lt));
+        tree_type* rtarget = tree_get_unqualified_type(tree_get_pointer_target(rt));
+
+        if (tree_types_are_same(ltarget, rtarget)
+                || (tree_type_is_incomplete(ltarget) && tree_type_is_void(rtarget))
+                || (tree_type_is_incomplete(rtarget) && tree_type_is_void(ltarget)))
+        {
+                return csema_check_pointer_qualifier_discartion(self, lt, rt, r);
+        }
+
+        r->kind = CACRK_INCOMPATIBLE_POINTERS;
+        return false;
+}
+
+static inline tree_type* cassign_conv_error(
+        cassign_conv_result_kind k, cassign_conv_result* r)
+{
+        r->kind = k;
+        return NULL;
+}
+
+extern tree_type* csema_assignment_conversion(
+        csema* self, tree_type* lt, tree_expr** rhs, cassign_conv_result* r)
+{
+        S_ASSERT(r);
+
+        tree_type* rt = csema_unary_conversion(self, rhs);
+        if (tree_type_is_arithmetic(lt))
+        {
+                if (!tree_type_is_arithmetic(rt))
+                        return cassign_conv_error(CACRK_RHS_NOT_AN_ARITHMETIC, r);
+        }
+        else if (tree_type_is_record(lt))
+        {
+                if (!tree_type_is_record(rt))
+                        return cassign_conv_error(CACRK_RHS_NOT_A_RECORD, r);
+                if (!tree_types_are_same(lt, rt))
+                        return cassign_conv_error(CACRK_INCOMPATIBLE_RECORDS, r);
+        }
+        else if (tree_type_is_object_pointer(lt) && tree_expr_is_null_pointer_constant(*rhs))
+                ; // nothing to check
+        else if (tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt))
+        {
+                if (!csema_check_assignment_pointer_types(self, lt, rt, r))
+                        return NULL;
+        }
+        else 
+                return cassign_conv_error(CACRK_INCOMPATIBLE, r);
+
+        *rhs = csema_new_impl_cast(self, *rhs, lt);
+        r->kind = CACRK_COMPATIBLE;
+        return lt;
+}

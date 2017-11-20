@@ -21,6 +21,26 @@ extern tree_type* csema_unary_conversion(csema* self, tree_expr** e);
 extern tree_type* csema_usual_arithmetic_conversion(
         csema* self, tree_expr** lhs, tree_expr** rhs);
 
+typedef enum
+{
+        CACRK_COMPATIBLE,
+        CACRK_INCOMPATIBLE,
+        CACRK_RHS_NOT_AN_ARITHMETIC,
+        CACRK_RHS_NOT_A_RECORD,
+        CACRK_INCOMPATIBLE_RECORDS,
+        CACRK_QUAL_DISCARTION,
+        CACRK_INCOMPATIBLE_POINTERS,
+} cassign_conv_result_kind;
+
+typedef struct
+{
+        cassign_conv_result_kind kind;
+        tree_type_quals discarded_quals;
+} cassign_conv_result;
+
+extern tree_type* csema_assignment_conversion(
+        csema* self, tree_type* lt, tree_expr** rhs, cassign_conv_result* r);
+
 #ifdef __cplusplus
 }
 #endif

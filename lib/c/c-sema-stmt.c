@@ -253,14 +253,34 @@ extern tree_stmt* csema_new_return_stmt(
                 return NULL;
         }
 
-        if (value && !csema_check_simple_assignment_or_return(
-                self, restype, &value, TREE_INVALID_LOC, false))
-        {
-                return NULL;
-        }
+        cassign_conv_result r;
+        if (!value || csema_assignment_conversion(self, restype, &value, &r))
+                return tree_new_return_stmt(self->context,
+                        tree_init_xloc(kw_loc, semicolon_loc), value);
 
-        return tree_new_return_stmt(self->context,
-                tree_init_xloc(kw_loc, semicolon_loc), value);
+        tree_type* vt = tree_get_expr_type(value);
+        tree_location vloc = tree_get_expr_loc(value);
+
+        if (r.kind == CACRK_INCOMPATIBLE)
+                cerror(self->error_manager, CES_ERROR, vloc,
+                        "return type does not match the function type");
+        else if (r.kind == CACRK_RHS_NOT_AN_ARITHMETIC)
+                csema_require_arithmetic_expr_type(self, vt, vloc);
+        else if (r.kind == CACRK_RHS_NOT_A_RECORD)
+                csema_require_record_expr_type(self, vt, vloc);
+        else if (r.kind == CACRK_INCOMPATIBLE_RECORDS)
+                csema_require_compatible_expr_types(self, restype, vt, vloc);
+        else if (r.kind == CACRK_QUAL_DISCARTION)
+        {
+                char quals[64];
+                cqet_qual_string(r.discarded_quals, quals);
+                cerror(self->error_manager, CES_ERROR, vloc,
+                        "return discards '%s' qualifier");
+        }
+        else if (r.kind == CACRK_INCOMPATIBLE_POINTERS)
+                cerror(self->error_manager, CES_ERROR, vloc,
+                        "return from incompatible pointer type");
+        return NULL;
 }
 
 extern bool csema_check_stmt(const csema* self, const tree_stmt* s, cstmt_context c)
