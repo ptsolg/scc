@@ -239,8 +239,6 @@ extern tree_decl* tree_new_record_decl(
         tree_id name,
         bool is_union);
 
-extern bool tree_records_are_same(const tree_decl* a, const tree_decl* b);
-
 extern tree_decl* tree_get_record_begin(tree_decl* self);
 extern const tree_decl* tree_get_record_cbegin(const tree_decl* self);
 extern tree_decl* tree_get_record_end(tree_decl* self);
@@ -267,8 +265,6 @@ struct _tree_enum_decl
 
 extern tree_decl* tree_new_enum_decl(
         tree_context* context, tree_decl_scope* scope, tree_xlocation loc, tree_id name);
-
-extern bool tree_enums_are_same(const tree_decl* a, const tree_decl* b);
 
 static inline struct _tree_enum_decl* _tree_get_enum(tree_decl* self);
 static inline const struct _tree_enum_decl* _tree_get_cenum(const tree_decl* self);
