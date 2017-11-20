@@ -163,7 +163,7 @@ extern tree_stmt* csema_new_do_while_stmt(
 static bool _csema_check_iteration_stmt_decl(const csema* self, const tree_decl* d)
 {
         tree_location loc = tree_get_decl_loc_begin(d);
-        const char* name = csema_get_id(self, tree_get_decl_name(d));
+        const char* name = csema_get_id_cstr(self, tree_get_decl_name(d));
 
         if (!tree_decl_is(d, TDK_VAR))
         {
@@ -300,7 +300,7 @@ extern bool csema_check_stmt(const csema* self, const tree_stmt* s, cstmt_contex
                         if (!tree_get_label_decl_stmt(label))
                         {
                                 tree_location l = tree_get_decl_loc_begin(label);
-                                const char* n = csema_get_id(self, tree_get_decl_name(label));
+                                const char* n = csema_get_id_cstr(self, tree_get_decl_name(label));
                                 cerror(self->error_manager, CES_ERROR, l,
                                         "label '%s' used but not defined", n);
                                 return false;

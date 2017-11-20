@@ -194,7 +194,7 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
                         ctoken* id_tok = cparser_get_token(self);
                         tree_id id = ctoken_get_string(id_tok);
                         cerror(self->error_manager, CES_ERROR, ctoken_get_loc(id_tok),
-                                "unknown type name '%s'", csema_get_id(self->sema, id));
+                                "unknown type name '%s'", csema_get_id_cstr(self->sema, id));
                         return false;
                 }
 

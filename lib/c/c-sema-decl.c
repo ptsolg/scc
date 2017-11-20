@@ -225,7 +225,7 @@ extern cparam* csema_finish_param(csema* self, cparam* p)
         if (p->specs.class_ != TDSC_REGISTER && p->specs.class_ != TDSC_NONE)
         {
                 cerror(self->error_manager, CES_ERROR, d->id_loc,
-                        "invalid storage class for parameter '%s'", csema_get_id(self, d->id));
+                        "invalid storage class for parameter '%s'", csema_get_id_cstr(self, d->id));
                 return NULL;
         }
 
@@ -235,7 +235,7 @@ extern cparam* csema_finish_param(csema* self, cparam* p)
 static void csema_redefinition(const csema* self, tree_location loc, tree_id id)
 {
         cerror(self->error_manager, CES_ERROR, loc, 
-                "redefinition of '%s'", csema_get_id(self, id));
+                "redefinition of '%s'", csema_get_id_cstr(self, id));
 }
 
 static void csema_decl_redifinition(const csema* self, const tree_decl* decl)
@@ -313,7 +313,7 @@ extern tree_decl* csema_new_enumerator(
                 return e;
         }
 
-        const char* name = csema_get_id(self, tree_get_decl_name(e));
+        const char* name = csema_get_id_cstr(self, tree_get_decl_name(e));
 
         int_value val;
         tree_eval_info i;
@@ -344,7 +344,7 @@ extern tree_decl* csema_def_enumerator(
 static void csema_wrong_kind_of_tag(const csema* self, tree_location loc, tree_id name)
 {
         cerror(self->error_manager, CES_ERROR, loc,
-                "'%s' defined as wrong kind of tag", csema_get_id(self, name));
+                "'%s' defined as wrong kind of tag", csema_get_id_cstr(self, name));
 }
 
 extern tree_decl* csema_new_enum_decl(csema* self, tree_location kw_loc, tree_id name)
@@ -455,7 +455,7 @@ static bool csema_check_member_decl(const csema* self, const tree_decl* m)
 {
         tree_type* mt = tree_desugar_type(tree_get_decl_type(m));
         tree_location loc = tree_get_decl_loc_begin(m);
-        const char* name = csema_get_id(self, tree_get_decl_name(m));
+        const char* name = csema_get_id_cstr(self, tree_get_decl_name(m));
 
         if (tree_type_is(mt, TTK_FUNCTION))
         {
@@ -711,7 +711,7 @@ extern tree_decl* csema_forward_external_decl(
                 return NULL;
         
         tree_location loc = tree_get_decl_loc_begin(d);
-        const char* name = csema_get_id(self, tree_get_decl_name(d));
+        const char* name = csema_get_id_cstr(self, tree_get_decl_name(d));
         tree_decl_kind dk = tree_get_decl_kind(d);
         tree_decl_storage_class sc = dk == TDK_TYPEDEF
                 ? TDSC_NONE : tree_get_decl_storage_class(d);

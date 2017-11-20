@@ -174,7 +174,7 @@ extern tree_module* cparser_act_on_finish_module(csema* self)
         return self->module;
 }
 
-extern const char* csema_get_id(const csema* self, tree_id id)
+extern const char* csema_get_id_cstr(const csema* self, tree_id id)
 {
         return tree_get_id_cstr(self->context, id);
 }

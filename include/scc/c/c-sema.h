@@ -83,7 +83,7 @@ extern bool csema_require_complete_type(
 extern void csema_init_dseq_ptr(csema* self, dseq* group);
 extern tree_module* cparser_act_on_finish_module(csema* self);
 
-extern const char* csema_get_id(const csema* self, tree_id id);
+extern const char* csema_get_id_cstr(const csema* self, tree_id id);
 
 extern bool csema_at_file_scope(const csema* self);
 extern bool csema_at_block_scope(const csema* self);
