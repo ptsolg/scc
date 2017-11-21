@@ -30,11 +30,6 @@ static inline allocator* tree_get_context_allocator(const tree_context* self)
         return bpa_alloc(&self->_base);
 }
 
-static inline strpool* tree_get_context_strings(tree_context* self)
-{
-        return &self->_strings;
-}
-
 static inline tree_target_info* tree_get_target(const tree_context* self)
 {
         return self->_target;

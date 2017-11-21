@@ -9,11 +9,10 @@ extern void tree_init_context_ex(tree_context* self, tree_target_info* target, a
 {
         self->_target = target;
         bpa_init_ex(&self->_base, alloc);
-        strpool_init_ex(tree_get_context_strings(self),
-                tree_get_context_allocator(self));
+        strpool_init_ex(&self->_strings, tree_get_context_allocator(self));
 }
 
 extern void tree_dispose_context(tree_context* self)
 {
-        strpool_dispose(tree_get_context_strings(self));
+        strpool_dispose(&self->_strings);
 }
