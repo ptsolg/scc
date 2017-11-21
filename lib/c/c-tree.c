@@ -43,13 +43,13 @@ extern void ctree_context_init_ex(
 {
         S_ASSERT(on_fatal);
         nnull_alloc_init_ex(&self->alloc, NULL, on_fatal, alloc);
-        tree_init_context_ex(ctree_context_base(self), target,
+        tree_init_ex(ctree_context_base(self), target,
                 nnull_alloc_base(&self->alloc));
 }
 
 extern void ctree_context_dispose(ctree_context* self)
 {
-        tree_dispose_context(ctree_context_base(self));
+        tree_dispose(ctree_context_base(self));
 }
 
 extern void csizeof_expr_init(csizeof_rhs* self, tree_expr* e)
@@ -278,7 +278,7 @@ extern void cdeclarator_init(cdeclarator* self, ctree_context* context, cdeclara
 
         ctype_chain_init(&self->type);
         dseq_init_ex_ptr(&self->params,
-                tree_get_context_allocator(ctree_context_base(context)));
+                tree_get_allocator(ctree_context_base(context)));
 }
 
 extern void cdeclarator_dispose(cdeclarator* self)

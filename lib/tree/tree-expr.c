@@ -105,7 +105,7 @@ extern tree_expr* tree_new_call_expr(
                 return NULL;
 
         tree_set_call_lhs(e, lhs);
-        dseq_init_ex_ptr(&_tree_get_call(e)->_args, tree_get_context_allocator(context));
+        dseq_init_ex_ptr(&_tree_get_call(e)->_args, tree_get_allocator(context));
         return e;
 }
 

@@ -4,7 +4,7 @@
 
 extern void tree_symtab_init(tree_symtab* self, tree_context* context, tree_symtab* parent)
 {
-        htab_init_ex_ptr(&self->_symbols, tree_get_context_allocator(context));
+        htab_init_ex_ptr(&self->_symbols, tree_get_allocator(context));
         self->_parent = parent;
 }
 
@@ -392,7 +392,7 @@ extern tree_decl* tree_new_decl_group(
                 return NULL;
 
         dseq_init_ex_ptr(&_tree_get_decl_group(d)->_group,
-                tree_get_context_allocator(context));
+                tree_get_allocator(context));
         return d;
 }
 

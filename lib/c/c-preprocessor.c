@@ -600,7 +600,7 @@ extern void cpproc_init(
         self->error_manager = error_manager;
         self->context = context;
         dseq_init_ex_ptr(&self->expansion,
-                tree_get_context_allocator(ctree_context_base(context)));
+                tree_get_allocator(ctree_context_base(context)));
 }
 
 extern void cpproc_dispose(cpproc* self)
@@ -784,7 +784,7 @@ static ctoken* cpproc_lex_string(cpproc* self)
                 return t;
 
         dseq buf;
-        dseq_init_ex_ptr(&buf, tree_get_context_allocator(ctree_context_base(self->context)));
+        dseq_init_ex_ptr(&buf, tree_get_allocator(ctree_context_base(self->context)));
         while (ctoken_is(t, CTK_CONST_STRING))
         {
                 dseq_append_ptr(&buf, t);

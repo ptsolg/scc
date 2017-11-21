@@ -21,11 +21,11 @@ typedef struct _tree_context
         tree_target_info* _target;
 } tree_context;
 
-extern void tree_init_context(tree_context* self, tree_target_info* target);
-extern void tree_init_context_ex(tree_context* self, tree_target_info* target, allocator* alloc);
-extern void tree_dispose_context(tree_context* self);
+extern void tree_init(tree_context* self, tree_target_info* target);
+extern void tree_init_ex(tree_context* self, tree_target_info* target, allocator* alloc);
+extern void tree_dispose(tree_context* self);
 
-static inline allocator* tree_get_context_allocator(const tree_context* self)
+static inline allocator* tree_get_allocator(const tree_context* self)
 {
         return bpa_alloc(&self->_base);
 }

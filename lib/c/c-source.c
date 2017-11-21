@@ -72,7 +72,7 @@ extern void csource_close(csource* self)
 
 extern void csource_manager_init(csource_manager* self, ctree_context* context)
 {
-        self->alloc = tree_get_context_allocator(ctree_context_base(context));
+        self->alloc = tree_get_allocator(ctree_context_base(context));
         dseq_init_ex_ptr(&self->sources, self->alloc);
         dseq_init_ex_ptr(&self->lookup, self->alloc);
         htab_init_ex_ptr(&self->source_lookup, self->alloc);

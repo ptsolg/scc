@@ -42,7 +42,7 @@ extern tree_type* tree_new_function_type(tree_context* context, tree_type* resty
 
         tree_set_function_type_vararg(t, false);
         dseq_init_ex_ptr(&_tree_get_function_type(t)->_params,
-                tree_get_context_allocator(context));
+                tree_get_allocator(context));
         return t;
 }
 

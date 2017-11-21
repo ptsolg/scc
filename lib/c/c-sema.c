@@ -82,7 +82,7 @@ extern tree_id csema_get_decl_name(const csema* self, const tree_decl* d)
 
 extern void csema_init_dseq_ptr(csema* self, dseq* args)
 {
-        dseq_init_ex_ptr(args, tree_get_context_allocator(self->context));
+        dseq_init_ex_ptr(args, tree_get_allocator(self->context));
 }
 
 extern tree_decl* csema_get_local_tag_decl(const csema* self, tree_id name, bool parent_lookup)
