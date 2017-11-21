@@ -1,4 +1,5 @@
 #include "scc/tree/tree-target.h"
+#include "scc/tree/tree-eval.h"
 
 extern void tree_init_target_info(tree_target_info* self, tree_target_kind k)
 {
@@ -78,4 +79,106 @@ extern ssize tree_get_builtin_type_size(const tree_target_info* self, tree_built
 extern ssize tree_get_builtin_type_align(const tree_target_info* self, tree_builtin_type_kind k)
 {
         return self->_builtin_align[k];
+}
+
+extern ssize tree_get_sizeof_record(const tree_target_info* info, const tree_decl* d)
+{
+        bool is_union = tree_record_is_union(d);
+        const tree_decl_scope* scope = tree_get_record_cscope(d);
+        ssize total_size = 0;
+
+        // todo: padding?
+        TREE_DECL_SCOPE_FOREACH(scope, member)
+        {
+                ssize member_size = tree_get_sizeof(info, tree_get_decl_type(member));
+                if (is_union && member_size > total_size)
+                        total_size = member_size;
+                else
+                        total_size += member_size;
+        }
+
+        return total_size;
+}
+
+extern ssize tree_get_sizeof(const tree_target_info* info, const tree_type* t)
+{
+        S_ASSERT(t);
+        t = tree_desugar_ctype(t);
+
+        if (tree_type_is_pointer(t))
+                return tree_get_pointer_size(info);
+        else if (tree_type_is(t, TTK_BUILTIN))
+                return tree_get_builtin_type_size(info, tree_get_builtin_type_kind(t));
+        else if (tree_type_is(t, TTK_DECL))
+        {
+                tree_decl* entity = tree_get_decl_type_entity(t);
+                tree_decl_kind dk = tree_get_decl_kind(entity);
+
+                if (dk == TDK_ENUM)
+                        return tree_get_builtin_type_size(info, TBTK_INT32);
+                else if (dk == TDK_RECORD)
+                        return tree_get_sizeof_record(info, entity);
+        }
+        else if (tree_type_is(t, TTK_ARRAY))
+        {
+                ssize size = 0;
+                tree_expr* size_expr = tree_get_array_size(t);
+                if (size_expr)
+                {
+                        int_value result;
+                        tree_eval_info eval_info;
+                        tree_init_eval_info(&eval_info, info);
+                        if (!tree_eval_as_integer(&eval_info, size_expr, &result))
+                                return 0;
+
+                        size = int_get_u32(&result);
+                }
+                
+                return size * tree_get_sizeof(info, tree_get_array_eltype(t));
+        }
+
+        // probably function type
+        return 0;
+}
+
+extern ssize tree_get_alignof_record(const tree_target_info* info, const tree_decl* d)
+{
+        bool is_union = tree_record_is_union(d);
+        const tree_decl_scope* scope = tree_get_record_cscope(d);
+        ssize max_align = 0;
+
+        TREE_DECL_SCOPE_FOREACH(scope, member)
+        {
+                ssize member_align = tree_get_alignof(info, tree_get_decl_type(member));
+                if (member_align > max_align)
+                        max_align = member_align;
+        }
+
+        return max_align;
+}
+
+extern ssize tree_get_alignof(const tree_target_info* info, const tree_type* t)
+{
+        S_ASSERT(t);
+        t = tree_desugar_ctype(t);
+
+        if (tree_type_is_pointer(t))
+                return tree_get_pointer_align(info);
+        else if (tree_type_is(t, TTK_BUILTIN))
+                return tree_get_builtin_type_align(info, tree_get_builtin_type_kind(t));
+        else if (tree_type_is(t, TTK_DECL))
+        {
+                tree_decl* entity = tree_get_decl_type_entity(t);
+                tree_decl_kind dk = tree_get_decl_kind(entity);
+
+                if (dk == TDK_ENUM)
+                        return tree_get_builtin_type_align(info, TBTK_INT32);
+                else if (dk == TDK_RECORD)
+                        return tree_get_alignof_record(info, entity);
+        }
+        else if (tree_type_is(t, TTK_ARRAY))
+                return tree_get_alignof(info, tree_get_array_eltype(t));
+
+        // probably function type
+        return 0;
 }

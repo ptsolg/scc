@@ -38,6 +38,9 @@ extern ssize tree_get_pointer_align(const tree_target_info* self);
 extern ssize tree_get_builtin_type_size(const tree_target_info* self, tree_builtin_type_kind k);
 extern ssize tree_get_builtin_type_align(const tree_target_info* self, tree_builtin_type_kind k);
 
+extern ssize tree_get_sizeof(const tree_target_info* info, const tree_type* t);
+extern ssize tree_get_alignof(const tree_target_info* info, const tree_type* t);
+
 #ifdef __cplusplus
 }
 #endif

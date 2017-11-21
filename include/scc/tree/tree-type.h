@@ -14,7 +14,6 @@ extern "C" {
 
 typedef struct _tree_type tree_type;
 typedef struct _tree_decl tree_decl;
-typedef struct _tree_target_info tree_target_info;
 
 typedef enum _tree_type_kind
 {
@@ -278,9 +277,6 @@ extern bool tree_types_are_same(const tree_type* a, const tree_type* b);
 extern tree_type* tree_get_type_next(const tree_type* self);
 
 extern tree_builtin_type_kind tree_get_integer_counterpart(const tree_type* self);
-
-extern ssize tree_get_sizeof(const tree_target_info* info, const tree_type* t);
-extern ssize tree_get_alignof(const tree_target_info* info, const tree_type* t);
 
 #define TREE_ASSERT_TYPE(T) S_ASSERT(T)
 
