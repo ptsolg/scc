@@ -8,6 +8,6 @@ extern tree_module* tree_new_module(tree_context* context)
                 return NULL;
 
         tree_init_decl_scope(tree_get_module_globals(m), context, NULL);
-        m->_target = tree_get_context_target(context);
+        m->_target = tree_get_target(context);
         return m;
 }

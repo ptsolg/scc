@@ -28,7 +28,7 @@ extern void cprinter_init(
 {
         self->context = context;
         self->source_manager = source_manager;
-        self->target = tree_get_context_target(context);
+        self->target = tree_get_target(context);
         self->id_policy = id_policy;
         self->indent_level = 0;
         writebuf_init(&self->buf, write);

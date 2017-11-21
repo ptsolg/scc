@@ -16,7 +16,7 @@ extern void ssa_init_context_ex(
         allocator* alloc)
 {
         S_ASSERT(on_out_of_mem && target && context);
-        self->_target = tree_get_context_target(context);
+        self->_target = tree_get_target(context);
         self->_tree = context;
         nnull_alloc_init_ex(&self->_alloc, NULL, on_out_of_mem, alloc);
         bpa_init_ex(&self->_base, nnull_alloc_base(&self->_alloc));
