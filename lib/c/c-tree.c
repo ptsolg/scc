@@ -32,16 +32,18 @@ extern tree_id cident_policy_get_orig_decl_name(const cident_policy* self, const
         return id;
 }
 
-extern void ctree_context_init(ctree_context* self, jmp_buf* on_fatal)
+extern void ctree_context_init(
+        ctree_context* self, tree_target_info* target, jmp_buf* on_fatal)
 {
-        ctree_context_init_ex(self, on_fatal, get_std_alloc());
+        ctree_context_init_ex(self, target, on_fatal, get_std_alloc());
 }
 
-extern void ctree_context_init_ex(ctree_context* self, jmp_buf* on_fatal, allocator* alloc)
+extern void ctree_context_init_ex(
+        ctree_context* self, tree_target_info* target, jmp_buf* on_fatal, allocator* alloc)
 {
         S_ASSERT(on_fatal);
         nnull_alloc_init_ex(&self->alloc, NULL, on_fatal, alloc);
-        tree_init_context_ex(ctree_context_base(self),
+        tree_init_context_ex(ctree_context_base(self), target,
                 nnull_alloc_base(&self->alloc));
 }
 

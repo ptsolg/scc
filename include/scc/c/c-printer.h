@@ -56,8 +56,7 @@ extern void cprinter_init(
         write_cb* write,
         const tree_context* context,
         const cident_policy* id_policy,
-        const csource_manager* source_manager,
-        const tree_target_info* target);
+        const csource_manager* source_manager);
 
 extern void cprinter_dispose(cprinter* self);
 

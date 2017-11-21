@@ -29,8 +29,12 @@ typedef struct _ctree_context
         nnull_allocator alloc;
 } ctree_context;
 
-extern void ctree_context_init(ctree_context* self, jmp_buf* on_fatal);
-extern void ctree_context_init_ex(ctree_context* self, jmp_buf* on_fatal, allocator* alloc);
+extern void ctree_context_init(
+        ctree_context* self, tree_target_info* target, jmp_buf* on_fatal);
+
+extern void ctree_context_init_ex(
+        ctree_context* self, tree_target_info* target, jmp_buf* on_fatal, allocator* alloc);
+
 extern void ctree_context_dispose(ctree_context* self);
 
 static inline tree_context* ctree_context_base(ctree_context* self)

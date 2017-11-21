@@ -19,7 +19,7 @@ typedef struct _tree_module
         tree_target_info* _target;
 } tree_module;
 
-extern tree_module* tree_new_module(tree_context* context, tree_target_info* target);
+extern tree_module* tree_new_module(tree_context* context);
 
 static inline tree_decl_scope* tree_get_module_globals(tree_module* self)
 {

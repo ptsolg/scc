@@ -26,13 +26,11 @@ typedef struct _ssa_context
 extern void ssa_init_context(
         ssa_context* self,
         tree_context* context,
-        const tree_target_info* target,
         jmp_buf* on_out_of_mem);
 
 extern void ssa_init_context_ex(
         ssa_context* self,
         tree_context* context,
-        const tree_target_info* target,
         jmp_buf* on_out_of_mem,
         allocator* alloc);
 

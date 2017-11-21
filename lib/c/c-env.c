@@ -4,10 +4,11 @@
 #include "scc/c/c-parse-module.h"
 #include "scc/c/c-sema.h"
 
-extern void cenv_init(cenv* self, FILE* err, jmp_buf* fatal)
+extern void cenv_init(cenv* self, tree_target_kind target, FILE* err, jmp_buf* fatal)
 {
         S_ASSERT(fatal);
-        ctree_context_init(&self->context, fatal);
+        tree_init_target_info(&self->target, target);
+        ctree_context_init(&self->context, &self->target, fatal);
         csource_manager_init(&self->source_manager, &self->context);
         cerror_manager_init(&self->error_manager, &self->source_manager, err);
         cident_policy_init(&self->id_policy);
@@ -36,12 +37,12 @@ static csource* cenv_open_file(cenv* self, const char* file)
         return source;
 }
 
-extern tree_module* cparse_source(cenv* self, csource* source, tree_target_info* target)
+extern tree_module* cparse_source(cenv* self, csource* source)
 {
         if (!source)
                 return NULL;
 
-        tree_module* m = tree_new_module(ctree_context_base(&self->context), target);
+        tree_module* m = tree_new_module(ctree_context_base(&self->context));
 
         clexer lexer;
         csema sema;
@@ -76,14 +77,14 @@ extern tree_module* cparse_source(cenv* self, csource* source, tree_target_info*
         return m;
 }
 
-extern tree_module* cparse_file(cenv* self, const char* file, tree_target_info* target)
+extern tree_module* cparse_file(cenv* self, const char* file)
 {
-        return cparse_source(self, cenv_open_file(self, file), target);
+        return cparse_source(self, cenv_open_file(self, file));
 }
 
-extern tree_module* cparse_string(cenv* self, const char* str, tree_target_info* target)
+extern tree_module* cparse_string(cenv* self, const char* str)
 {
-        return cparse_source(self, csource_emulate(&self->source_manager, "", str), target);
+        return cparse_source(self, csource_emulate(&self->source_manager, "", str));
 }
 
 extern serrcode clex_source(cenv* self, csource* source, dseq* result)

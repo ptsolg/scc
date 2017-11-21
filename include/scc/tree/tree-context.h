@@ -12,14 +12,17 @@ extern "C" {
 #include "scc/scl/alloc.h"
 #include "tree-common.h"
 
+typedef struct _tree_target_info tree_target_info;
+
 typedef struct _tree_context
 {
         bp_allocator _base;
         strpool _strings;
+        tree_target_info* _target;
 } tree_context;
 
-extern void tree_init_context(tree_context* self);
-extern void tree_init_context_ex(tree_context* self, allocator* alloc);
+extern void tree_init_context(tree_context* self, tree_target_info* target);
+extern void tree_init_context_ex(tree_context* self, tree_target_info* target, allocator* alloc);
 extern void tree_dispose_context(tree_context* self);
 
 static inline allocator* tree_get_context_allocator(const tree_context* self)
@@ -30,6 +33,11 @@ static inline allocator* tree_get_context_allocator(const tree_context* self)
 static inline strpool* tree_get_context_strings(tree_context* self)
 {
         return &self->_strings;
+}
+
+static inline tree_target_info* tree_get_context_target(const tree_context* self)
+{
+        return self->_target;
 }
 
 static inline void* tree_allocate(tree_context* self, ssize bytes)

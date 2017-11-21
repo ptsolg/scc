@@ -128,7 +128,7 @@ static void scc_set_printer_opts(const scc_instance* self, cprinter_opts* opts)
 
 static serrcode scc_init_cenv(scc_instance* self, cenv* env, jmp_buf* fatal)
 {
-        cenv_init(env, self->err, fatal);
+        cenv_init(env, self->opts.x32 ? TTARGET_X32 : TTARGET_X64, self->err, fatal);
         for (ssize i = 0; i < dseq_size(&self->include); i++)
                 if (S_FAILED(cenv_add_lookup(env, dseq_get_ptr(&self->include, i))))
                         return S_ERROR;
@@ -137,9 +137,7 @@ static serrcode scc_init_cenv(scc_instance* self, cenv* env, jmp_buf* fatal)
 
 static serrcode _scc_perform_syntax_analysis(scc_instance* self, cenv* env)
 {
-        tree_target_info info;
-        tree_init_target_info(&info, self->opts.x32 ? TTARGET_X32 : TTARGET_X64);
-        tree_module* m = cparse_file(env, dseq_first_ptr(&self->input), &info);
+        tree_module* m = cparse_file(env, dseq_first_ptr(&self->input));
         if (!m)
                 return S_ERROR;
         if (!self->output)
@@ -156,8 +154,7 @@ static serrcode _scc_perform_syntax_analysis(scc_instance* self, cenv* env)
                 fwrite_cb_base(&w),
                 ctree_context_base(&env->context),
                 &env->id_policy,
-                &env->source_manager,
-                &info);
+                &env->source_manager);
 
         fwrite_cb_init(&w, out);
         scc_set_printer_opts(self, &p.opts);
@@ -203,8 +200,7 @@ static serrcode _scc_perform_lexical_analysis(scc_instance* self, cenv* env, dse
                 fwrite_cb_base(&w),
                 ctree_context_base(&env->context),
                 &env->id_policy,
-                &env->source_manager,
-                NULL);
+                &env->source_manager);
 
         fwrite_cb_init(&w, out);
         scc_set_printer_opts(self, &p.opts);
@@ -237,9 +233,7 @@ static serrcode scc_perform_lexical_analysis(scc_instance* self)
 
 static serrcode _scc_compile(scc_instance* self, cenv* env, jmp_buf* fatal)
 {
-        tree_target_info info;
-        tree_init_target_info(&info, self->opts.x32 ? TTARGET_X32 : TTARGET_X64);
-        tree_module* m = cparse_file(env, dseq_first_ptr(&self->input), &info);
+        tree_module* m = cparse_file(env, dseq_first_ptr(&self->input));
         if (!m)
                 return S_ERROR;
 
@@ -255,7 +249,7 @@ static serrcode _scc_compile(scc_instance* self, cenv* env, jmp_buf* fatal)
 
         // redo
         ssa_context sc;
-        ssa_init_context(&sc, ctree_context_base(&env->context), &info, fatal);
+        ssa_init_context(&sc, ctree_context_base(&env->context), fatal);
 
         ssaizer sr;
         ssaizer_init(&sr, &sc);
