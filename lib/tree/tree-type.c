@@ -352,6 +352,9 @@ extern bool tree_types_are_same(const tree_type* a, const tree_type* b)
                 }
                 else if (ak == TTK_FUNCTION)
                 {
+                        if (tree_function_type_is_vararg(a) != tree_function_type_is_vararg(b))
+                                return false;
+
                         ssize n = tree_get_function_type_nparams(a);
                         if (n != tree_get_function_type_nparams(b))
                                 return false;
