@@ -41,8 +41,14 @@ extern strref strpool_insertl(strpool* self, const char* string, ssize len)
 {
         strref r = STRREFL(string, len);
 
-        if (strpooled(self, r))
-                return r;
+        const char* pooled = NULL;
+        while ((pooled = strpool_get(self, r)))
+        {
+                if (strncmp(pooled, string, len) == 0)
+                        return r;
+
+                r += s_mix32(r);
+        }
 
         if (S_FAILED(htab_reserve(&self->_strings, r)))
                 return STRREF_INVALID;
