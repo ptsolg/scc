@@ -50,7 +50,7 @@ typedef struct _scc_cc_opts
         scc_cc_target_kind target;
         scc_cc_run_mode mode;
         scc_cc_print_opts print;
-        scc_cc_output_kind log;
+        scc_cc_output_kind output;
 } scc_cc_opts;
 
 typedef struct _scc_cc

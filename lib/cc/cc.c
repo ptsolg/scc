@@ -50,7 +50,7 @@ extern void scc_cc_init(scc_cc* self, FILE* log, jmp_buf on_fatal_error)
         scc_cc_opts* o = &self->opts;
         o->target = SCTK_32;
         o->mode = SCRM_DEFAULT;
-        o->log = SCOK_C;
+        o->output = SCOK_C;
 
         o->print.flags = SCPF_NONE;
         o->print.double_precision = 4;
@@ -258,7 +258,7 @@ extern serrcode scc_cc_parse(scc_cc* self)
         if (!m)
                 return S_ERROR;
 
-        if (!self->out || self->opts.log != SCOK_C)
+        if (!self->out || self->opts.output != SCOK_C)
                 return S_NO_ERROR;
 
         fwrite_cb write;
@@ -281,7 +281,7 @@ extern serrcode scc_cc_gen(scc_cc* self)
         if (!m)
                 return S_ERROR;
 
-        if (!self->out || self->opts.log != SCOK_SSA)
+        if (!self->out || self->opts.output != SCOK_SSA)
                 return S_NO_ERROR;
 
         ssaizer sr;

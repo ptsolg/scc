@@ -146,7 +146,7 @@ static void scc_cc_unknown(scc_cc_arg_handler* self, aparser* p)
 
 static void scc_cc_emit_ssa(scc_cc_arg_handler* self, aparser* p)
 {
-        self->cc->opts.log = SCOK_SSA;
+        self->cc->opts.output = SCOK_SSA;
 }
 
 static void scc_cc_help(scc_cc_arg_handler* self, aparser* p)
