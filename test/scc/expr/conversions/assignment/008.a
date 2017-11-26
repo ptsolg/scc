@@ -1,0 +1,11 @@
+void foo(int n, ...)
+{
+}
+
+void test()
+{
+	char a;
+	unsigned char b;
+	short c;
+	((void(*)(int, ...))foo)(10, (int)a, (unsigned)b, (int)c);
+}

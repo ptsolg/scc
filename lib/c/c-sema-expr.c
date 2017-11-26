@@ -260,6 +260,44 @@ extern tree_expr* csema_new_subscript_expr(
         return tree_new_subscript_expr(self->context, TVK_LVALUE, t, loc, lhs, rhs);
 }
 
+static bool csema_check_call_argument(
+        csema* self, tree_type* arg_type, tree_expr** arg, uint pos)
+{
+        cassign_conv_result r;
+        if (csema_assignment_conversion(self, arg_type, arg, &r))
+                return true;
+
+        tree_location loc = tree_get_expr_loc(*arg);
+        char quals[64];
+
+        switch (r.kind)
+        {
+                case CACRK_RHS_NOT_AN_ARITHMETIC:
+                case CACRK_RHS_NOT_A_RECORD:
+                case CACRK_INCOMPATIBLE_RECORDS:
+                case CACRK_INCOMPATIBLE:
+                        cerror(self->error_manager, CES_ERROR, loc,
+                                "incompatible type for argument %u in function call", pos);
+                        break;
+
+                case CACRK_QUAL_DISCARTION:
+                        cqet_qual_string(r.discarded_quals, quals);
+                        cerror(self->error_manager, CES_ERROR, loc,
+                                "passing argument %u discards '%s' qualifier", pos, quals);
+                        break;
+
+                case CACRK_INCOMPATIBLE_POINTERS:
+                        cerror(self->error_manager, CES_ERROR, loc,
+                                "passing argument %u from incompatible pointer type", pos);
+                        break;
+
+                default:
+                        S_UNREACHABLE();
+
+        }
+        return false;
+}
+
 // c99 6.5.2.2 function calls
 // The expression that denotes the called function shall have type pointer to function
 // returning void or returning an object type other than an array type.
@@ -278,19 +316,32 @@ extern tree_expr* csema_new_call_expr(
                 return NULL;
 
         t = tree_get_pointer_target(tree_desugar_ctype(t));
-        if (tree_get_function_type_nparams(t) != dseq_size(args))
+        ssize nparams = tree_get_function_type_nparams(t);
+        ssize nargs = dseq_size(args);
+        if (nargs < nparams)
+        {
+                cerror(self->error_manager, CES_ERROR, tree_get_expr_loc(lhs),
+                        "too few arguments in function call");
                 return NULL;
-  
+        }
+        if (!tree_function_type_is_vararg(t) && nargs > nparams)
+        {
+                cerror(self->error_manager, CES_ERROR, tree_get_expr_loc(lhs),
+                        "too many arguments in function call");
+                return NULL;
+        }
+
+        ssize i = 0;
+        for (tree_type** atype = tree_get_function_type_begin(t); i < nparams; i++, atype++)
+                if (!csema_check_call_argument(self, *atype, dseq_get(args, i), (uint)i + 1))
+                        return NULL;
+
+        for (; i < nargs; i++)
+                csema_default_argument_promotion(self, dseq_get(args, i));
+
         tree_expr* call = tree_new_call_expr(self->context, TVK_RVALUE,
                 tree_get_function_type_result(t), loc, lhs);
-
-        tree_type** typeit = tree_get_function_type_begin(t);
-        for (ssize i = 0; i < dseq_size(args); i++)
-        {
-                tree_expr* arg = csema_new_impl_cast(self, dseq_get_ptr(args, i), *typeit);
-                tree_add_call_arg(call, arg);
-                typeit++;
-        }
+        tree_set_call_args(call, args);
         return call;
 }
 
