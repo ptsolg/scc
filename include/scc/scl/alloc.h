@@ -14,199 +14,231 @@ extern "C" {
 #include "error.h"
 #include "misc.h"
 
-typedef void*(*alloc_fn)(void*, ssize);
-typedef void*(*alloc_ex_fn)(void*, ssize, ssize);
-typedef void*(*dealloc_fn)(void*, void*);
+#include <setjmp.h>
+
+#if S_X64
+#define STDALIGNMENT 8
+#else
+#define STDALIGNMENT 4
+#endif
+
+typedef void*(*allocate_fn)(void*, ssize);
+typedef void*(*allocate_aligned_fn)(void*, ssize, ssize);
+typedef void*(*deallocate_fn)(void*, void*);
 
 // an allocator for 'heavy' allocations that is used by various data structures
 typedef struct _allocator
 {
-        alloc_fn _allocate;
-        alloc_ex_fn _allocate_ex;
-        dealloc_fn _deallocate;
+        allocate_fn _allocate;
+        allocate_aligned_fn _allocate_aligned;
+        deallocate_fn _deallocate;
 } allocator;
 
-static inline void allocator_init_ex(
-        allocator* self, void* alloc, void* alloc_ex, void* dealloc)
-{
-        self->_allocate = (alloc_fn)alloc;
-        self->_allocate_ex = (alloc_ex_fn)alloc_ex;
-        self->_deallocate = (dealloc_fn)dealloc;
-}
+extern void allocator_init_ex(
+        allocator* self, void* allocate, void* allocate_aligned, void* deallocate);
 
-static inline void allocator_init(
-        allocator* self, void* alloc, void* dealloc)
+extern void allocator_init(allocator* self, void* allocate, void* deallocate);
+
+static inline void* allocate(allocator* self, ssize bytes);
+static inline void* allocate_aligned(allocator* self, ssize bytes, ssize alignment);
+static inline void deallocate(allocator* self, void* block);
+
+typedef struct _bump_ptr_allocator
 {
-        allocator_init_ex(self, alloc, NULL, dealloc);
-}
+        allocator _base;
+
+        struct
+        {
+                suint8* pos;
+                suint8* end;
+                ssize size;
+        } _chunk;
+
+        list_head _chunks;
+        allocator* _alloc;
+
+} bump_ptr_allocator;
+
+extern void bump_ptr_allocator_init(bump_ptr_allocator* self);
+extern void bump_ptr_allocator_init_ex(bump_ptr_allocator* self, allocator* alloc);
+extern void bump_ptr_allocator_dispose(bump_ptr_allocator* self);
+
+extern bool _bump_ptr_allocator_grow(bump_ptr_allocator* self, ssize cst);
+
+static inline void* bump_ptr_allocate(bump_ptr_allocator* self, ssize bytes);
+static inline void* bump_ptr_allocate_aligned(
+        bump_ptr_allocator* self, ssize bytes, ssize alignment);
+
+static inline void bump_ptr_deallocate(bump_ptr_allocator* self, void* block);
+
+static inline allocator* bump_ptr_allocator_base(bump_ptr_allocator* self);
+static inline allocator* bump_ptr_allocator_parent(const bump_ptr_allocator* self);
+
+typedef struct _object_allocator
+{
+        bump_ptr_allocator _base;
+        suint8* _top;
+        ssize _obsize;
+} object_allocator;
+
+extern void object_allocator_init(object_allocator* self, ssize obsize);
+extern void object_allocator_init_ex(object_allocator* self, ssize obsize, allocator* alloc);
+extern void object_allocator_dispose(object_allocator* self);
+
+static inline void* object_allocate(object_allocator* self);
+static inline void object_deallocate(object_allocator* self, void* object);
+
+typedef void*(*bad_alloc_handler)(void*, ssize);
+
+typedef struct _base_allocator
+{
+        allocator _base;
+        allocator* _alloc;
+        list_head _used;
+        void* _on_bad_alloc;
+        bad_alloc_handler _handler;
+} base_allocator;
+
+extern void base_allocator_init(
+        base_allocator* self, bad_alloc_handler handler, void* on_bad_alloc);
+
+extern void base_allocator_init_ex(
+        base_allocator* self, bad_alloc_handler handler, void* on_bad_alloc, allocator* alloc);
+
+extern void base_allocator_dispose(base_allocator* self);
+
+static inline void* base_allocate(base_allocator* self, ssize bytes);
+static inline void base_deallocate(base_allocator* self, void* block);
+
+static inline allocator* base_allocator_base(base_allocator* self);
+
+typedef struct _malloc_allocator
+{
+        allocator _base;
+} malloc_allocator;
+
+extern void malloc_allocator_init(malloc_allocator* self);
+extern void malloc_allocator_dispose(malloc_allocator* self);
+
+extern void* mallocate(malloc_allocator* self, ssize bytes);
+extern void mdeallocate(malloc_allocator* self, void* block);
+
+static inline allocator* malloc_allocator_base(malloc_allocator* self);
+
+extern allocator* _get_stdalloc();
+
+#define STDALLOC (_get_stdalloc())
 
 static inline void* allocate(allocator* self, ssize bytes)
-{ 
+{
         S_ASSERT(self && self->_allocate);
-        return self->_allocate(self, bytes); 
+        return self->_allocate(self, bytes);
 }
 
-static inline void* allocate_ex(allocator* self, ssize bytes, ssize align)
+static inline void* allocate_aligned(allocator* self, ssize bytes, ssize alignment)
 {
-        S_ASSERT(self && self->_allocate_ex);
-        return self->_allocate_ex(self, bytes, align);
+        S_ASSERT(self && self->_allocate_aligned && alignment);
+        return self->_allocate_aligned(self, bytes, alignment);
 }
 
 static inline void deallocate(allocator* self, void* block)
-{ 
+{
         S_ASSERT(self && self->_deallocate);
         self->_deallocate(self, block);
 }
 
-#if S_X64
-#define BPA_ALIGN 8
-#else
-#define BPA_ALIGN 4
-#endif
-
-typedef struct
+static inline void* bump_ptr_allocate(bump_ptr_allocator* self, ssize bytes)
 {
-        list_node _node;
-        ssize _size;
-        char _bytes[0];
-} _bp_chunk;
-
-typedef struct _bp_allocator
-{
-        allocator _base;
-        char* _pos;
-        char* _end;
-        list_head _chunks;
-        allocator* _alloc;
-} bp_allocator;
-
-extern void bpa_init(bp_allocator* self);
-extern void bpa_init_ex(bp_allocator* self, allocator* alloc);
-extern void bpa_dispose(bp_allocator* self);
-
-static inline allocator* bpa_base(bp_allocator* self)
-{
-        return &self->_base;
+        return bump_ptr_allocate_aligned(self, bytes, STDALIGNMENT);
 }
-
-static inline const allocator* bpa_cbase(const bp_allocator* self)
+static inline void* bump_ptr_allocate_aligned(
+        bump_ptr_allocator* self, ssize bytes, ssize alignment)
 {
-        return &self->_base;
-}
-
-static inline bool bpa_can_allocate(const bp_allocator* self, ssize bytes, ssize align)
-{
-        ssize adjustment = pointer_adjustment(self->_pos, align);
-        return self->_pos + adjustment < self->_end;
-}
-
-extern _bp_chunk* _bpa_new_chunk(bp_allocator* self, ssize bytes);
-extern void _bpa_use_chunk(bp_allocator* self, _bp_chunk* c);
-extern serrcode _bpa_grow(bp_allocator* self, ssize cst);
-
-static inline void* bp_allocate_ex(bp_allocator* self, ssize bytes, ssize alignment)
-{
-        ssize adjustment = pointer_adjustment(self->_pos, alignment);
-        if (self->_pos + bytes + adjustment >= self->_end)
+        ssize adjustment = pointer_adjustment(self->_chunk.pos, alignment);
+        if (self->_chunk.pos + bytes + adjustment >= self->_chunk.end)
         {
-                if (S_FAILED(_bpa_grow(self, bytes + alignment)))
+                if (!_bump_ptr_allocator_grow(self, bytes + alignment))
                         return NULL;
-                adjustment = pointer_adjustment(self->_pos, alignment);
+
+                adjustment = pointer_adjustment(self->_chunk.pos, alignment);
         }
 
-        void* result = self->_pos + adjustment;
-        self->_pos += bytes + adjustment;
-        return result;
+        void* block = self->_chunk.pos + adjustment;
+        self->_chunk.pos += bytes + adjustment;
+        return block;
 }
 
-static inline void* bp_allocate(bp_allocator* self, ssize bytes)
+static inline void bump_ptr_deallocate(bump_ptr_allocator* self, void* block)
 {
-        return bp_allocate_ex(self, bytes, BPA_ALIGN);
+        ;
 }
 
-static inline allocator* bpa_alloc(const bp_allocator* self)
+static inline allocator* bump_ptr_allocator_base(bump_ptr_allocator* self)
+{
+        return &self->_base;
+}
+
+static inline allocator* bump_ptr_allocator_parent(const bump_ptr_allocator* self)
 {
         return self->_alloc;
 }
 
-typedef struct
-{
-        void* _next;
-        char _bytes[0];
-} _obj_header;
-
-// an allocator for objects with the same size
-typedef struct _obj_allocator
-{
-        bp_allocator _base;
-        void* _top;
-        ssize _objects;
-        ssize _obsize;
-} obj_allocator;
-
-extern void obj_allocator_init(obj_allocator* self, ssize obsize);
-extern void obj_allocator_init_ex(obj_allocator* self, ssize obsize, allocator* alloc);
-extern serrcode _obj_allocator_grow(obj_allocator* self);
-
-static inline bp_allocator* obj_allocator_base(obj_allocator* self)
-{
-        return &self->_base;
-}
-
-static inline const bp_allocator* obj_allocator_cbase(const obj_allocator* self)
-{
-        return &self->_base;
-}
-
-static inline void obj_deallocate(obj_allocator* self, void* obj)
-{
-        if (!obj)
-                return;
-
-        _obj_header* h = (_obj_header*)obj;
-        h->_next = self->_top;
-        self->_top = h;
-}
-
-static inline void* obj_allocate(obj_allocator* self)
+static inline void* object_allocate(object_allocator* self)
 {
         if (!self->_top)
-                if (S_FAILED(_obj_allocator_grow(self)))
+                if (!(self->_top = bump_ptr_allocate(&self->_base, sizeof(void*) + self->_obsize)))
                         return NULL;
 
-        S_ASSERT(self->_top);
-        _obj_header* top = (_obj_header*)self->_top;
-        self->_top = top->_next;
-        return top->_bytes;
+        void* object = self->_top + sizeof(void*);
+        self->_top = *(void**)self->_top;
+        return object;
 }
 
-typedef void*(*null_alloc_handler)(void*, ssize, ssize);
-
-// never returns NULL
-typedef struct _nnull_allocator
+static inline void object_deallocate(object_allocator* self, void* object)
 {
-        allocator _base;
-        null_alloc_handler _handler;
-        void* _jbuf;
-        allocator* _alloc;
-} nnull_allocator;
+        if (!object)
+                return;
 
-extern void nnull_alloc_init(nnull_allocator* self, void* jbuf, void* fatal);
-
-extern void nnull_alloc_init_ex(
-        nnull_allocator* self, void* handler, void* jbuf, allocator* alloc);
-
-static inline void nnull_alloc_set_buf(nnull_allocator* self, void* buf)
-{
-        self->_jbuf = buf;
+        object = (suint8*)object - sizeof(void*);
+        *(void**)object = self->_top;
+        self->_top = object;
 }
 
-static inline allocator* nnull_alloc_base(nnull_allocator* self)
+static inline void* base_allocate(base_allocator* self, ssize bytes)
+{
+        void* block = allocate(self->_alloc, sizeof(list_node) + bytes);
+        if (!block)
+        {
+                if (self->_handler)
+                        block = self->_handler(self, bytes);
+                if (!block)
+                        longjmp(self->_on_bad_alloc, S_ERROR);
+        }
+
+        list_node_init(block);
+        list_push_back(&self->_used, block);
+        return (suint8*)block + sizeof(list_node);
+}
+
+static inline void base_deallocate(base_allocator* self, void* block)
+{
+        if (!block)
+                return;
+
+        block = (suint8*)block - sizeof(list_node);
+        list_node_remove(block);
+        deallocate(self->_alloc, block);
+}
+
+static inline allocator* base_allocator_base(base_allocator* self)
 {
         return &self->_base;
 }
 
-extern allocator* get_std_alloc();
+static inline allocator* malloc_allocator_base(malloc_allocator* self)
+{
+        return &self->_base;
+}
 
 #ifdef __cplusplus
 }

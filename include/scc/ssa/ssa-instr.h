@@ -34,7 +34,7 @@ typedef enum
         SIK_SIZE,
 } ssa_instr_kind;
 
-#define SSA_CHECK_INSTR_KIND(K) S_ASSERT((K) > SIK_INVALID && (K) < SIK_SIZE)
+#define SSA_ASSERT_INSTR_KIND(K) S_ASSERT((K) > SIK_INVALID && (K) < SIK_SIZE)
 
 struct _ssa_instr_base
 {
@@ -53,8 +53,8 @@ static inline ssa_instr* ssa_get_var_instr(ssa_value* self);
 static inline const ssa_instr* ssa_get_var_cinstr(const ssa_value* self);
 
 static inline ssa_instr_kind ssa_get_instr_kind(const ssa_instr* self);
-static inline ssa_value* ssa_get_instr_value(ssa_instr* self);
-static inline const ssa_value* ssa_get_instr_cvalue(const ssa_instr* self);
+static inline ssa_value* ssa_get_instr_var(ssa_instr* self);
+static inline const ssa_value* ssa_get_instr_cvar(const ssa_instr* self);
 static inline ssa_instr* ssa_get_next_instr(const ssa_instr* self);
 static inline ssa_instr* ssa_get_prev_instr(const ssa_instr* self);
 
@@ -85,7 +85,7 @@ typedef enum
         SBIK_SIZE,
 } ssa_binary_instr_kind;
 
-#define SSA_CHECK_BINARY_INSTR_KIND(K) S_ASSERT((K) > SBIK_INVALID && (K) < SBIK_SIZE)
+#define SSA_ASSERT_BINARY_INSTR_KIND(K) S_ASSERT((K) > SBIK_INVALID && (K) < SBIK_SIZE)
 
 struct _ssa_binary_instr
 {
@@ -295,12 +295,12 @@ static inline ssa_instr_kind ssa_get_instr_kind(const ssa_instr* self)
         return _ssa_get_instr_cbase(self)->_kind;
 }
 
-static inline ssa_value* ssa_get_instr_value(ssa_instr* self)
+static inline ssa_value* ssa_get_instr_var(ssa_instr* self)
 {
         return (ssa_value*)&_ssa_get_instr_base(self)->_val;
 }
 
-static inline const ssa_value* ssa_get_instr_cvalue(const ssa_instr* self)
+static inline const ssa_value* ssa_get_instr_cvar(const ssa_instr* self)
 {
         return (const ssa_value*)&_ssa_get_instr_cbase(self)->_val;
 }

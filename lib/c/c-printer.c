@@ -22,14 +22,13 @@ extern void cprinter_opts_init(cprinter_opts* self)
 extern void cprinter_init(
         cprinter* self,
         write_cb* write,
-        const tree_context* context,
-        const cident_policy* id_policy,
+        const ccontext* context,
         const csource_manager* source_manager)
 {
-        self->context = context;
+        self->context = cget_tree(context);
+        self->ccontext = context;
         self->source_manager = source_manager;
-        self->target = tree_get_target(context);
-        self->id_policy = id_policy;
+        self->target = tree_get_target(self->context);
         self->indent_level = 0;
         writebuf_init(&self->buf, write);
         cprinter_opts_init(&self->opts);
@@ -289,7 +288,7 @@ static inline void cprint_comma(cprinter* self)
 
 static inline void cprint_decl_name(cprinter* self, const tree_decl* d)
 {
-        cprint_id(self, cident_policy_get_orig_decl_name(self->id_policy, d));
+        cprint_id(self, tree_get_decl_name(d));
 }
 
 static void cprint_binop(cprinter* self, const tree_expr* expr)
@@ -667,7 +666,7 @@ static void cprint_type_parts(cprinter* self, ctype_name_info* info, int opts)
                                 continue;
 
                         cprint_lbracket(self);
-                        TREE_DECL_SCOPE_FOREACH(info->params, param)
+                        TREE_FOREACH_DECL_IN_SCOPE(info->params, param)
                         {
                                 cprint_decl(self, param, CPRINTER_IGNORE_DECL_ENDING);
                                 const tree_decl* next = tree_get_next_decl(param);
@@ -697,7 +696,7 @@ static void cprint_suffix_endings(cprinter* self, ctype_name_info* info, int opt
                 if (k == TTK_FUNCTION)
                 {
                         cprint_lbracket(self);
-                        TREE_FOREACH_FUNC_PARAM(t, param)
+                        TREE_FOREACH_FUNCTION_TYPE_PARAM(t, param)
                         {
                                 cprint_type_name(self, *param, CPRINT_OPTS_NONE);
                                 if (param + 1 != tree_get_function_type_end(t))
@@ -750,7 +749,7 @@ static void cprint_decl_scope(cprinter* self, const tree_decl_scope* scope, bool
 
         if (braces)
                 cprint_lbrace(self, true);
-        TREE_DECL_SCOPE_FOREACH(scope, decl)
+        TREE_FOREACH_DECL_IN_SCOPE(scope, decl)
                 if (!tree_decl_is_implicit(decl))
                 {
                         cprint_endl(self);
@@ -844,7 +843,7 @@ static void cprint_function(cprinter* self, const tree_decl* f, int opts)
 
         const tree_type* func_type = tree_get_decl_type(f);
         // since we have param-list we skip first function type
-        const tree_type* restype = tree_get_function_restype(func_type);
+        const tree_type* restype = tree_get_function_type_result(func_type);
         _cprint_type_name(self, restype, tree_get_decl_name(f),
                 tree_function_type_is_vararg(func_type), tree_get_function_cparams(f), opts);
 

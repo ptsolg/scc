@@ -20,10 +20,10 @@ typedef struct _creswords
         htab pp_reswords;
 } creswords;
 
-extern void creswords_init(creswords* self);
+extern void creswords_init(creswords* self, ccontext* context);
 extern void creswords_dispose(creswords* self);
-extern serrcode creswords_add(creswords* self, const char* string, ctoken_kind k);
-extern serrcode creswords_add_pp(creswords* self, const char* string, ctoken_kind k);
+extern void creswords_add(creswords* self, const char* string, ctoken_kind k);
+extern void creswords_add_pp(creswords* self, const char* string, ctoken_kind k);
 extern ctoken_kind creswords_get(const creswords* self, const char* string, ssize len);
 extern ctoken_kind creswords_get_h(const creswords* self, hval h);
 extern ctoken_kind creswords_get_pp(const creswords* self, const char* string, ssize len);
@@ -31,7 +31,6 @@ extern ctoken_kind creswords_get_pp_h(const creswords* self, hval h);
 
 typedef struct _cerror_manager cerror_manager;
 typedef struct _ctoken ctoken;
-typedef struct _ctree_context ctree_context;
 
 typedef struct _cpplexer
 {
@@ -42,7 +41,7 @@ typedef struct _cpplexer
         csource* source;
         csource_manager* source_manager;
         cerror_manager* error_manager;
-        ctree_context* context;
+        ccontext* context;
         tree_location loc;
         int tab_to_space;
 } cpplexer;
@@ -52,7 +51,7 @@ extern void cpplexer_init(
         const creswords* reswords,
         csource_manager* source_manager,
         cerror_manager* error_manager,
-        ctree_context* context);
+        ccontext* context);
 
 extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source);
 
@@ -149,10 +148,10 @@ typedef struct _cmacro
         bool function_like;
 } cmacro;
 
-extern cmacro* cmacro_new(ctree_context* context, tree_id name, bool function_like);
+extern cmacro* cmacro_new(ccontext* context, tree_id name, bool function_like);
 
-extern void cmacro_add_param(cmacro* self, ctree_context* context, const ctoken* t);
-extern void cmacro_add_expansion(cmacro* self, ctree_context* context, const ctoken* t);
+extern void cmacro_add_param(cmacro* self, ccontext* context, const ctoken* t);
+extern void cmacro_add_expansion(cmacro* self, ccontext* context, const ctoken* t);
 extern ctoken* cmacro_find_param(const cmacro* self, tree_id name);
 
 static inline bool cmacro_is_function_like(const cmacro* self)
@@ -182,7 +181,7 @@ typedef struct _cpproc
         const creswords* reswords;
         csource_manager* source_manager;
         cerror_manager* error_manager;
-        ctree_context* context;
+        ccontext* context;
 } cpproc;
 
 extern void cpproc_init(
@@ -190,7 +189,7 @@ extern void cpproc_init(
         const creswords* reswords,
         csource_manager* source_manager,
         cerror_manager* error_manager,
-        ctree_context* context);
+        ccontext* context);
 
 extern void cpproc_dispose(cpproc* self);
 extern serrcode cpproc_enter_source_file(cpproc* self, csource* source);

@@ -2,178 +2,139 @@
 #include "scc/scl/malloc.h"
 #include <setjmp.h>
 
-static void deallocate_plug(allocator* self, void* p)
+static void* _allocate_aligned(allocator* self, ssize bytes, ssize alignment)
 {
+        void* block = allocate(self, bytes + alignment);
+        return block
+                ? align_pointer(block, alignment)
+                : NULL;
 }
 
-extern void bpa_init(bp_allocator* self)
+extern void allocator_init_ex(
+        allocator* self, void* allocate, void* allocate_aligned, void* deallocate)
 {
-        bpa_init_ex(self, get_std_alloc());
+        self->_allocate = (allocate_fn)allocate;
+        self->_allocate_aligned = (allocate_aligned_fn)allocate_aligned;
+        self->_deallocate = (deallocate_fn)deallocate;
 }
 
-extern void bpa_init_ex(bp_allocator* self, allocator* alloc)
+extern void allocator_init(allocator* self, void* allocate, void* deallocate)
 {
-        allocator_init_ex(bpa_base(self), &bp_allocate, &bp_allocate_ex, &deallocate_plug);
+        allocator_init_ex(self, allocate, &_allocate_aligned, deallocate);
+}
+
+extern void bump_ptr_allocator_init(bump_ptr_allocator* self)
+{
+        bump_ptr_allocator_init_ex(self, STDALLOC);
+}
+
+extern void bump_ptr_allocator_init_ex(bump_ptr_allocator* self, allocator* alloc)
+{
+        self->_alloc = alloc;
+        self->_chunk.pos = NULL;
+        self->_chunk.end = NULL;
+        self->_chunk.size = 0;
+        allocator_init_ex(&self->_base,
+                &bump_ptr_allocate,
+                &bump_ptr_allocate_aligned,
+                &bump_ptr_deallocate);
         list_init(&self->_chunks);
-        self->_alloc = alloc;
-        self->_end = NULL;
-        self->_pos = NULL;
 }
 
-extern void bpa_dispose(bp_allocator* self)
+extern void bump_ptr_allocator_dispose(bump_ptr_allocator* self)
 {
-        //todo
+        while (!list_empty(&self->_chunks))
+                deallocate(self->_alloc, list_pop_front(&self->_chunks));
 }
 
-extern _bp_chunk* _bpa_new_chunk(bp_allocator* self, ssize bytes)
+extern bool _bump_ptr_allocator_grow(bump_ptr_allocator* self, ssize cst)
 {
-        _bp_chunk* c = allocate(self->_alloc, sizeof(_bp_chunk) + bytes);
-        if (!c)
-                return NULL;
-
-        list_node_init(&c->_node);
-        c->_size = bytes;
-        return c;
-}
-
-extern void _bpa_use_chunk(bp_allocator* self, _bp_chunk* c)
-{
-        list_push_back(&self->_chunks, &c->_node);
-        self->_pos = c->_bytes;
-        self->_end = self->_pos + c->_size;
-}
-
-extern serrcode _bpa_grow(bp_allocator* self, ssize cst)
-{
-        ssize chunk_size = cst;
-        if (!list_empty(&self->_chunks))
-                chunk_size += ((_bp_chunk*)list_last(&self->_chunks))->_size;
-
-        _bp_chunk* c = _bpa_new_chunk(self, chunk_size);
-        if (!c)
-                return S_ERROR;
-
-        _bpa_use_chunk(self, c);
-        return S_NO_ERROR;
-}
-
-extern void obj_allocator_init(obj_allocator* self, ssize obsize)
-{
-        obj_allocator_init_ex(self, obsize, get_std_alloc());
-}
-
-static void* _obj_allocate(obj_allocator* self, ssize bytes)
-{
-        return obj_allocate(self);
-}
-
-static void* _obj_allocate_ex(obj_allocator* self, ssize bytes, ssize align)
-{
-        return obj_allocate(self);
-}
-
-static void _obj_deallocate(obj_allocator* self, void* obj)
-{
-        obj_deallocate(self, obj);
-}
-
-extern void obj_allocator_init_ex(obj_allocator* self, ssize obsize, allocator* alloc)
-{
-        bpa_init_ex(obj_allocator_base(self), alloc);
-        allocator_init_ex(bpa_base(obj_allocator_base(self))
-                , &_obj_allocate, &_obj_allocate_ex, &_obj_deallocate);
-        self->_top = NULL;
-        self->_obsize = obsize;
-        self->_objects = 0;
-}
-
-extern serrcode _obj_allocator_grow(obj_allocator* self)
-{
-        ssize real_size = self->_obsize + sizeof(_obj_header);
-        ssize count = 1 + self->_objects;
-        _bp_chunk* c = _bpa_new_chunk(obj_allocator_base(self), count * real_size);
-        if (!c)
-                return S_ERROR;
-
-        char* val = c->_bytes;
-        ssize i = 0;
-        for (; i < count - 1; i++)
+        struct
         {
-                _obj_header* h = (_obj_header*)(val + i * real_size);
-                h->_next = (char*)h + real_size;
-        }
-        _obj_header* last = (_obj_header*)(val + i * real_size);
-        last->_next = NULL;
+                list_node node;
+                suint8 data[0];
+        } *chunk;
 
-        _bpa_use_chunk(obj_allocator_base(self), c);
-        return S_NO_ERROR;
+        ssize data_size = cst + self->_chunk.size;
+        if (!(chunk = allocate(self->_alloc, sizeof(*chunk) + data_size)))
+                return false;
+
+        self->_chunk.pos = chunk->data;
+        self->_chunk.end = self->_chunk.pos + data_size;
+        self->_chunk.size = data_size;
+        list_push_back(&self->_chunks, &chunk->node);
+        return true;
 }
 
-extern void nnull_alloc_init(nnull_allocator* self, void* handler, void* fatal)
+extern void object_allocator_init(object_allocator* self, ssize obsize)
 {
-        nnull_alloc_init_ex(self, handler, fatal, get_std_alloc());
+        object_allocator_init_ex(self, obsize, STDALLOC);
 }
 
-static void* nnull_allocate_ex(nnull_allocator* self, ssize bytes, ssize align)
+extern void object_allocator_init_ex(object_allocator* self, ssize obsize, allocator* alloc)
 {
-        S_ASSERT(self->_jbuf);
-        void* block = allocate_ex(self->_alloc, bytes, align);
-        if (block)
-                return block;
-
-        if (self->_handler)
-                if ((block = self->_handler(self, bytes, align)))
-                        return block;
-
-        longjmp(self->_jbuf, S_ERROR);
-        return NULL;
+        bump_ptr_allocator_init_ex(&self->_base, alloc);
+        self->_obsize = obsize;
+        self->_top = NULL;
 }
 
-static void* nnull_allocate(nnull_allocator* self, ssize bytes)
+extern void object_allocator_dispose(object_allocator* self)
 {
-        return nnull_allocate_ex(self, bytes, BPA_ALIGN);
+        bump_ptr_allocator_dispose(&self->_base);
 }
 
-static void nnull_deallocate(nnull_allocator* self, void* block)
+extern void base_allocator_init(
+        base_allocator* self, bad_alloc_handler handler, void* on_bad_alloc)
 {
-        deallocate(self->_alloc, block);
+        base_allocator_init_ex(self, handler, on_bad_alloc, STDALLOC);
 }
 
-extern void nnull_alloc_init_ex(
-        nnull_allocator* self, void* handler, void* fatal, allocator* alloc)
+extern void base_allocator_init_ex(
+        base_allocator* self, bad_alloc_handler handler, void* on_bad_alloc, allocator* alloc)
 {
-        allocator_init_ex(nnull_alloc_base(self),
-                &nnull_allocate,
-                &nnull_allocate_ex,
-                &nnull_deallocate);
+        S_ASSERT(on_bad_alloc);
         self->_alloc = alloc;
-        self->_jbuf = fatal;
         self->_handler = handler;
+        self->_on_bad_alloc = on_bad_alloc;
+        allocator_init(&self->_base, &base_allocate, &base_deallocate);
+        list_init(&self->_used);
 }
 
-static void* std_allocate(void* p, ssize bytes)
+extern void base_allocator_dispose(base_allocator* self)
+{
+        while (!list_empty(&self->_used))
+                deallocate(self->_alloc, list_pop_front(&self->_used));
+}
+
+extern void malloc_allocator_init(malloc_allocator* self)
+{
+        allocator_init(&self->_base, &mallocate, &mdeallocate);
+}
+
+extern void malloc_allocator_dispose(malloc_allocator* self)
+{
+        ;
+}
+
+extern void* mallocate(malloc_allocator* self, ssize bytes)
 {
         return smalloc(bytes);
 }
-
-static void* std_allocate_ex(void* p, ssize bytes, ssize align)
-{
-        return smalloc(bytes);
-}
-
-static void std_deallocate(void* p, void* block)
+extern void mdeallocate(malloc_allocator* self, void* block)
 {
         sfree(block);
 }
 
-static allocator std_alloc =
-{
-        ._allocate = (alloc_fn)&std_allocate,
-        ._allocate_ex = (alloc_ex_fn)&std_allocate_ex,
-        ._deallocate = (dealloc_fn)&std_deallocate
-};
+static malloc_allocator _stdalloc;
+static bool _stdalloc_initialized = false;
 
-extern allocator* get_std_alloc()
+extern allocator* _get_stdalloc()
 {
-        return &std_alloc;
+        if (!_stdalloc_initialized)
+        {
+                malloc_allocator_init(&_stdalloc);
+                _stdalloc_initialized = true;
+        }
+
+        return malloc_allocator_base(&_stdalloc);
 }

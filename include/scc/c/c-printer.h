@@ -14,6 +14,7 @@ extern "C" {
 #include "scc/scl/dseq-ext.h"
 
 typedef struct _ctoken ctoken;
+typedef struct _ccontext ccontext;
 typedef struct _csource_manager csource_manager;
 typedef struct _cident_policy cident_policy;
 typedef struct _tree_expr tree_expr;
@@ -43,6 +44,7 @@ typedef struct _cprinter
 {
         writebuf buf;
         const tree_context* context;
+        const ccontext* ccontext;
         // used when we need to print constant expression result
         const tree_target_info* target;
         const csource_manager* source_manager;
@@ -54,8 +56,7 @@ typedef struct _cprinter
 extern void cprinter_init(
         cprinter* self,
         write_cb* write,
-        const tree_context* context,
-        const cident_policy* id_policy,
+        const ccontext* context,
         const csource_manager* source_manager);
 
 extern void cprinter_dispose(cprinter* self);

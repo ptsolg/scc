@@ -12,8 +12,8 @@ extern "C" {
 #include "scc/tree/tree-common.h"
 #include "c-token-kind.h"
 
-typedef struct _ctree_context ctree_context;
 typedef struct _ctoken ctoken;
+typedef struct _ccontext ccontext;
 
 struct _ctoken_base
 {
@@ -21,22 +21,19 @@ struct _ctoken_base
         tree_location _loc;
 };
 
-extern ctoken* ctoken_new(ctree_context* context, ctoken_kind kind, tree_location loc);
+extern ctoken* ctoken_new(ccontext* context, ctoken_kind kind, tree_location loc);
 
 extern ctoken* ctoken_new_ex(
-        ctree_context* context, ctoken_kind kind, tree_location loc, ssize size);
+        ccontext* context, ctoken_kind kind, tree_location loc, ssize size);
 
 static inline struct _ctoken_base* _ctoken_get(ctoken* self);
 static inline const struct _ctoken_base* _ctoken_cget(const ctoken* self);
 
-static inline ctoken* ctoken_get_next(const ctoken* self);
-static inline ctoken* ctoken_get_prev(const ctoken* self);
 static inline ctoken_kind ctoken_get_kind(const ctoken* self);
 static inline bool ctoken_is(const ctoken* self, ctoken_kind k);
 static inline tree_location ctoken_get_loc(const ctoken* self);
 static inline list_node* ctoken_get_node(ctoken* self);
 static inline const list_node* ctoken_get_cnode(const ctoken* self);
-
 
 static inline void ctoken_set_kind(ctoken* self, ctoken_kind k);
 static inline void ctoken_set_loc(ctoken* self, tree_location l);
@@ -48,11 +45,11 @@ struct _cstring_token
 };
 
 extern ctoken* ctoken_new_string_ex(
-        ctree_context* context, ctoken_kind kind, tree_location loc, tree_id ref, ssize size);
+        ccontext* context, ctoken_kind kind, tree_location loc, tree_id ref, ssize size);
 
-extern ctoken* ctoken_new_string(ctree_context* context, tree_location loc, tree_id ref);
-extern ctoken* ctoken_new_angle_string(ctree_context* context, tree_location loc, tree_id ref);
-extern ctoken* ctoken_new_id(ctree_context* context, tree_location loc, tree_id id);
+extern ctoken* ctoken_new_string(ccontext* context, tree_location loc, tree_id ref);
+extern ctoken* ctoken_new_angle_string(ccontext* context, tree_location loc, tree_id ref);
+extern ctoken* ctoken_new_id(ccontext* context, tree_location loc, tree_id id);
 
 static inline struct _cstring_token* _cstring_token_get(ctoken* self);
 static inline const struct _cstring_token* _cstring_token_cget(const ctoken* self);
@@ -66,7 +63,7 @@ struct _cfloat_token
         float _value;
 };
 
-extern ctoken* ctoken_new_float(ctree_context* context, tree_location loc, float val);
+extern ctoken* ctoken_new_float(ccontext* context, tree_location loc, float val);
 
 static inline struct _cfloat_token* _cfloat_token_get(ctoken* self);
 static inline const struct _cfloat_token* _cfloat_token_cget(const ctoken* self);
@@ -80,7 +77,7 @@ struct _cdouble_token
         ldouble _value;
 };
 
-extern ctoken* ctoken_new_double(ctree_context* context, tree_location loc, ldouble val);
+extern ctoken* ctoken_new_double(ccontext* context, tree_location loc, ldouble val);
 
 static inline struct _cdouble_token* _cdouble_token_get(ctoken* self);
 static inline const struct _cdouble_token* _cdouble_token_cget(const ctoken* self);
@@ -97,7 +94,7 @@ struct _cint_token
 };
 
 extern ctoken* ctoken_new_int(
-        ctree_context* context, tree_location loc, suint64 val, bool is_signed, int ls);
+        ccontext* context, tree_location loc, suint64 val, bool is_signed, int ls);
 
 static inline struct _cint_token* _cint_token_get(ctoken* self);
 static inline const struct _cint_token* _cint_token_cget(const ctoken* self);
@@ -116,7 +113,7 @@ struct _cchar_token
         int _value;
 };
 
-extern ctoken* ctoken_new_char(ctree_context* context, tree_location loc, int val);
+extern ctoken* ctoken_new_char(ccontext* context, tree_location loc, int val);
 
 static inline struct _cchar_token* _cchar_token_get(ctoken* self);
 static inline const struct _cchar_token* _cchar_token_cget(const ctoken* self);
@@ -130,7 +127,7 @@ struct _cwspace_token
         int _count;
 };
 
-extern ctoken* ctoken_new_wspace(ctree_context* context, tree_location loc, int count);
+extern ctoken* ctoken_new_wspace(ccontext* context, tree_location loc, int count);
 
 static inline struct _cwspace_token* _cwspace_token_get(ctoken* self);
 static inline const struct _cwspace_token* _cwspace_token_cget(const ctoken* self);
@@ -152,9 +149,9 @@ typedef struct _ctoken
         };
 } ctoken;
 
-extern ctoken* ctoken_copy(ctree_context* self, const ctoken* other);
+extern ctoken* ctoken_copy(ccontext* self, const ctoken* other);
 // allocates token with a size sufficient for converting it to float/double/int token
-extern ctoken* ctoken_new_pp_num(ctree_context* context, tree_location loc, tree_id ref);
+extern ctoken* ctoken_new_pp_num(ccontext* context, tree_location loc, tree_id ref);
 
 #define CTOKEN_ASSERT(P, K) S_ASSERT((P) && ctoken_is((P), (K)))
 

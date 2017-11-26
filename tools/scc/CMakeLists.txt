@@ -2,7 +2,7 @@ add_scc_tool(scc
 	main.c
 
 	DEPENDS
-	compiler
+	cc
 
 	INCLUDE
 	${SCC_INC_DIR}

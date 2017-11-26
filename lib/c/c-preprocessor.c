@@ -4,10 +4,10 @@
 #include "scc/c/c-tree.h"
 #include "scc/scl/char-info.h"
 
-extern void creswords_init(creswords* self)
+extern void creswords_init(creswords* self, ccontext* context)
 {
-        htab_init_i32(&self->reswords);
-        htab_init_i32(&self->pp_reswords);
+        htab_init_ex_i32(&self->reswords, cget_alloc(context));
+        htab_init_ex_i32(&self->pp_reswords, cget_alloc(context));
 }
 
 extern void creswords_dispose(creswords* self)
@@ -16,14 +16,14 @@ extern void creswords_dispose(creswords* self)
         htab_dispose(&self->pp_reswords);
 }
 
-extern serrcode creswords_add(creswords* self, const char* string, ctoken_kind k)
+extern void creswords_add(creswords* self, const char* string, ctoken_kind k)
 {
-        return htab_insert_i32(&self->reswords, STRREF(string), k);
+        htab_insert_i32(&self->reswords, STRREF(string), k);
 }
 
-extern serrcode creswords_add_pp(creswords* self, const char* string, ctoken_kind k)
+extern void creswords_add_pp(creswords* self, const char* string, ctoken_kind k)
 {
-        return htab_insert_i32(&self->pp_reswords, STRREF(string), k);
+        htab_insert_i32(&self->pp_reswords, STRREF(string), k);
 }
 
 extern ctoken_kind creswords_get(const creswords* self, const char* string, ssize len)
@@ -113,7 +113,7 @@ extern void cpplexer_init(
         const creswords* reswords,
         csource_manager* source_manager,
         cerror_manager* error_manager,
-        ctree_context* context)
+        ccontext* context)
 {
         self->reswords = reswords;
         self->context = context;
@@ -133,7 +133,7 @@ extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source)
         if (!source)
                 return S_ERROR;
         
-        if (!(self->buf = csource_open(source)))
+        if (!(self->buf = csource_open(source, self->context)))
         {
                 cerror(self->error_manager, CES_ERROR, 0,
                         "cannot open source file %s", csource_get_name(source));
@@ -185,7 +185,7 @@ static inline bool csequence_append(csequence* self, const cpplexer* lexer, int 
 
 static tree_id cpplexer_pool_seq(cpplexer* self, csequence* seq)
 {
-        tree_id id = tree_get_id(ctree_context_base(self->context), seq->val, seq->size);
+        tree_id id = tree_get_id(cget_tree(self->context), seq->val, seq->size);
         S_ASSERT(id != TREE_INVALID_ID);
         return id;
 }
@@ -592,22 +592,21 @@ extern void cpproc_init(
         const creswords* reswords,
         csource_manager* source_manager,
         cerror_manager* error_manager,
-        ctree_context* context)
+        ccontext* context)
 {
         self->reswords = reswords;
         self->state = self->files - 1;
         self->source_manager = source_manager;
         self->error_manager = error_manager;
         self->context = context;
-        dseq_init_ex_ptr(&self->expansion,
-                tree_get_allocator(ctree_context_base(context)));
+        dseq_init_ex_ptr(&self->expansion, cget_alloc(context));
 }
 
 extern void cpproc_dispose(cpproc* self)
 {
         while (self->state != self->files - 1)
         {
-                csource_close(self->state->source);
+                csource_close(self->state->source, self->context);
                 self->state--;
         }
 }
@@ -645,7 +644,7 @@ extern serrcode cpproc_enter_source_file(cpproc* self, csource* source)
 extern void cpproc_exit_source_file(cpproc* self)
 {
         S_ASSERT(self->state != self->files);
-        csource_close(self->state->source);
+        csource_close(self->state->source, self->context);
         self->state--;
 }
 
@@ -687,7 +686,7 @@ static ctoken* cpproc_lex_include(cpproc* self)
         }
 
         tree_id ref = ctoken_get_string(t);
-        const char* filename = tree_get_id_cstr(ctree_context_base(self->context), ref);
+        const char* filename = tree_get_id_cstr(cget_tree(self->context), ref);
         S_ASSERT(filename);
 
         if (!*filename)
@@ -784,7 +783,7 @@ static ctoken* cpproc_lex_string(cpproc* self)
                 return t;
 
         dseq buf;
-        dseq_init_ex_ptr(&buf, tree_get_allocator(ctree_context_base(self->context)));
+        dseq_init_ex_ptr(&buf, cget_alloc(self->context));
         while (ctoken_is(t, CTK_CONST_STRING))
         {
                 dseq_append_ptr(&buf, t);
@@ -803,11 +802,11 @@ static ctoken* cpproc_lex_string(cpproc* self)
         for (ssize i = 0; i < dseq_size(&buf); i++)
         {
                 tree_id ref = ctoken_get_string(dseq_get_ptr(&buf, i));
-                const char* s = tree_get_id_cstr(ctree_context_base(self->context), ref);
+                const char* s = tree_get_id_cstr(cget_tree(self->context), ref);
                 strcat(concat, s);
         }
 
-        tree_id ref = tree_get_id(ctree_context_base(self->context), concat, strlen(concat));
+        tree_id ref = tree_get_id(cget_tree(self->context), concat, strlen(concat));
         t = dseq_first_ptr(&buf);
         ctoken_set_string(t, ref);
         dseq_dispose(&buf);

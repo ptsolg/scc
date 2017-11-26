@@ -282,7 +282,7 @@ extern tree_expr* csema_new_call_expr(
                 return NULL;
   
         tree_expr* call = tree_new_call_expr(self->context, TVK_RVALUE,
-                tree_get_function_restype(t), loc, lhs);
+                tree_get_function_type_result(t), loc, lhs);
 
         tree_type** typeit = tree_get_function_type_begin(t);
         for (ssize i = 0; i < dseq_size(args); i++)

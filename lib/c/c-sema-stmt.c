@@ -245,7 +245,7 @@ extern tree_stmt* csema_new_break_stmt(
 extern tree_stmt* csema_new_return_stmt(
         csema* self, tree_location kw_loc, tree_location semicolon_loc, tree_expr* value)
 {
-        tree_type* restype = tree_get_function_restype(tree_get_decl_type(self->function));
+        tree_type* restype = tree_get_function_type_result(tree_get_decl_type(self->function));
         if (tree_type_is_void(restype) && value)
         {
                 cerror(self->error_manager, CES_ERROR, tree_get_expr_loc(value),
@@ -313,8 +313,7 @@ extern bool csema_check_stmt(const csema* self, const tree_stmt* s, cstmt_contex
         }
         else if (sk == TSK_COMPOUND && is_top_level)
         {
-                tree_symtab* labels = tree_get_decl_scope_symtab(self->labels);
-                TREE_SYMTAB_FOREACH(labels, it)
+                TREE_FOREACH_DECL_IN_LOOKUP(self->labels, it)
                 {
                         tree_decl* label = hiter_get_ptr(&it);
                         if (!tree_get_label_decl_stmt(label))

@@ -367,8 +367,8 @@ extern bool tree_types_are_same(const tree_type* a, const tree_type* b)
                                         return false;
                         }
 
-                        a = tree_get_function_restype(a);
-                        b = tree_get_function_restype(b);
+                        a = tree_get_function_type_result(a);
+                        b = tree_get_function_type_result(b);
                 }
                 else if (ak == TTK_DECL)
                         return tree_decls_are_same(

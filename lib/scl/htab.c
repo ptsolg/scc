@@ -12,7 +12,7 @@ typedef struct
 
 extern void htab_init(htab* self, ssize obsize)
 {
-        htab_init_ex(self, obsize, get_std_alloc());
+        htab_init_ex(self, obsize, STDALLOC);
 }
 
 extern void htab_init_ex(htab* self, ssize obsize, allocator* alloc)

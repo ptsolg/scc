@@ -43,7 +43,6 @@ extern void tree_init_scope_ex(
         tree_decl_scope* decl_parent,
         tree_scope_flags flags);
 
-extern void tree_dispose_scope(tree_scope* self);
 extern void tree_scope_add(tree_scope* self, tree_stmt* s);
 
 static inline tree_scope_flags tree_get_scope_flags(const tree_scope* self);
@@ -82,7 +81,7 @@ typedef enum _tree_stmt_kind
         TSK_SIZE,
 } tree_stmt_kind;
 
-#define TREE_CHECK_STMT_KIND(K) S_ASSERT((K) > TSK_UNKNOWN && (K) < TSK_SIZE)
+#define TREE_ASSERT_STMT_KIND(K) S_ASSERT((K) > TSK_UNKNOWN && (K) < TSK_SIZE)
 
 struct _tree_stmt_base
 {

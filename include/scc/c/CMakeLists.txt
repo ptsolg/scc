@@ -19,7 +19,6 @@ add_scc_target_sources(c
 	c-sema-type.h
 	c-sema-stmt.h
 	c-info.h
-	c-env.h
 	c-preprocessor.h
 	c-printer.h
 	c-token-kind.inc

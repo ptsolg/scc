@@ -16,7 +16,7 @@ typedef struct _tree_target_info tree_target_info;
 
 typedef struct _tree_context
 {
-        bp_allocator _base;
+        bump_ptr_allocator _alloc;
         strpool _strings;
         tree_target_info* _target;
 } tree_context;
@@ -27,7 +27,7 @@ extern void tree_dispose(tree_context* self);
 
 static inline allocator* tree_get_allocator(const tree_context* self)
 {
-        return bpa_alloc(&self->_base);
+        return bump_ptr_allocator_parent(&self->_alloc);
 }
 
 static inline tree_target_info* tree_get_target(const tree_context* self)
@@ -37,7 +37,7 @@ static inline tree_target_info* tree_get_target(const tree_context* self)
 
 static inline void* tree_allocate(tree_context* self, ssize bytes)
 {
-        return bp_allocate(&self->_base, bytes);
+        return bump_ptr_allocate(&self->_alloc, bytes);
 }
 
 static inline const char* tree_get_id_cstr(const tree_context* self, tree_id id)

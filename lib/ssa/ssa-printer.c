@@ -115,9 +115,9 @@ S_STATIC_ASSERT(S_ARRAY_SIZE(ssa_binary_instr_table) == SBIK_SIZE,
 
 static void ssa_print_binary_instr(ssa_printer* self, const ssa_instr* instr)
 {
-        ssa_print_value_ref(self, ssa_get_instr_cvalue(instr));
+        ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
         ssa_binary_instr_kind k = ssa_get_binop_opcode(instr);
-        SSA_CHECK_BINARY_INSTR_KIND(k);
+        SSA_ASSERT_BINARY_INSTR_KIND(k);
         ssa_printf(self, " = %s ", ssa_binary_instr_table[k]);
         ssa_print_value_ref(self, ssa_get_binop_lhs(instr));
         ssa_prints(self, ", ");
@@ -126,8 +126,8 @@ static void ssa_print_binary_instr(ssa_printer* self, const ssa_instr* instr)
 
 static void ssa_print_alloca(ssa_printer* self, const ssa_instr* instr)
 {
-        const ssa_value* v = ssa_get_instr_cvalue(instr);
-        const tree_target_info* ti = ssa_get_context_target(self->context);
+        const ssa_value* v = ssa_get_instr_cvar(instr);
+        const tree_target_info* ti = ssa_get_target(self->context);
         const tree_type* vt = ssa_get_value_type(v);
         ssa_print_value_ref(self, v);
         ssa_printf(self, " = alloca %u",
@@ -136,7 +136,7 @@ static void ssa_print_alloca(ssa_printer* self, const ssa_instr* instr)
 
 static void ssa_print_load(ssa_printer* self, const ssa_instr* instr)
 {
-        ssa_print_value_ref(self, ssa_get_instr_cvalue(instr));
+        ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
         ssa_prints(self, " = load ");
         ssa_print_value_ref(self, ssa_get_load_what(instr));
 }
@@ -151,7 +151,7 @@ static void ssa_print_store(ssa_printer* self, const ssa_instr* instr)
 
 static void ssa_print_phi(ssa_printer* self, const ssa_instr* instr)
 {
-        ssa_print_value_ref(self, ssa_get_instr_cvalue(instr));
+        ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
         ssa_prints(self, " = phi ");
         SSA_FOREACH_PHI_VAR(instr, it)
         {
@@ -163,7 +163,7 @@ static void ssa_print_phi(ssa_printer* self, const ssa_instr* instr)
 
 static void ssa_print_cast(ssa_printer* self, const ssa_instr* instr)
 {
-        ssa_print_value_ref(self, ssa_get_instr_cvalue(instr));
+        ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
         ssa_prints(self, " = cast ");
         ssa_print_value_ref(self, ssa_get_cast_operand(instr));
 }
@@ -174,7 +174,7 @@ extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
         ssa_print_indent(self);
 
         ssa_instr_kind k = ssa_get_instr_kind(instr);
-        SSA_CHECK_INSTR_KIND(k);
+        SSA_ASSERT_INSTR_KIND(k);
 
         if (k == SIK_ALLOCA)
                 ssa_print_alloca(self, instr);
@@ -223,7 +223,7 @@ static void ssa_print_branch(ssa_printer* self, const ssa_branch* br)
 extern void ssa_print_block(ssa_printer* self, const ssa_block* block)
 {
         ssa_print_endl(self);
-        ssa_print_value_ref(self, ssa_get_block_cvalue(block));
+        ssa_print_value_ref(self, ssa_get_block_clabel(block));
         ssa_printc(self, ':');
 
         SSA_FOREACH_BLOCK_INSTR(block, it)
@@ -237,7 +237,7 @@ extern void ssa_print_function(ssa_printer* self, const ssa_function* func)
 {
         tree_decl* entity = ssa_get_function_entity(func);
         const char* name = tree_get_id_cstr(
-                ssa_get_context_tree(self->context), tree_get_decl_name(entity));
+                ssa_get_tree(self->context), tree_get_decl_name(entity));
         ssa_printf(self, "; Definition for %s", name);
 
         SSA_FOREACH_FUNCTION_BLOCK(func, block)

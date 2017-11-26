@@ -11,7 +11,7 @@ extern void membuf_init_ex(membuf* self, allocator* alloc)
 
 extern void membuf_init(membuf* self)
 {
-        membuf_init_ex(self, get_std_alloc());
+        membuf_init_ex(self, STDALLOC);
 }
 
 extern void membuf_dispose(membuf* self)

@@ -21,33 +21,45 @@
 #error todo
 #endif
 
-extern void path_get_cd(char* path)
+extern serrcode path_get_cd(char* path)
 {
 #if S_WIN
-        GetCurrentDirectory(S_MAX_PATH_LEN, path);
+        if (!GetCurrentDirectory(S_MAX_PATH_LEN, path))
+                return S_ERROR;
 #elif S_OSX
-        getcwd(path, S_MAX_PATH_LEN);
+        if (!getcwd(path, S_MAX_PATH_LEN))
+                return S_ERROR;
 #else
 #error todo
 #endif
-        path_add_trailing_slash(path);
+        return path_add_trailing_slash(path);
 }
 
-extern void path_add_trailing_slash(char* path)
+extern serrcode path_add_trailing_slash(char* path)
 {
         if (!path_has_trailing_slash(path))
         {
-                char* end = sstrend(path);
-                *end++ = S_PATH_DELIMETER;
-                *end = '\0';
+                ssize len = strlen(path);
+                if (len + 1 >= S_MAX_PATH_LEN)
+                        return S_ERROR;
+
+                path[len++] = S_PATH_DELIMETER;
+                path[len] = '\0';
         }
+        return S_NO_ERROR;
 }
 
-extern void path_join(char* path, const char* other)
+extern serrcode path_join(char* path, const char* other)
 {
+        if (strlen(path) + strlen(other) >= S_MAX_PATH_LEN)
+                return S_ERROR;
+
         if (!path_has_trailing_slash(path))
-                path_add_trailing_slash(path);
+                if (S_FAILED(path_add_trailing_slash(path)))
+                        return S_ERROR;
+
         strcat(path, other);
+        return S_NO_ERROR;
 }
 
 extern void path_goto_parent_dir(char* path)
@@ -182,21 +194,25 @@ extern void path_fix_delimeter(char* path)
         }
 }
 
-extern void path_get_abs(char* abs, const char* loc)
+extern serrcode path_get_abs(char* abs, const char* loc)
 {
         if (path_is_abs(loc))
         {
                 strcpy(abs, loc);
-                return;
+                return S_NO_ERROR;
         }
 
 #if S_WIN
-        GetFullPathName(loc, S_MAX_PATH_LEN, abs, NULL);
+        if (!GetFullPathName(loc, S_MAX_PATH_LEN, abs, NULL))
+                return S_ERROR;
 #elif S_OSX
-        realpath(loc, abs);
+        if (!realpath(loc, abs))
+                return S_ERROR;
 #else
 #error todo
 #endif
+
+        return S_NO_ERROR;
 }
 
 static ssize fread_cb_read(fread_cb* self, void* buf, ssize bytes)

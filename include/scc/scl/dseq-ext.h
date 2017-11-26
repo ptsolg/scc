@@ -31,7 +31,7 @@ extern "C" {
 #define DSEQ_GEN_INIT(SUFFIX, TYPE)                          \
         static inline void DSEQ_INIT(SUFFIX)(dseq* self)     \
         {                                                    \
-                DSEQ_INIT_EX(SUFFIX)(self, get_std_alloc()); \
+                DSEQ_INIT_EX(SUFFIX)(self, STDALLOC);        \
         }
 
 #define DSEQ_BEGIN(SUFFIX) dseq_begin_##SUFFIX

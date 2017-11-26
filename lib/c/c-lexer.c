@@ -10,9 +10,9 @@ extern void clexer_init(
         clexer* self,
         csource_manager* source_manager,
         cerror_manager* error_manager,
-        ctree_context* context)
+        ccontext* context)
 {
-        creswords_init(&self->reswords);
+        creswords_init(&self->reswords, context);
         cpproc_init(&self->pp, &self->reswords, source_manager, error_manager, context);
 }
 
@@ -21,34 +21,20 @@ extern serrcode clexer_enter_source_file(clexer* self, csource* source)
         return cpproc_enter_source_file(&self->pp, source);
 }
 
-S_STATIC_ASSERT(CTK_TOTAL_SIZE == 108, "Update lexer reswords initialization");
+S_STATIC_ASSERT(CTK_TOTAL_SIZE == 108, "lexer reswords initialization needs an update");
 
-static serrcode _clexer_init_reswords(clexer* self, ctoken_kind from, ctoken_kind to)
-{
-        for (ctoken_kind i = from; i < to; i++)
-        {
-                const cresword_info* info = cget_token_kind_info(i);
-                if (S_FAILED(creswords_add(&self->reswords, info->string, i)))
-                        return S_ERROR;
-        }
-        return S_NO_ERROR;
-}
-
-extern serrcode clexer_init_reswords(clexer* self)
+extern void clexer_init_reswords(clexer* self)
 {
         for (ctoken_kind i = CTK_CHAR; i < CTK_CONST_INT; i++)
         {
                 const cresword_info* info = cget_token_kind_info(i);
-                if (S_FAILED(creswords_add(&self->reswords, info->string, i)))
-                        return S_ERROR;
+                creswords_add(&self->reswords, info->string, i);
         }
         for (ctoken_kind i = CTK_PP_IF; i < CTK_TOTAL_SIZE; i++)
         {
                 const cresword_info* info = cget_token_kind_info(i);
-                if (S_FAILED(creswords_add_pp(&self->reswords, info->string, i)))
-                        return S_ERROR;
+                creswords_add_pp(&self->reswords, info->string, i);
         }
-        return S_NO_ERROR;
 }
 
 extern void clexer_dispose(clexer* self)
@@ -59,7 +45,7 @@ extern void clexer_dispose(clexer* self)
 
 static inline const char* clexer_get_string(clexer* self, tree_id ref)
 {
-        return tree_get_id_cstr(ctree_context_base(self->pp.context), ref);
+        return tree_get_id_cstr(cget_tree(self->pp.context), ref);
 }
 
 static inline bool clexer_pp_num_is_floating_constant(clexer* self, const ctoken* pp)

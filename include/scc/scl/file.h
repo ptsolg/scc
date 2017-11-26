@@ -14,9 +14,9 @@ extern "C" {
 #include "read-write.h"
 #include <stdio.h>
 
-extern void path_get_cd(char* path);
-extern void path_add_trailing_slash(char* path);
-extern void path_join(char* path, const char* other);
+extern serrcode path_get_cd(char* path);
+extern serrcode path_add_trailing_slash(char* path);
+extern serrcode path_join(char* path, const char* other);
 extern void path_goto_parent_dir(char* path);
 extern bool path_has_trailing_slash(const char* path);
 extern void path_strip_file(char* path);
@@ -27,7 +27,7 @@ extern char* path_get_file(char* path);
 extern const char* path_get_cfile(const char* path);
 extern ssize path_get_size(const char* path);
 extern bool path_is_abs(const char* path);
-extern void path_get_abs(char* abs, const char* loc);
+extern serrcode path_get_abs(char* abs, const char* loc);
 extern void path_fix_delimeter(char* path);
 
 typedef struct _fread_cb

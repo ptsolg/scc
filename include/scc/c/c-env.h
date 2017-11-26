@@ -15,14 +15,13 @@ extern "C" {
 
 typedef struct _cenv
 {
-        ctree_context context;
+        ccontext context;
         csource_manager source_manager;
         cerror_manager error_manager;
-        cident_policy id_policy;
         tree_target_info target;
 } cenv;
 
-extern void cenv_init(cenv* self, tree_target_kind target, FILE* err, jmp_buf* fatal);
+extern void cenv_init(cenv* self, tree_context* tree, FILE* output, jmp_buf* fatal);
 extern void cenv_dispose(cenv* self);
 extern serrcode cenv_add_lookup(cenv* self, const char* dir);
 extern tree_module* cparse_file(cenv* self, const char* file);

@@ -4,14 +4,12 @@
 
 extern void csema_init(
         csema* self,
-        ctree_context* context,
-        cident_policy* id_policy,
+        ccontext* context,
         tree_module* module,
         cerror_manager* error_manager)
 {
         self->ccontext = context;
-        self->context = ctree_context_base(context);
-        self->id_policy = id_policy;
+        self->context = cget_tree(context);
         self->module = module;
         self->labels = NULL;
         self->globals = tree_get_module_globals(module);
@@ -75,38 +73,42 @@ extern void csema_push_scope(csema* self)
         csema_enter_decl_scope(self, tree_new_decl_scope(self->context, self->locals));
 }
 
-extern tree_id csema_get_decl_name(const csema* self, const tree_decl* d)
-{
-        return cident_policy_get_orig_decl_name(self->id_policy, d);
-}
-
 extern void csema_init_dseq_ptr(csema* self, dseq* args)
 {
         dseq_init_ex_ptr(args, tree_get_allocator(self->context));
 }
 
-extern tree_decl* csema_get_local_tag_decl(const csema* self, tree_id name, bool parent_lookup)
+extern tree_decl* csema_get_any_decl(
+        const csema* self, const tree_decl_scope* scope, tree_id name, bool parent_lookup)
 {
-        if (tree_id_is_empty(name))
-                return NULL;
-
-        return tree_decl_scope_find(self->locals,
-                cident_policy_to_tag(self->id_policy, name), parent_lookup);
+        tree_decl* d = csema_get_decl(self, scope, name, false, parent_lookup);
+        return d ? d : csema_get_decl(self, scope, name, true, parent_lookup);
 }
 
-extern tree_decl* csema_get_local_decl(const csema* self, tree_id name)
+extern tree_decl* csema_get_decl(
+        const csema* self,
+        const tree_decl_scope* scope,
+        tree_id name,
+        bool is_tag,
+        bool parent_lookup)
 {
-        return tree_decl_scope_find(self->locals, name, true);
+        return tree_decl_scope_lookup(scope,
+                ctree_id_to_key(self->ccontext, name, is_tag), parent_lookup);
 }
 
-extern tree_decl* csema_get_global_decl(const csema* self, tree_id name)
+extern tree_decl* csema_get_local_decl(const csema* self, tree_id name, bool is_tag)
 {
-        return tree_decl_scope_find(self->globals, name, false);
+        return csema_get_decl(self, self->locals, name, is_tag, false);
+}
+
+extern tree_decl* csema_get_global_decl(const csema* self, tree_id name, bool is_tag)
+{
+        return csema_get_decl(self, self->globals, name, is_tag, false);
 }
 
 extern tree_decl* csema_get_label_decl(const csema* self, tree_id name)
 {
-        return tree_decl_scope_find(self->labels, name, false);
+        return csema_get_decl(self, self->labels, name, false, false);
 }
 
 extern tree_decl* csema_require_decl(
@@ -117,7 +119,7 @@ extern tree_decl* csema_require_decl(
         tree_id name,
         bool parent_lookup)
 {
-        tree_decl* d = tree_symtab_get(tree_get_decl_scope_csymtab(scope), name, parent_lookup);
+        tree_decl* d = csema_get_any_decl(self, scope, name, parent_lookup);
         if (!d)
         {
                 cerror(self->error_manager, CES_ERROR, name_loc,

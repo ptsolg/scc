@@ -27,7 +27,7 @@ extern "C" {
 #define HTAB_GEN_INIT(SUFFIX, TYPE)                          \
         static inline void HTAB_INIT(SUFFIX)(htab* self)     \
         {                                                    \
-                HTAB_INIT_EX(SUFFIX)(self, get_std_alloc()); \
+                HTAB_INIT_EX(SUFFIX)(self, STDALLOC);        \
         }
 
 #define HTAB_INSERT(SUFFIX) htab_insert_##SUFFIX

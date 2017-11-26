@@ -3,7 +3,7 @@
 
 extern void dseq_init(dseq* self, ssize obsize)
 {
-        dseq_init_ex(self, obsize, get_std_alloc());
+        dseq_init_ex(self, obsize, STDALLOC);
 }
 
 extern void dseq_init_ex(dseq* self, ssize obsize, allocator* alloc)

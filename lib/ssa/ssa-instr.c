@@ -11,7 +11,7 @@ extern ssa_instr* ssa_new_instr(
 
         ssa_set_instr_kind(i, kind);
         list_node_init(&_ssa_get_instr_base(i)->_node);
-        ssa_init_variable(ssa_get_instr_value(i), id, type);
+        ssa_init_variable(ssa_get_instr_var(i), id, type);
         return i;
 }
 
@@ -51,7 +51,7 @@ extern ssa_instr* ssa_new_call(ssa_context* context, ssa_id id, tree_type* resty
                 return NULL;
 
         ssa_set_call_func(i, func);
-        dseq_init_ex_ptr(&_ssa_get_call(i)->_args, ssa_get_context_alloc(context));
+        dseq_init_ex_ptr(&_ssa_get_call(i)->_args, ssa_get_alloc(context));
         return i;
 }
 
@@ -86,7 +86,7 @@ extern ssa_instr* ssa_new_phi(ssa_context* context, ssa_id id, tree_type* restyp
         if (!i)
                 return NULL;
 
-        dseq_init_ex_ptr(&_ssa_get_phi(i)->_params, ssa_get_context_alloc(context));
+        dseq_init_ex_ptr(&_ssa_get_phi(i)->_params, ssa_get_alloc(context));
         return i;
 }
 

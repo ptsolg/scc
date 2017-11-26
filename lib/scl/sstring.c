@@ -3,19 +3,19 @@
 
 extern void strpool_init(strpool* self)
 {
-        strpool_init_ex(self, get_std_alloc());
+        strpool_init_ex(self, STDALLOC);
 }
 
 extern void strpool_init_ex(strpool* self, allocator* alloc)
 {
         htab_init_ex_ptr(&self->_strings, alloc);
-        bpa_init_ex(&self->_alloc, alloc);
+        bump_ptr_allocator_init_ex(&self->_alloc, alloc);
 }
 
 extern void strpool_dispose(strpool* self)
 {
         htab_dispose(&self->_strings);
-        bpa_dispose(&self->_alloc);
+        bump_ptr_allocator_dispose(&self->_alloc);
 }
 
 extern const char* strpool_get(const strpool* self, strref ref)
@@ -53,7 +53,7 @@ extern strref strpool_insertl(strpool* self, const char* string, ssize len)
         if (S_FAILED(htab_reserve(&self->_strings, r)))
                 return STRREF_INVALID;
 
-        char* cpy = bp_allocate(&self->_alloc, len + 1);
+        char* cpy = bump_ptr_allocate(&self->_alloc, len + 1);
         if (!cpy)
         {
                 htab_erase(&self->_strings, r);

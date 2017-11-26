@@ -10,41 +10,49 @@ extern "C" {
 #endif
 
 #include "scc/tree/tree.h"
+#include <stdio.h>
 #include <setjmp.h>
 
-typedef struct _cident_policy
+typedef struct _cfile
 {
+        list_node node;
+        FILE* entity;
+} cfile;
+
+typedef struct _ccontext
+{
+        base_allocator base_alloc;
+        bump_ptr_allocator node_alloc;
+        list_head opened_files;
         bool use_tags;
-} cident_policy;
+        tree_context* tree;
+} ccontext;
 
-extern void cident_policy_init(cident_policy* self);
+extern void cinit(ccontext* self, tree_context* tree, jmp_buf on_bad_alloc);
+extern void cinit_ex(ccontext* self,
+        tree_context* tree, jmp_buf on_bad_alloc, allocator* alloc);
 
-extern tree_id cident_policy_to_tag(const cident_policy* self, tree_id id);
-extern tree_id cident_policy_from_tag(const cident_policy* self, tree_id tag);
-extern tree_id cident_policy_get_orig_decl_name(const cident_policy* self, const tree_decl* decl);
+extern void cdispose(ccontext* self);
 
-typedef struct _ctree_context
+extern cfile* cfopen(ccontext* self, const char* filename, const char* mode);
+extern void cfclose(ccontext* self, cfile* file);
+
+extern hval ctree_id_to_key(const ccontext* self, tree_id id, bool is_tag);
+extern hval cget_decl_key(const ccontext* self, const tree_decl* decl);
+
+static inline tree_context* cget_tree(const ccontext* self)
 {
-        tree_context base;
-        nnull_allocator alloc;
-} ctree_context;
-
-extern void ctree_context_init(
-        ctree_context* self, tree_target_info* target, jmp_buf* on_fatal);
-
-extern void ctree_context_init_ex(
-        ctree_context* self, tree_target_info* target, jmp_buf* on_fatal, allocator* alloc);
-
-extern void ctree_context_dispose(ctree_context* self);
-
-static inline tree_context* ctree_context_base(ctree_context* self)
-{
-        return &self->base;
+        return self->tree;
 }
 
-static inline const tree_context* ctree_context_cbase(const ctree_context* self)
+static inline allocator* cget_alloc(ccontext* self)
 {
-        return &self->base;
+        return base_allocator_base(&self->base_alloc);
+}
+
+static inline void* callocate(ccontext* self, ssize bytes)
+{
+        return bump_ptr_allocate(&self->node_alloc, bytes);
 }
 
 typedef struct
@@ -134,14 +142,19 @@ typedef struct _cdeclarator
 {
         cdeclarator_kind kind;
         ctype_chain type;
+
         tree_id id;
-        tree_xlocation loc;
         tree_location id_loc;
+
+        tree_xlocation loc;
+
         dseq params;
         bool params_initialized;
+
+        ccontext* context;
 } cdeclarator;
 
-extern void cdeclarator_init(cdeclarator* self, ctree_context* context, cdeclarator_kind k);
+extern void cdeclarator_init(cdeclarator* self, ccontext* context, cdeclarator_kind k);
 extern void cdeclarator_dispose(cdeclarator* self);
 
 extern void cdeclarator_set_id(cdeclarator* self, tree_location id_loc, tree_id id);
@@ -157,8 +170,8 @@ typedef struct
         cdeclarator declarator;
 } cparam;
 
-extern cparam* cparam_new(ctree_context* context);
-extern void cparam_delete(ctree_context* context, cparam* p);
+extern cparam* cparam_new(ccontext* context);
+extern void cparam_delete(ccontext* context, cparam* p);
 
 extern tree_xlocation cparam_get_loc(const cparam* self);
 

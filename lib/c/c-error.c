@@ -3,22 +3,27 @@
 #include <stdarg.h>
 
 extern void cerror_manager_init(
-        cerror_manager* self, const csource_manager* source_manager, FILE* err)
+        cerror_manager* self, const csource_manager* source_manager, FILE* log)
 {
         self->enabled = true;
         self->errors = 0;
         self->warnings = 0;
         self->errors_as_warnings = false;
         self->source_manager = source_manager;
-        self->err = err;
+        self->log = log;
 }
 
-extern void cerrors_set_enabled(cerror_manager* self)
+extern void cerror_manager_set_output(cerror_manager* self, FILE* log)
+{
+        self->log = log;
+}
+
+extern void cerror_manager_set_enabled(cerror_manager* self)
 {
         self->enabled = true;
 }
 
-extern void cerrors_set_disabled(cerror_manager* self)
+extern void cerror_manager_set_disabled(cerror_manager* self)
 {
         self->enabled = false;
 }
@@ -33,21 +38,21 @@ static const char* cerror_severity_to_str[] =
 extern void cerror(
         cerror_manager* self,
         cerror_severity severity,
-        tree_location loc,
+        tree_location location,
         const char* description, ...)
 {
         if (!self->enabled)
                 return;
 
         clocation l;
-        csource_find_loc(self->source_manager, &l, loc);
+        csource_find_loc(self->source_manager, &l, location);
 
         char buffer[CMAX_LINE_LENGTH];
         va_list args;
         va_start(args, description);
         vsnprintf(buffer, CMAX_LINE_LENGTH, description, args);
 
-        fprintf(self->err, "%s:%d:%d: %s: %s\n",
+        fprintf(self->log, "%s:%d:%d: %s: %s\n",
                 path_get_cfile(l.file),
                 l.line,
                 l.column,

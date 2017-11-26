@@ -35,7 +35,7 @@ extern tree_type* csema_new_typedef_name(csema* self, tree_location name_loc, tr
 
 extern bool csema_typedef_name_exists(csema* self, tree_id name)
 {
-        tree_decl* d = csema_get_local_decl(self, name);
+        tree_decl* d = csema_get_decl(self, self->locals, name, false, true);
         if (!d)
                 return false;
 
@@ -84,7 +84,7 @@ extern tree_type* csema_set_function_restype(
         //        return NULL;
         //}
 
-        tree_set_function_restype(func, restype);
+        tree_set_function_type_result(func, restype);
         return func;
 }
 
@@ -219,7 +219,7 @@ extern bool csema_check_function_type(const csema* self, const tree_type* t, tre
 {
         S_ASSERT(tree_type_is(t, TTK_FUNCTION));
 
-        tree_type* r = tree_desugar_type(tree_get_function_restype(t));
+        tree_type* r = tree_desugar_type(tree_get_function_type_result(t));
         if (tree_type_is(r, TTK_ARRAY))
         {
                 cerror(self->error_manager, CES_ERROR, l,
@@ -263,7 +263,7 @@ extern bool csema_check_type(const csema* self, const tree_type* t, tree_locatio
                 {
                         if (!csema_check_function_type(self, t, l))
                                 return false;
-                        t = tree_get_function_restype(t);
+                        t = tree_get_function_type_result(t);
                 }
                 else if (k == TTK_ARRAY)
                 {

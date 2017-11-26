@@ -20,11 +20,6 @@ extern void tree_init_scope_ex(
         self->_flags = flags;
 }
 
-extern void tree_dispose_scope(tree_scope* self)
-{
-        tree_dispose_decl_scope(tree_get_scope_decls(self));
-}
-
 extern void tree_scope_add(tree_scope* self, tree_stmt* s)
 {
         list_push_back(&self->_stmts, &_tree_get_stmt(s)->_node);

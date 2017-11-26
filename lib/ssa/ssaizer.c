@@ -16,7 +16,7 @@ extern void ssaizer_init(ssaizer* self, ssa_context* context)
         self->block = NULL;
         ssa_init_builder(&self->builder, self->context, NULL);
 
-        allocator* alloc = ssa_get_context_alloc(context);
+        allocator* alloc = ssa_get_alloc(context);
         dseq_init_ex_htab(&self->defs, alloc);
         htab_init_ex_ptr(&self->labels, alloc);
         dseq_init_ex_ptr(&self->continue_stack, alloc);
@@ -60,7 +60,7 @@ extern void ssaizer_push_scope(ssaizer* self)
 {
         dseq_resize(&self->defs, dseq_size(&self->defs) + 1);
         htab_init_ex_ptr(ssaizer_get_last_scope(self),
-                ssa_get_context_alloc(self->context));
+                ssa_get_alloc(self->context));
 }
 
 extern void ssaizer_pop_scope(ssaizer* self)
@@ -153,7 +153,7 @@ static bool ssaizer_maybe_insert_return(ssaizer* self)
         if (ssa_get_block_exit(self->block))
                 return true;
 
-        tree_type* restype = tree_get_function_restype(
+        tree_type* restype = tree_get_function_type_result(
                 tree_get_decl_type(ssa_get_function_entity(self->function)));
 
         ssa_value* val = NULL;
@@ -200,7 +200,7 @@ extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module)
 {
         ssa_module* m = ssa_new_module(self->context);
         const tree_decl_scope* globals = tree_get_module_cglobals(module);
-        TREE_DECL_SCOPE_FOREACH(globals, func)
+        TREE_FOREACH_DECL_IN_SCOPE(globals, func)
         {
                 if (!tree_decl_is(func, TDK_FUNCTION))
                         continue;

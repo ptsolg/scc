@@ -105,7 +105,7 @@ static inline ssa_value* _ssaize_assign(ssaizer* self,
         if (!val)
                 return NULL;
 
-        TREE_CHECK_BINOP_KIND(prefix);
+        TREE_ASSERT_BINOP_KIND(prefix);
         ssa_value* action = _ssaize_binary_expr(self, prefix, val, rhs);
         if (!action)
                 return NULL;
@@ -215,7 +215,7 @@ S_STATIC_ASSERT(S_ARRAY_SIZE(ssaize_binary_expr_table) == TBK_SIZE,
 static inline ssa_value* _ssaize_binary_expr(
         ssaizer* self, tree_binop_kind opcode, ssa_value* lhs, ssa_value* rhs)
 {
-        TREE_CHECK_BINOP_KIND(opcode);
+        TREE_ASSERT_BINOP_KIND(opcode);
         ssa_value* res = ssaizer_try_constant_folding(self, opcode, lhs, rhs);
         return res ? res : ssaize_binary_expr_table[opcode](self, lhs, rhs);
 }
@@ -304,7 +304,7 @@ static ssa_value* ssaize_log_expr(ssaizer* self, const tree_expr* expr)
         ssa_br_expr_info_add_phi_var(&info, last_cond);
         ssaizer_enter_block(self, exit);
         ssaizer_finish_block(self, exit);
-        return ssa_get_instr_value(info.phi);
+        return ssa_get_instr_var(info.phi);
 }
 
 extern ssa_value* ssaize_binary_expr(ssaizer* self, const tree_expr* expr)
@@ -427,7 +427,7 @@ S_STATIC_ASSERT(S_ARRAY_SIZE(ssaize_unary_expr_table) == TUK_SIZE,
 extern ssa_value* ssaize_unary_expr(ssaizer* self, const tree_expr* expr)
 {
         tree_unop_kind k = tree_get_unop_kind(expr);
-        TREE_CHECK_UNOP_KIND(k);
+        TREE_ASSERT_UNOP_KIND(k);
 
         ssa_value* operand = ssaize_expr(self, tree_get_unop_expr(expr));
         if (!operand)
@@ -481,7 +481,7 @@ extern ssa_value* ssaize_conditional_expr(ssaizer* self, const tree_expr* expr)
                 return NULL;
 
         ssaizer_enter_block(self, info.exit);
-        return ssa_get_instr_value(info.phi);
+        return ssa_get_instr_var(info.phi);
 }
 
 extern ssa_value* ssaize_integer_literal(ssaizer* self, const tree_expr* expr)
@@ -541,7 +541,7 @@ extern ssa_value* ssaize_sizeof_expr(ssaizer* self, const tree_expr* expr)
                 ? tree_get_expr_type(tree_get_sizeof_expr(expr))
                 : tree_get_sizeof_type(expr);
 
-        ssize size = tree_get_sizeof(ssa_get_context_target(self->context), type);
+        ssize size = tree_get_sizeof(ssa_get_target(self->context), type);
         return ssa_build_int_constant(&self->builder, tree_get_expr_type(expr), size);
 }
 
@@ -589,7 +589,7 @@ extern ssa_value* ssaize_expr(ssaizer* self, const tree_expr* expr)
 {
         S_ASSERT(expr);
         tree_expr_kind k = tree_get_expr_kind(expr);
-        TREE_CHECK_EXPR_KIND(k);
+        TREE_ASSERT_EXPR_KIND(k);
         return ssaize_expr_table[k](self, expr);
 }
 

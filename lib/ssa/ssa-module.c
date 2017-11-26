@@ -8,7 +8,7 @@ extern ssa_module* ssa_new_module(ssa_context* context)
         if (!m)
                 return NULL;
 
-        htab_init_ex_ptr(&m->_defs, ssa_get_context_alloc(context));
+        htab_init_ex_ptr(&m->_defs, ssa_get_alloc(context));
         return m;
 }
 

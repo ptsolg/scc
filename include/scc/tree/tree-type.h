@@ -30,7 +30,7 @@ typedef enum _tree_type_kind
         TTK_SIZE,
 } tree_type_kind;
 
-#define TREE_CHECK_TYPE_KIND(K) S_ASSERT((K) > TTK_UNKNOWN && (K) < TTK_SIZE)
+#define TREE_ASSERT_TYPE_KIND(K) S_ASSERT((K) > TTK_UNKNOWN && (K) < TTK_SIZE)
 
 struct _tree_type_base
 {
@@ -110,16 +110,16 @@ static inline struct _tree_function_type* _tree_get_function_type(tree_type* sel
 static inline const struct _tree_function_type* _tree_get_function_ctype(const tree_type* self);
 
 static inline ssize tree_get_function_type_nparams(const tree_type* self);
-static inline tree_type* tree_get_function_restype(const tree_type* self);
+static inline tree_type* tree_get_function_type_result(const tree_type* self);
 static inline tree_type* tree_get_function_type_param(const tree_type* self, ssize n);
 static inline tree_type** tree_get_function_type_begin(const tree_type* self);
 static inline tree_type** tree_get_function_type_end(const tree_type* self);
 static inline bool tree_function_type_is_vararg(const tree_type* self);
 
-static inline void tree_set_function_restype(tree_type* self, tree_type* restype);
+static inline void tree_set_function_type_result(tree_type* self, tree_type* restype);
 static inline void tree_set_function_type_vararg(tree_type* self, bool vararg);
 
-#define TREE_FOREACH_FUNC_PARAM(PFUNC, ITNAME) \
+#define TREE_FOREACH_FUNCTION_TYPE_PARAM(PFUNC, ITNAME) \
         for (tree_type** ITNAME = tree_get_function_type_begin(PFUNC); \
                 ITNAME != tree_get_function_type_end(PFUNC); ITNAME++)
 
@@ -366,7 +366,7 @@ static inline ssize tree_get_function_type_nparams(const tree_type* self)
         return dseq_size(&_tree_get_function_ctype(self)->_params);
 }
 
-static inline tree_type* tree_get_function_restype(const tree_type* self)
+static inline tree_type* tree_get_function_type_result(const tree_type* self)
 {
         return tree_get_chain_type_next(self);
 }
@@ -391,7 +391,7 @@ static inline bool tree_function_type_is_vararg(const tree_type* self)
         return _tree_get_function_ctype(self)->_vararg;
 }
 
-static inline void tree_set_function_restype(tree_type* self, tree_type* restype)
+static inline void tree_set_function_type_result(tree_type* self, tree_type* restype)
 {
         tree_set_chain_type_next(self, restype);
 }

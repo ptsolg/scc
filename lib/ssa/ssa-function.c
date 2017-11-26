@@ -24,12 +24,12 @@ extern void ssa_fix_function_content_uids(ssa_function* self)
         ssa_id uid = 0;
         SSA_FOREACH_FUNCTION_BLOCK(self, block)
         {
-                ssa_set_value_id(ssa_get_block_value(block), uid++);
+                ssa_set_value_id(ssa_get_block_label(block), uid++);
                 SSA_FOREACH_BLOCK_INSTR(block, instr)
                 {
                         if (ssa_get_instr_kind(instr) == SIK_STORE)
                                 continue;
-                        ssa_set_value_id(ssa_get_instr_value(instr), uid++);
+                        ssa_set_value_id(ssa_get_instr_var(instr), uid++);
                 }
         }
 }

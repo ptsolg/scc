@@ -20,14 +20,15 @@ typedef struct _cerror_manager
         bool errors_as_warnings;
         bool enabled;
         const csource_manager* source_manager;
-        FILE* err;
+        FILE* log;
 } cerror_manager;
 
 extern void cerror_manager_init(
-        cerror_manager* self, const csource_manager* source_manager, FILE* err);
+        cerror_manager* self, const csource_manager* source_manager, FILE* log);
 
-extern void cerrors_set_enabled(cerror_manager* self);
-extern void cerrors_set_disabled(cerror_manager* self);
+extern void cerror_manager_set_output(cerror_manager* self, FILE* log);
+extern void cerror_manager_set_enabled(cerror_manager* self);
+extern void cerror_manager_set_disabled(cerror_manager* self);
 
 typedef enum
 {
@@ -39,7 +40,7 @@ typedef enum
 extern void cerror(
         cerror_manager* self,
         cerror_severity severity,
-        tree_location loc,
+        tree_location location,
         const char* description, ...);
 
 #ifdef __cplusplus

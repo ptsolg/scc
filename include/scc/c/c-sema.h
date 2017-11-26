@@ -16,8 +16,7 @@ extern "C" {
 typedef struct _csema
 {
         tree_context* context;
-        ctree_context* ccontext;
-        cident_policy* id_policy;
+        ccontext* ccontext;
         cerror_manager* error_manager;
         tree_decl* function;
         tree_decl_scope* globals;
@@ -31,8 +30,7 @@ typedef struct _csema
 
 extern void csema_init(
         csema* self,
-        ctree_context* context,
-        cident_policy* id_policy,
+        ccontext* context,
         tree_module* module,
         cerror_manager* error_manager);
 
@@ -50,11 +48,21 @@ extern void csema_exit_function(csema* self);
 // e.g: to hide for-loop variables from using them outside loop scope
 extern void csema_push_scope(csema* self);
 
-extern tree_id csema_get_decl_name(const csema* self, const tree_decl* d);
+extern tree_decl* csema_get_any_decl(
+        const csema* self,
+        const tree_decl_scope* scope,
+        tree_id name,
+        bool parent_lookup);
 
-extern tree_decl* csema_get_local_tag_decl(const csema* self, tree_id name, bool parent_lookup);
-extern tree_decl* csema_get_local_decl(const csema* self, tree_id name);
-extern tree_decl* csema_get_global_decl(const csema* self, tree_id name);
+extern tree_decl* csema_get_decl(
+        const csema* self,
+        const tree_decl_scope* scope,
+        tree_id name,
+        bool is_tag,
+        bool parent_lookup);
+
+extern tree_decl* csema_get_local_decl(const csema* self, tree_id name, bool is_tag);
+extern tree_decl* csema_get_global_decl(const csema* self, tree_id name, bool is_tag);
 extern tree_decl* csema_get_label_decl(const csema* self, tree_id name);
 
 extern tree_decl* csema_require_decl(

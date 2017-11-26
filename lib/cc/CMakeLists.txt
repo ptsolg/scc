@@ -1,10 +1,11 @@
-add_scc_lib(compiler
-	args.c
-	instance.c
+add_scc_lib(cc
+	cc.c
+	cc-args.c
 
 	DEPENDS
 	c
 	ssa
+	codegen
 
 	INCLUDE
 	${SCC_INC_DIR}

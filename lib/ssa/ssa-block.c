@@ -8,7 +8,7 @@ extern ssa_block* ssa_new_block(ssa_context* context, ssa_id entry_id, ssa_branc
         if (!b)
                 return NULL;
 
-        ssa_init_label(ssa_get_block_value(b), entry_id);
+        ssa_init_label(ssa_get_block_label(b), entry_id);
         ssa_set_block_exit(b, exit);
         list_init(&b->_instr_list);
         list_node_init(&b->_node);

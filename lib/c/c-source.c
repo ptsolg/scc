@@ -42,7 +42,7 @@ extern serrcode csource_save_line_loc(csource* self, tree_location loc)
         return dseq_append_u32(&self->_lines, loc);
 }
 
-extern readbuf* csource_open(csource* self)
+extern readbuf* csource_open(csource* self, ccontext* context)
 {
         dseq_dispose(&self->_lines);
 
@@ -54,9 +54,10 @@ extern readbuf* csource_open(csource* self)
         }
         else
         {
-                if (!(self->_file = fopen(self->_path, "r")))
+                if (!(self->_file = cfopen(context, self->_path, "r")))
                         return NULL;
-                fread_cb_init(&self->_fread, self->_file);
+
+                fread_cb_init(&self->_fread, self->_file->entity);
                 read = fread_cb_base(&self->_fread);
         }
 
@@ -64,72 +65,67 @@ extern readbuf* csource_open(csource* self)
         return &self->_rb;
 }
 
-extern void csource_close(csource* self)
+extern void csource_close(csource* self, ccontext* context)
 {
         if (!self->_emulated)
-                fclose(self->_file);
+                cfclose(context, self->_file);
 }
 
-extern void csource_manager_init(csource_manager* self, ctree_context* context)
+extern void csource_manager_init(csource_manager* self, ccontext* context)
 {
-        self->alloc = tree_get_allocator(ctree_context_base(context));
-        dseq_init_ex_ptr(&self->sources, self->alloc);
-        dseq_init_ex_ptr(&self->lookup, self->alloc);
-        htab_init_ex_ptr(&self->source_lookup, self->alloc);
+        self->context = context;
+
+        allocator* a = cget_alloc(context);
+        dseq_init_ex_ptr(&self->sources, a);
+        dseq_init_ex_ptr(&self->lookup, a);
+        htab_init_ex_ptr(&self->source_lookup, a);
 }
 
-static void csource_delete(allocator* alloc, csource* source)
+static void csource_delete(csource* source, ccontext* context)
 {
-        // todo
+        csource_close(source, context);
+
+        allocator* alloc = cget_alloc(context);
+        deallocate(alloc, source->_path);
+        if (source->_emulated)
+                deallocate(alloc, source->_content);
+        deallocate(alloc, source);
 }
 
 extern void csource_manager_dispose(csource_manager* self)
 {
+        allocator* alloc = cget_alloc(self->context);
         for (ssize i = 0; i < dseq_size(&self->sources); i++)
-                csource_delete(self->alloc, dseq_get_ptr(&self->sources, i));
+                csource_delete(dseq_get_ptr(&self->sources, i), self->context);
         for (ssize i = 0; i < dseq_size(&self->lookup); i++)
-                deallocate(self->alloc, dseq_get_ptr(&self->sources, i));
+                deallocate(alloc, dseq_get_ptr(&self->lookup , i));
 
         htab_dispose(&self->source_lookup);
         dseq_dispose(&self->sources);
         dseq_dispose(&self->lookup);
 }
 
-extern serrcode csource_manager_add_lookup(csource_manager* self, const char* path)
+extern void csource_manager_add_lookup(csource_manager* self, const char* path)
 {
-        char* copy = allocate(self->alloc, strlen(path) + 1);
-        if (!copy)
-                return S_ERROR;
-
+        char* copy = allocate(cget_alloc(self->context), strlen(path) + 1);
         strcpy(copy, path);
-        if (S_FAILED(dseq_append_ptr(&self->lookup, copy)))
-        {
-                deallocate(self->alloc, copy);
-                return S_ERROR;
-        }
-        return S_NO_ERROR;
+        dseq_append_ptr(&self->lookup, copy);
 }
 
 extern bool csource_exists(csource_manager* self, const char* path)
 {
         char abs[S_MAX_PATH_LEN];
-        path_get_abs(abs, path);
+        if (S_FAILED(path_get_abs(abs, path)))
+                return false;
+
         return htab_exists(&self->source_lookup, STRREF(abs));
 }
 
-static csource* _csource_new(allocator* alloc, const char* path)
+static csource* _csource_new(ccontext* context, const char* path)
 {
+        allocator* alloc = cget_alloc(context);
         csource* source = allocate(alloc, sizeof(*source));
-        if (!source)
-                return NULL;
-
         source->_path = allocate(alloc, strlen(path) + 1);
-        if (!source->_path)
-        {
-                deallocate(alloc, source);
-                return NULL;
-        }
-
         strcpy(source->_path, path);
         source->_begin = 0;
         source->_end = 0;
@@ -144,7 +140,7 @@ static csource* _csource_new(allocator* alloc, const char* path)
 static csource* csource_new(
         csource_manager* source_manager, const char* path, const char* content)
 {
-        csource* source = _csource_new(source_manager->alloc, path);
+        csource* source = _csource_new(source_manager->context, path);
         if (!source)
                 return NULL;
 
@@ -154,14 +150,8 @@ static csource* csource_new(
 
         if (content)
         {
-                ssize len = strlen(content) + 1; // space for eof
-                source->_content = allocate(source_manager->alloc, len);
-                if (!source->_content)
-                {
-                        csource_delete(source_manager->alloc, source);
-                        return NULL;
-                }
-
+                ssize len = strlen(content) + 1;
+                source->_content = allocate(cget_alloc(source_manager->context), len);
                 strcpy(source->_content, content);
                 source->_emulated = true;
                 source->_end = source->_begin + (tree_location)len;
@@ -172,18 +162,15 @@ static csource* csource_new(
                 source->_end = source->_begin + (tree_location)path_get_size(path) + 1;
         }
 
-        if (S_FAILED(dseq_append_ptr(sources, source)))
-        {
-                csource_delete(source_manager->alloc, source);
-                return NULL;
-        }
+        dseq_append_ptr(sources, source);
         return source;
 }
 
-extern csource* csource_find(csource_manager* self, const char* path)
+static csource* csource_find_without_lookup(csource_manager* self, const char* path)
 {
         char abs[S_MAX_PATH_LEN];
-        path_get_abs(abs, path);
+        if (S_FAILED(path_get_abs(abs, path)))
+                return NULL;
 
         hiter res;
         if (htab_find(&self->source_lookup, STRREF(abs), &res))
@@ -192,16 +179,30 @@ extern csource* csource_find(csource_manager* self, const char* path)
         if (path_is_file(abs))
                 return csource_new(self, abs, NULL);
 
+        return NULL;
+}
+
+static csource* csource_find_with_lookup(csource_manager* self, const char* path)
+{
+        char abs[S_MAX_PATH_LEN];
         for (ssize i = 0; i < dseq_size(&self->lookup); i++)
         {
-                path_get_abs(abs, dseq_get_ptr(&self->lookup, i));
-                path_join(abs, path);
-                path_fix_delimeter(abs);
+                if (S_FAILED(path_get_abs(abs, dseq_get_ptr(&self->lookup, i))))
+                        continue;
+                if (S_FAILED(path_join(abs, path)))
+                        continue;
 
+                path_fix_delimeter(abs);
                 if (path_is_file(abs))
                         return csource_new(self, abs, NULL);
         }
         return NULL;
+}
+
+extern csource* csource_find(csource_manager* self, const char* path)
+{
+        csource* s = csource_find_without_lookup(self, path);
+        return s ? s : csource_find_with_lookup(self, path);
 }
 
 extern csource* csource_emulate(csource_manager* self, const char* name, const char* content)

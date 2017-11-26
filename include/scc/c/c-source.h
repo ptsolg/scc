@@ -12,8 +12,9 @@ extern "C" {
 #include "scc/scl/file.h"
 #include "scc/tree/tree-common.h"
 
-typedef struct _ctree_context ctree_context;
 typedef struct _csource_manager csource_manager;
+typedef struct _ccontext ccontext;
+typedef struct _cfile cfile;
 
 typedef struct _csource
 {
@@ -24,8 +25,9 @@ typedef struct _csource
         dseq _lines;
         bool _emulated;
         char* _content;
-        FILE* _file;
+        cfile* _file;
         readbuf _rb;
+
         union
         {
                 fread_cb _fread;
@@ -41,8 +43,8 @@ extern int csource_get_col(const csource* self, tree_location loc);
 // assumes that loc is beginning of a line
 extern serrcode csource_save_line_loc(csource* self, tree_location loc);
                 
-extern readbuf* csource_open(csource* self);
-extern void csource_close(csource* self);
+extern readbuf* csource_open(csource* self, ccontext* context);
+extern void csource_close(csource* self, ccontext* context);
 
 static inline tree_location csource_begin(const csource* self)
 {
@@ -69,17 +71,23 @@ static inline const char* csource_get_name(const csource* self)
         return path_get_cfile(csource_get_path(self));
 }
 
+static inline bool csource_is_emulated(const csource* self)
+{
+        return self->_emulated;
+}
+
 typedef struct _csource_manager
 {
         htab source_lookup;
         dseq sources;
         dseq lookup;
-        allocator* alloc;
+        ccontext* context;
 } csource_manager;
 
-extern void csource_manager_init(csource_manager* self, ctree_context* context);
+extern void csource_manager_init(csource_manager* self, ccontext* context);
 extern void csource_manager_dispose(csource_manager* self);
-extern serrcode csource_manager_add_lookup(csource_manager* self, const char* path);
+extern void csource_manager_add_lookup(csource_manager* self, const char* path);
+
 extern bool csource_exists(csource_manager* self, const char* path);
 extern csource* csource_find(csource_manager* self, const char* path);
 extern csource* csource_emulate(csource_manager* self, const char* name, const char* content);

@@ -2,55 +2,42 @@
 #include "scc/tree/tree-type.h"
 #include "scc/tree/tree-context.h"
 
-extern void tree_symtab_init(tree_symtab* self, tree_context* context, tree_symtab* parent)
+extern void tree_init_decl_scope(
+        tree_decl_scope* self, tree_context* context, tree_decl_scope* parent)
 {
-        htab_init_ex_ptr(&self->_symbols, tree_get_allocator(context));
         self->_parent = parent;
+        htab_init_ex_ptr(&self->_lookup, tree_get_allocator(context));
+        list_init(&self->_decls);
 }
 
-extern void tree_symtab_dispose(tree_symtab* self)
+extern tree_decl_scope* tree_new_decl_scope(tree_context* context, tree_decl_scope* parent)
 {
-        htab_dispose(&self->_symbols);
+        tree_decl_scope* s = tree_allocate(context, sizeof(*s));
+        if (!s)
+                return NULL;
+
+        tree_init_decl_scope(s, context, parent);
+        return s;
 }
 
-extern serrcode tree_symtab_insert(tree_symtab* self, tree_decl* symbol)
+extern bool tree_decl_scopes_are_same(const tree_decl_scope* a, const tree_decl_scope* b)
 {
-        return tree_id_is_empty(tree_get_decl_name(symbol))
-                ? S_NO_ERROR
-                : htab_insert_ptr(&self->_symbols, tree_get_decl_name(symbol), symbol);
-}
-
-extern tree_decl* tree_symtab_get(const tree_symtab* self, tree_id name, bool parent_lookup)
-{
-        const tree_symtab* it = self;
-        while (it)
-        {
-                tree_decl* d = NULL;
-                hiter res;
-                if (htab_find(&it->_symbols, name, &res))
-                        d = hiter_get_ptr(&res);
-
-                if (d || !parent_lookup)
-                        return d;
-
-                it = tree_get_symtab_parent(it);
-        }
-        return NULL;
-}
-
-extern bool tree_symtabs_are_same(const tree_symtab* a, const tree_symtab* b)
-{
-        const htab* ah = &a->_symbols;
-        const htab* bh = &b->_symbols;
-        if (htab_size(ah) != htab_size(bh))
+        if (a == b)
+                return true;
+        if (tree_get_decl_scope_parent(a) != tree_get_decl_scope_parent(b))
+                return false;
+ 
+        const htab* alookup = &a->_lookup;
+        const htab* blookup = &b->_lookup;
+        if (htab_size(alookup) != htab_size(blookup))
                 return false;
 
         ssize matches = 0;
-        HTAB_FOREACH(ah, ait)
+        HTAB_FOREACH(alookup, ait)
         {
-                tree_id aname = hiter_get_key(&ait);
+                tree_id akey = hiter_get_key(&ait);
                 hiter bit;
-                if (!htab_find(bh, aname, &bit))
+                if (!htab_find(blookup, akey, &bit))
                         return false;
 
                 if (!tree_decls_are_same(hiter_get_ptr(&ait), hiter_get_ptr(&bit)))
@@ -58,64 +45,44 @@ extern bool tree_symtabs_are_same(const tree_symtab* a, const tree_symtab* b)
 
                 matches++;
         }
-        return matches == htab_size(ah);
+        return matches == htab_size(alookup);
 }
 
-extern void tree_init_decl_scope(
-        tree_decl_scope* self, tree_context* context, tree_decl_scope* parent)
-{
-        tree_symtab_init(&self->_symtab, context, parent ? &parent->_symtab : NULL);
-        list_init(&self->_decls);
-        self->_parent = parent;
-        self->_ndecls = 0;
-}
-
-extern tree_decl_scope* tree_new_decl_scope(tree_context* context, tree_decl_scope* parent)
-{
-        tree_decl_scope* ds = tree_allocate(context, sizeof(*ds));
-        if (!ds)
-                return NULL;
-
-        tree_init_decl_scope(ds, context, parent);
-        return ds;
-}
-
-extern void tree_dispose_decl_scope(tree_decl_scope* self)
-{
-        tree_symtab_dispose(&self->_symtab);
-        //...
-}
-
-extern bool tree_decl_scopes_are_same(const tree_decl_scope* a, const tree_decl_scope* b)
-{
-        if (tree_get_decl_scope_parent(a) != tree_get_decl_scope_parent(b))
-                return false;
-
-        return tree_symtabs_are_same(
-                tree_get_decl_scope_csymtab(a), tree_get_decl_scope_csymtab(b));
-}
-
-extern serrcode tree_decl_scope_insert(tree_decl_scope* self, tree_decl* decl)
+extern void tree_decl_scope_add_lookup(tree_decl_scope* self, hval key, tree_decl* decl)
 {
         S_ASSERT(decl);
-
-        if (S_FAILED(tree_symtab_insert(&self->_symtab, decl)))
-                return S_ERROR;
-
-        tree_decl_scope_add(self, decl);
-        return S_NO_ERROR;
+        htab_insert_ptr(&self->_lookup, key, decl);
 }
 
-extern void tree_decl_scope_add(tree_decl_scope* self, tree_decl* decl)
+extern void tree_decl_scope_add_hidden(tree_decl_scope* self, tree_decl* decl)
 {
+        S_ASSERT(decl);
         list_push_back(&self->_decls, &_tree_get_decl(decl)->_node);
-        self->_ndecls++;
 }
 
-extern tree_decl* tree_decl_scope_find(
-        const tree_decl_scope* self, tree_id id, bool parent_lookup)
+extern void tree_decl_scope_add(tree_decl_scope* self, hval key, tree_decl* decl)
 {
-        return tree_symtab_get(tree_get_decl_scope_csymtab(self), id, parent_lookup);
+        tree_decl_scope_add_lookup(self, key, decl);
+        tree_decl_scope_add_hidden(self, decl);
+}
+
+extern tree_decl* tree_decl_scope_lookup(
+        const tree_decl_scope* self, hval key, bool parent_lookup)
+{
+        const tree_decl_scope* it = self;
+        while (it)
+        {
+                tree_decl* d = NULL;
+                hiter res;
+                if (htab_find(&it->_lookup, key, &res))
+                        d = hiter_get_ptr(&res);
+
+                if (d || !parent_lookup)
+                        return d;
+
+                it = tree_get_decl_scope_parent(it);
+        }
+        return NULL;
 }
 
 extern tree_decl* tree_new_decl(
@@ -220,7 +187,7 @@ extern tree_decl* tree_new_record_decl(
 extern tree_decl* tree_get_record_begin(tree_decl* self)
 {
         const tree_decl_scope* scope = tree_get_record_cscope(self);
-        TREE_DECL_SCOPE_FOREACH(scope, it)
+        TREE_FOREACH_DECL_IN_SCOPE(scope, it)
                 if (tree_decl_is(it, TDK_MEMBER))
                         return it;
 
@@ -230,7 +197,7 @@ extern tree_decl* tree_get_record_begin(tree_decl* self)
 extern const tree_decl* tree_get_record_cbegin(const tree_decl* self)
 {
         const tree_decl_scope* scope = tree_get_record_cscope(self);
-        TREE_DECL_SCOPE_FOREACH(scope, it)
+        TREE_FOREACH_DECL_IN_SCOPE(scope, it)
                 if (tree_decl_is(it, TDK_MEMBER))
                         return it;
 

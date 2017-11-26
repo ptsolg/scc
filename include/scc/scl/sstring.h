@@ -19,7 +19,7 @@ typedef hval strref;
 typedef struct
 {
         htab _strings;
-        bp_allocator _alloc;
+        bump_ptr_allocator _alloc;
 } strpool;
 
 #define STRREF_INVALID ((strref)-1)

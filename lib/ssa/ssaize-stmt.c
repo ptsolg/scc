@@ -5,7 +5,7 @@
 
 extern bool ssaizer_build_jmp(ssaizer* self, ssa_block* dest)
 {
-        if (!ssa_build_jmp(&self->builder, ssa_get_block_value(dest)))
+        if (!ssa_build_jmp(&self->builder, ssa_get_block_label(dest)))
                 return false;
 
         ssaizer_finish_current_block(self);
@@ -24,7 +24,7 @@ extern bool ssaizer_build_if(ssaizer* self,
         ssa_value* cond, ssa_block* on_true, ssa_block* on_false)
 {
         if (!ssa_build_if(&self->builder, cond,
-                ssa_get_block_value(on_true), ssa_get_block_value(on_false)))
+                ssa_get_block_label(on_true), ssa_get_block_label(on_false)))
         {
                 return false;
         }
@@ -324,6 +324,6 @@ extern bool ssaize_stmt(ssaizer* self, const tree_stmt* stmt)
         }
 
         tree_stmt_kind k = tree_get_stmt_kind(stmt);
-        TREE_CHECK_STMT_KIND(k);
+        TREE_ASSERT_STMT_KIND(k);
         return ssaize_stmt_table[k](self, stmt);
 }

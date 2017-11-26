@@ -29,8 +29,8 @@ extern void ssa_add_block_instr(ssa_block* self, ssa_instr* i);
 
 extern ssa_instr* ssa_block_get_first_phi(const ssa_block* self);
 
-static inline ssa_value* ssa_get_block_value(ssa_block* self);
-static inline const ssa_value* ssa_get_block_cvalue(const ssa_block* self);
+static inline ssa_value* ssa_get_block_label(ssa_block* self);
+static inline const ssa_value* ssa_get_block_clabel(const ssa_block* self);
 
 static inline ssa_branch* ssa_get_block_exit(const ssa_block* self);
 
@@ -48,12 +48,12 @@ static inline void ssa_set_block_exit(ssa_block* self, ssa_branch* exit);
                 ITNAME != ssa_get_block_cend(PBLOCK);\
                 ITNAME = ssa_get_next_instr(ITNAME))
 
-static inline ssa_value* ssa_get_block_value(ssa_block* self)
+static inline ssa_value* ssa_get_block_label(ssa_block* self)
 {
         return (ssa_value*)&self->_entry;
 }
 
-static inline const ssa_value* ssa_get_block_cvalue(const ssa_block* self)
+static inline const ssa_value* ssa_get_block_clabel(const ssa_block* self)
 {
         return (const ssa_value*)&self->_entry;
 }

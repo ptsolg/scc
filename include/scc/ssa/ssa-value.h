@@ -131,18 +131,18 @@ static inline void ssa_set_value_id(ssa_value* self, ssa_id id)
         _ssa_get_value_base(self)->_id = id;
 }
 
-#define SSA_CHECK_TYPED_VALUE(P)\
+#define SSA_ASSERT_TYPED_VALUE(P)\
         S_ASSERT((P) && (ssa_get_value_kind(P) == SVK_CONSTANT || ssa_get_value_kind(P) == SVK_VARIABLE))
 
 static inline struct _ssa_typed_value_base* _ssa_get_typed_value_base(ssa_value* self)
 {
-        SSA_CHECK_TYPED_VALUE(self);
+        SSA_ASSERT_TYPED_VALUE(self);
         return (struct _ssa_typed_value_base*)self;
 }
 
 static inline const struct _ssa_typed_value_base* _ssa_get_typed_value_cbase(const ssa_value* self)
 {
-        SSA_CHECK_TYPED_VALUE(self);
+        SSA_ASSERT_TYPED_VALUE(self);
         return (const struct _ssa_typed_value_base*)self;
 }
 
@@ -157,16 +157,16 @@ static inline void ssa_set_value_type(ssa_value* self, tree_type* type)
         _ssa_get_typed_value_base(self)->_type = type;
 }
 
-#define SSA_CHECK_CONSTANT(P) S_ASSERT((P) && ssa_get_value_kind(P) == SVK_CONSTANT)
+#define SSA_ASSERT_CONSTANT(P) S_ASSERT((P) && ssa_get_value_kind(P) == SVK_CONSTANT)
 
 static inline ssa_constant* _ssa_get_constant(ssa_value* self)
 {
-        SSA_CHECK_CONSTANT(self);
+        SSA_ASSERT_CONSTANT(self);
         return (ssa_constant*)self;
 }
 static inline const ssa_constant* _ssa_get_cconstant(const ssa_value* self)
 {
-        SSA_CHECK_CONSTANT(self);
+        SSA_ASSERT_CONSTANT(self);
         return (const ssa_constant*)self;
 }
 

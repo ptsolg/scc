@@ -3,53 +3,71 @@
 #include "scc/c/c-error.h"
 #include <setjmp.h>
 
-extern void cident_policy_init(cident_policy* self)
+extern void cinit(ccontext* self, tree_context* tree, jmp_buf on_bad_alloc)
+{
+        cinit_ex(self, tree, on_bad_alloc, STDALLOC);
+}
+
+extern void cinit_ex(ccontext* self,
+        tree_context* tree, jmp_buf on_bad_alloc, allocator* alloc)
 {
         self->use_tags = true;
+        self->tree = tree;
+
+        base_allocator_init_ex(&self->base_alloc, NULL, on_bad_alloc, alloc);
+        bump_ptr_allocator_init_ex(&self->node_alloc, cget_alloc(self));
+        list_init(&self->opened_files);
 }
 
-extern tree_id cident_policy_to_tag(const cident_policy* self, tree_id id)
+extern void cdispose(ccontext* self)
 {
-        // todo
-        if (self->use_tags)
-                id += 1000;
-        return id;
+        LIST_FOREACH(&self->opened_files, cfile*, file)
+                fclose(file->entity);
+
+        bump_ptr_allocator_dispose(&self->node_alloc);
+        base_allocator_dispose(&self->base_alloc);
 }
 
-extern tree_id cident_policy_from_tag(const cident_policy* self, tree_id tag)
+extern cfile* cfopen(ccontext* self, const char* filename, const char* mode)
 {
-        // todo
-        if (self->use_tags)
-                tag -= 1000;
-        return tag;
+        cfile* f = base_allocate(&self->base_alloc, sizeof(*f));
+        if (!f)
+                return NULL;
+
+        if (!(f->entity = fopen(filename, mode)))
+        {
+                base_deallocate(&self->base_alloc, f);
+                return NULL;
+        }
+
+        list_push_back(&self->opened_files, &f->node);
+        return f;
 }
 
-extern tree_id cident_policy_get_orig_decl_name(const cident_policy* self, const tree_decl* decl)
+extern void cfclose(ccontext* self, cfile* file)
 {
-        tree_id id = tree_get_decl_name(decl);
-        if (self->use_tags && (tree_decl_is(decl, TDK_RECORD) || tree_decl_is(decl, TDK_ENUM)))
-                id = cident_policy_from_tag(self, id);
-        return id;
+        if (!file)
+                return;
+
+        list_node_remove(&file->node);
+        fclose(file->entity);
 }
 
-extern void ctree_context_init(
-        ctree_context* self, tree_target_info* target, jmp_buf* on_fatal)
+extern hval ctree_id_to_key(const ccontext* self, tree_id id, bool is_tag)
 {
-        ctree_context_init_ex(self, target, on_fatal, get_std_alloc());
+        if (!self->use_tags)
+                return (hval)id;
+
+        hval key = id >> 1;
+        return is_tag
+                ? key | (1U << 31)
+                : key;
 }
 
-extern void ctree_context_init_ex(
-        ctree_context* self, tree_target_info* target, jmp_buf* on_fatal, allocator* alloc)
+extern hval cget_decl_key(const ccontext* self, const tree_decl* decl)
 {
-        S_ASSERT(on_fatal);
-        nnull_alloc_init_ex(&self->alloc, NULL, on_fatal, alloc);
-        tree_init_ex(ctree_context_base(self), target,
-                nnull_alloc_base(&self->alloc));
-}
-
-extern void ctree_context_dispose(ctree_context* self)
-{
-        tree_dispose(ctree_context_base(self));
+        return ctree_id_to_key(self, tree_get_decl_name(decl),
+                tree_decl_is(decl, TDK_ENUM) || tree_decl_is(decl, TDK_RECORD));
 }
 
 extern void csizeof_expr_init(csizeof_rhs* self, tree_expr* e)
@@ -268,22 +286,26 @@ extern void ctype_chain_init(ctype_chain* self)
         self->tail = NULL;
 }
 
-extern void cdeclarator_init(cdeclarator* self, ctree_context* context, cdeclarator_kind k)
+extern void cdeclarator_init(cdeclarator* self, ccontext* context, cdeclarator_kind k)
 {
         self->kind = k;
         self->id = tree_get_empty_id();
         self->params_initialized = false;
         self->loc = TREE_INVALID_XLOC;
         self->id_loc = TREE_INVALID_LOC;
+        self->context = context;
 
         ctype_chain_init(&self->type);
-        dseq_init_ex_ptr(&self->params,
-                tree_get_allocator(ctree_context_base(context)));
+        dseq_init_ex_ptr(&self->params, cget_alloc(context));
 }
 
 extern void cdeclarator_dispose(cdeclarator* self)
 {
-        ; //todo
+        for (void** p = dseq_begin_ptr(&self->params);
+                p != dseq_end_ptr(&self->params); p++)
+        {
+                cparam_delete(self->context, *p);
+        }
 }
 
 extern void cdeclarator_set_id(cdeclarator* self, tree_location id_loc, tree_id id)
@@ -314,15 +336,16 @@ extern tree_location cdeclarator_get_id_loc_or_begin(const cdeclarator* self)
                 : self->id_loc;
 }
 
-extern cparam* cparam_new(ctree_context* context)
+extern cparam* cparam_new(ccontext* context)
 {
-        cparam* p = tree_allocate(ctree_context_base(context), sizeof(cparam));
+        //todo
+        cparam* p = callocate(context, sizeof(cparam));
         cdecl_specs_init(&p->specs);
         cdeclarator_init(&p->declarator, context, CDK_PARAM);
         return p;
 }
 
-extern void cparam_delete(ctree_context* context, cparam* p)
+extern void cparam_delete(ccontext* context, cparam* p)
 {
         cdeclarator_dispose(&p->declarator);
 }

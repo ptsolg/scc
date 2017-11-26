@@ -88,7 +88,7 @@ extern ssize tree_get_sizeof_record(const tree_target_info* info, const tree_dec
         ssize total_size = 0;
 
         // todo: padding?
-        TREE_DECL_SCOPE_FOREACH(scope, member)
+        TREE_FOREACH_DECL_IN_SCOPE(scope, member)
         {
                 ssize member_size = tree_get_sizeof(info, tree_get_decl_type(member));
                 if (is_union && member_size > total_size)
@@ -147,7 +147,7 @@ extern ssize tree_get_alignof_record(const tree_target_info* info, const tree_de
         const tree_decl_scope* scope = tree_get_record_cscope(d);
         ssize max_align = 0;
 
-        TREE_DECL_SCOPE_FOREACH(scope, member)
+        TREE_FOREACH_DECL_IN_SCOPE(scope, member)
         {
                 ssize member_align = tree_get_alignof(info, tree_get_decl_type(member));
                 if (member_align > max_align)

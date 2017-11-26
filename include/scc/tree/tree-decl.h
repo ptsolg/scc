@@ -18,34 +18,11 @@ typedef struct _tree_decl tree_decl;
 typedef struct _tree_expr tree_expr;
 typedef struct _tree_stmt tree_stmt;
 
-typedef struct _tree_symtab
-{
-        htab _symbols;
-        struct _tree_symtab* _parent;
-} tree_symtab;
-
-extern void tree_symtab_init(tree_symtab* self, tree_context* context, tree_symtab* parent);
-extern void tree_symtab_dispose(tree_symtab* self);
-
-extern serrcode tree_symtab_insert(tree_symtab* self, tree_decl* symbol);
-extern tree_decl* tree_symtab_get(const tree_symtab* self, tree_id name, bool parent_lookup);
-
-extern bool tree_symtabs_are_same(const tree_symtab* a, const tree_symtab* b);
-
-static inline ssize tree_get_symtab_size(const tree_symtab* self);
-static inline tree_symtab* tree_get_symtab_parent(const tree_symtab* self);
-static inline hiter tree_get_symtab_begin(const tree_symtab* self);
-
-#define TREE_SYMTAB_FOREACH(PTAB, ITNAME) \
-        for (hiter ITNAME = tree_get_symtab_begin(PTAB); \
-                hiter_valid(&ITNAME); hiter_advance(&ITNAME))
-
 typedef struct _tree_decl_scope
 {
         struct _tree_decl_scope* _parent;
-        tree_symtab _symtab;
+        htab _lookup;
         list_head _decls;
-        ssize _ndecls;
 } tree_decl_scope;
 
 extern void tree_init_decl_scope(
@@ -53,30 +30,35 @@ extern void tree_init_decl_scope(
 
 extern tree_decl_scope* tree_new_decl_scope(tree_context* context, tree_decl_scope* parent);
 
-extern void tree_dispose_decl_scope(tree_decl_scope* self);
-
 extern bool tree_decl_scopes_are_same(const tree_decl_scope* a, const tree_decl_scope* b);
 
-// if decl is group then its content will not be added to symtab
-extern serrcode tree_decl_scope_insert(tree_decl_scope* self, tree_decl* decl);
-// adds decl to the decl scope, but not to the symbol table
-extern void tree_decl_scope_add(tree_decl_scope* self, tree_decl* decl);
+// adds decl only to lookup table
+extern void tree_decl_scope_add_lookup(tree_decl_scope* self, hval key, tree_decl* decl);
 
-extern tree_decl* tree_decl_scope_find(
-        const tree_decl_scope* self, tree_id id, bool parent_lookup);
+// adds decl to this scope, but not to its lookup table
+extern void tree_decl_scope_add_hidden(tree_decl_scope* self, tree_decl* decl);
 
-static inline ssize tree_get_decl_scope_size(const tree_decl_scope* self);
+// adds decl to this scope 
+extern void tree_decl_scope_add(tree_decl_scope* self, hval key, tree_decl* decl);
+
+extern tree_decl* tree_decl_scope_lookup(
+        const tree_decl_scope* self, hval key, bool parent_lookup);
+
 static inline tree_decl_scope* tree_get_decl_scope_parent(const tree_decl_scope* self);
-static inline tree_symtab* tree_get_decl_scope_symtab(tree_decl_scope* self);
-static inline const tree_symtab* tree_get_decl_scope_csymtab(const tree_decl_scope* self);
 static inline tree_decl* tree_get_decl_scope_begin(const tree_decl_scope* self);
 static inline tree_decl* tree_get_decl_scope_end(tree_decl_scope* self);
 static inline const tree_decl* tree_get_decl_scope_cend(const tree_decl_scope* self);
+static inline hiter tree_get_decl_scope_lookup_begin(const tree_decl_scope* self);
+static inline bool tree_decl_scope_is_empty(const tree_decl_scope* self);
 
-#define TREE_DECL_SCOPE_FOREACH(PSCOPE, ITNAME) \
+#define TREE_FOREACH_DECL_IN_SCOPE(PSCOPE, ITNAME) \
         for (tree_decl* ITNAME = tree_get_decl_scope_begin(PSCOPE); \
                 ITNAME != tree_get_decl_scope_cend(PSCOPE); \
                 ITNAME = tree_get_next_decl(ITNAME))
+
+#define TREE_FOREACH_DECL_IN_LOOKUP(PSCOPE, ITNAME) \
+        for (hiter ITNAME = tree_get_decl_scope_lookup_begin(PSCOPE); \
+                hiter_valid(&ITNAME); hiter_advance(&ITNAME))
 
 typedef enum
 {
@@ -105,7 +87,7 @@ typedef enum _tree_decl_kind
         TDK_SIZE,
 } tree_decl_kind;
 
-#define TREE_CHECK_DECL_KIND(K) S_ASSERT((K) > TDK_UNKNOWN && (K) < TDK_SIZE)
+#define TREE_ASSERT_DECL_KIND(K) S_ASSERT((K) > TDK_UNKNOWN && (K) < TDK_SIZE)
 
 struct _tree_decl_base
 {
@@ -432,39 +414,9 @@ extern bool tree_decls_are_same(const tree_decl* a, const tree_decl* b);
 
 // accessors
 
-static inline ssize tree_get_symtab_size(const tree_symtab* self)
-{
-        return htab_size(&self->_symbols);
-}
-
-static inline hiter tree_get_symtab_begin(const tree_symtab* self)
-{
-        return htab_begin(&self->_symbols);
-}
-
-static inline tree_symtab* tree_get_symtab_parent(const tree_symtab* self)
-{
-        return self->_parent;
-}
-
-static inline ssize tree_get_decl_scope_size(const tree_decl_scope* self)
-{
-        return self->_ndecls;
-}
-
 static inline tree_decl_scope* tree_get_decl_scope_parent(const tree_decl_scope* self)
 {
         return self->_parent;
-}
-
-static inline tree_symtab* tree_get_decl_scope_symtab(tree_decl_scope* self)
-{
-        return &self->_symtab;
-}
-
-static inline const tree_symtab* tree_get_decl_scope_csymtab(const tree_decl_scope* self)
-{
-        return &self->_symtab;
 }
 
 static inline tree_decl* tree_get_decl_scope_begin(const tree_decl_scope* self)
@@ -480,6 +432,16 @@ static inline tree_decl* tree_get_decl_scope_end(tree_decl_scope* self)
 static inline const tree_decl* tree_get_decl_scope_cend(const tree_decl_scope* self)
 {
         return (const tree_decl*)list_cend(&self->_decls);
+}
+
+static inline hiter tree_get_decl_scope_lookup_begin(const tree_decl_scope* self)
+{
+        return htab_begin(&self->_lookup);
+}
+
+static inline bool tree_decl_scope_is_empty(const tree_decl_scope* self)
+{
+        return list_empty(&self->_decls);
 }
 
 #define TREE_ASSERT_DECL(D) S_ASSERT(D)

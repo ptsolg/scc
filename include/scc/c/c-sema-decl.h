@@ -11,6 +11,9 @@ extern "C" {
 
 #include "c-sema.h"
 
+extern tree_decl* csema_lookup_for_duplicates(
+        const csema* self, const tree_decl_scope* scope, const tree_decl* decl);
+
 extern void csema_init_declarator(csema* self, cdeclarator* declarator, cdeclarator_kind k);
 
 extern bool csema_new_direct_declarator_suffix(

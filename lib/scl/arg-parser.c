@@ -2,8 +2,6 @@
 #include "scc/scl/sstring.h"
 #include <stdlib.h> // strtoi
 
-#include "scc/compiler/args.h"
-
 extern void aparser_init(aparser* self, int argc, const char** argv)
 {
         self->_argv = argv;

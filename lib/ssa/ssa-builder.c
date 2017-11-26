@@ -19,7 +19,7 @@ extern ssa_value* ssa_build_instr(ssa_builder* self, ssa_instr* i)
 {
         S_ASSERT(i && self->block);
         ssa_add_block_instr(self->block, i);
-        return ssa_get_instr_value(i);
+        return ssa_get_instr_var(i);
 }
 
 static ssa_value* ssa_build_binop(ssa_builder* self,
@@ -184,7 +184,7 @@ extern ssa_value* ssa_build_getptrval(
 
 extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type)
 {
-        tree_type* p = tree_new_pointer_type(ssa_get_context_tree(self->context), type);
+        tree_type* p = tree_new_pointer_type(ssa_get_tree(self->context), type);
         if (!p)
                 return NULL;
 
@@ -226,7 +226,7 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
 extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, suint64 val)
 {
         S_ASSERT(tree_type_is_integer(type));
-        uint bits = (uint)tree_get_sizeof(ssa_get_context_target(self->context), type) * 8;
+        uint bits = (uint)tree_get_sizeof(ssa_get_target(self->context), type) * 8;
 
         avalue v;
         avalue_init_int(&v, bits, tree_type_is_signed_integer(type), val);
@@ -285,7 +285,7 @@ extern ssa_value* ssa_build_not(ssa_builder* self, ssa_value* operand)
         tree_type* t = ssa_get_value_type(operand);
         S_ASSERT(t && tree_type_is_integer(t));
       
-        suint64 bits = 8ULL * tree_get_sizeof(ssa_get_context_target(self->context), t);
+        suint64 bits = 8ULL * tree_get_sizeof(ssa_get_target(self->context), t);
         ssa_value* ones = ssa_build_int_constant(self, t, (1ULL << bits) - 1);
         if (!ones)
                 return NULL;
