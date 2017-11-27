@@ -1280,8 +1280,12 @@ extern tree_expr* csema_new_init_expr(csema* self, tree_location loc)
 
 extern tree_expr* csema_finish_expr(csema* self, tree_expr* expr)
 {
-        if (expr && tree_expr_is(expr, TEK_DECL))
-                tree_set_expr_value_kind(expr, TVK_RVALUE);
+        if (!expr)
+                return NULL;
+
+        tree_expr_kind k = tree_get_expr_kind(expr);
+        if (k == TEK_DECL || k == TEK_SUBSCRIPT || k == TEK_MEMBER)
+                csema_unary_conversion(self, &expr);
 
         return expr;
 }

@@ -1,5 +1,5 @@
 void test()
 {
 	int a[10];
-	a[0]; // lvalue
+	a[0]; // rvalue
 }

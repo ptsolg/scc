@@ -1,5 +1,5 @@
 void test()
 {
 	struct { int a; } *b;
-	b->a; // lvalue
+	b->a; // rvalue
 }
