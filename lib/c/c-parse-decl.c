@@ -639,7 +639,7 @@ static bool cparse_direct_declarator(cparser* self, cdeclarator* result)
 
 extern bool cparse_declarator(cparser* self, cdeclarator* result)
 {
-        cdeclarator_set_start_loc(result, cparser_get_loc(self));
+        cdeclarator_set_loc_begin(result, cparser_get_loc(self));
 
         ctype_chain pointer;
         ctype_chain_init(&pointer);
@@ -650,7 +650,7 @@ extern bool cparse_declarator(cparser* self, cdeclarator* result)
                 if (!cparse_direct_declarator(self, result))
                         return false;
 
-        cdeclarator_set_end_loc(result, cparser_get_loc(self));
+        cdeclarator_set_loc_end(result, cparser_get_loc(self));
         return csema_finish_declarator(self->sema, result, &pointer);
 }
 

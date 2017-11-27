@@ -159,7 +159,8 @@ extern bool csema_require_compatible_expr_types(
         return true;
 }
 
-extern tree_expr* csema_new_paren_expr(csema* self, tree_location loc, tree_expr* expr)
+extern tree_expr* csema_new_paren_expr(
+        csema* self, tree_location lbracket_loc, tree_expr* expr, tree_location rbracket_loc)
 {
         if (!expr)
                 return NULL;
@@ -168,13 +169,13 @@ extern tree_expr* csema_new_paren_expr(csema* self, tree_location loc, tree_expr
                 self->context,
                 tree_get_expr_value_kind(expr),
                 tree_get_expr_type(expr),
-                loc,
+                lbracket_loc,
                 expr);
 }
 
-extern tree_expr* csema_new_decl_expr(csema* self, tree_location loc, tree_id name)
+extern tree_expr* csema_new_decl_expr(csema* self, tree_id id, tree_location id_loc)
 {
-        tree_decl* d = csema_require_local_decl(self, loc, TDK_UNKNOWN, name);
+        tree_decl* d = csema_require_local_decl(self, id_loc, TDK_UNKNOWN, id);
         if (!d)
                 return NULL; // unknown decl
 
@@ -187,7 +188,7 @@ extern tree_expr* csema_new_decl_expr(csema* self, tree_location loc, tree_id na
         else if (dk != TDK_VAR)
                 return NULL; // unknown decl kind
 
-        return tree_new_decl_expr(self->context, vk, t, loc, d);
+        return tree_new_decl_expr(self->context, vk, t, id_loc, d);
 }
 
 extern tree_expr* csema_new_sp_floating_literal(csema* self, tree_location loc, float v)
@@ -332,7 +333,7 @@ extern tree_expr* csema_new_call_expr(
         }
 
         ssize i = 0;
-        for (tree_type** atype = tree_get_function_type_begin(t); i < nparams; i++, atype++)
+        for (tree_type** atype = tree_get_function_type_params_begin(t); i < nparams; i++, atype++)
                 if (!csema_check_call_argument(self, *atype, dseq_get(args, i), (uint)i + 1))
                         return NULL;
 

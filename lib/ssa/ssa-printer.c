@@ -153,10 +153,10 @@ static void ssa_print_phi(ssa_printer* self, const ssa_instr* instr)
 {
         ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
         ssa_prints(self, " = phi ");
-        SSA_FOREACH_PHI_VAR(instr, it)
+        SSA_FOREACH_PHI_ARG(instr, it)
         {
                 ssa_print_value_ref(self, *it);
-                if (it + 1 != ssa_get_phi_end(instr))
+                if (it + 1 != ssa_get_phi_args_end(instr))
                         ssa_prints(self, ", ");
         }
 }
@@ -260,7 +260,7 @@ extern void ssa_print_function(ssa_printer* self, const ssa_function* func)
 
 extern void ssa_print_module(ssa_printer* self, const ssa_module* module)
 {
-        for (hiter func = ssa_get_module_begin(module);
+        for (hiter func = ssa_get_module_defs_begin(module);
                 hiter_valid(&func); hiter_advance(&func))
         {
                 ssa_print_function(self, hiter_get_ptr(&func));

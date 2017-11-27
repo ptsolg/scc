@@ -109,11 +109,11 @@ extern bool cinit_iterator_advance(cinit_iterator* self)
                 tree_decl* record = tree_get_decl_type_entity(self->entity);
                 if (!self->member_pos)
                 {
-                        self->member_pos = tree_get_record_begin(record);
+                        self->member_pos = tree_get_record_members_begin(record);
                         return true;
                 }
 
-                if (self->member_pos == tree_get_record_end(record))
+                if (self->member_pos == tree_get_record_members_end(record))
                         return false;
 
                 self->member_pos = tree_get_next_member(self->member_pos, record);
@@ -319,12 +319,12 @@ extern void cdeclarator_set_initialized(cdeclarator* self)
         self->params_initialized = true;
 }
 
-extern void cdeclarator_set_start_loc(cdeclarator* self, tree_location start_loc)
+extern void cdeclarator_set_loc_begin(cdeclarator* self, tree_location start_loc)
 {
         self->loc = tree_set_xloc_begin(self->loc, start_loc);
 }
 
-extern void cdeclarator_set_end_loc(cdeclarator* self, tree_location end_loc)
+extern void cdeclarator_set_loc_end(cdeclarator* self, tree_location end_loc)
 {
         self->loc = tree_set_xloc_end(self->loc, end_loc);
 }

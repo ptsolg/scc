@@ -79,14 +79,14 @@ extern ssa_instr* ssa_new_phi(ssa_context* context, ssa_id id, tree_type* restyp
         if (!i)
                 return NULL;
 
-        dseq_init_ex_ptr(&_ssa_get_phi(i)->_params, ssa_get_alloc(context));
+        dseq_init_ex_ptr(&_ssa_get_phi(i)->_args, ssa_get_alloc(context));
         return i;
 }
 
-extern void ssa_add_phi_var(ssa_instr* self, ssa_value* var)
+extern void ssa_add_phi_arg(ssa_instr* self, ssa_value* arg)
 {
-        S_ASSERT(var);
-        dseq_append_ptr(&_ssa_get_phi(self)->_params, var);
+        S_ASSERT(arg);
+        dseq_append_ptr(&_ssa_get_phi(self)->_args, arg);
 }
 
 extern ssa_instr* ssa_new_alloca(ssa_context* context, ssa_id id, tree_type* type)

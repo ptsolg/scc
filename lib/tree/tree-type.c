@@ -41,21 +41,21 @@ extern tree_type* tree_new_function_type(tree_context* context, tree_type* resty
                 return NULL;
 
         tree_set_function_type_vararg(t, false);
-        dseq_init_ex_ptr(&_tree_get_function_type(t)->_params,
+        dseq_init_ex_ptr(&_tree_get_function_type(t)->_args,
                 tree_get_allocator(context));
         return t;
 }
 
 extern void tree_set_function_type_params(tree_type* self, dseq* params)
 {
-        dseq* this_group = &_tree_get_function_type(self)->_params;
+        dseq* this_group = &_tree_get_function_type(self)->_args;
         dseq_dispose(this_group);
         dseq_move(this_group, params);
 }
 
 extern void tree_add_function_type_param(tree_type* self, tree_type* param)
 {
-        dseq_append_ptr(&_tree_get_function_type(self)->_params, param);
+        dseq_append_ptr(&_tree_get_function_type(self)->_args, param);
 }
 
 extern tree_type* tree_new_array_type(

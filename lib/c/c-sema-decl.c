@@ -283,7 +283,7 @@ extern tree_decl* csema_export_decl(csema* self, tree_decl_scope* scope, tree_de
 
 extern tree_decl* csema_set_decl_end_loc(const csema* self, tree_decl* decl, tree_location end)
 {
-        tree_set_decl_end_loc(decl, end);
+        tree_set_decl_loc_end(decl, end);
         return decl;
 }
 
@@ -309,7 +309,7 @@ static void csema_compute_enumerator_value(
 
         if (!tree_decl_scope_is_empty(s))
         {
-                tree_decl* last = tree_get_prev_decl(tree_get_decl_scope_end(s));
+                tree_decl* last = tree_get_prev_decl(tree_get_decl_scope_decls_end(s));
                 int_value last_val;
                 tree_eval_info i;
                 bool r = tree_eval_as_integer(&i, tree_get_enumerator_value(last), &last_val);
@@ -317,7 +317,8 @@ static void csema_compute_enumerator_value(
                 v = int_get_i32(&last_val) + 1;
         }
 
-        tree_expr* val = csema_new_integer_literal(self, tree_get_decl_loc_begin(enumerator), v, true, false);
+        tree_expr* val = csema_new_integer_literal(self,
+                tree_get_decl_loc_begin(enumerator), v, true, false);
         tree_set_enumerator_value(enumerator, tree_new_impl_init_expr(self->context, val));
 }
 
@@ -469,7 +470,7 @@ extern tree_decl* csema_def_record_decl(
 extern tree_decl* csema_complete_record_decl(csema* self, tree_decl* decl, tree_location end_loc)
 {
         tree_set_record_complete(decl, true);
-        tree_set_decl_end_loc(decl, end_loc);
+        tree_set_decl_loc_end(decl, end_loc);
         return decl;
 }
 

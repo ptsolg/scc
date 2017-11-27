@@ -46,12 +46,12 @@ extern serrcode csource_save_line_loc(csource* self, tree_location loc);
 extern readbuf* csource_open(csource* self, ccontext* context);
 extern void csource_close(csource* self, ccontext* context);
 
-static inline tree_location csource_begin(const csource* self)
+static inline tree_location csource_loc_begin(const csource* self)
 {
         return self->_begin;
 }
 
-static inline tree_location csource_end(const csource* self)
+static inline tree_location csource_loc_end(const csource* self)
 {
         return self->_end;
 }

@@ -3,7 +3,7 @@
 
 extern bool csource_has(const csource* self, tree_location loc)
 {
-        return loc >= csource_begin(self) && loc < csource_end(self);
+        return loc >= csource_loc_begin(self) && loc < csource_loc_end(self);
 }
 
 extern int csource_get_line(const csource* self, tree_location loc)
@@ -16,7 +16,7 @@ extern int csource_get_line(const csource* self, tree_location loc)
         for (ssize i = 0; i < nlines; i++)
         {
                 tree_location cur = dseq_get_u32(&self->_lines, i);
-                tree_location next = csource_end(self);
+                tree_location next = csource_loc_end(self);
                 if (i + 1 < nlines)
                         next = dseq_get_u32(&self->_lines, i + 1);
 
@@ -146,7 +146,7 @@ static csource* csource_new(
 
         dseq* sources = &source_manager->sources;
         if (dseq_size(sources))
-                source->_begin = csource_end(dseq_last_ptr(sources));
+                source->_begin = csource_loc_end(dseq_last_ptr(sources));
 
         if (content)
         {

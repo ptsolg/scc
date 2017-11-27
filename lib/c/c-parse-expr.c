@@ -17,8 +17,9 @@ extern tree_expr* cparse_paren_expr(cparser* self)
                 return NULL;
 
         tree_expr* e = cparse_expr(self);
+        tree_location rbracket_loc = cparser_get_loc(self);
         return e && cparser_require(self, CTK_RBRACKET)
-                ? csema_new_paren_expr(self->sema, lbracket_loc, e)
+                ? csema_new_paren_expr(self->sema, lbracket_loc, e, rbracket_loc)
                 : NULL;
 }
 
@@ -33,10 +34,10 @@ extern tree_expr* cparse_primary_expr(cparser* self)
         cparser_consume_token(self);
         if (k == CTK_ID || k == CTK_CONST_STRING)
         {
-                tree_id s = ctoken_get_string(t);
+                tree_id id = ctoken_get_string(t);
                 return k == CTK_ID
-                        ? csema_new_decl_expr(self->sema, loc, s)
-                        : csema_new_string_literal(self->sema, loc, s);
+                        ? csema_new_decl_expr(self->sema, id, loc)
+                        : csema_new_string_literal(self->sema, loc, id);
         }
         else if (k == CTK_CONST_CHAR)
                 return csema_new_character_literal(self->sema, loc, ctoken_get_char(t));

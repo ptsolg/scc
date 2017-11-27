@@ -334,7 +334,7 @@ static void cprint_call_expr(cprinter* self, const tree_expr* expr)
         TREE_FOREACH_CALL_ARG(expr, arg)
         {
                 cprint_expr(self, *arg);
-                if (arg + 1 != tree_get_call_end(expr))
+                if (arg + 1 != tree_get_call_args_end(expr))
                         cprint_comma(self);
         }
         cprint_rbracket(self);
@@ -670,7 +670,7 @@ static void cprint_type_parts(cprinter* self, ctype_name_info* info, int opts)
                         {
                                 cprint_decl(self, param, CPRINTER_IGNORE_DECL_ENDING);
                                 const tree_decl* next = tree_get_next_decl(param);
-                                if (next != tree_get_decl_scope_cend(info->params))
+                                if (next != tree_get_decl_scope_decls_cend(info->params))
                                         cprint_comma(self);
                         }
                         if (info->params_vararg)
@@ -699,7 +699,7 @@ static void cprint_suffix_endings(cprinter* self, ctype_name_info* info, int opt
                         TREE_FOREACH_FUNCTION_TYPE_PARAM(t, param)
                         {
                                 cprint_type_name(self, *param, CPRINT_OPTS_NONE);
-                                if (param + 1 != tree_get_function_type_end(t))
+                                if (param + 1 != tree_get_function_type_params_end(t))
                                         cprint_comma(self);
                         }
                         if (tree_function_type_is_vararg(t))

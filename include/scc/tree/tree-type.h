@@ -98,7 +98,7 @@ static inline void tree_set_builtin_type_kind(tree_type* self, tree_builtin_type
 struct _tree_function_type
 {
         struct _tree_chain_type _base;
-        dseq _params;
+        dseq _args;
         bool _vararg;
 };
 
@@ -112,16 +112,16 @@ static inline const struct _tree_function_type* _tree_get_function_ctype(const t
 static inline ssize tree_get_function_type_nparams(const tree_type* self);
 static inline tree_type* tree_get_function_type_result(const tree_type* self);
 static inline tree_type* tree_get_function_type_param(const tree_type* self, ssize n);
-static inline tree_type** tree_get_function_type_begin(const tree_type* self);
-static inline tree_type** tree_get_function_type_end(const tree_type* self);
+static inline tree_type** tree_get_function_type_params_begin(const tree_type* self);
+static inline tree_type** tree_get_function_type_params_end(const tree_type* self);
 static inline bool tree_function_type_is_vararg(const tree_type* self);
 
 static inline void tree_set_function_type_result(tree_type* self, tree_type* restype);
 static inline void tree_set_function_type_vararg(tree_type* self, bool vararg);
 
 #define TREE_FOREACH_FUNCTION_TYPE_PARAM(PFUNC, ITNAME) \
-        for (tree_type** ITNAME = tree_get_function_type_begin(PFUNC); \
-                ITNAME != tree_get_function_type_end(PFUNC); ITNAME++)
+        for (tree_type** ITNAME = tree_get_function_type_params_begin(PFUNC); \
+                ITNAME != tree_get_function_type_params_end(PFUNC); ITNAME++)
 
 struct _tree_array_type
 {
@@ -363,7 +363,7 @@ static inline const struct _tree_function_type* _tree_get_function_ctype(const t
 
 static inline ssize tree_get_function_type_nparams(const tree_type* self)
 {
-        return dseq_size(&_tree_get_function_ctype(self)->_params);
+        return dseq_size(&_tree_get_function_ctype(self)->_args);
 }
 
 static inline tree_type* tree_get_function_type_result(const tree_type* self)
@@ -373,17 +373,17 @@ static inline tree_type* tree_get_function_type_result(const tree_type* self)
 
 static inline tree_type* tree_get_function_type_param(const tree_type* self, ssize n)
 {
-        return (tree_type*)dseq_get_ptr(&_tree_get_function_ctype(self)->_params, n);
+        return (tree_type*)dseq_get_ptr(&_tree_get_function_ctype(self)->_args, n);
 }
 
-static inline tree_type** tree_get_function_type_begin(const tree_type* self)
+static inline tree_type** tree_get_function_type_params_begin(const tree_type* self)
 {
-        return (tree_type**)dseq_begin_ptr(&_tree_get_function_ctype(self)->_params);
+        return (tree_type**)dseq_begin_ptr(&_tree_get_function_ctype(self)->_args);
 }
 
-static inline tree_type** tree_get_function_type_end(const tree_type* self)
+static inline tree_type** tree_get_function_type_params_end(const tree_type* self)
 {
-        return (tree_type**)dseq_end_ptr(&_tree_get_function_ctype(self)->_params);
+        return (tree_type**)dseq_end_ptr(&_tree_get_function_ctype(self)->_args);
 }
 
 static inline bool tree_function_type_is_vararg(const tree_type* self)

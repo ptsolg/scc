@@ -258,7 +258,7 @@ static void ssa_br_expr_info_add_phi_var(ssa_br_expr_info* self, ssa_value* var)
                 ssa_builder_set_block(self->builder, block);
         }
 
-        ssa_add_phi_var(self->phi, var);
+        ssa_add_phi_arg(self->phi, var);
 }
 
 static inline ssa_value* ssaize_log_expr_lhs(

@@ -48,16 +48,16 @@ extern void tree_scope_add(tree_scope* self, tree_stmt* s);
 static inline tree_scope_flags tree_get_scope_flags(const tree_scope* self);
 static inline tree_decl_scope* tree_get_scope_decls(tree_scope* self);
 static inline const tree_decl_scope* tree_get_scope_cdecls(const tree_scope* self);
-static inline tree_stmt* tree_get_scope_begin(const tree_scope* self);
-static inline const tree_stmt* tree_get_scope_end(const tree_scope* self);
+static inline tree_stmt* tree_get_scope_stmt_begin(const tree_scope* self);
+static inline const tree_stmt* tree_get_scope_stmt_end(const tree_scope* self);
 static inline tree_scope* tree_get_scope_parent(const tree_scope* self);
 
 static inline void tree_set_scope_flags(tree_scope* self, tree_scope_flags f);
 static inline void tree_add_scope_flags(tree_scope* self, tree_scope_flags f);
 
 #define TREE_FOREACH_STMT(PSCOPE, ITNAME) \
-        for (tree_stmt* ITNAME = tree_get_scope_begin(PSCOPE); \
-                ITNAME != tree_get_scope_end(PSCOPE); \
+        for (tree_stmt* ITNAME = tree_get_scope_stmt_begin(PSCOPE); \
+                ITNAME != tree_get_scope_stmt_end(PSCOPE); \
                 ITNAME = tree_get_next_stmt(ITNAME))
 
 typedef enum _tree_stmt_kind
@@ -402,12 +402,12 @@ static inline const tree_decl_scope* tree_get_scope_cdecls(const tree_scope* sel
         return &self->_decls;
 }
 
-static inline tree_stmt* tree_get_scope_begin(const tree_scope* self)
+static inline tree_stmt* tree_get_scope_stmt_begin(const tree_scope* self)
 {
         return (tree_stmt*)list_begin(&self->_stmts);
 }
 
-static inline const tree_stmt* tree_get_scope_end(const tree_scope* self)
+static inline const tree_stmt* tree_get_scope_stmt_end(const tree_scope* self)
 {
         return (const tree_stmt*)list_cend(&self->_stmts);
 }

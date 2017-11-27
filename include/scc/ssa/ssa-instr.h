@@ -174,22 +174,22 @@ static inline void ssa_set_getaddr_offset(ssa_instr* self, ssa_value* offset);
 struct _ssa_phi_instr
 {
         struct _ssa_instr_base _base;
-        dseq _params;
+        dseq _args;
 };
 
 extern ssa_instr* ssa_new_phi(ssa_context* context, ssa_id id, tree_type* restype);
 
-extern void ssa_add_phi_var(ssa_instr* self, ssa_value* var);
+extern void ssa_add_phi_arg(ssa_instr* self, ssa_value* arg);
 
 static inline struct _ssa_phi_instr* _ssa_get_phi(ssa_instr* self);
 static inline const struct _ssa_phi_instr* _ssa_get_cphi(const ssa_instr* self);
 
-static inline ssa_value** ssa_get_phi_begin(const ssa_instr* self);
-static inline ssa_value** ssa_get_phi_end(const ssa_instr* self);
+static inline ssa_value** ssa_get_phi_args_begin(const ssa_instr* self);
+static inline ssa_value** ssa_get_phi_args_end(const ssa_instr* self);
 
-#define SSA_FOREACH_PHI_VAR(PPHI, ITNAME)\
-        for (ssa_value** ITNAME = ssa_get_phi_begin(PPHI);\
-                ITNAME != ssa_get_phi_end(PPHI); ITNAME++)
+#define SSA_FOREACH_PHI_ARG(PPHI, ITNAME)\
+        for (ssa_value** ITNAME = ssa_get_phi_args_begin(PPHI);\
+                ITNAME != ssa_get_phi_args_end(PPHI); ITNAME++)
 
 struct _ssa_alloca_instr
 {
@@ -446,14 +446,14 @@ static inline const struct _ssa_phi_instr* _ssa_get_cphi(const ssa_instr* self)
         return (const struct _ssa_phi_instr*)self;
 }
 
-static inline ssa_value** ssa_get_phi_begin(const ssa_instr* self)
+static inline ssa_value** ssa_get_phi_args_begin(const ssa_instr* self)
 {
-        return (ssa_value**)dseq_begin_ptr(&_ssa_get_cphi(self)->_params);
+        return (ssa_value**)dseq_begin_ptr(&_ssa_get_cphi(self)->_args);
 }
 
-static inline ssa_value** ssa_get_phi_end(const ssa_instr* self)
+static inline ssa_value** ssa_get_phi_args_end(const ssa_instr* self)
 {
-        return (ssa_value**)dseq_end_ptr(&_ssa_get_cphi(self)->_params);
+        return (ssa_value**)dseq_end_ptr(&_ssa_get_cphi(self)->_args);
 }
 
 static inline struct _ssa_load_instr* _ssa_get_load(ssa_instr* self)

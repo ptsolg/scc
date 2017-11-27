@@ -27,13 +27,13 @@ extern void ssa_add_function_block(ssa_function* self, ssa_block* block);
 extern void ssa_fix_function_content_uids(ssa_function* self);
 
 static inline tree_decl* ssa_get_function_entity(const ssa_function* self);
-static inline ssa_block* ssa_get_function_begin(const ssa_function* self);
-static inline ssa_block* ssa_get_function_end(ssa_function* self);
-static inline ssa_block* ssa_get_function_cend(const ssa_function* self);
+static inline ssa_block* ssa_get_function_blocks_begin(const ssa_function* self);
+static inline ssa_block* ssa_get_function_blocks_end(ssa_function* self);
+static inline ssa_block* ssa_get_function_blocks_cend(const ssa_function* self);
 
 #define SSA_FOREACH_FUNCTION_BLOCK(PFUNC, ITNAME)\
-        for (ssa_block* ITNAME = ssa_get_function_begin(PFUNC);\
-                ITNAME != ssa_get_function_cend(PFUNC);\
+        for (ssa_block* ITNAME = ssa_get_function_blocks_begin(PFUNC);\
+                ITNAME != ssa_get_function_blocks_cend(PFUNC);\
                 ITNAME = ssa_get_next_block(ITNAME))
 
 static inline void ssa_set_function_entity(ssa_function* self, tree_decl* func);
@@ -43,17 +43,17 @@ static inline tree_decl* ssa_get_function_entity(const ssa_function* self)
         return self->_function;
 }
 
-static inline ssa_block* ssa_get_function_begin(const ssa_function* self)
+static inline ssa_block* ssa_get_function_blocks_begin(const ssa_function* self)
 {
         return (ssa_block*)list_begin(&self->_blocks);
 }
 
-static inline ssa_block* ssa_get_function_end(ssa_function* self)
+static inline ssa_block* ssa_get_function_blocks_end(ssa_function* self)
 {
         return (ssa_block*)list_end(&self->_blocks);
 }
 
-static inline ssa_block* ssa_get_function_cend(const ssa_function* self)
+static inline ssa_block* ssa_get_function_blocks_cend(const ssa_function* self)
 {
         return (ssa_block*)list_cend(&self->_blocks);
 }

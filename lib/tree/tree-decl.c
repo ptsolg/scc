@@ -184,39 +184,39 @@ extern tree_decl* tree_new_record_decl(
         return d;
 }
 
-extern tree_decl* tree_get_record_begin(tree_decl* self)
+extern tree_decl* tree_get_record_members_begin(tree_decl* self)
 {
         const tree_decl_scope* scope = tree_get_record_cscope(self);
         TREE_FOREACH_DECL_IN_SCOPE(scope, it)
                 if (tree_decl_is(it, TDK_MEMBER))
                         return it;
 
-        return tree_get_record_end(self);
+        return tree_get_record_members_end(self);
 }
 
-extern const tree_decl* tree_get_record_cbegin(const tree_decl* self)
+extern const tree_decl* tree_get_record_members_cbegin(const tree_decl* self)
 {
         const tree_decl_scope* scope = tree_get_record_cscope(self);
         TREE_FOREACH_DECL_IN_SCOPE(scope, it)
                 if (tree_decl_is(it, TDK_MEMBER))
                         return it;
 
-        return tree_get_record_cend(self);
+        return tree_get_record_members_cend(self);
 }
 
-extern tree_decl* tree_get_record_end(tree_decl* self)
+extern tree_decl* tree_get_record_members_end(tree_decl* self)
 {
-        return tree_get_decl_scope_end(tree_get_record_scope(self));
+        return tree_get_decl_scope_decls_end(tree_get_record_scope(self));
 }
 
-extern const tree_decl* tree_get_record_cend(const tree_decl* self)
+extern const tree_decl* tree_get_record_members_cend(const tree_decl* self)
 {
-        return tree_get_decl_scope_cend(tree_get_record_cscope(self));
+        return tree_get_decl_scope_decls_cend(tree_get_record_cscope(self));
 }
 
 extern const tree_decl* tree_get_next_cmember(const tree_decl* member, const tree_decl* record)
 {
-        const tree_decl* end = tree_get_record_cend(record);
+        const tree_decl* end = tree_get_record_members_cend(record);
         if (member == end)
                 return end;
 
@@ -233,7 +233,7 @@ extern const tree_decl* tree_get_next_cmember(const tree_decl* member, const tre
 
 extern tree_decl* tree_get_next_member(tree_decl* member, tree_decl* record)
 {
-        tree_decl* end = tree_get_record_end(record);
+        tree_decl* end = tree_get_record_members_end(record);
         if (member == end)
                 return end;
 

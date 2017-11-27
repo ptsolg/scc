@@ -140,13 +140,13 @@ extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source)
                 return S_ERROR;
         }
         // save first line location
-        if (S_FAILED(csource_save_line_loc(source, csource_begin(source))))
+        if (S_FAILED(csource_save_line_loc(source, csource_loc_begin(source))))
                 return S_ERROR;
 
         // fill buffer
         cpplexer_readc(self);
         cpplexer_readc(self);
-        self->loc = csource_begin(source);
+        self->loc = csource_loc_begin(source);
         self->source = source;
         return S_NO_ERROR;
 }

@@ -241,14 +241,14 @@ static inline const struct _tree_call_expr* _tree_get_ccall(const tree_expr* sel
 
 static inline ssize tree_get_call_nargs(const tree_expr* self);
 static inline tree_expr* tree_get_call_lhs(const tree_expr* self);
-static inline tree_expr** tree_get_call_begin(const tree_expr* self);
-static inline tree_expr** tree_get_call_end(const tree_expr* self);
+static inline tree_expr** tree_get_call_args_begin(const tree_expr* self);
+static inline tree_expr** tree_get_call_args_end(const tree_expr* self);
 
 static inline void tree_set_call_lhs(tree_expr* self, tree_expr* lhs);
 
 #define TREE_FOREACH_CALL_ARG(PEXP, ITNAME) \
-        for (tree_expr** ITNAME = tree_get_call_begin(PEXP); \
-                ITNAME != tree_get_call_end(PEXP); ITNAME++)
+        for (tree_expr** ITNAME = tree_get_call_args_begin(PEXP); \
+                ITNAME != tree_get_call_args_end(PEXP); ITNAME++)
 
 struct _tree_subscript_expr
 {
@@ -500,8 +500,7 @@ static inline const struct _tree_designator_base* _tree_get_cdesignator(const tr
 
 static inline tree_designator* tree_get_next_designator(const tree_designator* self);
 static inline tree_designator_kind tree_get_designator_kind(const tree_designator* self);
-static inline bool tree_designator_is(const tree_designator* self,
-                                                        tree_designator_kind k);
+static inline bool tree_designator_is(const tree_designator* self, tree_designator_kind k);
 
 static inline void tree_set_designator_kind(tree_designator* self, tree_designator_kind k);
 
@@ -820,12 +819,12 @@ static inline tree_expr* tree_get_call_lhs(const tree_expr* self)
         return _tree_get_ccall(self)->_lhs;
 }
 
-static inline tree_expr** tree_get_call_begin(const tree_expr* self)
+static inline tree_expr** tree_get_call_args_begin(const tree_expr* self)
 {
         return (tree_expr**)dseq_begin_ptr(&_tree_get_ccall(self)->_args);
 }
 
-static inline tree_expr** tree_get_call_end(const tree_expr* self)
+static inline tree_expr** tree_get_call_args_end(const tree_expr* self)
 {
         return (tree_expr**)dseq_end_ptr(&_tree_get_ccall(self)->_args);
 }

@@ -45,15 +45,15 @@ extern tree_decl* tree_decl_scope_lookup(
         const tree_decl_scope* self, hval key, bool parent_lookup);
 
 static inline tree_decl_scope* tree_get_decl_scope_parent(const tree_decl_scope* self);
-static inline tree_decl* tree_get_decl_scope_begin(const tree_decl_scope* self);
-static inline tree_decl* tree_get_decl_scope_end(tree_decl_scope* self);
-static inline const tree_decl* tree_get_decl_scope_cend(const tree_decl_scope* self);
+static inline tree_decl* tree_get_decl_scope_decls_begin(const tree_decl_scope* self);
+static inline tree_decl* tree_get_decl_scope_decls_end(tree_decl_scope* self);
+static inline const tree_decl* tree_get_decl_scope_decls_cend(const tree_decl_scope* self);
 static inline hiter tree_get_decl_scope_lookup_begin(const tree_decl_scope* self);
 static inline bool tree_decl_scope_is_empty(const tree_decl_scope* self);
 
 #define TREE_FOREACH_DECL_IN_SCOPE(PSCOPE, ITNAME) \
-        for (tree_decl* ITNAME = tree_get_decl_scope_begin(PSCOPE); \
-                ITNAME != tree_get_decl_scope_cend(PSCOPE); \
+        for (tree_decl* ITNAME = tree_get_decl_scope_decls_begin(PSCOPE); \
+                ITNAME != tree_get_decl_scope_decls_cend(PSCOPE); \
                 ITNAME = tree_get_next_decl(ITNAME))
 
 #define TREE_FOREACH_DECL_IN_LOOKUP(PSCOPE, ITNAME) \
@@ -121,8 +121,8 @@ static inline bool tree_decl_is_implicit(const tree_decl* self);
 static inline void tree_set_decl_scope(tree_decl* self, tree_decl_scope* scope);
 static inline void tree_set_decl_kind(tree_decl* self, tree_decl_kind k);
 static inline void tree_set_decl_loc(tree_decl* self, tree_xlocation l);
-static inline void tree_set_decl_begin_loc(tree_decl* self, tree_location l);
-static inline void tree_set_decl_end_loc(tree_decl* self, tree_location l);
+static inline void tree_set_decl_loc_begin(tree_decl* self, tree_location l);
+static inline void tree_set_decl_loc_end(tree_decl* self, tree_location l);
 static inline void tree_set_decl_implicit(tree_decl* self, bool v);
 
 struct _tree_named_decl
@@ -221,10 +221,10 @@ extern tree_decl* tree_new_record_decl(
         tree_id name,
         bool is_union);
 
-extern tree_decl* tree_get_record_begin(tree_decl* self);
-extern const tree_decl* tree_get_record_cbegin(const tree_decl* self);
-extern tree_decl* tree_get_record_end(tree_decl* self);
-extern const tree_decl* tree_get_record_cend(const tree_decl* self);
+extern tree_decl* tree_get_record_members_begin(tree_decl* self);
+extern const tree_decl* tree_get_record_members_cbegin(const tree_decl* self);
+extern tree_decl* tree_get_record_members_end(tree_decl* self);
+extern const tree_decl* tree_get_record_members_cend(const tree_decl* self);
 extern const tree_decl* tree_get_next_cmember(const tree_decl* member, const tree_decl* record);
 extern tree_decl* tree_get_next_member(tree_decl* member, tree_decl* record);
 
@@ -264,7 +264,7 @@ struct _tree_function_decl
 {
         struct _tree_value_decl _base;
         tree_function_specifier_kind _specs;
-        tree_decl_scope _params;
+        tree_decl_scope _args;
         tree_decl_scope _labels;
         tree_stmt* _body;
 };
@@ -419,17 +419,17 @@ static inline tree_decl_scope* tree_get_decl_scope_parent(const tree_decl_scope*
         return self->_parent;
 }
 
-static inline tree_decl* tree_get_decl_scope_begin(const tree_decl_scope* self)
+static inline tree_decl* tree_get_decl_scope_decls_begin(const tree_decl_scope* self)
 {
         return (tree_decl*)list_begin(&self->_decls);
 }
 
-static inline tree_decl* tree_get_decl_scope_end(tree_decl_scope* self)
+static inline tree_decl* tree_get_decl_scope_decls_end(tree_decl_scope* self)
 {
         return (tree_decl*)list_end(&self->_decls);
 }
 
-static inline const tree_decl* tree_get_decl_scope_cend(const tree_decl_scope* self)
+static inline const tree_decl* tree_get_decl_scope_decls_cend(const tree_decl_scope* self)
 {
         return (const tree_decl*)list_cend(&self->_decls);
 }
@@ -518,12 +518,12 @@ static inline void tree_set_decl_loc(tree_decl* self, tree_xlocation l)
         _tree_get_decl(self)->_loc = l;
 }
 
-static inline void tree_set_decl_begin_loc(tree_decl* self, tree_location l)
+static inline void tree_set_decl_loc_begin(tree_decl* self, tree_location l)
 {
         _tree_get_decl(self)->_loc = tree_set_xloc_begin(tree_get_decl_loc(self), l);
 }
 
-static inline void tree_set_decl_end_loc(tree_decl* self, tree_location l)
+static inline void tree_set_decl_loc_end(tree_decl* self, tree_location l)
 {
         _tree_get_decl(self)->_loc = tree_set_xloc_end(tree_get_decl_loc(self), l);
 }
@@ -701,12 +701,12 @@ static inline tree_function_specifier_kind tree_get_function_specifier(const tre
 
 static inline tree_decl_scope* tree_get_function_params(tree_decl* self)
 {
-        return &_tree_get_function(self)->_params;
+        return &_tree_get_function(self)->_args;
 }
 
 static inline const tree_decl_scope* tree_get_function_cparams(const tree_decl* self)
 {
-        return &_tree_get_cfunction(self)->_params;
+        return &_tree_get_cfunction(self)->_args;
 }
 
 static inline tree_decl_scope* tree_get_function_labels(tree_decl* self)

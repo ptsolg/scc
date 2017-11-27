@@ -50,7 +50,8 @@ extern bool csema_require_modifiable_lvalue(const csema* self, const tree_expr* 
 extern bool csema_require_compatible_expr_types(
         const csema* self, const tree_type* a, const tree_type* b, tree_location l);
 
-extern tree_expr* csema_new_paren_expr(csema* self, tree_location loc, tree_expr* expr);
+extern tree_expr* csema_new_paren_expr(
+        csema* self, tree_location lbracket_loc, tree_expr* expr, tree_location rbracket_loc);
 extern tree_expr* csema_new_decl_expr(csema* self, tree_location loc, tree_id name);
 
 extern tree_expr* csema_new_sp_floating_literal(csema* self, tree_location loc, float v);

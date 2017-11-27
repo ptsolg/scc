@@ -159,8 +159,8 @@ extern void cdeclarator_dispose(cdeclarator* self);
 
 extern void cdeclarator_set_id(cdeclarator* self, tree_location id_loc, tree_id id);
 extern void cdeclarator_set_initialized(cdeclarator* self);
-extern void cdeclarator_set_start_loc(cdeclarator* self, tree_location start_loc);
-extern void cdeclarator_set_end_loc(cdeclarator* self, tree_location end_loc);
+extern void cdeclarator_set_loc_begin(cdeclarator* self, tree_location start_loc);
+extern void cdeclarator_set_loc_end(cdeclarator* self, tree_location end_loc);
 
 extern tree_location cdeclarator_get_id_loc_or_begin(const cdeclarator* self);
 
