@@ -56,27 +56,20 @@ extern ssa_instr* ssa_new_call(ssa_context* context, ssa_id id, tree_type* resty
 }
 
 extern ssa_instr* ssa_new_getaddr(
-        ssa_context* context, ssa_id id, tree_type* ptr, ssa_value* operand, ssize offset)
+        ssa_context* context,
+        ssa_id id,
+        tree_type* restype,
+        ssa_value* pointer,
+        ssa_value* index,
+        ssa_value* offset)
 {
-        ssa_instr* i = ssa_new_instr(context, SIK_GETADDR, id, ptr, sizeof(struct _ssa_getaddr_instr));
+        ssa_instr* i = ssa_new_instr(context, SIK_GETADDR, id, restype, sizeof(struct _ssa_getaddr_instr));
         if (!i)
                 return NULL;
 
-        ssa_set_getaddr_operand(i, operand);
+        ssa_set_getaddr_operand(i, pointer);
+        ssa_set_getaddr_index(i, index);
         ssa_set_getaddr_offset(i, offset);
-        return i;
-}
-
-extern ssa_instr* ssa_new_getptrval(
-        ssa_context* context, ssa_id id, tree_type* restype, ssa_value* pointer, ssize index, ssize offset)
-{
-        ssa_instr* i = ssa_new_instr(context, SIK_GETPTRVAL, id, restype, sizeof(struct _ssa_getptrval_instr));
-        if (!i)
-                return NULL;
-
-        ssa_set_getptrval_operand(i, pointer);
-        ssa_set_getptrval_index(i, index);
-        ssa_set_getptrval_offset(i, offset);
         return i;
 }
 

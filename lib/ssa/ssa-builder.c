@@ -169,17 +169,34 @@ extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* res, dseq* operan
         return NULL;
 }
 
-extern ssa_value* ssa_build_getaddr(ssa_builder* self, ssa_value* operand, ssize offset)
+extern ssa_value* ssa_build_getaddr(
+        ssa_builder* self,
+        tree_type* target_type,
+        ssa_value* operand,
+        ssa_value* index,
+        ssa_value* offset)
 {
-        S_UNREACHABLE();
-        return NULL;
-}
+        if (!index)
+                index = ssa_build_zero_u32(self);
+        if (!offset)
+                offset = ssa_build_zero_u32(self);
+        if (!index || !offset)
+                return NULL;
 
-extern ssa_value* ssa_build_getptrval(
-        ssa_builder* self, ssa_value* operand, ssize index, ssize offset)
-{
-        S_UNREACHABLE();
-        return NULL;
+        S_ASSERT(tree_type_is_pointer(ssa_get_value_type(operand)));
+        S_ASSERT(tree_type_is_integer(ssa_get_value_type(index)));
+        S_ASSERT(tree_type_is_integer(ssa_get_value_type(offset)));
+
+        tree_type* value_type = tree_new_pointer_type(ssa_get_tree(self->context), target_type);
+        if (!value_type)
+                return NULL;
+
+        ssa_instr* i = ssa_new_getaddr(self->context,
+                ssa_builder_gen_uid(self), value_type, operand, index, offset);
+        if (!i)
+                return NULL;
+
+        return ssa_build_instr(self, i);
 }
 
 extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type)
@@ -254,6 +271,15 @@ extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, doub
         avalue_init_dp(&v, val);
 
         return ssa_new_constant(self->context, type, v);
+}
+
+extern ssa_value* ssa_build_zero_u32(ssa_builder* self)
+{
+        tree_type* u32 = tree_new_builtin_type(ssa_get_tree(self->context), TBTK_UINT32);
+        if (!u32)
+                return NULL;
+
+        return ssa_build_int_constant(self, u32, 0);
 }
 
 extern ssa_value* ssa_build_inc(ssa_builder* self, ssa_value* operand)

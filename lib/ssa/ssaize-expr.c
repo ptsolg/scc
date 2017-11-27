@@ -443,7 +443,33 @@ extern ssa_value* ssaize_call_expr(ssaizer* self, const tree_expr* expr)
 
 extern ssa_value* ssaize_subscript_expr(ssaizer* self, const tree_expr* expr)
 {
-        return NULL;
+        tree_expr* pointer = tree_get_subscript_lhs(expr);
+        tree_expr* index = tree_get_subscript_rhs(expr);
+
+        // 0[pointer]
+        if (tree_type_is_pointer(tree_get_expr_type(index)))
+        {
+                tree_expr* tmp = pointer;
+                pointer = index;
+                index = tmp;
+        }
+
+        ssa_value* ssa_pointer = ssaize_expr(self, pointer);
+        if (!ssa_pointer)
+                return NULL;
+
+        ssa_value* ssa_index = ssaize_expr(self, index);
+        if (!ssa_index)
+                return NULL;
+
+        ssa_value* element_ptr = ssa_build_getaddr(&self->builder,
+                tree_get_pointer_target(tree_get_expr_type(pointer)), ssa_pointer, ssa_index, NULL);
+        if (!element_ptr)
+                return NULL;
+
+        return tree_expr_is_lvalue(expr)
+                ? element_ptr
+                : ssaize_dereference(self, element_ptr);
 }
 
 static bool ssaize_conditional_expr_branch(

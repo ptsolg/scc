@@ -25,7 +25,6 @@ typedef enum
         SIK_CAST,
         SIK_CALL,
         SIK_GETADDR,
-        SIK_GETPTRVAL,
         SIK_PHI,
         SIK_ALLOCA,
         SIK_LOAD,
@@ -148,43 +147,29 @@ static inline void ssa_set_call_func(ssa_instr* self, tree_decl* func);
 struct _ssa_getaddr_instr
 {
         struct _ssa_instr_base _base;
-        ssa_value* _operand;
-        ssize _offset;
+        ssa_value* _ptr;
+        ssa_value* _index;
+        ssa_value* _offset;
 };
 
 extern ssa_instr* ssa_new_getaddr(
-        ssa_context* context, ssa_id id, tree_type* ptr, ssa_value* operand, ssize offset);
+        ssa_context* context,
+        ssa_id id,
+        tree_type* restype,
+        ssa_value* pointer,
+        ssa_value* index,
+        ssa_value* offset);
 
 static inline struct _ssa_getaddr_instr* _ssa_get_getaddr(ssa_instr* self);
 static inline const struct _ssa_getaddr_instr* _ssa_get_cgetaddr(const ssa_instr* self);
 
 static inline ssa_value* ssa_get_getaddr_operand(const ssa_instr* self);
-static inline ssize ssa_get_getaddr_offset(const ssa_instr* self);
+static inline ssa_value* ssa_get_getaddr_index(const ssa_instr* self);
+static inline ssa_value* ssa_get_getaddr_offset(const ssa_instr* self);
 
 static inline void ssa_set_getaddr_operand(ssa_instr* self, ssa_value* operand);
-static inline void ssa_set_getaddr_offset(ssa_instr* self, ssize offset);
-
-struct _ssa_getptrval_instr
-{
-        struct _ssa_instr_base _base;
-        ssa_value* _ptr;
-        ssize _index;
-        ssize _offset;
-};
-
-extern ssa_instr* ssa_new_getptrval(
-        ssa_context* context, ssa_id id, tree_type* restype, ssa_value* pointer, ssize index, ssize offset);
-
-static inline struct _ssa_getptrval_instr* _ssa_get_getptrval(ssa_instr* self);
-static inline const struct _ssa_getptrval_instr* _ssa_get_cgetptrval(const ssa_instr* self);
-
-static inline ssa_value* ssa_get_getptrval_operand(const ssa_instr* self);
-static inline ssize ssa_get_getptrval_index(const ssa_instr* self);
-static inline ssize ssa_get_getptrval_offset(const ssa_instr* self);
-
-static inline void ssa_set_getptrval_operand(ssa_instr* self, ssa_value* operand);
-static inline void ssa_set_getptrval_index(ssa_instr* self, ssize index);
-static inline void ssa_set_getptrval_offset(ssa_instr* self, ssize offset);
+static inline void ssa_set_getaddr_index(ssa_instr* self, ssa_value* index);
+static inline void ssa_set_getaddr_offset(ssa_instr* self, ssa_value* offset);
 
 struct _ssa_phi_instr
 {
@@ -254,8 +239,7 @@ typedef struct _ssa_instr
                 struct _ssa_binary_instr _binary;
                 struct _ssa_cast_instr _cast;
                 struct _ssa_call_instr _call;
-                struct _ssa_getaddr_instr _getaddr;
-                struct _ssa_getptrval_instr _getptrval;
+                struct _ssa_getaddr_instr _getptrval;
                 struct _ssa_phi_instr _phi;
                 struct _ssa_alloca_instr _alloca;
                 struct _ssa_store_instr _store;
@@ -422,64 +406,32 @@ static inline const struct _ssa_getaddr_instr* _ssa_get_cgetaddr(const ssa_instr
 
 static inline ssa_value* ssa_get_getaddr_operand(const ssa_instr* self)
 {
-        return _ssa_get_cgetaddr(self)->_operand;
+        return _ssa_get_cgetaddr(self)->_ptr;
 }
 
-static inline ssize ssa_get_getaddr_offset(const ssa_instr* self)
+static inline ssa_value* ssa_get_getaddr_index(const ssa_instr* self)
+{
+        return _ssa_get_cgetaddr(self)->_index;
+}
+
+static inline ssa_value* ssa_get_getaddr_offset(const ssa_instr* self)
 {
         return _ssa_get_cgetaddr(self)->_offset;
 }
 
 static inline void ssa_set_getaddr_operand(ssa_instr* self, ssa_value* operand)
 {
-        _ssa_get_getaddr(self)->_operand = operand;
+        _ssa_get_getaddr(self)->_ptr = operand;
 }
 
-static inline void ssa_set_getaddr_offset(ssa_instr* self, ssize offset)
+static inline void ssa_set_getaddr_index(ssa_instr* self, ssa_value* index)
+{
+        _ssa_get_getaddr(self)->_index = index;
+}
+
+static inline void ssa_set_getaddr_offset(ssa_instr* self, ssa_value* offset)
 {
         _ssa_get_getaddr(self)->_offset = offset;
-}
-
-static inline struct _ssa_getptrval_instr* _ssa_get_getptrval(ssa_instr* self)
-{
-        SSA_ASSERT_INSTR(self, SIK_GETPTRVAL);
-        return (struct _ssa_getptrval_instr*)self;
-}
-
-static inline const struct _ssa_getptrval_instr* _ssa_get_cgetptrval(const ssa_instr* self)
-{
-        SSA_ASSERT_INSTR(self, SIK_GETPTRVAL);
-        return (const struct _ssa_getptrval_instr*)self;
-}
-
-static inline ssa_value* ssa_get_getptrval_operand(const ssa_instr* self)
-{
-        return _ssa_get_cgetptrval(self)->_ptr;
-}
-
-static inline ssize ssa_get_getptrval_index(const ssa_instr* self)
-{
-        return _ssa_get_cgetptrval(self)->_index;
-}
-
-static inline ssize ssa_get_getptrval_offset(const ssa_instr* self)
-{
-        return _ssa_get_cgetptrval(self)->_offset;
-}
-
-static inline void ssa_set_getptrval_operand(ssa_instr* self, ssa_value* operand)
-{
-        _ssa_get_getptrval(self)->_ptr = operand;
-}
-
-static inline void ssa_set_getptrval_index(ssa_instr* self, ssize index)
-{
-        _ssa_get_getptrval(self)->_index = index;
-}
-
-static inline void ssa_set_getptrval_offset(ssa_instr* self, ssize offset)
-{
-        _ssa_get_getptrval(self)->_offset = offset;
 }
 
 static inline struct _ssa_phi_instr* _ssa_get_phi(ssa_instr* self)

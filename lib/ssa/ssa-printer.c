@@ -168,6 +168,17 @@ static void ssa_print_cast(ssa_printer* self, const ssa_instr* instr)
         ssa_print_value_ref(self, ssa_get_cast_operand(instr));
 }
 
+static void ssa_print_getaddr(ssa_printer* self, const ssa_instr* instr)
+{
+        ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
+        ssa_prints(self, " = getaddr ");
+        ssa_print_value_ref(self, ssa_get_getaddr_operand(instr));
+        ssa_prints(self, ", ");
+        ssa_print_value_ref(self, ssa_get_getaddr_index(instr));
+        ssa_prints(self, ", ");
+        ssa_print_value_ref(self, ssa_get_getaddr_offset(instr));
+}
+
 extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
 {
         ssa_print_endl(self);
@@ -188,6 +199,8 @@ extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
                 ssa_print_phi(self, instr);
         else if (k == SIK_CAST)
                 ssa_print_cast(self, instr);
+        else if (k == SIK_GETADDR)
+                ssa_print_getaddr(self, instr);
 }
 
 static void ssa_print_branch(ssa_printer* self, const ssa_branch* br)
