@@ -193,20 +193,27 @@ static bool csema_check_pointer_qualifier_discartion(
         return false;
 }
 
+static bool csema_pointer_operands_are_compatible(csema* self, tree_type* lt, tree_type* rt)
+{
+        if (tree_types_are_same(lt, rt))
+                return true;
+
+        if ((tree_type_is_incomplete(lt) || tree_type_is_object(lt)) && tree_type_is_void(rt))
+                return true;
+
+        return (tree_type_is_incomplete(rt) || tree_type_is_object(rt)) && tree_type_is_void(lt);
+}
+
 static bool csema_check_assignment_pointer_types(
         csema* self, tree_type* lt, tree_type* rt, cassign_conv_result* r)
 {
-        S_ASSERT(tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt));
+        S_ASSERT(tree_type_is_pointer(lt) && tree_type_is_pointer(rt));
 
         tree_type* ltarget = tree_get_unqualified_type(tree_get_pointer_target(lt));
         tree_type* rtarget = tree_get_unqualified_type(tree_get_pointer_target(rt));
 
-        if (tree_types_are_same(ltarget, rtarget)
-                || (tree_type_is_incomplete(ltarget) && tree_type_is_void(rtarget))
-                || (tree_type_is_incomplete(rtarget) && tree_type_is_void(ltarget)))
-        {
+        if (csema_pointer_operands_are_compatible(self, ltarget, rtarget))
                 return csema_check_pointer_qualifier_discartion(self, lt, rt, r);
-        }
 
         r->kind = CACRK_INCOMPATIBLE_POINTERS;
         return false;
