@@ -950,7 +950,7 @@ static tree_type* csema_check_assign_expr(
                 char quals[64];
                 cqet_qual_string(r.discarded_quals, quals);
                 cerror(self->error_manager, CES_ERROR, loc,
-                        "assignment discards '%s' qualifier");
+                        "assignment discards '%s' qualifier", quals);
         }
         else if (r.kind == CACRK_INCOMPATIBLE_POINTERS)
                 cerror(self->error_manager, CES_ERROR, loc,

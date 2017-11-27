@@ -1,0 +1,1 @@
+052.t:4:12: error: return discards 'const' qualifier

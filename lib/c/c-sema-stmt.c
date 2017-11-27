@@ -275,7 +275,7 @@ extern tree_stmt* csema_new_return_stmt(
                 char quals[64];
                 cqet_qual_string(r.discarded_quals, quals);
                 cerror(self->error_manager, CES_ERROR, vloc,
-                        "return discards '%s' qualifier");
+                        "return discards '%s' qualifier", quals);
         }
         else if (r.kind == CACRK_INCOMPATIBLE_POINTERS)
                 cerror(self->error_manager, CES_ERROR, vloc,
