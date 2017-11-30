@@ -112,6 +112,7 @@ static inline tree_decl* tree_get_next_decl(const tree_decl* self);
 static inline tree_decl* tree_get_prev_decl(const tree_decl* self);
 static inline tree_decl_kind tree_get_decl_kind(const tree_decl* self);
 static inline bool tree_decl_is(const tree_decl* self, tree_decl_kind k);
+static inline bool tree_decl_is_global(const tree_decl* self);
 static inline tree_decl_scope* tree_get_decl_scope(const tree_decl* self);
 static inline tree_xlocation tree_get_decl_loc(const tree_decl* self);
 static inline tree_location tree_get_decl_loc_begin(const tree_decl* self);
@@ -476,6 +477,11 @@ static inline tree_decl_kind tree_get_decl_kind(const tree_decl* self)
 static inline bool tree_decl_is(const tree_decl* self, tree_decl_kind k)
 {
         return tree_get_decl_kind(self) == k;
+}
+
+static inline bool tree_decl_is_global(const tree_decl* self)
+{
+        return tree_get_decl_scope_parent(tree_get_decl_scope(self)) == NULL;
 }
 
 static inline tree_decl_scope* tree_get_decl_scope(const tree_decl* self)
