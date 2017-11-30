@@ -368,6 +368,7 @@ static inline ssize tree_get_function_type_nparams(const tree_type* self)
 
 static inline tree_type* tree_get_function_type_result(const tree_type* self)
 {
+        TREE_ASSERT_TYPE(self, TTK_FUNCTION);
         return tree_get_chain_type_next(self);
 }
 
