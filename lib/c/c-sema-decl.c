@@ -351,7 +351,7 @@ extern tree_decl* csema_new_enumerator(
         return e;
 }
 
-extern tree_decl* csema_def_enumerator(
+extern tree_decl* csema_define_enumerator(
         csema* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_expr* value)
 {
         tree_decl* e = csema_new_enumerator(self, enum_, id, id_loc, value);
@@ -379,7 +379,7 @@ extern tree_decl* csema_new_enum_decl(csema* self, tree_location kw_loc, tree_id
                 name);
 }
 
-static tree_decl* _csema_forward_enum_decl(
+static tree_decl* _csema_declare_enum_decl(
         csema* self, tree_location kw_loc, tree_id name, bool parent_lookup)
 {
         tree_decl* e = csema_get_decl(self, self->locals, name, true, parent_lookup);
@@ -397,14 +397,14 @@ static tree_decl* _csema_forward_enum_decl(
         return e;
 }
 
-extern tree_decl* csema_forward_enum_decl(csema* self, tree_location kw_loc, tree_id name)
+extern tree_decl* csema_declare_enum_decl(csema* self, tree_location kw_loc, tree_id name)
 {
-        return _csema_forward_enum_decl(self, kw_loc, name, true);
+        return _csema_declare_enum_decl(self, kw_loc, name, true);
 }
 
-extern tree_decl* csema_def_enum_decl(csema* self, tree_location kw_loc, tree_id name)
+extern tree_decl* csema_define_enum_decl(csema* self, tree_location kw_loc, tree_id name)
 {
-        tree_decl* e = _csema_forward_enum_decl(self, kw_loc, name, false);
+        tree_decl* e = _csema_declare_enum_decl(self, kw_loc, name, false);
         if (!e)
                 return NULL;
 
@@ -427,7 +427,7 @@ extern tree_decl* csema_new_record_decl(
                 is_union);
 }
 
-extern tree_decl* _csema_forward_record_decl(
+extern tree_decl* _csema_declare_record_decl(
         csema* self, tree_location kw_loc, tree_id name, bool is_union, bool parent_lookup)
 {
         tree_decl* d = csema_get_decl(self, self->locals, name, true, parent_lookup);
@@ -446,16 +446,16 @@ extern tree_decl* _csema_forward_record_decl(
         return d;
 }
 
-extern tree_decl* csema_forward_record_decl(
+extern tree_decl* csema_declare_record_decl(
         csema* self, tree_location kw_loc, tree_id name, bool is_union)
 {
-        return _csema_forward_record_decl(self, kw_loc, name, is_union, true);
+        return _csema_declare_record_decl(self, kw_loc, name, is_union, true);
 }
 
-extern tree_decl* csema_def_record_decl(
+extern tree_decl* csema_define_record_decl(
         csema* self, tree_location kw_loc, tree_id name, bool is_union)
 {
-        tree_decl* r = _csema_forward_record_decl(self, kw_loc, name, is_union, false);
+        tree_decl* r = _csema_declare_record_decl(self, kw_loc, name, is_union, false);
         if (!r)
                 return NULL;
 
@@ -552,7 +552,7 @@ extern tree_decl* csema_new_member_decl(
         return m;
 }
 
-extern tree_decl* csema_def_member_decl(
+extern tree_decl* csema_define_member_decl(
         csema* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_expr* bits)
 {
         tree_decl* m = csema_new_member_decl(self, decl_specs, struct_declarator, bits);
@@ -580,7 +580,7 @@ extern tree_decl* csema_new_label_decl(
                 self->labels, tree_init_xloc(id_loc, colon_loc), id, NULL);
 }
 
-extern tree_decl* csema_forward_label_decl(csema* self, tree_id name, tree_id name_loc)
+extern tree_decl* csema_declare_label_decl(csema* self, tree_id name, tree_id name_loc)
 {
         tree_decl* l = csema_get_label_decl(self, name);
         if (!l)
@@ -592,10 +592,10 @@ extern tree_decl* csema_forward_label_decl(csema* self, tree_id name, tree_id na
         return l;
 }
 
-extern tree_decl* csema_def_label_decl(
+extern tree_decl* csema_define_label_decl(
         csema* self, tree_location id_loc, tree_id id, tree_location colon_loc, tree_stmt* stmt)
 {
-        tree_decl* l = csema_forward_label_decl(self, id, id_loc);
+        tree_decl* l = csema_declare_label_decl(self, id, id_loc);
         if (!l)
                 return NULL;
 
@@ -632,7 +632,7 @@ static tree_decl* csema_new_param_decl(csema* self, cparam* p)
                 NULL);
 }
 
-static tree_decl* csema_def_param_decl(csema* self, cparam* p)
+static tree_decl* csema_define_param_decl(csema* self, cparam* p)
 {
         tree_decl* d = csema_new_param_decl(self, p);
         if (!d)
@@ -646,7 +646,7 @@ static bool csema_set_function_params(csema* self, tree_decl* func, dseq* params
         csema_enter_decl_scope(self, tree_get_function_params(func));
 
         for (ssize i = 0; i < dseq_size(params); i++)
-                if (!csema_def_param_decl(self, dseq_get_ptr(params, i)))
+                if (!csema_define_param_decl(self, dseq_get_ptr(params, i)))
                 {
                         csema_exit_decl_scope(self);
                         return false;
@@ -726,7 +726,7 @@ extern tree_decl* csema_new_external_decl(
         return csema_new_var_decl(self, decl_specs, declarator);
 }
 
-extern tree_decl* csema_forward_external_decl(
+extern tree_decl* csema_declare_external_decl(
         csema* self, cdecl_specs* decl_specs, cdeclarator* declarator)
 {
         tree_decl* d = csema_new_external_decl(self, decl_specs, declarator);
@@ -780,7 +780,7 @@ extern tree_decl* csema_forward_external_decl(
         return d;
 }
 
-extern tree_decl* csema_def_var_decl(csema* self, tree_decl* var, tree_expr* init)
+extern tree_decl* csema_define_var_decl(csema* self, tree_decl* var, tree_expr* init)
 {
         if (tree_get_decl_kind(var) != TDK_VAR)
                 return false;
@@ -800,7 +800,7 @@ extern tree_decl* csema_def_var_decl(csema* self, tree_decl* var, tree_expr* ini
         return var;
 }
 
-extern tree_decl* csema_def_function_decl(csema* self, tree_decl* func, tree_stmt* body)
+extern tree_decl* csema_define_function_decl(csema* self, tree_decl* func, tree_stmt* body)
 {
         S_ASSERT(tree_decl_is(func, TDK_FUNCTION));
         tree_decl* orig = csema_get_global_decl(self, tree_get_decl_name(func), false);

@@ -16,7 +16,7 @@ static bool cparse_function_definition(cparser* self, tree_decl* func)
         tree_stmt* body = cparse_stmt(self);
         csema_exit_function(self->sema);
 
-        if (!body || !csema_def_function_decl(self->sema, func, body))
+        if (!body || !csema_define_function_decl(self->sema, func, body))
                 return false;
 
         return true;
@@ -33,7 +33,7 @@ static tree_decl* cparse_function_or_init_declarator(
                 return NULL;
         }
 
-        tree_decl* decl = csema_forward_external_decl(self->sema, specs, &d);
+        tree_decl* decl = csema_declare_external_decl(self->sema, specs, &d);
         cdeclarator_dispose(&d);
         
         if (!decl)
@@ -45,7 +45,7 @@ static tree_decl* cparse_function_or_init_declarator(
                 tree_expr* init = cparse_initializer(self, decl);
                 if (!init)
                         return NULL;
-                if (!csema_def_var_decl(self->sema, decl, init))
+                if (!csema_define_var_decl(self->sema, decl, init))
                         return NULL;
         }
         else if (func_def_expected && cparser_at(self, CTK_LBRACE))
@@ -333,7 +333,7 @@ static bool cparse_struct_declaration(cparser* self)
                         bits = cparse_const_expr(self);
                 }
 
-                tree_decl* m = csema_def_member_decl(self->sema, &ds, &sd, bits);
+                tree_decl* m = csema_define_member_decl(self->sema, &ds, &sd, bits);
                 cdeclarator_dispose(&sd);
                 if (!m)
                         return false;
@@ -400,10 +400,10 @@ extern tree_decl* cparse_struct_or_union_specifier(cparser* self, bool* referenc
         {
                 if (referenced)
                         *referenced = true;
-                return csema_forward_record_decl(self->sema, kw_loc, name, is_union);
+                return csema_declare_record_decl(self->sema, kw_loc, name, is_union);
         }
 
-        tree_decl* record = csema_def_record_decl(self->sema, kw_loc, name, is_union);
+        tree_decl* record = csema_define_record_decl(self->sema, kw_loc, name, is_union);
         if (!record)
                 return NULL;
 
@@ -433,7 +433,7 @@ static tree_decl* cparse_enumerator(cparser* self, tree_decl* enum_)
                         return NULL;
         }
 
-        return csema_def_enumerator(self->sema, enum_, id, id_loc, value);
+        return csema_define_enumerator(self->sema, enum_, id, id_loc, value);
 }
 
 static ctoken_kind ctk_rbrace_or_comma[] =
@@ -494,10 +494,10 @@ extern tree_decl* cparse_enum_specifier(cparser* self, bool* referenced)
         {
                 if (referenced)
                         *referenced = true;
-                return csema_forward_enum_decl(self->sema, kw_loc, name);
+                return csema_declare_enum_decl(self->sema, kw_loc, name);
         }
 
-        tree_decl* enum_ = csema_def_enum_decl(self->sema, kw_loc, name);
+        tree_decl* enum_ = csema_define_enum_decl(self->sema, kw_loc, name);
         if (!enum_)
                 return NULL;
 

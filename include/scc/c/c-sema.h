@@ -89,7 +89,7 @@ extern bool csema_require_complete_type(
         const csema* self, tree_location loc, const tree_type* type);
 
 extern void csema_init_dseq_ptr(csema* self, dseq* group);
-extern tree_module* cparser_act_on_finish_module(csema* self);
+extern tree_module* csema_finish_module(csema* self);
 
 extern const char* csema_get_id_cstr(const csema* self, tree_id id);
 

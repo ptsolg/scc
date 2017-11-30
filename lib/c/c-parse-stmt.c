@@ -108,7 +108,7 @@ extern tree_stmt* cparse_labeled_stmt(cparser* self, cstmt_context context)
                 return NULL;
 
         tree_stmt placeholder;
-        tree_decl* label = csema_def_label_decl(
+        tree_decl* label = csema_define_label_decl(
                 self->sema,id_loc, name, colon_loc, &placeholder);
         if (!label)
                 return NULL;

@@ -171,7 +171,7 @@ extern bool csema_require_complete_type(
         return true;
 }
 
-extern tree_module* cparser_act_on_finish_module(csema* self)
+extern tree_module* csema_finish_module(csema* self)
 {
         return self->module;
 }

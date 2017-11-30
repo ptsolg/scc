@@ -57,20 +57,20 @@ extern tree_type* csema_new_type_name(
 extern tree_decl* csema_new_enumerator(
         csema* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_expr* value);
 
-extern tree_decl* csema_def_enumerator(
+extern tree_decl* csema_define_enumerator(
         csema* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_expr* value);
 
 extern tree_decl* csema_new_enum_decl(csema* self, tree_location kw_loc, tree_id name);
-extern tree_decl* csema_forward_enum_decl(csema* self, tree_location kw_loc, tree_id name);
-extern tree_decl* csema_def_enum_decl(csema* self, tree_location kw_loc, tree_id name);
+extern tree_decl* csema_declare_enum_decl(csema* self, tree_location kw_loc, tree_id name);
+extern tree_decl* csema_define_enum_decl(csema* self, tree_location kw_loc, tree_id name);
 
 extern tree_decl* csema_new_record_decl(
         csema* self, tree_location kw_loc, tree_id name, bool is_union);
 
-extern tree_decl* csema_forward_record_decl(
+extern tree_decl* csema_declare_record_decl(
         csema* self, tree_location kw_loc, tree_id name, bool is_union);
 
-extern tree_decl* csema_def_record_decl(
+extern tree_decl* csema_define_record_decl(
         csema* self, tree_location kw_loc, tree_id name, bool is_union);
 
 extern tree_decl* csema_complete_record_decl(csema* self, tree_decl* decl, tree_location end_loc);
@@ -78,25 +78,25 @@ extern tree_decl* csema_complete_record_decl(csema* self, tree_decl* decl, tree_
 extern tree_decl* csema_new_member_decl(
         csema* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_expr* bits);
 
-extern tree_decl* csema_def_member_decl(
+extern tree_decl* csema_define_member_decl(
         csema* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_expr* bits);
 
 extern tree_decl* csema_new_label_decl(
         csema* self, tree_location id_loc, tree_id id, tree_location colon_loc);
 
-extern tree_decl* csema_forward_label_decl(csema* self, tree_id name, tree_id name_loc);
+extern tree_decl* csema_declare_label_decl(csema* self, tree_id name, tree_id name_loc);
 
-extern tree_decl* csema_def_label_decl(
+extern tree_decl* csema_define_label_decl(
         csema* self, tree_location id_loc, tree_id id, tree_location colon_loc, tree_stmt* stmt);
 
 extern tree_decl* csema_new_external_decl(
         csema* self, cdecl_specs* decl_specs, cdeclarator* declarator);
 
-extern tree_decl* csema_forward_external_decl(
+extern tree_decl* csema_declare_external_decl(
         csema* self, cdecl_specs* decl_specs, cdeclarator* declarator);
 
-extern tree_decl* csema_def_var_decl(csema* self, tree_decl* var, tree_expr* init);
-extern tree_decl* csema_def_function_decl(csema* self, tree_decl* func, tree_stmt* body);
+extern tree_decl* csema_define_var_decl(csema* self, tree_decl* var, tree_expr* init);
+extern tree_decl* csema_define_function_decl(csema* self, tree_decl* func, tree_stmt* body);
 extern bool csema_check_function_def_loc(csema* self, tree_decl* func);
 
 extern tree_decl* csema_add_init_declarator(csema* self, tree_decl* list, tree_decl* d);

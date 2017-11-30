@@ -221,7 +221,7 @@ extern tree_stmt* csema_new_goto_stmt(
         tree_id id,
         tree_location semicolon_loc)
 {
-        tree_decl* l = csema_forward_label_decl(self, id, id_loc);
+        tree_decl* l = csema_declare_label_decl(self, id, id_loc);
         if (!l)
                 return NULL;
 
