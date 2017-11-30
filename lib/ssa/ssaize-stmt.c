@@ -289,7 +289,11 @@ extern bool ssaize_return_stmt(ssaizer* self, const tree_stmt* stmt)
         if (expr && !(val = ssaize_expr(self, expr)))
                 return false;
 
-        return (bool)ssa_build_return(&self->builder, val);
+        if (!ssa_build_return(&self->builder, val))
+                return false;
+        
+        ssaizer_finish_current_block(self);
+        return true;
 }
 
 static bool(*ssaize_stmt_table[TSK_SIZE])(ssaizer*, const tree_stmt*) =
@@ -318,10 +322,7 @@ S_STATIC_ASSERT(S_ARRAY_SIZE(ssaize_stmt_table) == TSK_SIZE,
 extern bool ssaize_stmt(ssaizer* self, const tree_stmt* stmt)
 {
         if (!self->block)
-        {
-                self->block = ssaizer_new_block(self);
-                ssaizer_enter_block(self, self->block);
-        }
+                ssaizer_enter_block(self, ssaizer_new_block(self));
 
         tree_stmt_kind k = tree_get_stmt_kind(stmt);
         TREE_ASSERT_STMT_KIND(k);

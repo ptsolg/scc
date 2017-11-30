@@ -15,7 +15,9 @@ typedef struct _ssa_context ssa_context;
 typedef struct _ssa_value ssa_value;
 typedef struct _ssa_block ssa_block;
 typedef struct _ssa_branch ssa_branch;
+typedef struct _ssa_instr ssa_instr;
 typedef struct _tree_type tree_type;
+typedef struct _tree_decl tree_decl;
 
 typedef struct _ssa_builder
 {
@@ -44,7 +46,7 @@ extern ssa_value* ssa_build_geq(ssa_builder* self, ssa_value* lhs, ssa_value* rh
 extern ssa_value* ssa_build_eq(ssa_builder* self, ssa_value* lhs, ssa_value* rhs);
 extern ssa_value* ssa_build_neq(ssa_builder* self, ssa_value* lhs, ssa_value* rhs);
 extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* type, ssa_value* operand);
-extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* res, dseq* operands);
+extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, dseq* args);
 extern ssa_value* ssa_build_getaddr(
         ssa_builder* self,
         tree_type* target_type,

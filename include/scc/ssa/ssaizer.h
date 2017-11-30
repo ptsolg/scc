@@ -28,11 +28,13 @@ typedef struct _ssaizer
         ssa_context* context;
         ssa_block* block;
         ssa_function* function;
+        ssa_module* module;
         ssa_builder builder;
 
         // stack of htab's used for tracking the last definition of the variable
         dseq defs;
         htab labels;
+        htab globals;
 
         dseq break_stack;
         dseq continue_stack;
@@ -52,6 +54,8 @@ extern void ssaizer_pop_scope(ssaizer* self);
 
 extern void ssaizer_set_def(ssaizer* self, const tree_decl* var, ssa_value* def);
 extern ssa_value* ssaizer_get_def(ssaizer* self, const tree_decl* var);
+extern void ssaizer_set_global_decl(ssaizer* self, const tree_decl* var, ssa_value* decl);
+extern ssa_value* ssaizer_get_global_decl(ssaizer* self, const tree_decl* var);
 
 extern ssa_block* ssaizer_get_label_block(ssaizer* self, const tree_decl* label);
 

@@ -1,0 +1,9 @@
+; Definition for foo
+@0:
+    ret
+
+; Definition for test
+@0:
+    $1 = cast %foo
+    call $1 ()
+    ret

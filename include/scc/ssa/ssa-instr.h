@@ -45,6 +45,8 @@ struct _ssa_instr_base
 extern ssa_instr* ssa_new_instr(
         ssa_context* context, ssa_instr_kind kind, ssa_id id, tree_type* type, ssize size);
 
+extern bool ssa_instr_has_var(const ssa_instr* self);
+
 static inline struct _ssa_instr_base* _ssa_get_instr_base(ssa_instr* self);
 static inline const struct _ssa_instr_base* _ssa_get_instr_cbase(const ssa_instr* self);
 
@@ -131,18 +133,28 @@ static inline void ssa_set_cast_operand(ssa_instr* self, ssa_value* operand);
 struct _ssa_call_instr
 {
         struct _ssa_instr_base _base;
-        tree_decl* _func;
+        ssa_value* _func;
         dseq _args;
 };
 
-extern ssa_instr* ssa_new_call(ssa_context* context, ssa_id id, tree_type* restype, tree_decl* func);
+extern ssa_instr* ssa_new_call(ssa_context* context, ssa_id id, ssa_value* func);
+
+extern void ssa_set_call_args(ssa_instr* self, dseq* args);
+extern void ssa_add_call_arg(ssa_instr* self, ssa_value* arg);
+extern bool ssa_call_returns_void(const ssa_instr* self);
 
 static inline struct _ssa_call_instr* _ssa_get_call(ssa_instr* self);
 static inline const struct _ssa_call_instr* _ssa_get_ccall(const ssa_instr* self);
 
-static inline tree_decl* ssa_get_call_func(const ssa_instr* self);
+static inline ssa_value* ssa_get_called_func(const ssa_instr* self);
+static inline ssa_value** ssa_get_call_args_begin(const ssa_instr* self);
+static inline ssa_value** ssa_get_call_args_end(const ssa_instr* self);
 
-static inline void ssa_set_call_func(ssa_instr* self, tree_decl* func);
+static inline void ssa_set_called_func(ssa_instr* self, ssa_value* func);
+
+#define SSA_FOREACH_CALL_ARG(PCALL, ITNAME) \
+        for (ssa_value** ITNAME = ssa_get_call_args_begin(PCALL); \
+                ITNAME != ssa_get_call_args_end(PCALL); ITNAME++)
 
 struct _ssa_getaddr_instr
 {
@@ -382,14 +394,31 @@ static inline const struct _ssa_call_instr* _ssa_get_ccall(const ssa_instr* self
         return (const struct _ssa_call_instr*)self;
 }
 
-static inline tree_decl* ssa_get_call_func(const ssa_instr* self)
+static inline ssa_value* ssa_get_called_func(const ssa_instr* self)
 {
         return _ssa_get_ccall(self)->_func;
 }
 
-static inline void ssa_set_call_func(ssa_instr* self, tree_decl* func)
+static inline ssa_value** ssa_get_call_args_begin(const ssa_instr* self)
+{
+        return (ssa_value**)dseq_begin_ptr(&_ssa_get_ccall(self)->_args);
+}
+
+static inline ssa_value** ssa_get_call_args_end(const ssa_instr* self)
+{
+        return (ssa_value**)dseq_end_ptr(&_ssa_get_ccall(self)->_args);
+}
+
+static inline void ssa_set_called_func(ssa_instr* self, ssa_value* func)
 {
         _ssa_get_call(self)->_func = func;
+        if (!func || ssa_call_returns_void(self))
+                return;
+
+        tree_type* ft = tree_desugar_type(
+                tree_get_pointer_target(ssa_get_value_type(func)));
+
+        ssa_set_value_type(ssa_get_instr_var(self), tree_get_function_type_result(ft));
 }
 
 static inline struct _ssa_getaddr_instr* _ssa_get_getaddr(ssa_instr* self)

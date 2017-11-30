@@ -17,18 +17,34 @@ typedef struct _tree_decl tree_decl;
 
 typedef struct _ssa_module
 {
-        htab _defs;
+        htab _lookup;
+        list_head _defs;
 } ssa_module;
 
 extern ssa_module* ssa_new_module(ssa_context* context);
 
 extern void ssa_module_add_func_def(ssa_module* self, ssa_function* func);
-extern ssa_function* ssa_module_find_func_def(ssa_module* self, const tree_decl* func);
+extern ssa_function* ssa_module_lookup(ssa_module* self, const tree_decl* func);
 
-static inline hiter ssa_get_module_defs_begin(const ssa_module* self)
+static inline ssa_function* ssa_get_module_defs_begin(const ssa_module* self)
 {
-        return htab_begin(&self->_defs);
+        return (ssa_function*)list_begin(&self->_defs);
 }
+
+static inline ssa_function* ssa_get_module_defs_end(ssa_module* self)
+{
+        return (ssa_function*)list_end(&self->_defs);
+}
+
+static inline const ssa_function* ssa_get_module_defs_cend(const ssa_module* self)
+{
+        return (const ssa_function*)list_cend(&self->_defs);
+}
+
+#define SSA_FOREACH_MODULE_DEF(PMODULE, ITNAME) \
+        for (ssa_function* ITNAME = ssa_get_module_defs_begin(PMODULE); \
+                ITNAME != ssa_get_module_defs_cend(PMODULE); \
+                ITNAME = ssa_get_next_function(ITNAME))
 
 #ifdef __cplusplus
 }

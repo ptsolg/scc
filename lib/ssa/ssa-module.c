@@ -8,7 +8,8 @@ extern ssa_module* ssa_new_module(ssa_context* context)
         if (!m)
                 return NULL;
 
-        htab_init_ex_ptr(&m->_defs, ssa_get_alloc(context));
+        htab_init_ex_ptr(&m->_lookup, ssa_get_alloc(context));
+        list_init(&m->_defs);
         return m;
 }
 
@@ -16,13 +17,14 @@ extern void ssa_module_add_func_def(ssa_module* self, ssa_function* func)
 {
         tree_decl* entity = ssa_get_function_entity(func);
         S_ASSERT(entity);
-        htab_insert_ptr(&self->_defs, tree_get_decl_name(entity), func);
+        htab_insert_ptr(&self->_lookup, tree_get_decl_name(entity), func);
+        list_push_back(&self->_defs, &func->_node);
 }
 
-extern ssa_function* ssa_module_find_func_def(ssa_module* self, const tree_decl* func)
+extern ssa_function* ssa_module_lookup(ssa_module* self, const tree_decl* func)
 {
         hiter res;
-        return htab_find(&self->_defs, tree_get_decl_name(func), &res)
+        return htab_find(&self->_lookup, tree_get_decl_name(func), &res)
                 ? hiter_get_ptr(&res)
                 : NULL;
 }

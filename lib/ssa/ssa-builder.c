@@ -15,7 +15,7 @@ extern void ssa_dispose_builder(ssa_builder* self)
 {
 }
 
-extern ssa_value* ssa_build_instr(ssa_builder* self, ssa_instr* i)
+static ssa_value* ssa_build_instr(ssa_builder* self, ssa_instr* i)
 {
         S_ASSERT(i && self->block);
         ssa_add_block_instr(self->block, i);
@@ -163,10 +163,18 @@ extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* type, ssa_value* 
         return ssa_build_instr(self, c);
 }
 
-extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* res, dseq* operands)
+extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, dseq* args)
 {
-        S_UNREACHABLE();
-        return NULL;
+        S_ASSERT(func && args);
+        tree_type* func_type = tree_desugar_type(
+                tree_get_pointer_target(ssa_get_value_type(func)));
+        S_ASSERT(tree_type_is(func_type, TTK_FUNCTION));
+        ssa_instr* call = ssa_new_call(self->context, ssa_builder_gen_uid(self), func);
+        if (!call)
+                return NULL;
+
+        ssa_set_call_args(call, args);
+        return ssa_build_instr(self, call);
 }
 
 extern ssa_value* ssa_build_getaddr(
@@ -231,7 +239,11 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
         tree_type* where_type = ssa_get_value_type(where);
         S_ASSERT(what_type && where_type);
         S_ASSERT(tree_type_is_object_pointer(where_type));
+
+        tree_type* uu1 = tree_get_unqualified_type(what_type);
+        tree_type* uu2 = tree_get_unqualified_type(where_type);
         S_ASSERT(tree_types_are_same(what_type, tree_get_pointer_target(where_type)));
+
 
         ssa_instr* i = ssa_new_store(self->context, what, where);
         if (!i)

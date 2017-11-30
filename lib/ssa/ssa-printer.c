@@ -70,7 +70,7 @@ static inline void ssa_print_value_ref(ssa_printer* self, const ssa_value* val)
                 return;
 
         ssa_value_kind k = ssa_get_value_kind(val);
-        if (k == SVK_VARIABLE)
+        if (k == SVK_VARIABLE || k == SVK_PARAM)
         {
                 ssa_printc(self, '$');
                 ssa_print_id(self, ssa_get_value_id(val));
@@ -86,6 +86,13 @@ static inline void ssa_print_value_ref(ssa_printer* self, const ssa_value* val)
                 avalue v = ssa_get_constant_value(val);
                 avalue_print(&v, buf, 64, 4);
                 ssa_prints(self, buf);
+        }
+        else if (k == SVK_DECL)
+        {
+                ssa_printc(self, '%');
+                tree_decl* entity = ssa_get_decl_entity(val);
+                ssa_prints(self, tree_get_id_cstr(ssa_get_tree(self->context),
+                        tree_get_decl_name(entity)));
         }
 }
 
@@ -179,6 +186,27 @@ static void ssa_print_getaddr(ssa_printer* self, const ssa_instr* instr)
         ssa_print_value_ref(self, ssa_get_getaddr_offset(instr));
 }
 
+static void ssa_print_call(ssa_printer* self, const ssa_instr* instr)
+{
+        if (ssa_instr_has_var(instr))
+        {
+                ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
+                ssa_prints(self, " = ");
+        }
+
+        ssa_prints(self, "call ");
+        ssa_print_value_ref(self, ssa_get_called_func(instr));
+
+        ssa_prints(self, " (");
+        SSA_FOREACH_CALL_ARG(instr, arg)
+        {
+                ssa_print_value_ref(self, *arg);
+                if (arg + 1 != ssa_get_call_args_end(instr))
+                        ssa_prints(self, ", ");
+        }
+        ssa_prints(self, ")");
+}
+
 extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
 {
         ssa_print_endl(self);
@@ -201,6 +229,8 @@ extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
                 ssa_print_cast(self, instr);
         else if (k == SIK_GETADDR)
                 ssa_print_getaddr(self, instr);
+        else if (k == SIK_CALL)
+                ssa_print_call(self, instr);
 }
 
 static void ssa_print_branch(ssa_printer* self, const ssa_branch* br)
@@ -260,9 +290,6 @@ extern void ssa_print_function(ssa_printer* self, const ssa_function* func)
 
 extern void ssa_print_module(ssa_printer* self, const ssa_module* module)
 {
-        for (hiter func = ssa_get_module_defs_begin(module);
-                hiter_valid(&func); hiter_advance(&func))
-        {
-                ssa_print_function(self, hiter_get_ptr(&func));
-        }
+        SSA_FOREACH_MODULE_DEF(module, def)
+                ssa_print_function(self, def);
 }

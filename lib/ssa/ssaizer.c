@@ -1,8 +1,8 @@
 #include "scc/ssa/ssaizer.h"
 #include "scc/ssa/ssa-context.h"
-#include "scc/ssa/ssaize-stmt.h"
-#include "scc/ssa/ssa-block.h"
 #include "scc/ssa/ssa-module.h"
+#include "scc/ssa/ssaize-decl.h"
+#include "scc/ssa/ssa-block.h"
 #include "scc/ssa/ssa-instr.h"
 #include "scc/tree/tree-module.h"
 
@@ -12,6 +12,7 @@ extern void ssaizer_init(ssaizer* self, ssa_context* context)
 {
         self->context = context;
         self->function = NULL;
+        self->module = NULL;
 
         self->block = NULL;
         ssa_init_builder(&self->builder, self->context, NULL);
@@ -19,6 +20,7 @@ extern void ssaizer_init(ssaizer* self, ssa_context* context)
         allocator* alloc = ssa_get_alloc(context);
         dseq_init_ex_htab(&self->defs, alloc);
         htab_init_ex_ptr(&self->labels, alloc);
+        htab_init_ex_ptr(&self->globals, alloc);
         dseq_init_ex_ptr(&self->continue_stack, alloc);
         dseq_init_ex_ptr(&self->break_stack, alloc);
 }
@@ -93,7 +95,21 @@ extern ssa_value* ssaizer_get_def(ssaizer* self, const tree_decl* var)
                         return hiter_get_ptr(&res);
                 it--;
         }
-        return NULL;
+        return ssaizer_get_global_decl(self, var);
+}
+
+extern void ssaizer_set_global_decl(ssaizer* self, const tree_decl* var, ssa_value* decl)
+{
+        S_ASSERT(decl);
+        htab_insert_ptr(&self->globals, tree_get_decl_name(var), decl);
+}
+
+extern ssa_value* ssaizer_get_global_decl(ssaizer* self, const tree_decl* var)
+{
+        hiter res;
+        return htab_find(&self->globals, tree_get_decl_name(var), &res)
+                ? hiter_get_ptr(&res)
+                : NULL;
 }
 
 extern ssa_block* ssaizer_get_label_block(ssaizer* self, const tree_decl* label)
@@ -142,74 +158,16 @@ extern ssa_block* ssaizer_get_break_dest(ssaizer* self)
         return dseq_last_ptr(&self->break_stack);
 }
 
-static bool ssaizer_maybe_insert_return(ssaizer* self)
-{
-        if (!self->block)
-        {
-                self->block = ssaizer_new_block(self);
-                ssaizer_enter_block(self, self->block);
-        }
-
-        if (ssa_get_block_exit(self->block))
-                return true;
-
-        tree_type* restype = tree_get_function_type_result(
-                tree_get_decl_type(ssa_get_function_entity(self->function)));
-
-        ssa_value* val = NULL;
-        if (!tree_type_is_void(restype))
-        {
-                ssa_value* alloca = ssa_build_alloca(&self->builder, restype);
-                val = ssa_build_load(&self->builder, alloca);
-        }
-
-        ssa_build_return(&self->builder, val);
-        ssaizer_finish_current_block(self);
-        return true;
-}
-
-static void ssaizer_function_cleanup(ssaizer* self)
-{
-        htab_clear(&self->labels);
-}
-
-static ssa_function* ssaize_function(ssaizer* self, tree_decl* func)
-{
-        tree_stmt* body = tree_get_function_body(func);
-        if (!body)
-                return NULL;
-
-        self->function = ssa_new_function(self->context, func);
-        ssa_builder_set_uid(&self->builder, 0);
-
-        if (!ssaize_stmt(self, body))
-                goto error;
-        if (!ssaizer_maybe_insert_return(self))
-                goto error;
-
-        ssaizer_function_cleanup(self);
-        ssa_fix_function_content_uids(self->function);
-        return self->function;
-
-error:
-        ssaizer_function_cleanup(self);
-        return NULL;
-}
-
 extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module)
 {
-        ssa_module* m = ssa_new_module(self->context);
+        self->module = ssa_new_module(self->context);
         const tree_decl_scope* globals = tree_get_module_cglobals(module);
-        TREE_FOREACH_DECL_IN_SCOPE(globals, func)
+        TREE_FOREACH_DECL_IN_SCOPE(globals, decl)
         {
-                if (!tree_decl_is(func, TDK_FUNCTION))
+                if (!tree_decl_is(decl, TDK_FUNCTION))
                         continue;
-
-                ssa_function* f = ssaize_function(self, func);
-                if (!f)
-                        continue;
-
-                ssa_module_add_func_def(m, f);
+                if (!ssaize_function_decl(self, decl))
+                        return NULL;
         }
-        return m;
+        return self->module;
 }

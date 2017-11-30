@@ -38,3 +38,24 @@ extern ssa_value* ssa_new_constant(ssa_context* context, tree_type* t, avalue va
         ssa_init_constant(c, t, val);
         return c;
 }
+
+extern ssa_value* ssa_new_decl(ssa_context* context, tree_type* type, tree_decl* entity)
+{
+        ssa_value* g = ssa_allocate(context, sizeof(ssa_decl));
+        if (!g)
+                return NULL;
+
+        ssa_init_typed_value(g, SVK_DECL, 0, type);
+        ssa_set_decl_entity(g, entity);
+        return g;
+}
+
+extern ssa_value* ssa_new_param(ssa_context* context, ssa_id id, tree_type* type)
+{
+        ssa_value* p = ssa_allocate(context, sizeof(ssa_param));
+        if (!p)
+                return NULL;
+
+        ssa_init_typed_value(p, SVK_PARAM, id, type);
+        return p;
+}

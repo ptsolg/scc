@@ -1,0 +1,20 @@
+; Definition for foo
+@2:
+    $3 = alloca 4
+    store $0, $3
+    $4 = alloca 4
+    store $1, $4
+    ret
+
+; Definition for test
+@0:
+    $1 = alloca 4
+    $2 = cast %foo
+    $3 = load $1
+    $4 = load $1
+    $5 = add $3, $4
+    $6 = load $1
+    $7 = load $1
+    $8 = mul $6, $7
+    call $2 ($5, $8)
+    ret

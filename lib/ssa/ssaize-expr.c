@@ -438,7 +438,26 @@ extern ssa_value* ssaize_unary_expr(ssaizer* self, const tree_expr* expr)
 
 extern ssa_value* ssaize_call_expr(ssaizer* self, const tree_expr* expr)
 {
-        return NULL;
+        ssa_value* func = ssaize_expr(self, tree_get_call_lhs(expr));
+        if (!func)
+                return NULL;
+
+        dseq args;
+        dseq_init_ex_ptr(&args, ssa_get_alloc(self->context));
+
+        TREE_FOREACH_CALL_ARG(expr, it)
+        {
+                ssa_value* arg = ssaize_expr(self, *it);
+                if (!arg)
+                {
+                        dseq_dispose(&args);
+                        return NULL;
+                }
+
+                dseq_append_ptr(&args, arg);
+        }
+
+        return ssa_build_call(&self->builder, func, &args);
 }
 
 extern ssa_value* ssaize_subscript_expr(ssaizer* self, const tree_expr* expr)
@@ -534,15 +553,33 @@ extern ssa_value* ssaize_string_literal(ssaizer* self, const tree_expr* expr)
                 tree_get_expr_type(expr), (double)tree_get_floating_lliteral(expr));
 }
 
+static ssa_value* ssaizer_get_global_decl_ptr(ssaizer* self, tree_decl* decl)
+{
+        ssa_value* global = ssaizer_get_global_decl(self, decl);
+        if (!global)
+        {
+                tree_type* type = tree_get_decl_type(decl);
+                if (!tree_type_is(type, TTK_FUNCTION) && !tree_type_is(type, TTK_ARRAY))
+                        type = tree_new_pointer_type(ssa_get_tree(self->context), type);
+                global = ssa_new_decl(self->context, type, decl);
+                ssaizer_set_global_decl(self, decl, global);
+        }
+        return global;
+}
+
 extern ssa_value* ssaize_decl_expr(ssaizer* self, const tree_expr* expr)
 {
-        tree_decl* var = tree_get_decl_expr_entity(expr);
-        if (!var)
+        tree_decl* decl = tree_get_decl_expr_entity(expr);
+        if (!decl)
+                return NULL;
+        
+        ssa_value* def = tree_decl_is_global(decl)
+                ? ssaizer_get_global_decl_ptr(self, decl)
+                : ssaizer_get_def(self, decl);
+        if (!def)
                 return NULL;
 
-        ssa_value* def = ssaizer_get_def(self, var);
-        S_ASSERT(def);
-        return tree_expr_is_lvalue(expr)
+        return tree_expr_is_lvalue(expr) || tree_decl_is(decl, TDK_FUNCTION)
                 ? def
                 : ssaize_dereference(self, def);
 }

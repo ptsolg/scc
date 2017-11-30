@@ -24,6 +24,8 @@ typedef enum
         SVK_VARIABLE,
         SVK_CONSTANT,
         SVK_LABEL,
+        SVK_DECL,
+        SVK_PARAM,
 } ssa_value_kind;
 
 struct _ssa_value_base
@@ -89,6 +91,28 @@ static inline avalue ssa_get_constant_value(const ssa_value* self);
 
 static inline void ssa_set_constant_value(ssa_value* self, avalue val);
 
+typedef struct _ssa_decl
+{
+        struct _ssa_typed_value_base _base;
+        tree_decl* _entity;
+} ssa_decl;
+
+extern ssa_value* ssa_new_decl(ssa_context* context, tree_type* type, tree_decl* entity);
+
+static inline ssa_decl* _ssa_get_decl(ssa_value* self);
+static inline const ssa_decl* _ssa_get_cdecl(const ssa_value* self);
+
+static inline tree_decl* ssa_get_decl_entity(const ssa_value* self);
+
+static inline void ssa_set_decl_entity(ssa_value* self, tree_decl* entity);
+
+typedef struct _ssa_param
+{
+        struct _ssa_typed_value_base _base;
+} ssa_param;
+
+extern ssa_value* ssa_new_param(ssa_context* context, ssa_id id, tree_type* type);
+
 typedef struct _ssa_value
 {
         union
@@ -96,6 +120,7 @@ typedef struct _ssa_value
                 ssa_label _label;
                 ssa_variable _var;
                 ssa_constant _const;
+                ssa_decl _decl;
         };
 } ssa_value;
 
@@ -131,8 +156,11 @@ static inline void ssa_set_value_id(ssa_value* self, ssa_id id)
         _ssa_get_value_base(self)->_id = id;
 }
 
-#define SSA_ASSERT_TYPED_VALUE(P)\
-        S_ASSERT((P) && (ssa_get_value_kind(P) == SVK_CONSTANT || ssa_get_value_kind(P) == SVK_VARIABLE))
+#define SSA_ASSERT_TYPED_VALUE(P) \
+        S_ASSERT((P) && (ssa_get_value_kind(P) == SVK_CONSTANT \
+                      || ssa_get_value_kind(P) == SVK_VARIABLE \
+                      || ssa_get_value_kind(P) == SVK_DECL \
+                      || ssa_get_value_kind(P) == SVK_PARAM))
 
 static inline struct _ssa_typed_value_base* _ssa_get_typed_value_base(ssa_value* self)
 {
@@ -157,16 +185,16 @@ static inline void ssa_set_value_type(ssa_value* self, tree_type* type)
         _ssa_get_typed_value_base(self)->_type = type;
 }
 
-#define SSA_ASSERT_CONSTANT(P) S_ASSERT((P) && ssa_get_value_kind(P) == SVK_CONSTANT)
+#define SSA_ASSERT_VALUE(P, K) S_ASSERT((P) && ssa_get_value_kind(P) == (K))
 
 static inline ssa_constant* _ssa_get_constant(ssa_value* self)
 {
-        SSA_ASSERT_CONSTANT(self);
+        SSA_ASSERT_VALUE(self, SVK_CONSTANT);
         return (ssa_constant*)self;
 }
 static inline const ssa_constant* _ssa_get_cconstant(const ssa_value* self)
 {
-        SSA_ASSERT_CONSTANT(self);
+        SSA_ASSERT_VALUE(self, SVK_CONSTANT);
         return (const ssa_constant*)self;
 }
 
@@ -178,6 +206,28 @@ static inline avalue ssa_get_constant_value(const ssa_value* self)
 static inline void ssa_set_constant_value(ssa_value* self, avalue val)
 {
         _ssa_get_constant(self)->_val = val;
+}
+
+static inline ssa_decl* _ssa_get_decl(ssa_value* self)
+{
+        SSA_ASSERT_VALUE(self, SVK_DECL);
+        return (ssa_decl*)self;
+}
+
+static inline const ssa_decl* _ssa_get_cdecl(const ssa_value* self)
+{
+        SSA_ASSERT_VALUE(self, SVK_DECL);
+        return (const ssa_decl*)self;
+}
+
+static inline tree_decl* ssa_get_decl_entity(const ssa_value* self)
+{
+        return _ssa_get_cdecl(self)->_entity;
+}
+
+static inline void ssa_set_decl_entity(ssa_value* self, tree_decl* entity)
+{
+        _ssa_get_decl(self)->_entity = entity;
 }
 
 #ifdef __cplusplus
