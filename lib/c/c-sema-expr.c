@@ -316,7 +316,7 @@ extern tree_expr* csema_new_call_expr(
         if (!csema_require_function_pointer_expr_type(self, t, tree_get_expr_loc(lhs)))
                 return NULL;
 
-        t = tree_get_pointer_target(tree_desugar_ctype(t));
+        t = tree_desugar_type(tree_get_pointer_target(tree_desugar_ctype(t)));
         ssize nparams = tree_get_function_type_nparams(t);
         ssize nargs = dseq_size(args);
         if (nargs < nparams)
