@@ -32,8 +32,6 @@ static inline const struct _ctoken_base* _ctoken_cget(const ctoken* self);
 static inline ctoken_kind ctoken_get_kind(const ctoken* self);
 static inline bool ctoken_is(const ctoken* self, ctoken_kind k);
 static inline tree_location ctoken_get_loc(const ctoken* self);
-static inline list_node* ctoken_get_node(ctoken* self);
-static inline const list_node* ctoken_get_cnode(const ctoken* self);
 
 static inline void ctoken_set_kind(ctoken* self, ctoken_kind k);
 static inline void ctoken_set_loc(ctoken* self, tree_location l);
