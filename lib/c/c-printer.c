@@ -4,6 +4,7 @@
 #include "scc/c/c-reswords.h"
 #include "scc/c/c-tree.h"
 #include "scc/c/c-source.h"
+#include "scc/c/c-limits.h"
 #include "scc/tree/tree-eval.h"
 #include "scc/scl/char-info.h"
 #include <stdarg.h>
@@ -145,6 +146,15 @@ extern void ctoken_print_info_init(ctoken_print_info* self)
         self->max_line = 0;
 }
 
+static void _cprint_string_literal(cprinter* self, tree_id id)
+{
+        strentry entry;
+        tree_get_id_strentry(self->context, id, &entry);
+        char unescaped[CMAX_LINE_LENGTH + 1];
+        cget_unescaped_string(unescaped, entry.data, entry.len);
+        cprintf(self, "\"%s\"", unescaped);
+}
+
 static void cprint_token_value(cprinter* self, const ctoken* token)
 {
         ctoken_kind k = ctoken_get_kind(token);
@@ -165,12 +175,7 @@ static void cprint_token_value(cprinter* self, const ctoken* token)
         else if (k == CTK_CONST_DOUBLE)
                 cprintf(self, "%f", (double)ctoken_get_double(token));
         else if (k == CTK_CONST_STRING)
-        {
-                cprintc(self, '"');
-                cprint_id(self, ctoken_get_string(token));
-                cprintc(self, '"');
-
-        }
+                _cprint_string_literal(self, ctoken_get_string(token));
         else if (k == CTK_CONST_CHAR)
         {
                 int c = ctoken_get_char(token);
@@ -405,9 +410,7 @@ static void cprint_char_literal(cprinter* self, const tree_expr* expr)
 
 static void cprint_string_literal(cprinter* self, const tree_expr* expr)
 {
-        cprints(self, "\"");
-        cprint_id(self, tree_get_string_literal(expr));
-        cprints(self, "\"");
+        _cprint_string_literal(self, tree_get_string_literal(expr));
 }
 
 static void cprint_member_expr(cprinter* self, const tree_expr* expr)

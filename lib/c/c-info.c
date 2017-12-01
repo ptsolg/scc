@@ -1,5 +1,37 @@
 #include "scc/c/c-info.h"
 #include "scc/c/c-reswords.h"
+#include "scc/scl/char-info.h"
+
+extern void cget_unescaped_string(char* buffer, const char* string, ssize len)
+{
+        for (ssize i = 0; i < len; i++)
+        {
+                int c = string[i];
+                if (char_is_escape(c))
+                {
+                        *buffer++ = '\\';
+                        *buffer++ = escape_to_char(c);
+                }
+                else
+                        *buffer++ = c;
+        }
+        *buffer++ = '\0';
+}
+
+extern ssize cget_escaped_string(char* buffer, const char* string, ssize len)
+{
+        char* begin = buffer;
+        for (ssize i = 0; i < len; i++)
+        {
+                int c = string[i];
+                if (c == '\\')
+                        *buffer++ = char_to_escape(string[++i]);
+                else
+                        *buffer++ = c;
+        }
+        *buffer++ = '\0';
+        return buffer - begin;
+}
 
 #define ASSERT_ENUM_RANGE(V, MAX) S_ASSERT((V) > -1 && (V) < (MAX))
 

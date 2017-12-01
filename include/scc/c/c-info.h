@@ -14,6 +14,10 @@ extern "C" {
 #include "scc/tree/tree-decl.h"
 #include "c-token.h"
 
+extern void cget_unescaped_string(char* buffer, const char* string, ssize len);
+// returns size of the buffer (including trailing zero)
+extern ssize cget_escaped_string(char* buffer, const char* string, ssize len);
+
 typedef struct _cresword_info cresword_info;
 
 extern const char* cget_builtin_type_string(tree_builtin_type_kind k);

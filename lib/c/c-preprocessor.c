@@ -2,6 +2,7 @@
 #include "scc/c/c-token.h"
 #include "scc/c/c-error.h"
 #include "scc/c/c-tree.h"
+#include "scc/c/c-info.h"
 #include "scc/scl/char-info.h"
 
 extern void creswords_init(creswords* self, ccontext* context)
@@ -224,7 +225,8 @@ static bool cpplex_quoted_seq(cpplexer* self, csequence* seq, int quote)
                 int c = cpplexer_readc(self);
                 if (char_is_newline(c) || cpplexer_at_eof(self))
                 {
-                        cerror(self->error_manager, CES_ERROR, seq->loc, "missing closing quote");
+                        cerror(self->error_manager,
+                                CES_ERROR, seq->loc, "missing closing quote");
                         return false;
                 }
                 else if (c == '\\')
@@ -773,6 +775,50 @@ static inline void cpproc_unget_macro_id(cpproc* self, ctoken* t)
         dseq_append_ptr(&self->expansion, t);
 }
 
+static bool cpproc_collect_adjacent_strings(cpproc* self, dseq* result)
+{
+        while (1)
+        {
+                ctoken* t = cpproc_lex_macro_id(self);
+                if (!t)
+                        return false;
+
+                if (!ctoken_is(t, CTK_CONST_STRING))
+                {
+                        cpproc_unget_macro_id(self, t);
+                        return true;
+                }
+
+                dseq_append_ptr(result, t);
+        }
+}
+
+static ctoken* cpproc_concat_and_escape_strings(cpproc* self, dseq* strings)
+{
+        S_ASSERT(dseq_size(strings));
+
+        dseq concat;
+        dseq_init_ex_u8(&concat, cget_alloc(self->context));
+        for (ssize i = 0; i < dseq_size(strings); i++)
+        {
+                ctoken* t = dseq_get_ptr(strings, i);
+                const char* string = tree_get_id_cstr(
+                        cget_tree(self->context), ctoken_get_string(t));
+
+                char escaped[CMAX_LINE_LENGTH + 1];
+                ssize size = cget_escaped_string(escaped, string, strlen(string));
+                for (ssize j = 0; j < size - 1; j++)
+                        dseq_append_i8(&concat, escaped[j]);
+        }
+
+        tree_id concat_ref = tree_get_id(
+                cget_tree(self->context), (char*)dseq_begin_u8(&concat), dseq_size(&concat));
+        tree_location loc = ctoken_get_loc(dseq_get_ptr(strings, 0));
+        dseq_dispose(&concat);
+
+        return ctoken_new_string(self->context, loc, concat_ref);
+}
+
 static ctoken* cpproc_lex_string(cpproc* self)
 {
         ctoken* t = cpproc_lex_macro_id(self);
@@ -782,35 +828,16 @@ static ctoken* cpproc_lex_string(cpproc* self)
         if (!ctoken_is(t, CTK_CONST_STRING))
                 return t;
 
-        dseq buf;
-        dseq_init_ex_ptr(&buf, cget_alloc(self->context));
-        while (ctoken_is(t, CTK_CONST_STRING))
-        {
-                dseq_append_ptr(&buf, t);
-                if (!(t = cpproc_lex_macro_id(self)))
-                        return NULL;
-                if (!ctoken_is(t, CTK_CONST_STRING))
-                {
-                        cpproc_unget_macro_id(self, t);
-                        break;
-                }
-        }
+        dseq adjacent_strings;
+        dseq_init_ex_ptr(&adjacent_strings, cget_alloc(self->context));
+        dseq_append_ptr(&adjacent_strings, t);
 
-        //todo:
-        char concat[4096];
-        *concat = '\0';
-        for (ssize i = 0; i < dseq_size(&buf); i++)
-        {
-                tree_id ref = ctoken_get_string(dseq_get_ptr(&buf, i));
-                const char* s = tree_get_id_cstr(cget_tree(self->context), ref);
-                strcat(concat, s);
-        }
+        ctoken* result = cpproc_collect_adjacent_strings(self, &adjacent_strings)
+                ? cpproc_concat_and_escape_strings(self, &adjacent_strings)
+                : NULL;
 
-        tree_id ref = tree_get_id(cget_tree(self->context), concat, strlen(concat));
-        t = dseq_first_ptr(&buf);
-        ctoken_set_string(t, ref);
-        dseq_dispose(&buf);
-        return t;
+        dseq_dispose(&adjacent_strings);
+        return result;
 }
 
 extern ctoken* cpreprocess(cpproc* self)
