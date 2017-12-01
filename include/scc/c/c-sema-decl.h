@@ -55,7 +55,7 @@ extern tree_type* csema_new_type_name(
         csema* self, cdeclarator* declarator, tree_type* typespec);
 
 extern tree_decl* csema_new_enumerator(
-        csema* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_expr* value);
+        csema* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_expr* init);
 
 extern tree_decl* csema_define_enumerator(
         csema* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_expr* value);

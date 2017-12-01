@@ -60,7 +60,7 @@ extern tree_expr* tree_new_unop(
         return e;
 }
 
-extern tree_expr* tree_new_EXPLIcit_cast_expr(
+extern tree_expr* tree_new_explicit_cast_expr(
         tree_context* context,
         tree_value_kind value_kind,
         tree_location loc,

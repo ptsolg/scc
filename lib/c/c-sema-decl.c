@@ -301,54 +301,54 @@ extern tree_type* csema_new_type_name(
         return csema_set_declarator_type(self, declarator, typespec);
 }
 
-static void csema_compute_enumerator_value(
-        csema* self, tree_decl* enum_, tree_decl* enumerator)
+static bool csema_compute_enumerator_value(
+        csema* self,
+        tree_decl* enum_,
+        tree_id id,
+        tree_location id_loc,
+        tree_expr* init,
+        int_value* result)
 {
-        int v = 0;
-        tree_decl_scope* s = tree_get_enum_scope(enum_);
+        ssize i32_nbits = 8 * tree_get_builtin_type_size(self->target, TBTK_INT32);
+        if (init)
+        {
+                tree_eval_info i;
+                tree_init_eval_info(&i, self->target);
+                if (!tree_eval_as_integer(&i, init, result))
+                {
+                        cerror(self->error_manager, CES_ERROR, id_loc,
+                                "enumerator value for '%s' is not an integer constant",
+                                csema_get_id_cstr(self, id));
+                        return false;
+                }
 
+                int_resize(result, i32_nbits);
+                return true;
+        }
+
+        int value = 0;
+        tree_decl_scope* s = tree_get_enum_scope(enum_);
         if (!tree_decl_scope_is_empty(s))
         {
                 tree_decl* last = tree_get_prev_decl(tree_get_decl_scope_decls_end(s));
-                int_value last_val;
-                tree_eval_info i;
-                bool r = tree_eval_as_integer(&i, tree_get_enumerator_value(last), &last_val);
-                S_ASSERT(r);
-                v = int_get_i32(&last_val) + 1;
+                value = int_get_i32(tree_get_enumerator_cvalue(last)) + 1;
         }
-
-        tree_expr* val = csema_new_integer_literal(self,
-                tree_get_decl_loc_begin(enumerator), v, true, false);
-        tree_set_enumerator_value(enumerator, tree_new_impl_init_expr(self->context, val));
+        int_init(result, i32_nbits, true, value);
+        return true;
 }
 
 extern tree_decl* csema_new_enumerator(
-        csema* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_expr* value)
+        csema* self, tree_decl* enum_, tree_id id, tree_id id_loc, tree_expr* init)
 {
+        int_value value;
+        if (!csema_compute_enumerator_value(self, enum_, id, id_loc, init, &value))
+                return NULL;
+
         tree_type* t = tree_new_qual_type(self->context, TTQ_UNQUALIFIED,
                 tree_new_decl_type(self->context, enum_, true));
-        tree_decl* e = tree_new_enumerator_decl(
-                self->context, self->locals, tree_init_xloc(id_loc, id_loc), id, t, value);
 
-        if (!value)
-        {
-                csema_compute_enumerator_value(self, enum_, e);
-                return e;
-        }
-
-        const char* name = csema_get_id_cstr(self, tree_get_decl_name(e));
-
-        int_value val;
-        tree_eval_info i;
-        tree_init_eval_info(&i, self->target);
-        if (!tree_eval_as_integer(&i, value, &val))
-        {
-                cerror(self->error_manager, CES_ERROR, id_loc,
-                        "enumerator value for '%s' is not an integer constant", name);
-                return NULL;
-        }
-
-        return e;
+        return tree_new_enumerator_decl(self->context, self->locals,
+                tree_init_xloc(id_loc, id_loc), id, t, init, &value);
 }
 
 extern tree_decl* csema_define_enumerator(

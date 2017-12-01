@@ -905,7 +905,7 @@ static void cprint_enumerator(cprinter* self, const tree_decl* e, int opts)
 {
         cprint_decl_name(self, e);
 
-        const tree_expr* value = tree_get_enumerator_value(e);
+        const tree_expr* value = tree_get_enumerator_expr(e);
         if (value && !tree_expr_is(value, TEK_IMPL_INIT) && !(opts & CPRINT_DECL_NAME))
         {
                 cprint_space(self);

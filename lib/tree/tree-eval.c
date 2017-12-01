@@ -347,7 +347,11 @@ static bool tree_eval_decl(tree_eval_info* info, const tree_expr* expr, avalue* 
         if (!tree_decl_is(d, TDK_ENUMERATOR))
                 return false;
 
-        return tree_eval_as_arithmetic(info, tree_get_enumerator_value(d), result);
+        avalue_init_int(result,
+                8 * tree_get_builtin_type_size(info->_target, TBTK_INT32),
+                true,
+                int_get_i32(tree_get_enumerator_cvalue(d)));
+        return true;
 }
 
 static bool tree_eval_impl_init(tree_eval_info* info, const tree_expr* expr, avalue* result)

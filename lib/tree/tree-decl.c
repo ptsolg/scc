@@ -323,14 +323,16 @@ extern tree_decl* tree_new_enumerator_decl(
         tree_xlocation loc,
         tree_id name,
         tree_type* type,
-        tree_expr* value)
+        tree_expr* expr,
+        const int_value* val)
 {
         tree_decl* d = tree_new_typed_decl(context,
                 TDK_ENUMERATOR, scope, loc, name, type, sizeof(struct _tree_enumerator_decl));
         if (!d)
                 return NULL;
 
-        tree_set_enumerator_value(d, value);
+        tree_set_enumerator_expr(d, expr);
+        tree_set_enumerator_value(d, val);
         return d;
 }
 
