@@ -123,23 +123,60 @@ static inline void tree_set_function_type_vararg(tree_type* self, bool vararg);
         for (tree_type** ITNAME = tree_get_function_type_params_begin(PFUNC); \
                 ITNAME != tree_get_function_type_params_end(PFUNC); ITNAME++)
 
+typedef enum _tree_array_kind
+{
+        TAK_INCOMPLETE,
+        TAK_CONSTANT,
+} tree_array_kind;
+
 struct _tree_array_type
 {
         struct _tree_chain_type _base;
-        tree_expr* _size;
+        tree_array_kind _kind;
 };
 
+extern tree_type* tree_new_array_type_ex(
+        tree_context* context, tree_array_kind kind, tree_type* eltype, ssize size);
+
 extern tree_type* tree_new_array_type(
-        tree_context* context, tree_type* eltype, tree_expr* size);
+        tree_context* context, tree_array_kind kind, tree_type* eltype);
+
+extern tree_type* tree_new_incomplete_array_type(tree_context* context, tree_type* eltype);
 
 static inline struct _tree_array_type* _tree_get_array_type(tree_type* self);
 static inline const struct _tree_array_type* _tree_get_array_ctype(const tree_type* self);
 
 static inline tree_type* tree_get_array_eltype(const tree_type* self);
-static inline tree_expr* tree_get_array_size(const tree_type* self);
+static inline tree_array_kind tree_get_array_kind(const tree_type* self);
+static inline bool tree_array_is(const tree_type* self, tree_array_kind kind);
 
 static inline void tree_set_array_eltype(tree_type* self, tree_type* eltype);
-static inline void tree_set_array_size(tree_type* self, tree_expr* size);
+static inline void tree_set_array_kind(tree_type* self, tree_array_kind kind);
+
+struct _tree_constant_array_type
+{
+        struct _tree_array_type _base;
+        tree_expr* _expr;
+        int_value _size;
+};
+
+extern tree_type* tree_new_constant_array_type(
+        tree_context* context,
+        tree_type* eltype,
+        tree_expr* size_expr,
+        const int_value* size_value);
+
+static inline struct _tree_constant_array_type*
+_tree_get_constant_array_type(tree_type* self);
+
+static inline const struct _tree_constant_array_type*
+_tree_get_constant_array_ctype(const tree_type* self);
+
+static inline tree_expr* tree_get_constant_array_size_expr(const tree_type* self);
+static inline const int_value* tree_get_constant_array_size_cvalue(const tree_type* self);
+
+static inline void tree_set_constant_array_size_expr(tree_type* self, tree_expr* size);
+static inline void tree_set_constant_array_size_value(tree_type* self, const int_value* size);
 
 struct _tree_decl_type
 {
@@ -404,34 +441,78 @@ static inline void tree_set_function_type_vararg(tree_type* self, bool vararg)
 
 static inline struct _tree_array_type* _tree_get_array_type(tree_type* self)
 {
-        TREE_ASSERT_TYPE(self, TTK_ARRAY);
+        S_ASSERT(tree_type_is(self, TTK_ARRAY));
         return (struct _tree_array_type*)tree_get_unqualified_type(self);
 }
 
 static inline const struct _tree_array_type* _tree_get_array_ctype(const tree_type* self)
 {
-        TREE_ASSERT_TYPE(self, TTK_ARRAY);
+        S_ASSERT(tree_type_is(self, TTK_ARRAY));
         return (const struct _tree_array_type*)tree_get_unqualified_ctype(self);
 }
 
 static inline tree_type* tree_get_array_eltype(const tree_type* self)
 {
+        S_ASSERT(tree_type_is(self, TTK_ARRAY));
         return tree_get_chain_type_next(self);
 }
 
-static inline tree_expr* tree_get_array_size(const tree_type* self)
+static inline tree_array_kind tree_get_array_kind(const tree_type* self)
 {
-        return _tree_get_array_ctype(self)->_size;
+        return _tree_get_array_ctype(self)->_kind;
+}
+
+static inline bool tree_array_is(const tree_type* self, tree_array_kind kind)
+{
+        return tree_get_array_kind(self) == kind;
 }
 
 static inline void tree_set_array_eltype(tree_type* self, tree_type* eltype)
 {
+        S_ASSERT(tree_type_is(self, TTK_ARRAY));
         tree_set_chain_type_next(self, eltype);
 }
 
-static inline void tree_set_array_size(tree_type* self, tree_expr* size)
+static inline void tree_set_array_kind(tree_type* self, tree_array_kind kind)
 {
-        _tree_get_array_type(self)->_size = size;
+        _tree_get_array_type(self)->_kind = kind;
+}
+
+#define TREE_ASSERT_ARRAY(P, K) \
+        S_ASSERT(tree_type_is((P), TTK_ARRAY) && tree_array_is((P), (K)))
+
+static inline struct _tree_constant_array_type*
+_tree_get_constant_array_type(tree_type* self)
+{
+        TREE_ASSERT_ARRAY(self, TAK_CONSTANT);
+        return (struct _tree_constant_array_type*)tree_get_unqualified_type(self);
+}
+
+static inline const struct _tree_constant_array_type*
+_tree_get_constant_array_ctype(const tree_type* self)
+{
+        TREE_ASSERT_ARRAY(self, TAK_CONSTANT);
+        return (const struct _tree_constant_array_type*)tree_get_unqualified_ctype(self);
+}
+
+static inline tree_expr* tree_get_constant_array_size_expr(const tree_type* self)
+{
+        return _tree_get_constant_array_ctype(self)->_expr;
+}
+
+static inline const int_value* tree_get_constant_array_size_cvalue(const tree_type* self)
+{
+        return &_tree_get_constant_array_ctype(self)->_size;
+}
+
+static inline void tree_set_constant_array_size_expr(tree_type* self, tree_expr* size)
+{
+        _tree_get_constant_array_type(self)->_expr = size;
+}
+
+static inline void tree_set_constant_array_size_value(tree_type* self, const int_value* size)
+{
+        _tree_get_constant_array_type(self)->_size = *size;
 }
 
 static inline struct _tree_decl_type* _tree_get_decl_type(tree_type* self)

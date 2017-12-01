@@ -119,23 +119,9 @@ extern ssize tree_get_sizeof(const tree_target_info* info, const tree_type* t)
                 else if (dk == TDK_RECORD)
                         return tree_get_sizeof_record(info, entity);
         }
-        else if (tree_type_is(t, TTK_ARRAY))
-        {
-                ssize size = 0;
-                tree_expr* size_expr = tree_get_array_size(t);
-                if (size_expr)
-                {
-                        int_value result;
-                        tree_eval_info eval_info;
-                        tree_init_eval_info(&eval_info, info);
-                        if (!tree_eval_as_integer(&eval_info, size_expr, &result))
-                                return 0;
-
-                        size = int_get_u32(&result);
-                }
-                
-                return size * tree_get_sizeof(info, tree_get_array_eltype(t));
-        }
+        else if (tree_type_is(t, TTK_ARRAY) && tree_array_is(t, TAK_CONSTANT))
+                return int_get_u32(tree_get_constant_array_size_cvalue(t))
+                        * tree_get_sizeof(info, tree_get_array_eltype(t));
 
         // probably function type
         return 0;

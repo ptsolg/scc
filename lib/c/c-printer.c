@@ -715,7 +715,8 @@ static void cprint_suffix_endings(cprinter* self, ctype_name_info* info, int opt
                 else if (k == TTK_ARRAY)
                 {
                         cprint_lsbracket(self);
-                        cprint_expr(self, tree_get_array_size(t));
+                        if (tree_array_is(t, TAK_CONSTANT))
+                                cprint_expr(self, tree_get_constant_array_size_expr(t));
                         cprint_rsbracket(self);
                 }
                 else if (k == TTK_PAREN)

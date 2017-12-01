@@ -67,30 +67,12 @@ extern tree_type* csema_new_function_type(csema* self, tree_type* restype)
 extern tree_type* csema_set_function_restype(
         csema* self, tree_type* func, tree_type* restype)
 {
-        //if (!restype)
-        //        return func;
-
-        //tree_type* dt = tree_desugar_type(restype);
-        //if (tree_type_is(dt, TTK_ARRAY))
-        //{
-        //        cerror(self->error_manager, CES_ERROR, loc,
-        //                "function returning array is not allowed");
-        //        return NULL;
-        //}
-        //else if (tree_type_is(dt, TTK_FUNCTION))
-        //{
-        //        cerror(self->error_manager, CES_ERROR, loc,
-        //                "function returning function is not allowed");
-        //        return NULL;
-        //}
-
         tree_set_function_type_result(func, restype);
         return func;
 }
 
 extern tree_type* csema_add_function_type_param(csema* self, tree_type* func, cparam* param)
 {
-        // todo
         tree_type* param_type = param->declarator.type.head;
         tree_add_function_type_param(func, param_type);
         return func;
@@ -113,50 +95,26 @@ extern tree_type* csema_new_array_type(
         tree_type* eltype,
         tree_expr* size)
 {
-        tree_type* arr = tree_new_qual_type(self->context, quals,
-                tree_new_array_type(self->context, NULL, size));
-        //if (!size)
-        //        return arr;
+        tree_type* array = NULL;
+        if (size)
+        {
+                int_value size_value;
+                tree_eval_info info;
+                tree_init_eval_info(&info, self->target);
+                // we'll check size-value later
+                tree_eval_as_integer(&info, size, &size_value);
+                array = tree_new_constant_array_type(
+                        self->context, NULL, size, &size_value);
+        }
+        else
+                array = tree_new_incomplete_array_type(self->context, NULL);
 
-        //if (!tree_type_is_integer(tree_get_expr_type(size)))
-        //{
-        //        cerror(self->error_manager, CES_ERROR, loc,
-        //                "size of array has non-integer type");
-        //        return NULL;
-        //}
-
-        //tree_eval_info i;
-        //int_value v;
-        //tree_init_eval_info(&i, self->target);
-        //if (!tree_eval_as_integer(&i, size, &v))
-        //        return NULL;
-
-        //if (int_is_zero(&v) || (int_is_signed(&v) && int_get_i64(&v) < 0))
-        //{
-        //        cerror(self->error_manager, CES_ERROR, loc,
-        //                "size of array must be greater than zero");
-        //        return NULL;
-        //}
-
-        return csema_set_array_eltype(self, arr, eltype);
+        return csema_set_array_eltype(self, array, eltype);
 }
 
 extern tree_type* csema_set_array_eltype(
         csema* self, tree_type* array, tree_type* eltype)
 {
-        //if (!eltype)
-        //        return array;
-
-        //if (tree_type_is(tree_desugar_type(eltype), TTK_FUNCTION))
-        //{
-        //        cerror(self->error_manager, CES_ERROR, loc,
-        //                "array of functions is not allowed");
-        //        return NULL;
-        //}
-
-        //if (!csema_require_complete_type(self, loc, eltype))
-        //        return NULL;
-
         tree_set_array_eltype(array, eltype);
         return array;
 }
@@ -188,24 +146,22 @@ extern bool csema_check_array_type(const csema* self, const tree_type* t, tree_l
         if (!csema_require_complete_type(self, l, el))
                 return false;
 
-        tree_expr* size = tree_get_array_size(t);
-        if (!size)
+        tree_expr* size_expr = tree_array_is(t, TAK_CONSTANT)
+                ? tree_get_constant_array_size_expr(t)
+                : NULL;
+        if (!size_expr)
                 return true;
 
-        if (!tree_type_is_integer(tree_get_expr_type(size)))
+        if (!tree_type_is_integer(tree_get_expr_type(size_expr)))
         {
                 cerror(self->error_manager, CES_ERROR, l,
                         "size of array has non-integer type");
                 return false;
         }
 
-        tree_eval_info i;
-        int_value v;
-        tree_init_eval_info(&i, self->target);
-        if (!tree_eval_as_integer(&i, size, &v))
-                return false;
-
-        if (int_is_zero(&v) || (int_is_signed(&v) && int_get_i64(&v) < 0))
+        const int_value* size_value = tree_get_constant_array_size_cvalue(t);
+        if (int_is_zero(size_value)
+                || (int_is_signed(size_value) && int_get_i64(size_value) < 0))
         {
                 cerror(self->error_manager, CES_ERROR, l,
                         "size of array must be greater than zero");

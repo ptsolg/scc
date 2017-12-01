@@ -58,15 +58,42 @@ extern void tree_add_function_type_param(tree_type* self, tree_type* param)
         dseq_append_ptr(&_tree_get_function_type(self)->_args, param);
 }
 
-extern tree_type* tree_new_array_type(
-        tree_context* context, tree_type* eltype, tree_expr* size)
+extern tree_type* tree_new_array_type_ex(
+        tree_context* context, tree_array_kind kind, tree_type* eltype, ssize size)
 {
-        tree_type* t = tree_new_chain_type(context, TTK_ARRAY, eltype,
-                sizeof(struct _tree_array_type));
+        tree_type* t = tree_new_chain_type(context, TTK_ARRAY, eltype, size);
         if (!t)
                 return NULL;
 
-        tree_set_array_size(t, size);
+        tree_set_array_eltype(t, eltype);
+        tree_set_array_kind(t, kind);
+        return t;
+}
+
+extern tree_type* tree_new_array_type(
+        tree_context* context, tree_array_kind kind, tree_type* eltype)
+{
+        return tree_new_array_type_ex(context, kind, eltype, sizeof(struct _tree_array_type));
+}
+
+extern tree_type* tree_new_incomplete_array_type(tree_context* context, tree_type* eltype)
+{
+        return tree_new_array_type(context, TAK_INCOMPLETE, eltype);
+}
+
+extern tree_type* tree_new_constant_array_type(
+        tree_context* context,
+        tree_type* eltype,
+        tree_expr* size_expr,
+        const int_value* size_value)
+{
+        tree_type* t = tree_new_array_type_ex(context, TAK_CONSTANT, eltype,
+                sizeof(struct _tree_constant_array_type));
+        if (!t)
+                return NULL;
+
+        tree_set_constant_array_size_expr(t, size_expr);
+        tree_set_constant_array_size_value(t, size_value);
         return t;
 }
 
@@ -310,7 +337,7 @@ extern bool tree_type_is_incomplete(const tree_type* self)
         if (tree_type_is_void(self))
                 return true;
         else if (tree_type_is_array(self))
-                return !tree_get_array_size(self);
+                return tree_array_is(self, TAK_INCOMPLETE);
         else if (tree_type_is_record(self))
         {
                 const tree_decl* entity = tree_get_decl_type_entity(self);
