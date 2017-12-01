@@ -1,6 +1,12 @@
 #include "scc/scl/sstring.h"
 #include <stdarg.h>
 
+typedef struct
+{
+        ssize len;
+        suint8 data[0];
+} strentry_impl;
+
 extern void strpool_init(strpool* self)
 {
         strpool_init_ex(self, STDALLOC);
@@ -18,13 +24,19 @@ extern void strpool_dispose(strpool* self)
         bump_ptr_allocator_dispose(&self->_alloc);
 }
 
-extern const char* strpool_get(const strpool* self, strref ref)
+extern bool strpool_get(const strpool* self, strref ref, strentry* result)
 {
-        hiter str;
-        if (!htab_find(&self->_strings, ref, &str))
-                return NULL;
+        result->data = NULL;
+        result->len = 0;
 
-        return hiter_get_ptr(&str);
+        hiter it;
+        if (!htab_find(&self->_strings, ref, &it))
+                return false;
+
+        strentry_impl* entry = hiter_get_ptr(&it);
+        result->data = entry->data;
+        result->len = entry->len;
+        return true;
 }
 
 extern bool strpooled(const strpool* self, strref ref)
@@ -32,38 +44,33 @@ extern bool strpooled(const strpool* self, strref ref)
         return htab_exists(&self->_strings, ref);
 }
 
-extern strref strpool_insert(strpool* self, const char* string)
+extern strref strpool_insert(strpool* self, const void* data, ssize len)
 {
-        return strpool_insertl(self, string, sstrlen(string));
-}
+        strref r = STRREFL(data, len);
 
-extern strref strpool_insertl(strpool* self, const char* string, ssize len)
-{
-        strref r = STRREFL(string, len);
-
-        const char* pooled = NULL;
-        while ((pooled = strpool_get(self, r)))
+        strentry pooled;
+        while (strpool_get(self, r, &pooled))
         {
-                if (strncmp(pooled, string, len) == 0)
+                if (pooled.len == len && memcmp(pooled.data, data, len) == 0)
                         return r;
-
                 r += s_mix32(r);
         }
 
         if (S_FAILED(htab_reserve(&self->_strings, r)))
                 return STRREF_INVALID;
 
-        char* cpy = bump_ptr_allocate(&self->_alloc, len + 1);
-        if (!cpy)
+        strentry_impl* copy = bump_ptr_allocate(&self->_alloc,
+                sizeof(strentry_impl) + len + 1);
+        if (!copy)
         {
                 htab_erase(&self->_strings, r);
                 return STRREF_INVALID;
         }
 
-        memcpy(cpy, string, len);
-        cpy[len] = '\0';
-
-        htab_insert_ptr(&self->_strings, r, cpy);
+        copy->len = len;
+        memcpy(copy->data, data, len);
+        copy->data[len] = '\0';
+        htab_insert_ptr(&self->_strings, r, copy);
         return r;
 }
 

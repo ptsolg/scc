@@ -40,14 +40,23 @@ static inline void* tree_allocate(tree_context* self, ssize bytes)
         return bump_ptr_allocate(&self->_alloc, bytes);
 }
 
+static inline bool tree_get_id_strentry(
+        const tree_context* self, tree_id id, strentry* result)
+{
+        return strpool_get(&self->_strings, id, result);
+}
+
 static inline const char* tree_get_id_cstr(const tree_context* self, tree_id id)
 {
-        return strpool_get(&self->_strings, id);
+        strentry entry;
+        return tree_get_id_strentry(self, id, &entry)
+                ? entry.data
+                : NULL;
 }
 
 static inline tree_id tree_get_id(tree_context* self, const char* string, ssize len)
 {
-        return strpool_insertl(&self->_strings, string, len);
+        return strpool_insert(&self->_strings, string, len);
 }
 
 #ifdef __cplusplus

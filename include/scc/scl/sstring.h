@@ -15,6 +15,12 @@ extern "C" {
 
 typedef hval strref;
 
+typedef struct _strentry
+{
+        ssize len;
+        const suint8* data;
+} strentry;
+
 // a set of unique strings that can be accessed through strref
 typedef struct
 {
@@ -34,10 +40,9 @@ typedef struct
 extern void strpool_init(strpool* self);
 extern void strpool_init_ex(strpool* self, allocator* alloc);
 extern void strpool_dispose(strpool* self);
-extern const char* strpool_get(const strpool* self, strref ref);
+extern bool strpool_get(const strpool* self, strref ref, strentry* result);
 extern bool strpooled(const strpool* self, strref ref);
-extern strref strpool_insert(strpool* self, const char* string);
-extern strref strpool_insertl(strpool* self, const char* string, ssize len);
+extern strref strpool_insert(strpool* self, const void* data, ssize len);
 
 extern ssize sstrlen(const char* string);
 extern bool sstreq(const char* a, const char* b, const char* ignore);
