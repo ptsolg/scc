@@ -184,26 +184,17 @@ extern tree_expr* tree_new_character_literal(
 }
 
 extern tree_expr* tree_new_floating_literal(
-        tree_context* context, tree_type* type, tree_location loc, float value)
+        tree_context* context,
+        tree_type* type,
+        tree_location loc,
+        const float_value* value)
 {
         tree_expr* e = tree_new_expr(context, TEK_FLOATING_LITERAL, TVK_RVALUE, type, loc,
                 sizeof(struct _tree_floating_literal_expr));
         if (!e)
                 return NULL;
 
-        tree_set_floating_literal(e, value);
-        return e;
-}
-
-extern tree_expr* tree_new_floating_lliteral(
-        tree_context* context, tree_type* type, tree_location loc, ldouble value)
-{
-        tree_expr* e = tree_new_expr(context, TEK_FLOATING_LITERAL, TVK_RVALUE, type, loc,
-                sizeof(struct _tree_floating_literal_expr));
-        if (!e)
-                return NULL;
-
-        tree_set_floating_lliteral(e, value);
+        tree_set_floating_literal_value(e, value);
         return e;
 }
 

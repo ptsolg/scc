@@ -335,26 +335,23 @@ static inline void tree_set_character_literal(tree_expr* self, int value);
 struct _tree_floating_literal_expr
 {
         struct _tree_expr_base _base;
-        union
-        {
-                float _float;
-                ldouble _double;
-        };
+        float_value _value;
 };
 
 extern tree_expr* tree_new_floating_literal(
-        tree_context* context, tree_type* type, tree_location loc, float value);
+        tree_context* context,
+        tree_type* type,
+        tree_location loc,
+        const float_value* value);
 
-extern tree_expr* tree_new_floating_lliteral(
-        tree_context* context, tree_type* type, tree_location loc, ldouble value);
+static inline struct _tree_floating_literal_expr*
+_tree_get_floating_literal(tree_expr* self);
 
-static inline struct _tree_floating_literal_expr* _tree_get_floating_literal(tree_expr* self);
-static inline const struct _tree_floating_literal_expr* _tree_get_cfloating_literal(const tree_expr* self);
+static inline const struct _tree_floating_literal_expr*
+_tree_get_cfloating_literal(const tree_expr* self);
 
-static inline float tree_get_floating_literal(const tree_expr* self);
-static inline ldouble tree_get_floating_lliteral(const tree_expr* self);
-static inline void tree_set_floating_literal(tree_expr* self, float value);
-static inline void tree_set_floating_lliteral(tree_expr* self, ldouble value);
+static inline const float_value* tree_get_floating_literal_cvalue(const tree_expr* self);
+static inline void tree_set_floating_literal_value(tree_expr* self, const float_value* value);
 
 struct _tree_string_literal_expr
 {
@@ -952,36 +949,28 @@ static inline void tree_set_character_literal(tree_expr* self, int value)
         _tree_get_character_literal(self)->_value = value;
 }
 
-static inline struct _tree_floating_literal_expr* _tree_get_floating_literal(tree_expr* self)
+static inline struct _tree_floating_literal_expr*
+_tree_get_floating_literal(tree_expr* self)
 {
         TREE_ASSERT_EXPR(self, TEK_FLOATING_LITERAL);
         return (struct _tree_floating_literal_expr*)self;
 }
 
-static inline const struct _tree_floating_literal_expr* _tree_get_cfloating_literal(const tree_expr* self)
+static inline const struct _tree_floating_literal_expr*
+_tree_get_cfloating_literal(const tree_expr* self)
 {
         TREE_ASSERT_EXPR(self, TEK_FLOATING_LITERAL);
         return (const struct _tree_floating_literal_expr*)self;
 }
 
-static inline float tree_get_floating_literal(const tree_expr* self)
+static inline const float_value* tree_get_floating_literal_cvalue(const tree_expr* self)
 {
-        return _tree_get_cfloating_literal(self)->_float;
+        return &_tree_get_cfloating_literal(self)->_value;
 }
 
-static inline ldouble tree_get_floating_lliteral(const tree_expr* self)
+static inline void tree_set_floating_literal_value(tree_expr* self, const float_value* value)
 {
-        return _tree_get_cfloating_literal(self)->_double;
-}
-
-static inline void tree_set_floating_literal(tree_expr* self, float value)
-{
-        _tree_get_floating_literal(self)->_float = value;
-}
-
-static inline void tree_set_floating_lliteral(tree_expr* self, ldouble value)
-{
-        _tree_get_floating_literal(self)->_double = value;
+        _tree_get_floating_literal(self)->_value = *value;
 }
 
 static inline struct _tree_string_literal_expr* _tree_get_string_literal(tree_expr* self)

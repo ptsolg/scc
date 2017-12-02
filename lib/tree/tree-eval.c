@@ -286,10 +286,11 @@ static bool tree_eval_char_literal(tree_eval_info* info, const tree_expr* expr, 
 
 static bool tree_eval_flt_literal(tree_eval_info* info, const tree_expr* expr, avalue* result)
 {
+        const float_value* value = tree_get_floating_literal_cvalue(expr);
         if (tree_builtin_type_is(tree_get_expr_type(expr), TBTK_FLOAT))
-                avalue_init_sp(result, tree_get_floating_literal(expr));
+                avalue_init_sp(result, float_get_sp(value));
         else
-                avalue_init_dp(result, tree_get_floating_lliteral(expr));
+                avalue_init_dp(result, float_get_dp(value));
         return true;
 }
 

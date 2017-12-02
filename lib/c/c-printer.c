@@ -375,10 +375,11 @@ static void cprint_decl_expr(cprinter* self, const tree_expr* expr)
 
 static void cprint_floating_literal(cprinter* self, const tree_expr* expr)
 {
+        const float_value* value = tree_get_floating_literal_cvalue(expr);
         if (tree_builtin_type_is(tree_get_expr_type(expr), TBTK_FLOAT))
-                cprint_float(self, tree_get_floating_literal(expr));
+                cprint_float(self, float_get_sp(value));
         else
-                cprint_double(self, tree_get_floating_lliteral(expr));
+                cprint_double(self, float_get_dp(value));
 }
 
 static void cprint_integer(cprinter* self, const tree_type* t, suint64 v)

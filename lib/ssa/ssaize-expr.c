@@ -543,14 +543,18 @@ extern ssa_value* ssaize_character_literal(ssaizer* self, const tree_expr* expr)
 
 extern ssa_value* ssaize_floating_literal(ssaizer* self, const tree_expr* expr)
 {
-        return ssa_build_sp_constant(&self->builder,
-                tree_get_expr_type(expr), tree_get_floating_literal(expr));
+        tree_type* type = tree_get_expr_type(expr);
+        const float_value* value = tree_get_floating_literal_cvalue(expr);
+
+        return tree_builtin_type_is(type, TBTK_FLOAT)
+                ? ssa_build_sp_constant(&self->builder, type, float_get_sp(value))
+                : ssa_build_dp_constant(&self->builder, type, float_get_dp(value));
 }
 
 extern ssa_value* ssaize_string_literal(ssaizer* self, const tree_expr* expr)
 {
-        return ssa_build_dp_constant(&self->builder,
-                tree_get_expr_type(expr), (double)tree_get_floating_lliteral(expr));
+        S_UNREACHABLE();
+        return NULL;
 }
 
 static ssa_value* ssaizer_get_global_decl_ptr(ssaizer* self, tree_decl* decl)
