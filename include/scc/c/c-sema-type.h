@@ -38,6 +38,9 @@ extern tree_type* csema_new_array_type(
         tree_type* eltype,
         tree_expr* size);
 
+extern tree_type* csema_new_constant_array_type(
+        csema* self, tree_type_quals quals, tree_type* eltype, uint size);
+
 extern tree_type* csema_set_array_eltype(
         csema* self, tree_type* array, tree_type* eltype);
 

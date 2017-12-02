@@ -112,6 +112,16 @@ extern tree_type* csema_new_array_type(
         return csema_set_array_eltype(self, array, eltype);
 }
 
+extern tree_type* csema_new_constant_array_type(
+        csema* self, tree_type_quals quals, tree_type* eltype, uint size)
+{
+        int_value value;
+        int_init(&value, 32, false, size);
+        
+        tree_type* array = tree_new_constant_array_type(self->context, NULL, NULL, &value);
+        return csema_set_array_eltype(self, array, eltype);
+}
+
 extern tree_type* csema_set_array_eltype(
         csema* self, tree_type* array, tree_type* eltype)
 {

@@ -222,8 +222,14 @@ extern tree_expr* csema_new_integer_literal(
 
 extern tree_expr* csema_new_string_literal(csema* self, tree_location loc, tree_id ref)
 {
-        tree_type* t = csema_new_pointer(self, TTQ_UNQUALIFIED,
-                csema_new_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT8));
+        strentry entry;
+        if (!tree_get_id_strentry(self->context, ref, &entry))
+                return NULL;
+
+        tree_type* t = csema_new_constant_array_type(self, TTQ_UNQUALIFIED,
+                csema_new_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT8),
+                (uint)entry.len + 1);
+
         return tree_new_string_literal(self->context, t, loc, ref);
 }
 
