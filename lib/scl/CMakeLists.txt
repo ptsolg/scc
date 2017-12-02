@@ -11,6 +11,7 @@ add_scc_lib(scl
 	read-write.c
 	value.c
 	dseq.c
+	misc.c
 
 	INCLUDE
 	${SCC_INC_DIR}

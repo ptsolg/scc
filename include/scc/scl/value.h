@@ -9,14 +9,7 @@
 extern "C" {
 #endif
 
-#include "common.h"
-
-typedef enum
-{
-        CR_EQ,
-        CR_LE,
-        CR_GR,
-} cmp_result;
+#include "misc.h"
 
 typedef enum
 {

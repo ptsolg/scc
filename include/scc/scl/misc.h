@@ -64,6 +64,18 @@ static inline suint64 mod2(suint64 x, uint pow)
         return (x & (y - 1));
 }
 
+typedef enum
+{
+        CR_EQ,
+        CR_LE,
+        CR_GR,
+} cmp_result;
+
+#define SSORT_MAX_OBJECT_SIZE 1024
+
+extern void ssort(void* data, ssize n, ssize obsize,
+        cmp_result(*const cmp_fn)(void*, const void*, const void*), void* ex_data);
+
 #ifdef __cplusplus
 }
 #endif
