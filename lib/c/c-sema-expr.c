@@ -193,44 +193,38 @@ extern tree_expr* csema_new_decl_expr(csema* self, tree_id id, tree_location id_
 
 extern tree_expr* csema_new_sp_floating_literal(csema* self, tree_location loc, float v)
 {
-        tree_type* t = csema_new_builtin_type(self, TTQ_UNQUALIFIED, TBTK_FLOAT);
-        return tree_new_floating_literal(self->context, t, loc, v);
+        float_value value;
+        float_init_sp(&value, v);
+
+        return tree_new_floating_literal(self->context,
+                csema_get_float_type(self), loc, &value);
 }
 
 extern tree_expr* csema_new_dp_floating_literal(csema* self, tree_location loc, ldouble v)
 {
-        tree_type* t = csema_new_builtin_type(self, TTQ_UNQUALIFIED, TBTK_DOUBLE);
-        return tree_new_floating_lliteral(self->context, t, loc, v);
+        float_value value;
+        float_init_dp(&value, v);
+
+        return tree_new_floating_literal(self->context,
+                csema_get_double_type(self), loc, &value);
 }
 
 extern tree_expr* csema_new_character_literal(csema* self, tree_location loc, int c)
 {
-        tree_type* t = csema_new_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT8);
-        return tree_new_character_literal(self->context, t, loc, c);
+        return tree_new_character_literal(self->context, csema_get_char_type(self), loc, c);
 }
 
 extern tree_expr* csema_new_integer_literal(
         csema* self, tree_location loc, suint64 v, bool signed_, bool ext)
 {
-        tree_builtin_type_kind btk = ext ? TBTK_INT64 : TBTK_INT32;
-        if (!signed_)
-                btk = ext ? TBTK_UINT64 : TBTK_UINT32;
-
-        tree_type* t = csema_new_builtin_type(self, TTQ_UNQUALIFIED, btk);
-        return tree_new_integer_literal(self->context, t, loc, v);
+        return tree_new_integer_literal(self->context,
+                csema_get_int_type(self, signed_, ext), loc, v);
 }
 
 extern tree_expr* csema_new_string_literal(csema* self, tree_location loc, tree_id ref)
 {
-        strentry entry;
-        if (!tree_get_id_strentry(self->context, ref, &entry))
-                return NULL;
-
-        tree_type* t = csema_new_constant_array_type(self, TTQ_UNQUALIFIED,
-                csema_new_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT8),
-                (uint)entry.len + 1);
-
-        return tree_new_string_literal(self->context, t, loc, ref);
+        return tree_new_string_literal(self->context,
+                csema_get_type_for_string_literal(self, ref), loc, ref);
 }
 
 // c99 6.5.2.1 array subscripting
@@ -441,7 +435,7 @@ static tree_type* csema_check_log_not_expr(csema* self, tree_expr** expr)
         if (!csema_require_scalar_expr_type(self, t, tree_get_expr_loc(*expr)))
                 return NULL;
 
-        return csema_new_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
+        return csema_get_logical_operation_type(self);
 }
 
 // 6.5.3.3 unary arithmetic
@@ -540,12 +534,8 @@ extern tree_expr* csema_new_sizeof_expr(csema* self, tree_location loc, csizeof_
                 return NULL;
         }
 
-        tree_builtin_type_kind btk = TBTK_UINT32;
-        if (tree_target_is(tree_get_module_target(self->module), TTARGET_X64))
-                btk = TBTK_UINT64;
-
-        tree_type* t = csema_new_builtin_type(self, TTQ_UNQUALIFIED, btk);
-        return tree_new_sizeof_expr(self->context, t, loc, rhs->pointer, rhs->unary);
+        return tree_new_sizeof_expr(self->context,
+                csema_get_size_t_type(self), loc, rhs->pointer, rhs->unary);
 }
 
 // c99 6.5.4 cast operators
@@ -621,7 +611,7 @@ static tree_type* csema_check_log_expr(
         if (!csema_require_scalar_expr_type(self, lt, tree_get_expr_loc(*lhs)))
                 return NULL;
 
-        return csema_new_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
+        return csema_get_logical_operation_type(self);
 }
 
 static void csema_invalid_binop_operands(
@@ -661,7 +651,7 @@ static tree_type* csema_check_relational_expr(
                 return NULL;
         }
 
-        return csema_new_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
+        return csema_get_logical_operation_type(self);
 }
 
 // 6.5.9 Equality operators
@@ -704,7 +694,7 @@ static tree_type* csema_check_compare_expr(
                 csema_invalid_binop_operands(self, opcode, loc);
                 return NULL;
         }
-        return csema_new_builtin_type(self, TTQ_UNQUALIFIED, TBTK_INT32);
+        return csema_get_logical_operation_type(self);
 }
 
 // 6.5.16.2 Compound assignment

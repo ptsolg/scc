@@ -11,6 +11,15 @@ extern "C" {
 
 #include "c-sema.h"
 
+// returns one of: int32_t uint32_t int64_t uint64_t
+extern tree_type* csema_get_int_type(csema* self, bool signed_, bool extended);
+extern tree_type* csema_get_size_t_type(csema* self);
+extern tree_type* csema_get_float_type(csema* self);
+extern tree_type* csema_get_double_type(csema* self);
+extern tree_type* csema_get_char_type(csema* self);
+extern tree_type* csema_get_logical_operation_type(csema* self);
+extern tree_type* csema_get_type_for_string_literal(csema* self, tree_id id);
+
 extern tree_type* csema_new_builtin_type(
         csema* self, tree_type_quals q, tree_builtin_type_kind k);
 

@@ -1,6 +1,53 @@
 #include "scc/c/c-sema-type.h"
 #include "scc/tree/tree-eval.h"
 
+extern tree_type* csema_get_int_type(csema* self, bool signed_, bool extended)
+{
+        tree_builtin_type_kind k = signed_
+                ? extended ? TBTK_INT64 : TBTK_INT32
+                : extended ? TBTK_UINT64 : TBTK_UINT32;
+
+        return tree_new_builtin_type(self->context, k);
+}
+
+extern tree_type* csema_get_size_t_type(csema* self)
+{
+        return csema_get_int_type(self, false, tree_target_is(self->target, TTARGET_X64));
+}
+
+extern tree_type* csema_get_float_type(csema* self)
+{
+        return tree_new_builtin_type(self->context, TBTK_FLOAT);
+}
+
+extern tree_type* csema_get_double_type(csema* self)
+{
+        return tree_new_builtin_type(self->context, TBTK_DOUBLE);
+}
+
+extern tree_type* csema_get_char_type(csema* self)
+{
+        return tree_new_builtin_type(self->context, TBTK_INT8);
+}
+
+extern tree_type* csema_get_logical_operation_type(csema* self)
+{
+        return tree_new_builtin_type(self->context, TBTK_INT32);
+}
+
+extern tree_type* csema_get_type_for_string_literal(csema* self, tree_id id)
+{
+        strentry entry;
+        bool found = tree_get_id_strentry(self->context, id, &entry);
+        S_ASSERT(found);
+
+        int_value size;
+        int_init(&size, 32, false, entry.len + 1);
+
+        return tree_new_constant_array_type(self->context,
+                csema_get_char_type(self), NULL, &size);
+}
+
 extern tree_type* csema_new_builtin_type(
         csema* self, tree_type_quals q, tree_builtin_type_kind k)
 {
