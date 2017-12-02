@@ -20,11 +20,13 @@ extern tree_stmt* csema_new_case_stmt(
         csema* self,
         tree_location kw_loc,
         tree_location colon_loc,
-        tree_expr* value,
+        tree_expr* expr,
         tree_stmt* body);
 
 extern tree_stmt* csema_new_default_stmt(
-        csema* self, tree_location kw_loc, tree_location colon_loc, tree_stmt* body);
+        csema* self, tree_location kw_loc, tree_location colon_loc);
+
+extern void csema_set_default_stmt_body(csema* self, tree_stmt* stmt, tree_stmt* body);
 
 extern tree_stmt* csema_new_labeled_stmt(csema* self, tree_decl* label, tree_stmt* stmt);
 

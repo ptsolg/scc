@@ -2,6 +2,8 @@
 #include "scc/c/c-info.h"
 #include "scc/scl/bit-utils.h"
 
+DSEQ_GEN(cssi, cswitch_stmt_info);
+
 extern void csema_init(
         csema* self,
         ccontext* context,
@@ -18,11 +20,12 @@ extern void csema_init(
         self->scope = NULL;
         self->function = NULL;
         self->error_manager = error_manager;
-        csema_init_dseq_ptr(self, &self->switch_stack);
+        dseq_init_ex_cssi(&self->switch_stack, cget_alloc(self->ccontext));
 }
 
 extern void csema_dispose(csema* self)
 {
+        // todo
 }
 
 extern void csema_enter_scope(csema* self, tree_scope* scope)
@@ -71,6 +74,51 @@ extern void csema_exit_function(csema* self)
 extern void csema_push_scope(csema* self)
 {
         csema_enter_decl_scope(self, tree_new_decl_scope(self->context, self->locals));
+}
+
+extern void csema_push_switch_stmt_info(csema* self, tree_stmt* switch_stmt)
+{
+        dseq_resize(&self->switch_stack, dseq_size(&self->switch_stack) + 1);
+        cswitch_stmt_info* last = csema_get_switch_stmt_info(self);
+        last->switch_stmt = switch_stmt;
+        last->has_default = false;
+        dseq_init_ex_ptr(&last->case_stmts, cget_alloc(self->ccontext));
+}
+
+extern void csema_pop_switch_stmt_info(csema* self)
+{
+        ssize size = dseq_size(&self->switch_stack);
+        S_ASSERT(size);
+        dseq_dispose(&csema_get_switch_stmt_info(self)->case_stmts);
+        dseq_resize(&self->switch_stack, size - 1);
+}
+
+extern void csema_add_switch_stmt_case_label(csema* self, tree_stmt* case_stmt)
+{
+        S_ASSERT(case_stmt);
+        dseq_append_ptr(&csema_get_switch_stmt_info(self)->case_stmts, case_stmt);
+}
+
+extern void csema_set_switch_stmt_has_default(csema* self)
+{
+        csema_get_switch_stmt_info(self)->has_default = true;
+}
+
+extern cswitch_stmt_info* csema_get_switch_stmt_info(const csema* self)
+{
+        ssize size = dseq_size(&self->switch_stack);
+        S_ASSERT(size);
+        return dseq_begin_cssi(&self->switch_stack) + size - 1;
+}
+
+extern bool csema_in_switch_stmt(const csema* self)
+{
+        return dseq_size(&self->switch_stack) != 0;
+}
+
+extern bool csema_switch_stmt_has_default(const csema* self)
+{
+        return csema_get_switch_stmt_info(self)->has_default;
 }
 
 extern void csema_init_dseq_ptr(csema* self, dseq* args)

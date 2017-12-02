@@ -993,7 +993,7 @@ static void cprint_case_stmt(cprinter* self, const tree_stmt* s)
 {
         cprintrw(self, CTK_CASE);
         cprint_space(self);
-        cprint_expr(self, tree_get_case_value(s));
+        cprint_expr(self, tree_get_case_expr(s));
         cprintrw(self, CTK_COLON);
         cprinter_add_indent(self);
         cprint_endl(self);

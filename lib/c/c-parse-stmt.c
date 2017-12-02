@@ -89,11 +89,16 @@ extern tree_stmt* cparse_default_stmt(cparser* self, cstmt_context context)
         if (!cparser_require(self, CTK_COLON))
                 return NULL;
 
+        tree_stmt* default_stmt = csema_new_default_stmt(self->sema, kw_loc, colon_loc);
+        if (!default_stmt)
+                return NULL;
+
         tree_stmt* body = _cparse_stmt(self, context);
         if (!body)
                 return NULL;
 
-        return csema_new_default_stmt(self->sema, kw_loc, colon_loc, body);
+        csema_set_default_stmt_body(self->sema, default_stmt, body);
+        return default_stmt;
 }
 
 extern tree_stmt* cparse_labeled_stmt(cparser* self, cstmt_context context)

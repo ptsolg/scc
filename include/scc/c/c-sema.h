@@ -12,6 +12,13 @@ extern "C" {
 #include "c-error.h"
 #include "c-tree.h"
 
+typedef struct
+{
+        tree_stmt* switch_stmt;
+        dseq case_stmts;
+        bool has_default;
+} cswitch_stmt_info;
+
 // The structure, used for semantic analysis and building AST
 typedef struct _csema
 {
@@ -47,6 +54,14 @@ extern void csema_exit_function(csema* self);
 // this is used when we need to create implicit decl scope.
 // e.g: to hide for-loop variables from using them outside loop scope
 extern void csema_push_scope(csema* self);
+
+extern void csema_push_switch_stmt_info(csema* self, tree_stmt* switch_stmt);
+extern void csema_pop_switch_stmt_info(csema* self);
+extern void csema_add_switch_stmt_case_label(csema* self, tree_stmt* label);
+extern void csema_set_switch_stmt_has_default(csema* self);
+extern cswitch_stmt_info* csema_get_switch_stmt_info(const csema* self);
+extern bool csema_in_switch_stmt(const csema* self);
+extern bool csema_switch_stmt_has_default(const csema* self);
 
 extern tree_decl* csema_get_any_decl(
         const csema* self,

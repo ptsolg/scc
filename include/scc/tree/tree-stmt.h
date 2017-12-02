@@ -112,7 +112,6 @@ struct _tree_labeled_stmt
 
 extern tree_stmt* tree_new_labeled_stmt(tree_context* context, tree_xlocation loc, tree_decl* label);
 
-
 static inline struct _tree_labeled_stmt* _tree_get_label_stmt(tree_stmt* self);
 static inline const struct _tree_labeled_stmt* _tree_get_label_cstmt(const tree_stmt* self);
 
@@ -122,21 +121,28 @@ static inline void tree_set_label_stmt_decl(tree_stmt* self, tree_decl* label);
 struct _tree_case_stmt
 {
         struct _tree_stmt_base _base;
-        tree_expr* _value;
+        tree_expr* _expr;
+        int_value _value;
         tree_stmt* _body;
 };
 
 extern tree_stmt* tree_new_case_stmt(
-        tree_context* context, tree_xlocation loc, tree_expr* value, tree_stmt* body);
+        tree_context* context,
+        tree_xlocation loc,
+        tree_expr* expr,
+        const int_value* value,
+        tree_stmt* body);
 
 static inline struct _tree_case_stmt* _tree_get_case(tree_stmt* self);
 static inline const struct _tree_case_stmt* _tree_get_ccase(const tree_stmt* self);
 
-static inline tree_expr* tree_get_case_value(const tree_stmt* self);
+static inline tree_expr* tree_get_case_expr(const tree_stmt* self);
+static inline const int_value* tree_get_case_cvalue(const tree_stmt* self);
 static inline tree_stmt* tree_get_case_body(const tree_stmt* self);
 
-static inline void tree_set_case_value(tree_stmt* self, tree_expr* value);
+static inline void tree_set_case_expr(tree_stmt* self, tree_expr* value);
 static inline void tree_set_case_body(tree_stmt* self, tree_stmt* body);
+static inline void tree_set_case_value(tree_stmt* self, const int_value* value);
 
 struct _tree_default_stmt
 {
@@ -317,7 +323,6 @@ static inline void tree_set_for_condition(tree_stmt* self, tree_expr* condition)
 static inline void tree_set_for_step(tree_stmt* self, tree_expr* step);
 static inline void tree_set_for_body(tree_stmt* self, tree_stmt* body);
 
-
 struct _tree_goto_stmt
 {
         struct _tree_stmt_base _base;
@@ -336,7 +341,6 @@ static inline void tree_set_goto_label(tree_stmt* self, tree_decl* label);
 struct _tree_continue_stmt
 {
         struct _tree_stmt_base _base;
-        // todo
 };
 
 extern tree_stmt* tree_new_continue_stmt(tree_context* context, tree_xlocation loc);
@@ -344,7 +348,6 @@ extern tree_stmt* tree_new_continue_stmt(tree_context* context, tree_xlocation l
 struct _tree_break_stmt
 {
         struct _tree_stmt_base _base;
-        // todo
 };
 
 extern tree_stmt* tree_new_break_stmt(tree_context* context, tree_xlocation loc);
@@ -353,7 +356,6 @@ struct _tree_return_stmt
 {
         struct _tree_stmt_base _base;
         tree_expr* _value;
-        // todo
 };
 
 extern tree_stmt* tree_new_return_stmt(tree_context* context, tree_xlocation loc, tree_expr* value);
@@ -508,9 +510,14 @@ static inline const struct _tree_case_stmt* _tree_get_ccase(const tree_stmt* sel
         return (const struct _tree_case_stmt*)self;
 }
 
-static inline tree_expr* tree_get_case_value(const tree_stmt* self)
+static inline tree_expr* tree_get_case_expr(const tree_stmt* self)
 {
-        return _tree_get_ccase(self)->_value;
+        return _tree_get_ccase(self)->_expr;
+}
+
+static inline const int_value* tree_get_case_cvalue(const tree_stmt* self)
+{
+        return &_tree_get_ccase(self)->_value;
 }
 
 static inline tree_stmt* tree_get_case_body(const tree_stmt* self)
@@ -518,14 +525,19 @@ static inline tree_stmt* tree_get_case_body(const tree_stmt* self)
         return _tree_get_ccase(self)->_body;
 }
 
-static inline void tree_set_case_value(tree_stmt* self, tree_expr* value)
+static inline void tree_set_case_expr(tree_stmt* self, tree_expr* expr)
 {
-        _tree_get_case(self)->_value = value;
+        _tree_get_case(self)->_expr = expr;
 }
 
 static inline void tree_set_case_body(tree_stmt* self, tree_stmt* body)
 {
         _tree_get_case(self)->_body = body;
+}
+
+static inline void tree_set_case_value(tree_stmt* self, const int_value* value)
+{
+        _tree_get_case(self)->_value = *value;
 }
 
 static inline struct _tree_default_stmt* _tree_get_default(tree_stmt* self)
