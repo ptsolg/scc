@@ -91,49 +91,18 @@ extern bool csema_typedef_name_exists(csema* self, tree_id name)
 
 extern tree_type* csema_new_pointer(csema* self, tree_type_quals quals, tree_type* target)
 {
-        tree_type* ptr = tree_new_qual_type(self->context, quals,
-                tree_new_pointer_type(self->context, target));
-
-        return csema_set_pointer_target(self, ptr, target);
-}
-
-extern tree_type* csema_set_pointer_target(csema* self, tree_type* pointer, tree_type* target)
-{
-        tree_set_pointer_target(pointer, target);
-        return pointer;
+        return tree_new_qual_type(self->context, quals, 
+                tree_new_pointer_type(self->context, target)); 
 }
 
 extern tree_type* csema_new_function_type(csema* self, tree_type* restype)
 {
-        tree_type* f = tree_new_qual_type(self->context, TTQ_UNQUALIFIED,
-                tree_new_function_type(self->context, NULL));
-
-        return csema_set_function_restype(self, f, restype);
-}
-
-extern tree_type* csema_set_function_restype(
-        csema* self, tree_type* func, tree_type* restype)
-{
-        tree_set_function_type_result(func, restype);
-        return func;
-}
-
-extern tree_type* csema_add_function_type_param(csema* self, tree_type* func, cparam* param)
-{
-        tree_type* param_type = param->declarator.type.head;
-        tree_add_function_type_param(func, param_type);
-        return func;
+        return tree_new_function_type(self->context, restype);
 }
 
 extern tree_type* csema_new_paren_type(csema* self, tree_type* next)
 {
-        return csema_set_paren_type(self, tree_new_paren_type(self->context, NULL), next);
-}
-
-extern tree_type* csema_set_paren_type(csema* self, tree_type* paren, tree_type* next)
-{
-        tree_set_paren_type(paren, next);
-        return paren;
+        return tree_new_paren_type(self->context, next);
 }
 
 extern tree_type* csema_new_array_type(
@@ -142,21 +111,15 @@ extern tree_type* csema_new_array_type(
         tree_type* eltype,
         tree_expr* size)
 {
-        tree_type* array = NULL;
-        if (size)
-        {
-                int_value size_value;
-                tree_eval_info info;
-                tree_init_eval_info(&info, self->target);
-                // we'll check size-value later
-                tree_eval_as_integer(&info, size, &size_value);
-                array = tree_new_constant_array_type(
-                        self->context, NULL, size, &size_value);
-        }
-        else
-                array = tree_new_incomplete_array_type(self->context, NULL);
+        if (!size)
+                return tree_new_incomplete_array_type(self->context, eltype);
 
-        return csema_set_array_eltype(self, array, eltype);
+        int_value size_value;
+        tree_eval_info info;
+        tree_init_eval_info(&info, self->target);
+        // we'll check size-value later
+        tree_eval_as_integer(&info, size, &size_value);
+        return tree_new_constant_array_type(self->context, eltype, size, &size_value);
 }
 
 extern tree_type* csema_new_constant_array_type(
@@ -165,15 +128,7 @@ extern tree_type* csema_new_constant_array_type(
         int_value value;
         int_init(&value, 32, false, size);
         
-        tree_type* array = tree_new_constant_array_type(self->context, NULL, NULL, &value);
-        return csema_set_array_eltype(self, array, eltype);
-}
-
-extern tree_type* csema_set_array_eltype(
-        csema* self, tree_type* array, tree_type* eltype)
-{
-        tree_set_array_eltype(array, eltype);
-        return array;
+        return tree_new_constant_array_type(self->context, eltype, NULL, &value);
 }
 
 extern tree_type* csema_set_type_quals(csema* self, tree_type* type, tree_type_quals quals)

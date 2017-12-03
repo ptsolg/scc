@@ -161,6 +161,7 @@ extern void cdeclarator_set_id(cdeclarator* self, tree_location id_loc, tree_id 
 extern void cdeclarator_set_initialized(cdeclarator* self);
 extern void cdeclarator_set_loc_begin(cdeclarator* self, tree_location start_loc);
 extern void cdeclarator_set_loc_end(cdeclarator* self, tree_location end_loc);
+extern tree_type* cdeclarator_get_type(const cdeclarator* self);
 
 extern tree_location cdeclarator_get_id_loc_or_begin(const cdeclarator* self);
 
@@ -172,7 +173,7 @@ typedef struct
 
 extern cparam* cparam_new(ccontext* context);
 extern void cparam_delete(ccontext* context, cparam* p);
-
+extern tree_type* cparam_get_type(const cparam* self);
 extern tree_xlocation cparam_get_loc(const cparam* self);
 
 typedef enum _cstmt_context

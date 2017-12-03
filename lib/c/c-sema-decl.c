@@ -30,13 +30,13 @@ static tree_type* csema_set_declarator_type(csema* self, cdeclarator* d, tree_ty
         tree_type_kind k = tree_get_type_kind(tail);
 
         if (k == TTK_POINTER)
-                csema_set_pointer_target(self, tail, t);
+                tree_set_pointer_target(tail, t);
         else if (k == TTK_FUNCTION)
-                csema_set_function_restype(self, tail, t);
+                tree_set_function_type_result(tail, t);
         else if (k == TTK_ARRAY)
-                csema_set_array_eltype(self, tail, t);
+                tree_set_array_eltype(tail, t);
         else if (k == TTK_PAREN)
-                csema_set_paren_type(self, tail, t);
+                tree_set_paren_type(tail, t);
         else
                 S_UNREACHABLE();
 
@@ -183,9 +183,7 @@ extern cparam* csema_add_declarator_param(csema* self, cdeclarator* d, cparam* p
         tree_type* t = d->type.tail;
         S_ASSERT(t && tree_get_type_kind(t) == TTK_FUNCTION);
 
-        if (!csema_add_function_type_param(self, t, p))
-                return NULL;
-
+        tree_add_function_type_param(t, cparam_get_type(p));
         if (!d->params_initialized)
                 dseq_append_ptr(&d->params, p);
         else

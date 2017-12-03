@@ -329,6 +329,11 @@ extern void cdeclarator_set_loc_end(cdeclarator* self, tree_location end_loc)
         self->loc = tree_set_xloc_end(self->loc, end_loc);
 }
 
+extern tree_type* cdeclarator_get_type(const cdeclarator* self)
+{
+        return self->type.head;
+}
+
 extern tree_location cdeclarator_get_id_loc_or_begin(const cdeclarator* self)
 {
         return self->id_loc == TREE_INVALID_LOC
@@ -348,6 +353,11 @@ extern cparam* cparam_new(ccontext* context)
 extern void cparam_delete(ccontext* context, cparam* p)
 {
         cdeclarator_dispose(&p->declarator);
+}
+
+extern tree_type* cparam_get_type(const cparam* self)
+{
+        return cdeclarator_get_type(&self->declarator);
 }
 
 extern tree_xlocation cparam_get_loc(const cparam* self)
