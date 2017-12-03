@@ -553,8 +553,8 @@ extern ssa_value* ssaize_floating_literal(ssaizer* self, const tree_expr* expr)
 
 extern ssa_value* ssaize_string_literal(ssaizer* self, const tree_expr* expr)
 {
-        S_UNREACHABLE();
-        return NULL;
+        return ssa_build_string(&self->builder,
+                tree_get_expr_type(expr), tree_get_string_literal(expr));
 }
 
 static ssa_value* ssaizer_get_global_decl_ptr(ssaizer* self, tree_decl* decl)

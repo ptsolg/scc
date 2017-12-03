@@ -6,6 +6,7 @@
 #include "scc/ssa/ssa-function.h"
 #include "scc/ssa/ssa-module.h"
 #include "scc/tree/tree-context.h"
+#include "scc/scl/char-info.h"
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -64,6 +65,22 @@ static inline void ssa_print_label_ref(ssa_printer* self, ssa_id id)
         ssa_print_id(self, id);
 }
 
+static void ssa_print_string(ssa_printer* self, tree_id id)
+{
+        strentry entry;
+        if (!tree_get_id_strentry(ssa_get_tree(self->context), id, &entry))
+                return;
+
+        ssa_printc(self, '"');
+        for (ssize i = 0; i < entry.len; i++)
+        {
+                int c = entry.data[i];
+                ssa_printf(self, (char_is_escape(c) ? "\\%02X" : "%c"), c);
+                
+        }
+        ssa_printc(self, '"');
+}
+
 static inline void ssa_print_value_ref(ssa_printer* self, const ssa_value* val)
 {
         if (!val)
@@ -94,6 +111,8 @@ static inline void ssa_print_value_ref(ssa_printer* self, const ssa_value* val)
                 ssa_prints(self, tree_get_id_cstr(ssa_get_tree(self->context),
                         tree_get_decl_name(entity)));
         }
+        else if (k == SVK_STRING)
+                ssa_print_string(self, ssa_get_string_value(val));
 }
 
 static const char* ssa_binary_instr_table[SBIK_SIZE] =

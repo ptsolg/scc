@@ -26,6 +26,7 @@ typedef enum
         SVK_LABEL,
         SVK_DECL,
         SVK_PARAM,
+        SVK_STRING,
 } ssa_value_kind;
 
 struct _ssa_value_base
@@ -113,6 +114,21 @@ typedef struct _ssa_param
 
 extern ssa_value* ssa_new_param(ssa_context* context, ssa_id id, tree_type* type);
 
+typedef struct _ssa_string
+{
+        struct _ssa_typed_value_base _base;
+        tree_id _id;
+} ssa_string;
+
+extern ssa_value* ssa_new_string(ssa_context* context, tree_type* type, tree_id id);
+
+static inline ssa_string* _ssa_get_string(ssa_value* self);
+static inline const ssa_string* _ssa_get_cstring(const ssa_value* self);
+
+static inline tree_id ssa_get_string_value(const ssa_value* self);
+
+static inline void ssa_set_string_value(ssa_value* self, tree_id id);
+
 typedef struct _ssa_value
 {
         union
@@ -160,7 +176,8 @@ static inline void ssa_set_value_id(ssa_value* self, ssa_id id)
         S_ASSERT((P) && (ssa_get_value_kind(P) == SVK_CONSTANT \
                       || ssa_get_value_kind(P) == SVK_VARIABLE \
                       || ssa_get_value_kind(P) == SVK_DECL \
-                      || ssa_get_value_kind(P) == SVK_PARAM))
+                      || ssa_get_value_kind(P) == SVK_PARAM \
+                      || ssa_get_value_kind(P) == SVK_STRING))
 
 static inline struct _ssa_typed_value_base* _ssa_get_typed_value_base(ssa_value* self)
 {
@@ -228,6 +245,28 @@ static inline tree_decl* ssa_get_decl_entity(const ssa_value* self)
 static inline void ssa_set_decl_entity(ssa_value* self, tree_decl* entity)
 {
         _ssa_get_decl(self)->_entity = entity;
+}
+
+static inline ssa_string* _ssa_get_string(ssa_value* self)
+{
+        SSA_ASSERT_VALUE(self, SVK_STRING);
+        return (ssa_string*)self;
+}
+
+static inline const ssa_string* _ssa_get_cstring(const ssa_value* self)
+{
+        SSA_ASSERT_VALUE(self, SVK_STRING);
+        return (const ssa_string*)self;
+}
+
+static inline tree_id ssa_get_string_value(const ssa_value* self)
+{
+        return _ssa_get_cstring(self)->_id;
+}
+
+static inline void ssa_set_string_value(ssa_value* self, tree_id id)
+{
+        _ssa_get_string(self)->_id = id;
 }
 
 #ifdef __cplusplus

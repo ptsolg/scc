@@ -252,6 +252,11 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
         return ssa_build_instr(self, i);
 }
 
+extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id id)
+{
+        return ssa_new_string(self->context, type, id);
+}
+
 extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, suint64 val)
 {
         S_ASSERT(tree_type_is_integer(type));

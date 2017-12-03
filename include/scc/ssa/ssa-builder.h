@@ -58,6 +58,7 @@ extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type);
 extern ssa_value* ssa_build_load(ssa_builder* self, ssa_value* what);
 extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value* where);
 
+extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id id);
 extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, suint64 val);
 extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, float val);
 extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, double val);
