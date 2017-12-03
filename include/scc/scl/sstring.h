@@ -17,7 +17,7 @@ typedef hval strref;
 
 typedef struct _strentry
 {
-        ssize len;
+        ssize size;
         const suint8* data;
 } strentry;
 
@@ -35,14 +35,14 @@ typedef struct
 #define STRREFL(S, L) ((strref)murmurhash3_86_32((S), _STRREF_HASH_SEED, (int)(L)))
 #endif
 
-#define STRREF(S) STRREFL(S, strlen(S))
+#define STRREF(S) STRREFL(S, strlen(S) + 1)
 
 extern void strpool_init(strpool* self);
 extern void strpool_init_ex(strpool* self, allocator* alloc);
 extern void strpool_dispose(strpool* self);
 extern bool strpool_get(const strpool* self, strref ref, strentry* result);
 extern bool strpooled(const strpool* self, strref ref);
-extern strref strpool_insert(strpool* self, const void* data, ssize len);
+extern strref strpool_insert(strpool* self, const void* data, ssize size);
 
 extern ssize sstrlen(const char* string);
 extern bool sstreq(const char* a, const char* b, const char* ignore);

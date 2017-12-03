@@ -3,7 +3,7 @@
 
 typedef struct
 {
-        ssize len;
+        ssize size;
         suint8 data[0];
 } strentry_impl;
 
@@ -27,7 +27,7 @@ extern void strpool_dispose(strpool* self)
 extern bool strpool_get(const strpool* self, strref ref, strentry* result)
 {
         result->data = NULL;
-        result->len = 0;
+        result->size = 0;
 
         hiter it;
         if (!htab_find(&self->_strings, ref, &it))
@@ -35,7 +35,7 @@ extern bool strpool_get(const strpool* self, strref ref, strentry* result)
 
         strentry_impl* entry = hiter_get_ptr(&it);
         result->data = entry->data;
-        result->len = entry->len;
+        result->size = entry->size;
         return true;
 }
 
@@ -44,14 +44,14 @@ extern bool strpooled(const strpool* self, strref ref)
         return htab_exists(&self->_strings, ref);
 }
 
-extern strref strpool_insert(strpool* self, const void* data, ssize len)
+extern strref strpool_insert(strpool* self, const void* data, ssize size)
 {
-        strref r = STRREFL(data, len);
+        strref r = STRREFL(data, size);
 
         strentry pooled;
         while (strpool_get(self, r, &pooled))
         {
-                if (pooled.len == len && memcmp(pooled.data, data, len) == 0)
+                if (pooled.size == size && memcmp(pooled.data, data, size) == 0)
                         return r;
                 r += s_mix32(r);
         }
@@ -59,15 +59,15 @@ extern strref strpool_insert(strpool* self, const void* data, ssize len)
         if (S_FAILED(htab_reserve(&self->_strings, r)))
                 return STRREF_INVALID;
 
-        strentry_impl* copy = bump_ptr_allocate(&self->_alloc, sizeof(strentry_impl) + len);
+        strentry_impl* copy = bump_ptr_allocate(&self->_alloc, sizeof(strentry_impl) + size);
         if (!copy)
         {
                 htab_erase(&self->_strings, r);
                 return STRREF_INVALID;
         }
 
-        copy->len = len;
-        memcpy(copy->data, data, len);
+        copy->size = size;
+        memcpy(copy->data, data, size);
         htab_insert_ptr(&self->_strings, r, copy);
         return r;
 }

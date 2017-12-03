@@ -151,7 +151,7 @@ static void _cprint_string_literal(cprinter* self, tree_id id)
         strentry entry;
         tree_get_id_strentry(self->context, id, &entry);
         char unescaped[CMAX_LINE_LENGTH + 1];
-        cget_unescaped_string(unescaped, entry.data, entry.len - 1);
+        cget_unescaped_string(unescaped, entry.data, entry.size - 1);
         cprintf(self, "\"%s\"", unescaped);
 }
 

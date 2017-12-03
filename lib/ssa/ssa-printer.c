@@ -72,7 +72,7 @@ static void ssa_print_string(ssa_printer* self, tree_id id)
                 return;
 
         ssa_printc(self, '"');
-        for (ssize i = 0; i < entry.len; i++)
+        for (ssize i = 0; i < entry.size; i++)
         {
                 int c = entry.data[i];
                 ssa_printf(self, (char_is_escape(c) ? "\\%02X" : "%c"), c);
