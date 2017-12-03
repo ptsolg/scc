@@ -42,7 +42,7 @@ extern tree_type* csema_get_type_for_string_literal(csema* self, tree_id id)
         S_ASSERT(found);
 
         int_value size;
-        int_init(&size, 32, false, entry.len + 1);
+        int_init(&size, 32, false, entry.len);
 
         return tree_new_constant_array_type(self->context,
                 csema_get_char_type(self), NULL, &size);

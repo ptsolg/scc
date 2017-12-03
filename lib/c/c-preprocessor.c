@@ -154,6 +154,7 @@ extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source)
 
 typedef struct 
 {
+        // size of the sequence including trailing zero
         ssize size;
         tree_location loc;
         char val[CMAX_LINE_LENGTH + 1];
@@ -161,14 +162,14 @@ typedef struct
 
 static inline void csequence_finish(csequence* self)
 {
-        self->val[self->size] = '\0';
+        self->val[self->size++] = '\0';
 }
 
 static void csequence_init(csequence* self)
 {
         self->size = 0;
         self->loc = 0;
-        csequence_finish(self);
+        self->val[0] = '\0';
 }
 
 static inline bool csequence_append(csequence* self, const cpplexer* lexer, int c)
@@ -264,12 +265,12 @@ extern ctoken* cpplex_const_char(cpplexer* self)
                 return NULL;
 
         bool escape = cchar.val[0] == '\\';
-        if (cchar.size == 0)
+        if (cchar.size == 1)
         {
                 cerror(self->error_manager, CES_ERROR, cchar.loc, "empty character constant");
                 return NULL;
         }
-        else if ((escape && cchar.size > 2) || (!escape && cchar.size > 1))
+        else if ((escape && cchar.size > 3) || (!escape && cchar.size > 2))
         {
                 cerror(self->error_manager, CES_ERROR, cchar.loc, "invalid character constant");
                 return NULL;
@@ -810,6 +811,7 @@ static ctoken* cpproc_concat_and_escape_strings(cpproc* self, dseq* strings)
                 for (ssize j = 0; j < size - 1; j++)
                         dseq_append_i8(&concat, escaped[j]);
         }
+        dseq_append_i8(&concat, '\0');
 
         tree_id concat_ref = tree_get_id(
                 cget_tree(self->context), (char*)dseq_begin_u8(&concat), dseq_size(&concat));
