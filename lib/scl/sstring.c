@@ -59,8 +59,7 @@ extern strref strpool_insert(strpool* self, const void* data, ssize len)
         if (S_FAILED(htab_reserve(&self->_strings, r)))
                 return STRREF_INVALID;
 
-        strentry_impl* copy = bump_ptr_allocate(&self->_alloc,
-                sizeof(strentry_impl) + len + 1);
+        strentry_impl* copy = bump_ptr_allocate(&self->_alloc, sizeof(strentry_impl) + len);
         if (!copy)
         {
                 htab_erase(&self->_strings, r);
@@ -69,7 +68,6 @@ extern strref strpool_insert(strpool* self, const void* data, ssize len)
 
         copy->len = len;
         memcpy(copy->data, data, len);
-        copy->data[len] = '\0';
         htab_insert_ptr(&self->_strings, r, copy);
         return r;
 }
