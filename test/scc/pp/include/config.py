@@ -1,1 +1,1 @@
-cmds = ['%test', '-lex-only', '-o', '%output', '-i', '%dir']
+cmds = ['%test', '-flex-only', '-o', '%output', '-I', '%dir']

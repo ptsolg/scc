@@ -1,1 +1,1 @@
-cmds = ['%test', '-syntax-only', '-print-expr-value', '-o', '%output']
+cmds = ['%test', '-fsyntax-only', '-fprint-expr-value', '-o', '%output']

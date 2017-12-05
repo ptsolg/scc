@@ -1,1 +1,1 @@
-cmds = ['%test', '-syntax-only', '-log', '%output']
+cmds = ['%test', '-fsyntax-only', '-log', '%output']

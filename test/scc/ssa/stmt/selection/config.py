@@ -1,1 +1,1 @@
-cmds = ['%test', '-emit-ssa', '-x32', '-o', '%output']
+cmds = ['%test', '-S', '-emit-ssa', '-m32', '-o', '%output']
