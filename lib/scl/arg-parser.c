@@ -2,37 +2,45 @@
 #include "scc/scl/sstring.h"
 #include <stdlib.h> // strtoi
 
+extern void arg_handler_init(arg_handler* self,
+        const char* prefix, void(*cb)(void*, aparser*), void* data)
+{
+        self->_prefix = prefix;
+        self->_cb = cb;
+        self->_data = data;
+}
+
 extern void aparser_init(aparser* self, int argc, const char** argv)
 {
         self->_argv = argv;
         self->_argc = argc;
         self->_pos = 1;
-        htab_init_ptr(&self->_handlers);
 }
 
-extern void aparser_dispose(aparser* self)
-{
-        htab_dispose(&self->_handlers);
-}
-
-extern void aparse(aparser* self)
+extern void aparse(aparser* self, arg_handler* handlers, ssize nhandlers, arg_handler* def)
 {
         while (self->_pos < self->_argc)
         {
                 const char* arg = self->_argv[self->_pos++];
-                aparser_cb* handler = NULL;
 
-                hiter res;
-                if (!htab_find(&self->_handlers, STRREF(arg), &res))
+                arg_handler* handler = NULL;
+                for (ssize i = 0; i < nhandlers; i++)
                 {
-                        handler = self->_default;
+                        const char* prefix = handlers[i]._prefix;
+                        if (*prefix && strncmp(arg, prefix, strlen(prefix)) == 0)
+                        {
+                                handler = handlers + i;
+                                break;
+                        }
+                }
+
+                if (!handler)
+                {
+                        handler = def;
                         self->_pos--;
                 }
-                else
-                        handler = hiter_get_ptr(&res);
 
-                if (handler)
-                        handler->_fn(handler, self);
+                handler->_cb(handler->_data, self);
         }
 }
 
@@ -40,21 +48,6 @@ extern int aparser_args_remain(const aparser* self)
 {
         int n = self->_argc - self->_pos;
         return n < 0 ? 0 : n;
-}
-
-extern serrcode aparser_add_handler(aparser* self, const char* arg, aparser_cb* cb)
-{
-        return htab_insert_ptr(&self->_handlers, STRREF(arg), cb);
-}
-
-extern void aparser_add_default_handler(aparser* self, aparser_cb* cb)
-{
-        self->_default = cb;
-}
-
-extern bool aparser_has_handler(const aparser* self, const char* arg)
-{
-        return htab_exists(&self->_handlers, STRREF(arg));
 }
 
 extern const char* aparser_get_string(aparser* self)
@@ -72,9 +65,4 @@ extern serrcode aparser_get_int(aparser* self, int* pint)
 
         *pint = atoi(num);
         return S_NO_ERROR;
-}
-
-extern void aparser_cb_init(aparser_cb* self, void* callback)
-{
-        self->_fn = callback;
 }

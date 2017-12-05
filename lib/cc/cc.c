@@ -17,7 +17,7 @@ static void* scc_cc_on_out_of_memory(base_allocator* alloc, ssize bytes, ssize a
         return NULL;
 }
 
-static allocator* scc_cc_alloc(scc_cc* self)
+extern allocator* scc_cc_alloc(scc_cc* self)
 {
         return base_allocator_base(&self->alloc);
 }
@@ -35,26 +35,24 @@ static void scc_cc_deallocate(scc_cc* self, void* block)
 extern void scc_cc_init(scc_cc* self, FILE* log, jmp_buf on_fatal_error)
 {
         base_allocator_init(&self->alloc, (void*)&scc_cc_on_out_of_memory, on_fatal_error);
-
         allocator* alloc = scc_cc_alloc(self);
-        self->log = log;
-        self->out = NULL;
-
-        tree_init_ex(&self->tree, &self->target, alloc);
-        cinit_ex(&self->c, &self->tree, on_fatal_error, alloc);
-        csource_manager_init(&self->source_manager, &self->c);
-        cerror_manager_init(&self->error_manager, &self->source_manager, log);
-        ssa_init_ex(&self->ssa, &self->tree, on_fatal_error, alloc);
-        dseq_init_ex_ptr(&self->sources, alloc);
-
         scc_cc_opts* o = &self->opts;
         o->target = SCTK_32;
         o->mode = SCRM_DEFAULT;
         o->output = SCOK_C;
-
         o->print.flags = SCPF_NONE;
         o->print.double_precision = 4;
         o->print.float_precision = 4;
+        self->out = NULL;
+        self->log = log;
+        dseq_init_ex_ptr(&self->sources, alloc);
+        dseq_init_ex_ptr(&self->libs, alloc);
+        flookup_init_ex(&self->source_lookup, alloc);
+        flookup_init_ex(&self->lib_lookup, alloc);
+        tree_init_target_info(&self->target, TTARGET_X32);
+        tree_init_ex(&self->tree, &self->target, alloc);
+        cinit_ex(&self->c, &self->tree, on_fatal_error, alloc);
+        ssa_init_ex(&self->ssa, &self->tree, on_fatal_error, alloc);
 }
 
 static char* scc_cc_copy_string(scc_cc* self, const char* string)
@@ -66,17 +64,19 @@ static char* scc_cc_copy_string(scc_cc* self, const char* string)
 
 extern void scc_cc_dispose(scc_cc* self)
 {
-        dseq_dispose(&self->sources);
         ssa_dispose(&self->ssa);
-        csource_manager_dispose(&self->source_manager);
         cdispose(&self->c);
         tree_dispose(&self->tree);
+        flookup_dispose(&self->lib_lookup);
+        flookup_dispose(&self->source_lookup);
+        dseq_dispose(&self->libs);
+        dseq_dispose(&self->sources);
         base_allocator_dispose(&self->alloc);
 }
 
 extern void scc_cc_error(scc_cc* self, const char* format, ...)
 {
-        fprintf(self->log, "error: ");
+        fprintf(self->log, "scc: error: ");
         va_list args;
         va_start(args, format);
         vfprintf(self->log, format, args);
@@ -126,65 +126,67 @@ extern void scc_cc_set_output(scc_cc* self, FILE* out)
 extern void scc_cc_set_log(scc_cc* self, FILE* log)
 {
         self->log = log;
-        cerror_manager_set_output(&self->error_manager, log);
 }
 
-extern serrcode scc_cc_add_input_file(scc_cc* self, const char* file)
+extern serrcode scc_cc_add_source_file(scc_cc* self, const char* file)
 {
         S_ASSERT(file);
-        csource* s = csource_find(&self->source_manager, file);
-        if (!s)
+        file_entry* f = file_get(&self->source_lookup, file);
+        if (!f)
         {
                 scc_cc_file_doesnt_exist(self, file);
                 return S_ERROR;
         }
-
-        dseq_append_ptr(&self->sources, s);
+        dseq_append_ptr(&self->sources, f);
         return S_NO_ERROR;
 }
 
-extern serrcode scc_cc_emulate_file(scc_cc* self, const char* filename, const char* content)
+extern serrcode scc_cc_emulate_source_file(
+        scc_cc* self, const char* filename, const char* content)
 {
-        csource* s = csource_emulate(&self->source_manager, filename, content);
-        if (!s)
+        file_entry* f = file_emulate(&self->source_lookup, filename, content);
+        if (!f)
                 return S_ERROR;
 
-        dseq_append_ptr(&self->sources, s);
+        dseq_append_ptr(&self->sources, f);
         return S_NO_ERROR;
 }
 
-extern void scc_cc_add_lookup_dir(scc_cc* self, const char* dir)
+extern void scc_cc_add_source_dir(scc_cc* self, const char* dir)
 {
-        csource_manager_add_lookup(&self->source_manager, dir);
+        flookup_add(&self->source_lookup, dir);
 }
 
 static void scc_cc_set_printer_opts(scc_cc* self, cprinter_opts* o)
 {
         scc_cc_print_opts* so = &self->opts.print;
-        o->double_precision = so->double_precision;
-        o->float_precision = so->float_precision;
         o->force_brackets = so->flags & SCPF_FORCE_BRACKETS;
-        o->print_eval_result = so->flags & SCPF_EVAL_RESULT;
-        o->print_expr_type = so->flags & SCPF_EXPR_TYPE;
-        o->print_expr_value = so->flags & SCPF_EXPR_VALUE;
-        o->print_impl_casts = so->flags & SCPF_IMPL_CASTS;
+        o->print_eval_result = so->flags & SCPF_PRINT_EVAL_RESULT;
+        o->print_expr_type = so->flags & SCPF_PRINT_EXPR_TYPE;
+        o->print_expr_value = so->flags & SCPF_PRINT_EXPR_VALUE;
+        o->print_impl_casts = so->flags & SCPF_PRINT_IMPL_CASTS;
 }
 
 extern serrcode scc_cc_lex(scc_cc* self)
 {
-        csource* source = dseq_first_ptr(&self->sources);
-        S_ASSERT(source);
+        csource_manager sm;
+        csource_manager_init(&sm, &self->source_lookup, &self->c);
+
+        cerror_manager em;
+        cerror_manager_init(&em, &sm, self->log);
 
         serrcode result = S_ERROR;
         clexer lexer;
-        clexer_init(&lexer, &self->source_manager, &self->error_manager, &self->c);
+        clexer_init(&lexer, &sm, &em, &self->c);
         clexer_init_reswords(&lexer);
-
-        if (S_FAILED(clexer_enter_source_file(&lexer, source)))
-                goto cleanup;
 
         dseq tokens;
         dseq_init_ex_ptr(&tokens, scc_cc_alloc(self));
+
+        file_entry* file = dseq_first_ptr(&self->sources);
+        csource* source = csource_get_from_file(&sm, file);
+        if (S_FAILED(clexer_enter_source_file(&lexer, source)))
+                goto cleanup;
 
         while (1)
         {
@@ -196,7 +198,7 @@ extern serrcode scc_cc_lex(scc_cc* self)
                 if (ctoken_is(t, CTK_EOF))
                         break;
         }
-        
+
         result = S_NO_ERROR;
         if (!self->out)
                 goto cleanup;
@@ -204,7 +206,7 @@ extern serrcode scc_cc_lex(scc_cc* self)
         fwrite_cb write;
         fwrite_cb_init(&write, self->out);
         cprinter printer;
-        cprinter_init(&printer, fwrite_cb_base(&write), &self->c, &self->source_manager);
+        cprinter_init(&printer, fwrite_cb_base(&write), &self->c, &sm);
         scc_cc_set_printer_opts(self, &printer.opts);
         cprint_tokens(&printer, &tokens);
         cprinter_dispose(&printer);
@@ -212,26 +214,27 @@ extern serrcode scc_cc_lex(scc_cc* self)
 cleanup:
         dseq_dispose(&tokens);
         clexer_dispose(&lexer);
-        return S_ERROR;
+        csource_manager_dispose(&sm);
+        return result;
 }
 
-static tree_module* scc_cc_parse_source(scc_cc* self, csource* source)
+static tree_module* scc_cc_parse_source(scc_cc* self,
+        csource_manager* source_manager, csource* source, cerror_manager* error_manager)
 {
         S_ASSERT(source);
-
         tree_module* m = tree_new_module(&self->tree);
         tree_module* result = NULL;
 
         clexer lexer;
-        clexer_init(&lexer, &self->source_manager, &self->error_manager, &self->c);
+        clexer_init(&lexer, source_manager, error_manager, &self->c);
         clexer_init_reswords(&lexer);
 
         csema sema;
-        csema_init(&sema, &self->c, m, &self->error_manager);
+        csema_init(&sema, &self->c, m, error_manager);
 
         jmp_buf on_parser_error;
         cparser parser;
-        cparser_init(&parser, &lexer, &sema, &self->error_manager);
+        cparser_init(&parser, &lexer, &sema, error_manager);
 
         if (S_FAILED(clexer_enter_source_file(&lexer, source)))
                 goto cleanup;
@@ -251,10 +254,17 @@ cleanup:
 
 extern serrcode scc_cc_parse(scc_cc* self)
 {
-        csource* source = dseq_first_ptr(&self->sources);
+        csource_manager sm;
+        csource_manager_init(&sm, &self->source_lookup, &self->c);
+
+        cerror_manager em;
+        cerror_manager_init(&em, &sm, self->log);
+
+        file_entry* file = dseq_first_ptr(&self->sources);
+        csource* source = csource_get_from_file(&sm, file);
         S_ASSERT(source);
 
-        tree_module* m = scc_cc_parse_source(self, source);
+        tree_module* m = scc_cc_parse_source(self, &sm, source, &em);
         if (!m)
                 return S_ERROR;
 
@@ -264,7 +274,7 @@ extern serrcode scc_cc_parse(scc_cc* self)
         fwrite_cb write;
         fwrite_cb_init(&write, self->out);
         cprinter printer;
-        cprinter_init(&printer, fwrite_cb_base(&write), &self->c, &self->source_manager);
+        cprinter_init(&printer, fwrite_cb_base(&write), &self->c, &sm);
         scc_cc_set_printer_opts(self, &printer.opts);
         cprint_module(&printer, m);
         cprinter_dispose(&printer);
@@ -272,12 +282,19 @@ extern serrcode scc_cc_parse(scc_cc* self)
         return S_NO_ERROR;
 }
 
-extern serrcode scc_cc_gen(scc_cc* self)
+extern serrcode scc_cc_gen_asm(scc_cc* self)
 {
-        csource* source = dseq_first_ptr(&self->sources);
+        csource_manager source_manager;
+        csource_manager_init(&source_manager, &self->source_lookup, &self->c);
+
+        cerror_manager error_manager;
+        cerror_manager_init(&error_manager, &source_manager, self->log);
+
+        file_entry* file = dseq_first_ptr(&self->sources);
+        csource* source = csource_get_from_file(&source_manager, file);
         S_ASSERT(source);
 
-        tree_module* m = scc_cc_parse_source(self, source);
+        tree_module* m = scc_cc_parse_source(self, &source_manager, source, &error_manager);
         if (!m)
                 return S_ERROR;
 
@@ -302,6 +319,11 @@ extern serrcode scc_cc_gen(scc_cc* self)
         return S_NO_ERROR;
 }
 
+extern serrcode scc_cc_gen(scc_cc* self)
+{
+        return S_ERROR;
+}
+
 extern serrcode scc_cc_run(scc_cc* self)
 {
         tree_init_target_info(&self->target,
@@ -320,6 +342,8 @@ extern serrcode scc_cc_run(scc_cc* self)
                 return scc_cc_lex(self);
         else if (m == SCRM_SYNTAX_ONLY)
                 return scc_cc_parse(self);
+        else if (m == SCRM_ASM_ONLY)
+                return scc_cc_gen_asm(self);
 
         return S_ERROR;
 }
