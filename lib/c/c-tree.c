@@ -16,41 +16,38 @@ extern void cinit_ex(ccontext* self,
 
         base_allocator_init_ex(&self->base_alloc, NULL, on_bad_alloc, alloc);
         bump_ptr_allocator_init_ex(&self->node_alloc, cget_alloc(self));
-        list_init(&self->opened_files);
+        list_init(&self->sources);
 }
 
 extern void cdispose(ccontext* self)
 {
-        LIST_FOREACH(&self->opened_files, cfile*, file)
-                fclose(file->entity);
+        while (!list_empty(&self->sources))
+                csource_delete(self, (csource*)list_pop_back(&self->sources));
 
         bump_ptr_allocator_dispose(&self->node_alloc);
         base_allocator_dispose(&self->base_alloc);
 }
 
-extern cfile* cfopen(ccontext* self, const char* filename, const char* mode)
+extern csource* csource_new(ccontext* context, file_entry* entry)
 {
-        cfile* f = base_allocate(&self->base_alloc, sizeof(*f));
-        if (!f)
-                return NULL;
-
-        if (!(f->entity = fopen(filename, mode)))
-        {
-                base_deallocate(&self->base_alloc, f);
-                return NULL;
-        }
-
-        list_push_back(&self->opened_files, &f->node);
-        return f;
+        csource* s = allocate(cget_alloc(context), sizeof(*s));
+        s->_begin = TREE_INVALID_LOC;
+        s->_end = TREE_INVALID_LOC;
+        s->_file = entry;
+        list_node_init(&s->_node);
+        dseq_init_ex_u32(&s->_lines, cget_alloc(context));
+        list_push_back(&context->sources, &s->_node);
+        return s;
 }
 
-extern void cfclose(ccontext* self, cfile* file)
+extern void csource_delete(ccontext* context, csource* source)
 {
-        if (!file)
+        if (!source)
                 return;
 
-        list_node_remove(&file->node);
-        fclose(file->entity);
+        file_close(source->_file);
+        list_node_remove(&source->_node);
+        deallocate(cget_alloc(context), source);
 }
 
 extern hval ctree_id_to_key(const ccontext* self, tree_id id, bool is_tag)

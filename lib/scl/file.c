@@ -236,3 +236,219 @@ extern void fwrite_cb_init(fwrite_cb* self, FILE* out)
         self->_out = out;
         write_cb_init(&self->_base, &fwrite_cb_write);
 }
+
+static file_entry* file_entry_new(allocator* alloc, const char* path, const char* content)
+{
+        file_entry* entry = NULL;
+        char* path_copy = NULL;
+        char* content_copy = NULL;
+
+        if (!(entry = allocate(alloc, sizeof(*entry))))
+                goto error;
+        if (!(path_copy = allocate(alloc, strlen(path) + 1)))
+                goto error;
+        if (content && !(content_copy = allocate(alloc, strlen(content) + 1)))
+                goto error;
+
+        strcpy(path_copy, path);
+        entry->_path = path_copy;
+        entry->_content = content_copy;
+        entry->_file = NULL;
+        entry->_opened = false;
+        entry->_emulated = false;
+
+        if (content)
+        {
+                strcpy(content_copy, content);
+                entry->_emulated = true;
+        }
+
+        return entry;
+
+error:
+        deallocate(alloc, entry);
+        deallocate(alloc, path_copy);
+        deallocate(alloc, content_copy);
+        return NULL;
+}
+
+static void file_entry_delete(allocator* alloc, file_entry* entry)
+{
+        file_close(entry);
+        deallocate(alloc, entry->_path);
+        deallocate(alloc, entry->_content);
+        deallocate(alloc, entry);
+}
+
+extern readbuf* file_open(file_entry* entry)
+{
+        file_close(entry);
+
+        read_cb* read;
+        if (file_emulated(entry))
+        {
+                sread_cb_init(&entry->_sread, entry->_content);
+                read = sread_cb_base(&entry->_sread);
+        }
+        else
+        {
+                if (!(entry->_file = fopen(entry->_path, "r")))
+                        return NULL;
+
+                fread_cb_init(&entry->_fread, entry->_file);
+                read = fread_cb_base(&entry->_fread);
+        }
+
+        entry->_opened = true;
+        readbuf_init(&entry->_rb, read);
+        return &entry->_rb;
+}
+
+extern void file_close(file_entry* entry)
+{
+        if (!entry)
+                return;
+
+        entry->_opened = false;
+        if (!file_emulated(entry) && entry->_file)
+                fclose(entry->_file);
+}
+
+extern bool file_opened(const file_entry* entry)
+{
+        return entry->_opened;
+}
+
+extern bool file_emulated(const file_entry* entry)
+{
+        return entry->_emulated;
+}
+
+extern const char* file_get_path(const file_entry* entry)
+{
+        return entry->_path;
+}
+
+extern const char* file_get_content(const file_entry* entry)
+{
+        return entry->_content;
+}
+
+extern ssize file_size(const file_entry* entry)
+{
+        return file_emulated(entry)
+                ? strlen(file_get_content(entry))
+                : path_get_size(file_get_path(entry));
+}
+
+static file_entry* flookup_new_entry(file_lookup* self, const char* path, const char* content)
+{
+        file_entry* entry = file_entry_new(self->_alloc, path, content);
+        if (!entry)
+                return NULL;
+
+        if (S_FAILED(htab_insert_ptr(&self->_lookup, STRREF(path), entry)))
+        {
+                file_entry_delete(self->_alloc, entry);
+                return NULL;
+        }
+
+        return entry;
+}
+
+extern void flookup_init(file_lookup* self)
+{
+        flookup_init_ex(self, STDALLOC);
+}
+
+extern void flookup_init_ex(file_lookup* self, allocator* alloc)
+{
+        self->_alloc = alloc;
+        htab_init_ex_ptr(&self->_lookup, alloc);
+        dseq_init_ex_ptr(&self->_dirs, alloc);
+}
+
+extern void flookup_dispose(file_lookup* self)
+{
+        HTAB_FOREACH(&self->_lookup, it)
+                file_entry_delete(self->_alloc, hiter_get_ptr(&it));
+        htab_dispose(&self->_lookup);
+
+        for (void** it = dseq_begin_ptr(&self->_dirs);
+                it != dseq_end_ptr(&self->_dirs); it++)
+        {
+                deallocate(self->_alloc, *it);
+        }
+        dseq_dispose(&self->_dirs);
+}
+
+extern serrcode flookup_add(file_lookup* self, const char* dir)
+{
+        S_ASSERT(dir);
+        char* copy = allocate(self->_alloc, strlen(dir) + 1);
+        if (!copy)
+                return S_ERROR;
+
+        strcpy(copy, dir);
+        return dseq_append_ptr(&self->_dirs, copy);
+}
+
+extern bool file_exists(file_lookup* lookup, const char* path)
+{
+        return file_get(lookup, path) != NULL;
+}
+
+static file_entry* file_get_without_lookup(file_lookup* self, const char* path)
+{
+        char abs[S_MAX_PATH_LEN + 1];
+        if (S_FAILED(path_get_abs(abs, path)))
+                return NULL;
+
+        hiter res;
+        if (htab_find(&self->_lookup, STRREF(abs), &res))
+                return hiter_get_ptr(&res);
+
+        if (!path_is_file(abs))
+                return NULL;
+
+        return flookup_new_entry(self, abs, NULL);
+}
+
+static file_entry* file_get_with_lookup(file_lookup* self, const char* path)
+{
+        char abs[S_MAX_PATH_LEN + 1];
+        for (ssize i = 0; i < dseq_size(&self->_dirs); i++)
+        {
+                if (S_FAILED(path_get_abs(abs, dseq_get_ptr(&self->_dirs, i))))
+                        continue;
+                if (S_FAILED(path_join(abs, path)))
+                        continue;
+                path_fix_delimeter(abs);
+
+                hiter res;
+                if (htab_find(&self->_lookup, STRREF(abs), &res))
+                        return hiter_get_ptr(&res);
+
+                if (path_is_file(abs))
+                        return flookup_new_entry(self, abs, NULL);
+        }
+        return NULL;
+}
+
+extern file_entry* file_get(file_lookup* lookup, const char* path)
+{
+        file_entry* entry = file_get_without_lookup(lookup, path);
+        return entry ? entry : file_get_with_lookup(lookup, path);
+}
+
+extern file_entry* file_emulate(
+        file_lookup* lookup, const char* path, const char* content)
+{
+        char abs[S_MAX_PATH_LEN + 1];
+        if (S_FAILED(path_get_cd(abs)))
+                return NULL;
+        if (S_FAILED(path_join(abs, path)))
+                return NULL;
+
+        return flookup_new_entry(lookup, abs, content);
+}

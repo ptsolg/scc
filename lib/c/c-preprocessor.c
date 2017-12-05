@@ -134,20 +134,21 @@ extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source)
         if (!source)
                 return S_ERROR;
         
-        if (!(self->buf = csource_open(source, self->context)))
+        if (!(self->buf = csource_open(source)))
         {
                 cerror(self->error_manager, CES_ERROR, 0,
                         "cannot open source file %s", csource_get_name(source));
                 return S_ERROR;
         }
+
         // save first line location
-        if (S_FAILED(csource_save_line_loc(source, csource_loc_begin(source))))
+        if (S_FAILED(csource_save_line_loc(source, csource_get_loc_begin(source))))
                 return S_ERROR;
 
         // fill buffer
         cpplexer_readc(self);
         cpplexer_readc(self);
-        self->loc = csource_loc_begin(source);
+        self->loc = csource_get_loc_begin(source);
         self->source = source;
         return S_NO_ERROR;
 }
@@ -609,7 +610,7 @@ extern void cpproc_dispose(cpproc* self)
 {
         while (self->state != self->files - 1)
         {
-                csource_close(self->state->source, self->context);
+                csource_close(self->state->source);
                 self->state--;
         }
 }
@@ -647,7 +648,7 @@ extern serrcode cpproc_enter_source_file(cpproc* self, csource* source)
 extern void cpproc_exit_source_file(cpproc* self)
 {
         S_ASSERT(self->state != self->files);
-        csource_close(self->state->source, self->context);
+        csource_close(self->state->source);
         self->state--;
 }
 

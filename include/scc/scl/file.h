@@ -12,6 +12,7 @@ extern "C" {
 #include "common.h"
 #include "htab.h"
 #include "read-write.h"
+#include "dseq-ext.h"
 #include <stdio.h>
 
 extern serrcode path_get_cd(char* path);
@@ -55,6 +56,47 @@ static inline write_cb* fwrite_cb_base(fwrite_cb* self)
 {
         return &self->_base;
 }
+
+typedef struct _file_entry
+{
+        char* _path;
+        bool _opened;
+        bool _emulated;
+        char* _content;
+        readbuf _rb;
+        FILE* _file;
+        union
+        {
+                fread_cb _fread;
+                sread_cb _sread;
+        };
+} file_entry;
+
+extern readbuf* file_open(file_entry* entry);
+extern void file_close(file_entry* entry);
+extern bool file_opened(const file_entry* entry);
+extern bool file_emulated(const file_entry* entry);
+extern const char* file_get_path(const file_entry* entry);
+extern const char* file_get_content(const file_entry* entry);
+extern ssize file_size(const file_entry* entry);
+
+typedef struct _file_lookup
+{
+        htab _lookup;
+        dseq _dirs;
+        allocator* _alloc;
+} file_lookup;
+
+extern void flookup_init(file_lookup* self);
+extern void flookup_init_ex(file_lookup* self, allocator* alloc);
+extern void flookup_dispose(file_lookup* self);
+extern serrcode flookup_add(file_lookup* self, const char* dir);
+
+extern bool file_exists(file_lookup* lookup, const char* path);
+extern file_entry* file_get(file_lookup* lookup, const char* path);
+extern file_entry* file_emulate(
+        file_lookup* lookup, const char* path, const char* content);
+
 
 #ifdef __cplusplus
 }

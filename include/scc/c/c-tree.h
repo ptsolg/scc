@@ -13,17 +13,14 @@ extern "C" {
 #include <stdio.h>
 #include <setjmp.h>
 
-typedef struct _cfile
-{
-        list_node node;
-        FILE* entity;
-} cfile;
+typedef struct _csource csource;
+typedef struct _file_entry file_entry;
 
 typedef struct _ccontext
 {
         base_allocator base_alloc;
         bump_ptr_allocator node_alloc;
-        list_head opened_files;
+        list_head sources;
         bool use_tags;
         tree_context* tree;
 } ccontext;
@@ -34,8 +31,8 @@ extern void cinit_ex(ccontext* self,
 
 extern void cdispose(ccontext* self);
 
-extern cfile* cfopen(ccontext* self, const char* filename, const char* mode);
-extern void cfclose(ccontext* self, cfile* file);
+extern csource* csource_new(ccontext* context, file_entry* entry);
+extern void csource_delete(ccontext* context, csource* source);
 
 extern hval ctree_id_to_key(const ccontext* self, tree_id id, bool is_tag);
 extern hval cget_decl_key(const ccontext* self, const tree_decl* decl);

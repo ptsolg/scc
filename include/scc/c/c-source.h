@@ -14,25 +14,14 @@ extern "C" {
 
 typedef struct _csource_manager csource_manager;
 typedef struct _ccontext ccontext;
-typedef struct _cfile cfile;
 
 typedef struct _csource
 {
-        char* _path;
+        list_node _node;
+        file_entry* _file;
         tree_location _begin;
         tree_location _end;
-        bool _opened;
         dseq _lines;
-        bool _emulated;
-        char* _content;
-        cfile* _file;
-        readbuf _rb;
-
-        union
-        {
-                fread_cb _fread;
-                sread_cb _sread;
-        };
 } csource;
 
 extern bool csource_has(const csource* self, tree_location loc);
@@ -42,55 +31,29 @@ extern int csource_get_line(const csource* self, tree_location loc);
 extern int csource_get_col(const csource* self, tree_location loc);
 // assumes that loc is beginning of a line
 extern serrcode csource_save_line_loc(csource* self, tree_location loc);
-                
-extern readbuf* csource_open(csource* self, ccontext* context);
-extern void csource_close(csource* self, ccontext* context);
+extern const char* csource_get_name(const csource* self);
+extern tree_location csource_get_loc_begin(const csource* self);
+extern tree_location csource_get_loc_end(const csource* self);
 
-static inline tree_location csource_loc_begin(const csource* self)
-{
-        return self->_begin;
-}
-
-static inline tree_location csource_loc_end(const csource* self)
-{
-        return self->_end;
-}
-
-static inline bool csource_opened(const csource* self)
-{
-        return self->_opened;
-}
-
-static inline const char* csource_get_path(const csource* self)
-{
-        return self->_path;
-}
-
-static inline const char* csource_get_name(const csource* self)
-{
-        return path_get_cfile(csource_get_path(self));
-}
-
-static inline bool csource_is_emulated(const csource* self)
-{
-        return self->_emulated;
-}
+extern readbuf* csource_open(csource* self);
+extern void csource_close(csource* self);
 
 typedef struct _csource_manager
 {
-        htab source_lookup;
+        file_lookup* lookup;
+        htab file_to_source;
         dseq sources;
-        dseq lookup;
         ccontext* context;
 } csource_manager;
 
-extern void csource_manager_init(csource_manager* self, ccontext* context);
+extern void csource_manager_init(
+        csource_manager* self, file_lookup* lookup, ccontext* context);
 extern void csource_manager_dispose(csource_manager* self);
-extern void csource_manager_add_lookup(csource_manager* self, const char* path);
 
 extern bool csource_exists(csource_manager* self, const char* path);
+extern csource* csource_get_from_file(csource_manager* self, file_entry* file);
 extern csource* csource_find(csource_manager* self, const char* path);
-extern csource* csource_emulate(csource_manager* self, const char* name, const char* content);
+extern csource* csource_emulate(csource_manager* self, const char* path, const char* content);
 
 typedef struct _clocation
 {
