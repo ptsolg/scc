@@ -21,5 +21,6 @@ add_scc_target_sources(c
 	c-info.h
 	c-preprocessor.h
 	c-printer.h
+	c-env.h
 	c-token-kind.inc
 )

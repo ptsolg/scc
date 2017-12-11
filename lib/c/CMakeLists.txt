@@ -18,6 +18,7 @@ add_scc_lib(c
 	c-info.c
 	c-preprocessor.c
 	c-printer.c
+	c-env.c
 
 	DEPENDS
 	tree

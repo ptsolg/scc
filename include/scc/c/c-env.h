@@ -9,25 +9,39 @@
 extern "C" {
 #endif
 
-#include "c-tree.h"
-#include "c-source.h"
-#include "c-error.h"
+#include "scc/c/c-lexer.h"
+#include "scc/c/c-error.h"
+#include "scc/c/c-sema.h"
+#include "scc/c/c-parser.h"
+
+extern serrcode clex_source(
+        ccontext* context,
+        file_lookup* source_lookup,
+        file_entry* source,
+        FILE* error,
+        dseq* result);
+
+extern tree_module* cparse_source(
+        ccontext* context,
+        file_lookup* source_lookup,
+        file_entry* source,
+        FILE* error);
 
 typedef struct _cenv
 {
-        ccontext context;
         csource_manager source_manager;
         cerror_manager error_manager;
-        tree_target_info target;
+        clexer lexer;
+        csema sema;
+        cparser parser;
+        ccontext* context;
 } cenv;
 
-extern void cenv_init(cenv* self, tree_context* tree, FILE* output, jmp_buf* fatal);
+extern void cenv_init(cenv* self, ccontext* context, file_lookup* source_lookup, FILE* err);
 extern void cenv_dispose(cenv* self);
-extern serrcode cenv_add_lookup(cenv* self, const char* dir);
-extern tree_module* cparse_file(cenv* self, const char* file);
-extern tree_module* cparse_string(cenv* self, const char* strt);
-extern serrcode clex_file(cenv* self, const char* file, dseq* result);
-extern serrcode clex_string(cenv* self, const char* str, dseq* result);
+
+extern serrcode cenv_lex_source(cenv* self, file_entry* source, dseq* result);
+extern tree_module* cenv_parse_source(cenv* self, file_entry* source);
 
 #ifdef __cplusplus
 }
