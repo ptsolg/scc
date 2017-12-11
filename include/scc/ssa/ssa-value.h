@@ -196,7 +196,6 @@ static inline tree_type* ssa_get_value_type(const ssa_value* self)
         return _ssa_get_typed_value_cbase(self)->_type;
 }
 
-
 static inline void ssa_set_value_type(ssa_value* self, tree_type* type)
 {
         _ssa_get_typed_value_base(self)->_type = type;
