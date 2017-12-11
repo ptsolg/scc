@@ -30,6 +30,7 @@ extern ssize path_get_size(const char* path);
 extern bool path_is_abs(const char* path);
 extern serrcode path_get_abs(char* abs, const char* loc);
 extern void path_fix_delimeter(char* path);
+extern serrcode path_change_ext(char* path, char* ext);
 
 typedef struct _fread_cb
 {

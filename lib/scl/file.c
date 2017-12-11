@@ -194,6 +194,26 @@ extern void path_fix_delimeter(char* path)
         }
 }
 
+extern serrcode path_change_ext(char* path, char* ext)
+{
+        path_fix_delimeter(path);
+        char* end = sstrend(path);
+        char* pos = end;
+        while (pos != path && *pos != '.' && *pos != S_PATH_DELIMETER)
+                pos--;
+
+        if (pos == path || *pos == S_PATH_DELIMETER)
+                pos = end;
+
+        ssize rem = S_MAX_PATH_LEN - strlen(path);
+        if (strlen(ext) + 1 >= rem)
+                return S_ERROR;
+
+        *pos++ = '.';
+        strcpy(pos, ext);
+        return S_NO_ERROR;
+}
+
 extern serrcode path_get_abs(char* abs, const char* loc)
 {
         if (path_is_abs(loc))
