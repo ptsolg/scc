@@ -86,7 +86,7 @@ static bool ssaize_else_stmt(ssaizer* self, const tree_stmt* stmt, ssa_block* ex
         if (!ssaize_stmt(self, stmt))
                 return false;
 
-        return ssaizer_build_jmp(self, exit);
+        return ssaizer_maybe_build_jmp(self, exit);
 }
 
 static bool _ssaize_if_stmt(ssaizer* self, const tree_stmt* stmt, ssa_block* exit)
