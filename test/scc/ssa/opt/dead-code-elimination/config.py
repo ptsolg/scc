@@ -1,0 +1,1 @@
+cmds = ['%test', '-S', '-emit-ssa', '-m32', '-fcf', '-fdce', '-o', '%output']

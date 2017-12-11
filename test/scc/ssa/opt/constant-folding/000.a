@@ -1,0 +1,5 @@
+; Definition for test
+@0:
+    $1 = alloca 4
+    store 4294967295, $1
+    ret
