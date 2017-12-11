@@ -21,7 +21,7 @@ extern void ssa_module_add_func_def(ssa_module* self, ssa_function* func)
         list_push_back(&self->_defs, &func->_node);
 }
 
-extern ssa_function* ssa_module_lookup(ssa_module* self, const tree_decl* func)
+extern ssa_function* ssa_module_lookup(const ssa_module* self, const tree_decl* func)
 {
         hiter res;
         return htab_find(&self->_lookup, tree_get_decl_name(func), &res)

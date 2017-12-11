@@ -24,7 +24,7 @@ typedef struct _ssa_module
 extern ssa_module* ssa_new_module(ssa_context* context);
 
 extern void ssa_module_add_func_def(ssa_module* self, ssa_function* func);
-extern ssa_function* ssa_module_lookup(ssa_module* self, const tree_decl* func);
+extern ssa_function* ssa_module_lookup(const ssa_module* self, const tree_decl* func);
 
 static inline ssa_function* ssa_get_module_defs_begin(const ssa_module* self)
 {
