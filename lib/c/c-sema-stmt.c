@@ -24,8 +24,7 @@ extern tree_stmt* csema_new_case_stmt(
         csema* self,
         tree_location kw_loc,
         tree_location colon_loc,
-        tree_expr* expr,
-        tree_stmt* body)
+        tree_expr* expr)
 {
         if (!csema_in_switch_stmt(self))
         {
@@ -52,9 +51,18 @@ extern tree_stmt* csema_new_case_stmt(
                 tree_get_expr_type(tree_get_switch_expr(switch_)));
 
         tree_stmt* case_stmt = tree_new_case_stmt(self->context,
-                tree_init_xloc(kw_loc, colon_loc), expr, &value, body);
-        csema_add_switch_stmt_case_label(self, case_stmt);
+                tree_init_xloc(kw_loc, colon_loc), expr, &value, NULL);
+        if (!csema_switch_stmt_register_case_label(self, case_stmt))
+        {
+                cerror(self->error_manager, CES_ERROR, kw_loc, "duplicate case value");
+                return NULL;
+        }
         return case_stmt;
+}
+
+extern void csema_set_case_stmt_body(csema* self, tree_stmt* stmt, tree_stmt* body)
+{
+        tree_set_case_body(stmt, body);
 }
 
 extern tree_stmt* csema_new_default_stmt(
@@ -148,67 +156,14 @@ extern tree_stmt* csema_start_switch_stmt(
         return s;
 }
 
-static cmp_result cmp_case_labels(void* ex_data, const void* a, const void* b)
-{
-        const tree_stmt** lhs = a;
-        const tree_stmt** rhs = b;
-
-        suint64 lval = int_get_u64(tree_get_case_cvalue(*lhs));
-        suint64 rval = int_get_u64(tree_get_case_cvalue(*rhs));
-
-        if (lval == rval)
-                return CR_EQ;
-
-        return lval < rval ? CR_LE : CR_GR;
-}
-
-static bool cseme_check_case_stmt_duplication(csema* self, dseq* stmts)
-{
-        if (dseq_size(stmts) < 2)
-                return true;
-
-        tree_stmt** begin = (tree_stmt**)dseq_begin_ptr(stmts);
-        tree_stmt** end = (tree_stmt**)dseq_end_ptr(stmts);
-        ssort(begin, end - begin, sizeof(*begin), &cmp_case_labels, NULL);
-
-        for (tree_stmt** it = begin; it + 1 != end; it++)
-        {
-                suint64 c = int_get_u64(tree_get_case_cvalue(*it));
-                tree_xlocation loc = tree_get_stmt_loc(*it);
-
-                tree_stmt** next = it + 1;
-                bool duplication = false;
-                while (next != end && c == int_get_u64(tree_get_case_cvalue(*next)))
-                {
-                        duplication = true;
-                        tree_xlocation next_loc = tree_get_stmt_loc(*next);
-                        if (next_loc > loc)
-                                loc = next_loc;
-                        next++;
-                }
-
-                if (!duplication)
-                        continue;
-
-                cerror(self->error_manager, CES_ERROR, tree_get_xloc_begin(loc),
-                        "duplicate case value");
-                return false;
-        }
-        return true;
-}
-
 extern tree_stmt* csema_finish_switch_stmt(csema* self, tree_stmt* switch_, tree_stmt* body)
 {
         if (!body)
                 return NULL;
 
         tree_set_switch_body(switch_, body);
-        dseq* case_stmts = &csema_get_switch_stmt_info(self)->case_stmts;
-        tree_stmt* result = cseme_check_case_stmt_duplication(self, case_stmts)
-                ? switch_
-                : NULL;
         csema_pop_switch_stmt_info(self);
-        return result;
+        return switch_;
 }
 
 extern tree_stmt* csema_new_while_stmt(

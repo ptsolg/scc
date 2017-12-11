@@ -15,7 +15,7 @@ extern "C" {
 typedef struct
 {
         tree_stmt* switch_stmt;
-        dseq case_stmts;
+        htab used_values;
         bool has_default;
 } cswitch_stmt_info;
 
@@ -35,14 +35,10 @@ typedef struct _csema
         tree_target_info* target;
 } csema;
 
-extern void csema_init(
-        csema* self,
-        ccontext* context,
-        tree_module* module,
-        cerror_manager* error_manager);
-
+extern void csema_init(csema* self, ccontext* context, cerror_manager* error_manager);
 extern void csema_dispose(csema* self);
 
+extern void csema_enter_module(csema* self, tree_module* module);
 extern void csema_enter_scope(csema* self, tree_scope* scope);
 extern void csema_exit_scope(csema* self);
 extern void csema_enter_decl_scope(csema* self, tree_decl_scope* scope);
@@ -57,11 +53,11 @@ extern void csema_push_scope(csema* self);
 
 extern void csema_push_switch_stmt_info(csema* self, tree_stmt* switch_stmt);
 extern void csema_pop_switch_stmt_info(csema* self);
-extern void csema_add_switch_stmt_case_label(csema* self, tree_stmt* label);
 extern void csema_set_switch_stmt_has_default(csema* self);
 extern cswitch_stmt_info* csema_get_switch_stmt_info(const csema* self);
 extern bool csema_in_switch_stmt(const csema* self);
 extern bool csema_switch_stmt_has_default(const csema* self);
+extern bool csema_switch_stmt_register_case_label(const csema* self, tree_stmt* label);
 
 extern tree_decl* csema_get_any_decl(
         const csema* self,

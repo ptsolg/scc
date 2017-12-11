@@ -72,11 +72,16 @@ extern tree_stmt* cparse_case_stmt(cparser* self, cstmt_context context)
         if (!cparser_require(self, CTK_COLON))
                 return NULL;
 
+        tree_stmt* case_stmt = csema_new_case_stmt(self->sema, kw_loc, colon_loc, value);
+        if (!case_stmt)
+                return NULL;
+
         tree_stmt* body = _cparse_stmt(self, context);
         if (!body)
                 return NULL;
 
-        return csema_new_case_stmt(self->sema, kw_loc, colon_loc, value, body);
+        csema_set_case_stmt_body(self->sema, case_stmt, body);
+        return case_stmt;
 }
 
 extern tree_stmt* cparse_default_stmt(cparser* self, cstmt_context context)

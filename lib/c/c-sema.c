@@ -4,21 +4,17 @@
 
 DSEQ_GEN(cssi, cswitch_stmt_info);
 
-extern void csema_init(
-        csema* self,
-        ccontext* context,
-        tree_module* module,
-        cerror_manager* error_manager)
+extern void csema_init(csema* self, ccontext* context, cerror_manager* error_manager)
 {
         self->ccontext = context;
         self->context = cget_tree(context);
-        self->module = module;
-        self->labels = NULL;
-        self->globals = tree_get_module_globals(module);
-        self->target = tree_get_module_target(module);
-        self->locals = self->globals;
-        self->scope = NULL;
+        self->module = NULL;
+        self->globals = NULL;
+        self->target = NULL;
+        self->locals = NULL;
         self->function = NULL;
+        self->labels = NULL;
+        self->scope = NULL;
         self->error_manager = error_manager;
         dseq_init_ex_cssi(&self->switch_stack, cget_alloc(self->ccontext));
 }
@@ -26,6 +22,14 @@ extern void csema_init(
 extern void csema_dispose(csema* self)
 {
         // todo
+}
+
+extern void csema_enter_module(csema* self, tree_module* module)
+{
+        self->module = module;
+        self->globals = tree_get_module_globals(module);
+        self->target = tree_get_module_target(module);
+        self->locals = self->globals;
 }
 
 extern void csema_enter_scope(csema* self, tree_scope* scope)
@@ -82,21 +86,15 @@ extern void csema_push_switch_stmt_info(csema* self, tree_stmt* switch_stmt)
         cswitch_stmt_info* last = csema_get_switch_stmt_info(self);
         last->switch_stmt = switch_stmt;
         last->has_default = false;
-        dseq_init_ex_ptr(&last->case_stmts, cget_alloc(self->ccontext));
+        htab_init_ex_ptr(&last->used_values, cget_alloc(self->ccontext));
 }
 
 extern void csema_pop_switch_stmt_info(csema* self)
 {
         ssize size = dseq_size(&self->switch_stack);
         S_ASSERT(size);
-        dseq_dispose(&csema_get_switch_stmt_info(self)->case_stmts);
+        htab_dispose(&csema_get_switch_stmt_info(self)->used_values);
         dseq_resize(&self->switch_stack, size - 1);
-}
-
-extern void csema_add_switch_stmt_case_label(csema* self, tree_stmt* case_stmt)
-{
-        S_ASSERT(case_stmt);
-        dseq_append_ptr(&csema_get_switch_stmt_info(self)->case_stmts, case_stmt);
 }
 
 extern void csema_set_switch_stmt_has_default(csema* self)
@@ -119,6 +117,27 @@ extern bool csema_in_switch_stmt(const csema* self)
 extern bool csema_switch_stmt_has_default(const csema* self)
 {
         return csema_get_switch_stmt_info(self)->has_default;
+}
+
+extern bool csema_switch_stmt_register_case_label(const csema* self, tree_stmt* label)
+{
+        const int_value* val = tree_get_case_cvalue(label);
+        hval h = (hval)int_get_u32(val);
+
+        hiter res;
+        htab* used = &csema_get_switch_stmt_info(self)->used_values;
+        while (htab_find(used, h, &res))
+        {
+                const tree_stmt* other = hiter_get_ptr(&res);
+                const int_value* other_val = tree_get_case_cvalue(other);
+                if (int_cmp(val, other_val) == CR_EQ)
+                        return false;
+
+                h += s_mix32(h);
+        }
+
+        htab_insert_ptr(used, h, label);
+        return true;
 }
 
 extern void csema_init_dseq_ptr(csema* self, dseq* args)
