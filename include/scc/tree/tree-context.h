@@ -50,7 +50,7 @@ static inline const char* tree_get_id_cstr(const tree_context* self, tree_id id)
 {
         strentry entry;
         return tree_get_id_strentry(self, id, &entry)
-                ? entry.data
+                ? (const char*)entry.data
                 : NULL;
 }
 
