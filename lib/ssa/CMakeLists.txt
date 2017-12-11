@@ -12,7 +12,9 @@ add_scc_lib(ssa
 	ssaize-expr.c
 	ssaize-stmt.c
 	ssaize-decl.c
-
+	ssa-opt.c
+	ssa-pass.c
+	
 	DEPENDS
 	tree
 

@@ -14,4 +14,6 @@ add_scc_target_sources(ssa
 	ssaize-expr.h
 	ssaize-stmt.h
 	ssaize-decl.h
+	ssa-opt.h
+	ssa-pass.h
 )
