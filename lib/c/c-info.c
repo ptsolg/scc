@@ -334,5 +334,8 @@ extern bool ctoken_starts_declarator(const ctoken* self)
 
 extern int cget_type_rank(const tree_type* t)
 {
-        return (int)tree_get_builtin_type_kind(tree_desugar_ctype(t));
+        t = tree_desugar_ctype(t);
+        return tree_declared_type_is(t, TDK_ENUM)
+                ? TBTK_INT32
+                : (int)tree_get_builtin_type_kind(t);
 }

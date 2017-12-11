@@ -99,8 +99,10 @@ extern tree_type* csema_usual_arithmetic_conversion(
         if (tree_types_are_same(lt, rt))
                 return lt;
 
-        tree_builtin_type_kind lk = tree_get_builtin_type_kind(lt);
-        tree_builtin_type_kind rk = tree_get_builtin_type_kind(rt);
+        tree_builtin_type_kind lk = tree_declared_type_is(lt, TDK_ENUM)
+                ? TBTK_INT32 : tree_get_builtin_type_kind(lt);
+        tree_builtin_type_kind rk = tree_declared_type_is(rt, TDK_ENUM)
+                ? TBTK_INT32 : tree_get_builtin_type_kind(rt);
 
         if (cget_type_rank(lt) > cget_type_rank(rt))
         {
