@@ -23,10 +23,10 @@ static ssa_value* ssa_build_instr(ssa_builder* self, ssa_instr* i)
 }
 
 static ssa_value* ssa_build_binop(ssa_builder* self,
-        ssa_binary_instr_kind opcode, ssa_value* lhs, ssa_value* rhs)
+        ssa_binary_instr_kind opcode, tree_type* restype, ssa_value* lhs, ssa_value* rhs)
 {
         ssa_instr* i = ssa_new_binop(self->context,
-                ssa_builder_gen_uid(self), ssa_get_value_type(lhs), opcode, lhs, rhs);
+                ssa_builder_gen_uid(self), restype, opcode, lhs, rhs);
         if (!i)
                 return NULL;
 
@@ -43,7 +43,7 @@ static inline ssa_value* ssa_build_arith_binop(
         S_ASSERT(tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt));
         S_ASSERT(tree_types_are_same(lt, rt));
 
-        return ssa_build_binop(self, opcode, lhs, rhs);
+        return ssa_build_binop(self, opcode, lt, lhs, rhs);
 }
 
 extern ssa_value* ssa_build_mul(ssa_builder* self, ssa_value* lhs, ssa_value* rhs)
@@ -81,7 +81,7 @@ static inline ssa_value* ssa_build_bitwise_binop(
         S_ASSERT(tree_type_is_integer(lt) && tree_type_is_integer(rt));
         S_ASSERT(tree_types_are_same(lt, rt));
 
-        return ssa_build_binop(self, opcode, lhs, rhs);
+        return ssa_build_binop(self, opcode, lt, lhs, rhs);
 }
 
 extern ssa_value* ssa_build_shl(ssa_builder* self, ssa_value* lhs, ssa_value* rhs)
@@ -118,8 +118,8 @@ static inline ssa_value* ssa_build_cmp_binop(
         S_ASSERT(lt && rt);
         S_ASSERT(tree_type_is_scalar(lt) && tree_type_is_scalar(rt));
         S_ASSERT(tree_types_are_same(lt, rt));
-
-        return ssa_build_binop(self, opcode, lhs, rhs);
+        return ssa_build_binop(self, opcode,
+                tree_new_builtin_type(ssa_get_tree(self->context), TBTK_INT32), lhs, rhs);
 }
 
 extern ssa_value* ssa_build_le(ssa_builder* self, ssa_value* lhs, ssa_value* rhs)
