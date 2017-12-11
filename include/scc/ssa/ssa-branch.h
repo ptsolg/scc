@@ -22,7 +22,6 @@ typedef enum
         SBK_SWITCH,
         SBK_RETURN,
         SBK_JUMP,
-
 } ssa_branch_kind;
 
 struct _ssa_branch_base
