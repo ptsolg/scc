@@ -1,5 +1,5 @@
 #include "scc/cc/cc.h"
-#include "scc/scl/arg-parser.h"
+#include "scc/scl/args.h"
 
 static void scc_cc_missing_argument(scc_cc* self, const char* arg)
 {
@@ -20,6 +20,8 @@ typedef enum
         SCAK_fprint_expr_type,
         SCAK_fprint_impl_casts,
         SCAK_fforce_brackets,
+        SCAK_fdce,
+        SCAK_fcf,
         SCAK_emit_ssa,
         SCAK_I,
         SCAK_l,    
@@ -114,6 +116,16 @@ static void scc_cc_fforce_brackets(scc_cc* self, aparser* parser)
         self->opts.print.flags |= SCPF_FORCE_BRACKETS;
 }
 
+static void scc_cc_fdce(scc_cc* self, aparser* parser)
+{
+        self->opts.optimization.eliminate_dead_code = true;
+}
+
+static void scc_cc_fcf(scc_cc* self, aparser* parser)
+{
+        self->opts.optimization.constant_folding = true;
+}
+
 static void scc_cc_emit_ssa(scc_cc* self, aparser* parser)
 {
         self->opts.output = SCOK_SSA;
@@ -176,22 +188,24 @@ extern serrcode scc_cc_parse_opts(scc_cc* self, int argc, const char** argv)
 {
         arg_handler handlers[] = 
         {
-                { "-S", &scc_cc_S, self },
-                { "-o", &scc_cc_o, self },
-                { "-log", &scc_cc_log, self },
-                { "--help", &scc_cc_help, self },
-                { "-fsyntax-only", &scc_cc_fsyntax_only, self },
-                { "-flex-only", &scc_cc_flex_only, self },
-                { "-fprint-eval-result", &scc_cc_fprint_eval_result, self },
-                { "-fprint-expr-value", &scc_cc_fprint_expr_value, self },
-                { "-fprint-expr-type", &scc_cc_fprint_expr_type, self },
-                { "-fprint-impl-casts", &scc_cc_fprint_impl_casts, self },
-                { "-fforce-brackets", &scc_cc_fforce_brackets, self },
-                { "-emit-ssa", &scc_cc_emit_ssa, self },
-                { "-I", &scc_cc_I, self },
-                { "-L", &scc_cc_L, self },
-                { "-m32", &scc_cc_m32, self },
-                { "-m64", &scc_cc_m64, self },           
+                ARG_HANDLER_INIT("-S", &scc_cc_S, self),
+                ARG_HANDLER_INIT("-o", &scc_cc_o, self),
+                ARG_HANDLER_INIT("-log", &scc_cc_log, self),
+                ARG_HANDLER_INIT("--help", &scc_cc_help, self),
+                ARG_HANDLER_INIT("-fsyntax-only", &scc_cc_fsyntax_only, self),
+                ARG_HANDLER_INIT("-flex-only", &scc_cc_flex_only, self),
+                ARG_HANDLER_INIT("-fprint-eval-result", &scc_cc_fprint_eval_result, self),
+                ARG_HANDLER_INIT("-fprint-expr-value", &scc_cc_fprint_expr_value, self),
+                ARG_HANDLER_INIT("-fprint-expr-type", &scc_cc_fprint_expr_type, self),
+                ARG_HANDLER_INIT("-fprint-impl-casts", &scc_cc_fprint_impl_casts, self),
+                ARG_HANDLER_INIT("-fforce-brackets", &scc_cc_fforce_brackets, self),
+                ARG_HANDLER_INIT("-fdce", &scc_cc_fdce, self),
+                ARG_HANDLER_INIT("-fcf", &scc_cc_fcf, self),
+                ARG_HANDLER_INIT("-emit-ssa", &scc_cc_emit_ssa, self),
+                ARG_HANDLER_INIT("-I", &scc_cc_I, self),
+                ARG_HANDLER_INIT("-L", &scc_cc_L, self),
+                ARG_HANDLER_INIT("-m32", &scc_cc_m32, self),
+                ARG_HANDLER_INIT("-m64", &scc_cc_m64, self),
         };
 
         arg_handler def;

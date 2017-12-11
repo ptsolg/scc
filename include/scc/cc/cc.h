@@ -46,12 +46,19 @@ typedef enum
         SCOK_C,
 } scc_cc_output_kind;
 
+typedef struct _scc_optimization_opts
+{
+        bool eliminate_dead_code;
+        bool constant_folding;
+} scc_optimization_opts;
+
 typedef struct _scc_cc_opts
 {
         scc_cc_target_kind target;
         scc_cc_run_mode mode;
         scc_cc_print_opts print;
         scc_cc_output_kind output;
+        scc_optimization_opts optimization;
 } scc_cc_opts;
 
 typedef struct _scc_cc
@@ -89,11 +96,6 @@ extern serrcode scc_cc_emulate_source_file(
         scc_cc* self, const char* filename, const char* content);
 
 extern void scc_cc_add_source_dir(scc_cc* self, const char* dir);
-
-extern serrcode scc_cc_lex(scc_cc* self);
-extern serrcode scc_cc_parse(scc_cc* self);
-extern serrcode scc_cc_gen_asm(scc_cc* self);
-extern serrcode scc_cc_gen(scc_cc* self);
 
 extern serrcode scc_cc_run(scc_cc* self);
 
