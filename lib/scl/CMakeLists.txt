@@ -3,7 +3,7 @@ add_scc_lib(scl
 	file.c
 	htab.c
 	malloc.c
-	arg-parser.c
+	args.c
 	membuf.c
 	sstring.c
 	char-info.c

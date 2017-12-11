@@ -8,7 +8,7 @@ add_scc_target_sources(scl
 	htab-ext.h
 	malloc.h
 	misc.h
-	arg-parser.h
+	args.h
 	membuf.h
 	sstring.h
 	target.h
