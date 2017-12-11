@@ -30,6 +30,7 @@ extern void ssa_add_block_instr(ssa_block* self, ssa_instr* i);
 extern ssa_instr* ssa_block_get_first_phi(const ssa_block* self);
 
 static inline ssa_value* ssa_get_block_label(ssa_block* self);
+static inline ssa_block* ssa_get_label_block(ssa_value* self);
 static inline const ssa_value* ssa_get_block_clabel(const ssa_block* self);
 
 static inline ssa_branch* ssa_get_block_exit(const ssa_block* self);
@@ -42,6 +43,7 @@ static inline ssa_block* ssa_get_next_block(const ssa_block* self);
 static inline ssa_block* ssa_get_prev_block(const ssa_block* self);
 
 static inline void ssa_set_block_exit(ssa_block* self, ssa_branch* exit);
+static inline void ssa_remove_block(ssa_block* self);
 
 #define SSA_FOREACH_BLOCK_INSTR(PBLOCK, ITNAME)\
         for (ssa_instr* ITNAME = ssa_get_block_instrs_begin(PBLOCK);\
@@ -51,6 +53,11 @@ static inline void ssa_set_block_exit(ssa_block* self, ssa_branch* exit);
 static inline ssa_value* ssa_get_block_label(ssa_block* self)
 {
         return (ssa_value*)&self->_entry;
+}
+
+static inline ssa_block* ssa_get_label_block(ssa_value* self)
+{
+        return (ssa_block*)((char*)self - offsetof(ssa_block, _entry));
 }
 
 static inline const ssa_value* ssa_get_block_clabel(const ssa_block* self)
@@ -91,6 +98,11 @@ static inline ssa_block* ssa_get_prev_block(const ssa_block* self)
 static inline void ssa_set_block_exit(ssa_block* self, ssa_branch* exit)
 {
         self->_exit = exit;
+}
+
+static inline void ssa_remove_block(ssa_block* self)
+{
+        list_node_remove(&self->_node);
 }
 
 #ifdef __cplusplus

@@ -60,6 +60,7 @@ static inline ssa_instr* ssa_get_next_instr(const ssa_instr* self);
 static inline ssa_instr* ssa_get_prev_instr(const ssa_instr* self);
 
 static inline void ssa_set_instr_kind(ssa_instr* self, ssa_instr_kind kind);
+static inline void ssa_remove_instr(ssa_instr* self);
 
 typedef enum
 {
@@ -210,6 +211,8 @@ struct _ssa_alloca_instr
 
 extern ssa_instr* ssa_new_alloca(ssa_context* context, ssa_id id, tree_type* type);
 
+static inline tree_type* ssa_get_allocated_type(const ssa_instr* self);
+
 struct _ssa_load_instr
 {
         struct _ssa_instr_base _base;
@@ -314,6 +317,11 @@ static inline ssa_instr* ssa_get_prev_instr(const ssa_instr* self)
 static inline void ssa_set_instr_kind(ssa_instr* self, ssa_instr_kind kind)
 {
         _ssa_get_instr_base(self)->_kind = kind;
+}
+
+static inline void ssa_remove_instr(ssa_instr* self)
+{
+        list_node_remove(&_ssa_get_instr_base(self)->_node);
 }
 
 #define SSA_ASSERT_INSTR(P, K) S_ASSERT((P) && ssa_get_instr_kind(self) == (K))
@@ -483,6 +491,11 @@ static inline ssa_value** ssa_get_phi_args_begin(const ssa_instr* self)
 static inline ssa_value** ssa_get_phi_args_end(const ssa_instr* self)
 {
         return (ssa_value**)dseq_end_ptr(&_ssa_get_cphi(self)->_args);
+}
+
+static inline tree_type* ssa_get_allocated_type(const ssa_instr* self)
+{
+        return tree_get_pointer_target(ssa_get_value_type(ssa_get_instr_cvar(self)));
 }
 
 static inline struct _ssa_load_instr* _ssa_get_load(ssa_instr* self)
