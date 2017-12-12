@@ -123,7 +123,7 @@ static void scc_cc_fdce(scc_cc* self, aparser* parser)
 
 static void scc_cc_fcf(scc_cc* self, aparser* parser)
 {
-        self->opts.optimization.constant_folding = true;
+        self->opts.optimization.fold_constants = true;
 }
 
 static void scc_cc_emit_ssa(scc_cc* self, aparser* parser)

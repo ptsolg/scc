@@ -49,7 +49,7 @@ typedef enum
 typedef struct _scc_optimization_opts
 {
         bool eliminate_dead_code;
-        bool constant_folding;
+        bool fold_constants;
 } scc_optimization_opts;
 
 typedef struct _scc_cc_opts

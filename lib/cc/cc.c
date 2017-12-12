@@ -36,7 +36,7 @@ extern void scc_cc_init(scc_cc* self, FILE* log, jmp_buf on_fatal_error)
         o->print.flags = SCPF_NONE;
         o->print.double_precision = 4;
         o->print.float_precision = 4;
-        o->optimization.constant_folding = false;
+        o->optimization.fold_constants = false;
         o->optimization.eliminate_dead_code = false;
         self->out = NULL;
         self->log = log;
