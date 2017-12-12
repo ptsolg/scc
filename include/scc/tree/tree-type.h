@@ -561,11 +561,13 @@ static inline const struct _tree_pointer_type* _tree_get_cpointer(const tree_typ
 
 static inline tree_type* tree_get_pointer_target(const tree_type* self)
 {
+        TREE_ASSERT_TYPE(self, TTK_POINTER);
         return tree_get_chain_type_next(self);
 }
 
 static inline void tree_set_pointer_target(tree_type* self, tree_type* target)
 {
+        TREE_ASSERT_TYPE(self, TTK_POINTER);
         tree_set_chain_type_next(self, target);
 }
 
