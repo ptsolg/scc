@@ -7,9 +7,8 @@
 ; Definition for test
 @0:
     $1 = alloca 4
-    $2 = cast %foo
-    $3 = call $2 ()
-    $4 = getaddr $3, 1, 0
-    $5 = load $4
-    store $5, $1
+    $2 = call %foo ()
+    $3 = getaddr $2, 1, 0
+    $4 = load $3
+    store $4, $1
     ret

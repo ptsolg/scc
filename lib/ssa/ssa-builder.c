@@ -155,6 +155,15 @@ extern ssa_value* ssa_build_neq(ssa_builder* self, ssa_value* lhs, ssa_value* rh
 extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* type, ssa_value* operand)
 {
         S_ASSERT(type && tree_type_is_scalar(type));
+        tree_type* from = ssa_get_value_type(operand);
+        if (tree_types_are_same(type, from))
+                return operand;
+
+        if (tree_type_is(from, TTK_FUNCTION) && tree_type_is_function_pointer(type))
+        {
+                ssa_set_value_type(operand, type);
+                return operand;
+        }
 
         ssa_instr* c = ssa_new_cast(self->context, ssa_builder_gen_uid(self), type, operand);
         if (!c)
