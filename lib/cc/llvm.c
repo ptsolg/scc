@@ -4,7 +4,7 @@
 
 extern void llvm_compiler_init(llvm_compiler* self, const char* path)
 {
-        scc_external_tool_init(&self->tool, &llvm_compiler_run, "llc", path);
+        scc_tool_init(&self->tool, "llc", path);
         self->opt_level = LCOL_O0;
         self->file = NULL;
 }
