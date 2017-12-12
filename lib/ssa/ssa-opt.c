@@ -50,7 +50,7 @@ static ssa_value* ssa_opt_constant_fold_binop(ssa_context* context, ssa_instr* i
 
         avalue l = ssa_get_constant_value(lhs);
         avalue r = ssa_get_constant_value(rhs);
-        ssa_eval_binop(ssa_get_binop_opcode(instr), &l, &r);
+        ssa_eval_binop(ssa_get_binop_kind(instr), &l, &r);
 
         return ssa_new_constant(context,
                 ssa_get_value_type(ssa_get_instr_cvar(instr)), l);
@@ -79,94 +79,7 @@ static ssa_value* ssa_opt_constant_fold_cast(ssa_context* context, ssa_instr* in
         return ssa_new_constant(context, t, v);
 }
 
-static void ssa_opt_constant_fold_binop_operands(ssa_instr* instr, const htab* constants)
-{
-        ssa_value* lhs = ssa_get_binop_lhs(instr);
-        ssa_value* rhs = ssa_get_binop_rhs(instr);
-
-        hiter res;
-        if (htab_find(constants, ssa_get_value_id(lhs), &res))
-                ssa_set_binop_lhs(instr, hiter_get_ptr(&res));
-        if (htab_find(constants, ssa_get_value_id(rhs), &res))
-                ssa_set_binop_rhs(instr, hiter_get_ptr(&res));
-}
-
-static void ssa_opt_constant_fold_cast_operand(ssa_instr* instr, const htab* constants)
-{
-        ssa_value* operand = ssa_get_cast_operand(instr);
-
-        hiter res;
-        if (htab_find(constants, ssa_get_value_id(operand), &res))
-                ssa_set_cast_operand(instr, hiter_get_ptr(&res));
-}
-
-static void ssa_opt_constant_fold_call_args(ssa_instr* instr, const htab* constants)
-{
-        hiter res;
-        SSA_FOREACH_CALL_ARG(instr, it)
-                if (htab_find(constants, ssa_get_value_id(*it), &res))
-                        *it = hiter_get_ptr(&res);
-}
-
-static void ssa_opt_constant_fold_getaddr_operands(ssa_instr* instr, const htab* constants)
-{
-        ssa_value* index = ssa_get_getaddr_index(instr);
-        ssa_value* offset = ssa_get_getaddr_offset(instr);
-
-        hiter res;
-        if (htab_find(constants, ssa_get_value_id(index), &res))
-                ssa_set_getaddr_index(instr, hiter_get_ptr(&res));
-        if (htab_find(constants, ssa_get_value_id(offset), &res))
-                ssa_set_getaddr_offset(instr, hiter_get_ptr(&res));
-}
-
-static void ssa_opt_constant_fold_phi_args(ssa_instr* instr, const htab* constants)
-{
-        hiter res;
-        SSA_FOREACH_PHI_ARG(instr, it)
-                if (htab_find(constants, ssa_get_value_id(*it), &res))
-                        *it = hiter_get_ptr(&res);
-}
-
-static void ssa_opt_constant_fold_load_operands(ssa_instr* instr, const htab* constants)
-{
-        ssa_value* what = ssa_get_load_what(instr);
-
-        hiter res;
-        if (htab_find(constants, ssa_get_value_id(what), &res))
-                ssa_set_load_what(instr, hiter_get_ptr(&res));
-}
-
-static void ssa_opt_constant_fold_store_operands(ssa_instr* instr, const htab* constants)
-{
-        ssa_value* what = ssa_get_store_what(instr);
-
-        hiter res;
-        if (htab_find(constants, ssa_get_value_id(what), &res))
-                ssa_set_store_what(instr, hiter_get_ptr(&res));
-}
-
-static void ssa_opt_constant_fold_instr_operands(ssa_instr* instr, const htab* constants)
-{
-        ssa_instr_kind k = ssa_get_instr_kind(instr);
-        if (k == SIK_BINARY)
-                ssa_opt_constant_fold_binop_operands(instr, constants);
-        else if (k == SIK_CAST)
-                ssa_opt_constant_fold_cast_operand(instr, constants);
-        else if (k == SIK_CALL)
-                ssa_opt_constant_fold_call_args(instr, constants);
-        else if (k == SIK_GETADDR)
-                ssa_opt_constant_fold_getaddr_operands(instr, constants);
-        else if (k == SIK_PHI)
-                ssa_opt_constant_fold_phi_args(instr, constants);
-        else if (k == SIK_LOAD)
-                ssa_opt_constant_fold_load_operands(instr, constants);
-        else if (k == SIK_STORE)
-                ssa_opt_constant_fold_store_operands(instr, constants);
-}
-
-static void ssa_opt_constant_fold_instr(
-        ssa_context* context, ssa_instr* instr, htab* constants)
+static void ssa_constant_fold_instr(ssa_context* context, ssa_instr* instr, htab* constants)
 {
         ssa_value* constant = NULL;
         ssa_instr_kind k = ssa_get_instr_kind(instr);
@@ -182,54 +95,54 @@ static void ssa_opt_constant_fold_instr(
         ssa_remove_instr(instr);
 }
 
-static void ssa_opt_constant_fold_branch_operands(ssa_branch* br, htab* constants)
+static void ssa_constant_fold_instr_operands(ssa_instr* instr, htab* constants)
 {
-        ssa_branch_kind k = ssa_get_branch_kind(br);
+        for (ssa_value** it = ssa_get_instr_operands_begin(instr),
+                **end = ssa_get_instr_operands_end(instr); it != end; it++)
+        {
+                hiter res;
+                if (htab_find(constants, ssa_get_value_id(*it), &res))
+                        *it = hiter_get_ptr(&res);
+        }
+}
+
+static void ssa_constant_fold_branch_operands(ssa_branch* branch, htab* constants)
+{
+        ssa_branch_kind k = ssa_get_branch_kind(branch);
         hiter res;
         if (k == SBK_IF)
         {
-                ssa_value* cond = ssa_get_if_cond(br);
+                ssa_value* cond = ssa_get_if_cond(branch);
                 if (htab_find(constants, ssa_get_value_id(cond), &res))
-                        ssa_set_if_cond(br, hiter_get_ptr(&res));
+                        ssa_set_if_cond(branch, hiter_get_ptr(&res));
         }
         else if (k == SBK_RETURN)
         {
-                ssa_value* val = ssa_get_return_value(br);
+                ssa_value* val = ssa_get_return_value(branch);
                 if (val && htab_find(constants, ssa_get_value_id(val), &res))
-                        ssa_set_return_value(br, hiter_get_ptr(&res));
+                        ssa_set_return_value(branch, hiter_get_ptr(&res));
         }
 }
 
-extern void ssa_opt_constant_fold(ssa_context* context, ssa_module* module)
+extern void ssa_fold_constants(ssa_context* context, ssa_function* function)
 {
         htab constants;
         htab_init_ex_ptr(&constants, ssa_get_alloc(context));
-
-        SSA_FOREACH_MODULE_DEF(module, func)
+        SSA_FOREACH_FUNCTION_BLOCK(function, block)
         {
-                SSA_FOREACH_FUNCTION_BLOCK(func, block)
+                ssa_instr* next = NULL;
+                for (ssa_instr* instr = ssa_get_block_instrs_begin(block),
+                        *end = ssa_get_block_instrs_end(block);
+                        instr != end;
+                        instr = next)
                 {
-                        ssa_instr* next = NULL;
-                        for (ssa_instr* instr = ssa_get_block_instrs_begin(block),
-                                *end = ssa_get_block_instrs_end(block);
-                                instr != end;
-                                instr = next)
-                        {
-                                next = ssa_get_next_instr(instr);
-                                ssa_opt_constant_fold_instr_operands(instr, &constants);
-                                ssa_opt_constant_fold_instr(context, instr, &constants);
-                        }
-                        ssa_opt_constant_fold_branch_operands(
-                                ssa_get_block_exit(block), &constants);
+                        next = ssa_get_next_instr(instr);
+                        ssa_constant_fold_instr_operands(instr, &constants);
+                        ssa_constant_fold_instr(context, instr, &constants);
                 }
+                ssa_constant_fold_branch_operands(ssa_get_block_exit(block), &constants);
         }
-
         htab_dispose(&constants);
-}
-
-extern void ssa_opt_init_constant_fold_pass(ssa_pass* pass)
-{
-        ssa_pass_init(pass, &ssa_opt_constant_fold);
 }
 
 static void ssa_opt_eliminate_dead_if_branches(ssa_context* context, ssa_function* func)
@@ -298,43 +211,63 @@ static void ssa_opt_eliminate_dead_blocks(ssa_context* context, ssa_function* fu
         htab_dispose(&visited);
 }
 
-extern void ssa_opt_eliminate_dead_code(ssa_context* context, ssa_module* module)
+
+extern void ssa_eliminate_dead_code(ssa_context* context, ssa_function* function)
 {
-        SSA_FOREACH_MODULE_DEF(module, func)
-        {
-                ssa_opt_eliminate_dead_if_branches(context, func);
-                ssa_opt_eliminate_dead_blocks(context, func);
-        }
+        ssa_opt_eliminate_dead_if_branches(context, function);
+        ssa_opt_eliminate_dead_blocks(context, function);
 }
 
-extern void ssa_opt_init_eliminate_dead_code_pass(ssa_pass* pass)
+static void ssa_run_constant_fold_pass(ssa_pass* pass, ssa_function* function)
 {
-        ssa_pass_init(pass, &ssa_opt_eliminate_dead_code);
+        ssa_constant_fold_pass* self = (ssa_constant_fold_pass*)(
+                (char*)pass - offsetof(ssa_constant_fold_pass, pass));
+        ssa_fold_constants(self->context, function);
 }
 
-extern void ssa_init_optimizer(ssa_optimizer* self)
+extern void ssa_init_constant_fold_pass(ssa_constant_fold_pass* self, ssa_context* context)
 {
-        for (int i = 0; i < SOK_SIZE; i++)
-                self->enabled[i] = false;
-
-        ssa_opt_init_constant_fold_pass(self->passes + SOK_CONSTANT_FOLDING);
-        ssa_opt_init_eliminate_dead_code_pass(self->passes + SOK_DEAD_CODE_ELIMINATION);
+        ssa_init_pass(&self->pass, SPK_FUNCTION, &ssa_run_constant_fold_pass);
+        self->context = context;
 }
 
-extern void ssa_optimizer_enable_pass(ssa_optimizer* self, ssa_opt_kind kind)
+static void ssa_run_dead_code_elimination_pass(ssa_pass* pass, ssa_function* function)
 {
-        self->enabled[kind] = true;
+        ssa_dead_code_elimination_pass* self = (ssa_dead_code_elimination_pass*)(
+                (char*)pass - offsetof(ssa_dead_code_elimination_pass, pass));
+        ssa_eliminate_dead_code(self->context, function);
 }
 
-extern void ssa_optimizer_run(ssa_optimizer* self, ssa_context* context, ssa_module* module)
+extern void ssa_init_dead_code_elimination_pass(
+        ssa_dead_code_elimination_pass* self, ssa_context* context)
 {
-        ssa_pass_manager manager;
-        ssa_pass_manager_init(&manager);
-        for (int i = 0; i < SOK_SIZE; i++)
-                if (self->enabled[i])
-                        ssa_pass_manager_add_pass(&manager, self->passes + i);
+        ssa_init_pass(&self->pass, SPK_FUNCTION, &ssa_run_dead_code_elimination_pass);
+        self->context = context;
+}
 
-        ssa_pass_manager_run(&manager, context, module);
+extern void ssa_reset_optimizer_opts(ssa_optimizer_opts* self)
+{
+        self->fold_constants = false;
+        self->eliminate_dead_code = false;
+}
+
+extern void ssa_optimize(ssa_context* context,
+        ssa_module* module, const ssa_optimizer_opts* opts)
+{
+        ssa_constant_fold_pass cf;
+        ssa_init_constant_fold_pass(&cf, context);
+
+        ssa_dead_code_elimination_pass dce;
+        ssa_init_dead_code_elimination_pass(&dce, context);
+
+        ssa_pass_manager pm;
+        ssa_init_pass_manager(&pm);
+        if (opts->fold_constants)
+                ssa_pass_manager_add_pass(&pm, &cf.pass);
+        if (opts->eliminate_dead_code)
+                ssa_pass_manager_add_pass(&pm, &dce.pass);
+
+        ssa_pass_manager_run(&pm, module);
 
         SSA_FOREACH_MODULE_DEF(module, func)
                 ssa_fix_function_content_uids(func);

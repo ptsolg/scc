@@ -142,7 +142,7 @@ S_STATIC_ASSERT(S_ARRAY_SIZE(ssa_binary_instr_table) == SBIK_SIZE,
 static void ssa_print_binary_instr(ssa_printer* self, const ssa_instr* instr)
 {
         ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
-        ssa_binary_instr_kind k = ssa_get_binop_opcode(instr);
+        ssa_binary_instr_kind k = ssa_get_binop_kind(instr);
         SSA_ASSERT_BINARY_INSTR_KIND(k);
         ssa_printf(self, " = %s ", ssa_binary_instr_table[k]);
         ssa_print_value_ref(self, ssa_get_binop_lhs(instr));
@@ -179,10 +179,10 @@ static void ssa_print_phi(ssa_printer* self, const ssa_instr* instr)
 {
         ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
         ssa_prints(self, " = phi ");
-        SSA_FOREACH_PHI_ARG(instr, it)
+        SSA_FOREACH_PHI_ARG(instr, it, end)
         {
                 ssa_print_value_ref(self, *it);
-                if (it + 1 != ssa_get_phi_args_end(instr))
+                if (it + 1 != end)
                         ssa_prints(self, ", ");
         }
 }
@@ -217,10 +217,10 @@ static void ssa_print_call(ssa_printer* self, const ssa_instr* instr)
         ssa_print_value_ref(self, ssa_get_called_func(instr));
 
         ssa_prints(self, " (");
-        SSA_FOREACH_CALL_ARG(instr, arg)
+        SSA_FOREACH_CALL_ARG(instr, arg, end)
         {
                 ssa_print_value_ref(self, *arg);
-                if (arg + 1 != ssa_get_call_args_end(instr))
+                if (arg + 1 != end)
                         ssa_prints(self, ", ");
         }
         ssa_prints(self, ")");

@@ -457,7 +457,9 @@ extern ssa_value* ssaize_call_expr(ssaizer* self, const tree_expr* expr)
                 dseq_append_ptr(&args, arg);
         }
 
-        return ssa_build_call(&self->builder, func, &args);
+        ssa_value* call = ssa_build_call(&self->builder, func, &args);
+        dseq_dispose(&args);
+        return call;
 }
 
 extern ssa_value* ssaize_subscript_expr(ssaizer* self, const tree_expr* expr)
@@ -673,7 +675,7 @@ extern ssa_value* ssaize_expr_as_condition(ssaizer* self, const tree_expr* cond)
         if (ssa_get_instr_kind(i) != SIK_BINARY)
                 return ssa_build_neq_zero(&self->builder, v);
 
-        switch (ssa_get_binop_opcode(i))
+        switch (ssa_get_binop_kind(i))
         {
                 case SBIK_LE:
                 case SBIK_GR:

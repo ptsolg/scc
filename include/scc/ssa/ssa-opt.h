@@ -4,29 +4,35 @@
 #include "ssa-instr.h"
 #include "ssa-pass.h"
 
-typedef struct _ssa_function ssa_function;
+extern void ssa_fold_constants(ssa_context* context, ssa_function* function);
+extern void ssa_eliminate_dead_code(ssa_context* context, ssa_function* function);
 
-extern void ssa_opt_constant_fold(ssa_context* context, ssa_module* module);
-extern void ssa_opt_init_constant_fold_pass(ssa_pass* pass);
-
-extern void ssa_opt_eliminate_dead_code(ssa_context* context, ssa_module* module);
-extern void ssa_opt_init_eliminate_dead_code_pass(ssa_pass* pass);
-
-typedef enum
+typedef struct
 {
-        SOK_CONSTANT_FOLDING,
-        SOK_DEAD_CODE_ELIMINATION,
-        SOK_SIZE,
-} ssa_opt_kind;
+        ssa_pass pass;
+        ssa_context* context;
+} ssa_constant_fold_pass;
 
-typedef struct _ssa_optimizer
+extern void ssa_init_constant_fold_pass(ssa_constant_fold_pass* self, ssa_context* context);
+
+typedef struct
 {
-        ssa_pass passes[SOK_SIZE];
-        bool enabled[SOK_SIZE];
-} ssa_optimizer;
+        ssa_pass pass;
+        ssa_context* context;
+} ssa_dead_code_elimination_pass;
 
-extern void ssa_init_optimizer(ssa_optimizer* self);
-extern void ssa_optimizer_enable_pass(ssa_optimizer* self, ssa_opt_kind kind);
-extern void ssa_optimizer_run(ssa_optimizer* self, ssa_context* context, ssa_module* module);
+extern void ssa_init_dead_code_elimination_pass(
+        ssa_dead_code_elimination_pass* self, ssa_context* context);
+
+typedef struct _ssa_optimizer_opts
+{
+        bool fold_constants;
+        bool eliminate_dead_code;
+} ssa_optimizer_opts;
+
+extern void ssa_reset_optimizer_opts(ssa_optimizer_opts* self);
+
+extern void ssa_optimize(ssa_context* context, 
+        ssa_module* module, const ssa_optimizer_opts* opts);
 
 #endif

@@ -46,7 +46,7 @@ extern ssa_value* ssa_build_geq(ssa_builder* self, ssa_value* lhs, ssa_value* rh
 extern ssa_value* ssa_build_eq(ssa_builder* self, ssa_value* lhs, ssa_value* rhs);
 extern ssa_value* ssa_build_neq(ssa_builder* self, ssa_value* lhs, ssa_value* rhs);
 extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* type, ssa_value* operand);
-extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, dseq* args);
+extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const dseq* args);
 extern ssa_value* ssa_build_getaddr(
         ssa_builder* self,
         tree_type* target_type,
