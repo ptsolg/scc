@@ -194,7 +194,7 @@ extern void path_fix_delimeter(char* path)
         }
 }
 
-extern serrcode path_change_ext(char* path, char* ext)
+extern serrcode path_change_ext(char* path, const char* ext)
 {
         path_fix_delimeter(path);
         char* end = sstrend(path);
