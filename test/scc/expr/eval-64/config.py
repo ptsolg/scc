@@ -1,1 +1,1 @@
-cmds = ['%test', '-fsyntax-only', '-fprint-eval-result', '-m64', '-o', '%output']
+cmds = ['%test', '-fsyntax-only', '-fprint-eval-result', '-m64', '-dump-tree', '-o', '%output']

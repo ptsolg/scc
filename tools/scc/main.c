@@ -3,20 +3,19 @@
 int main(int argc, const char** argv)
 {
         serrcode result = S_ERROR;
-        jmp_buf on_fatal_error;
-        scc_cc cc;
+        cc_instance cc;
+        cc_init(&cc, stdout);
 
-        if (setjmp(on_fatal_error))
+        char cd[S_MAX_PATH_LEN + 1];
+        if (S_FAILED(path_get_cd(cd)))
+                goto cleanup;
+        if (S_FAILED(cc_add_source_dir(&cc, cd)))
                 goto cleanup;
 
-        scc_cc_init(&cc, stderr, on_fatal_error);
-        if (S_FAILED(scc_cc_parse_opts(&cc, argc, argv)))
-                goto cleanup;
-
-        result = scc_cc_run(&cc);
+        if (S_SUCCEEDED(cc_parse_opts(&cc, argc, argv)))
+                result = cc_run(&cc);
 
 cleanup:
-        scc_cc_dispose(&cc);
+        cc_dispose(&cc);
         return result;
-
 }

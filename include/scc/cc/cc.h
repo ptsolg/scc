@@ -1,104 +1,83 @@
-#ifndef SCC_CC_H
-#define SCC_CC_H
+#ifndef CC_H
+#define CC_H
 
-#include "scc/c/c-tree.h"
-#include "scc/c/c-source.h"
-#include "scc/c/c-error.h"
-#include "scc/ssa/ssa-context.h"
-#include <stdio.h>
-#include <setjmp.h>
+#include "scc/scl/file.h"
 
 typedef enum
 {
-        SCTK_32,
-        SCTK_64,
-} scc_cc_target_kind;
+        CTK_X86_32,
+        CTK_X86_64,
+} cc_target_kind;
 
 typedef enum
 {
-        SCRM_DEFAULT,
-        SCRM_LEX_ONLY,
-        SCRM_SYNTAX_ONLY,
-        SCRM_ASM_ONLY,
-} scc_cc_run_mode;
+        COK_NONE,
+        COK_EXEC,
+        COK_OBJ,
+        COK_LEXEMES,
+        COK_C,
+        COK_SSA,
+        COK_ASM,
+        COK_LLVM_IR,
+} cc_output_kind;
 
-typedef enum
+typedef struct
 {
-        SCPF_NONE = 0,
-        SCPF_PRINT_EXPR_VALUE = 1,
-        SCPF_PRINT_EXPR_TYPE = 2,
-        SCPF_PRINT_IMPL_CASTS = 4,
-        SCPF_PRINT_EVAL_RESULT = 8,
-        SCPF_FORCE_BRACKETS = 16,
-} scc_cc_print_flags;
-
-typedef struct _scc_cc_print_opts
-{
-        scc_cc_print_flags flags;
-        int float_precision;
-        int double_precision;
-} scc_cc_print_opts;
-
-typedef enum
-{
-        SCOK_EXEC,
-        SCOK_SSA,
-        SCOK_C,
-} scc_cc_output_kind;
-
-typedef struct _scc_optimization_opts
-{
-        bool eliminate_dead_code;
-        bool fold_constants;
-} scc_optimization_opts;
-
-typedef struct _scc_cc_opts
-{
-        scc_cc_target_kind target;
-        scc_cc_run_mode mode;
-        scc_cc_print_opts print;
-        scc_cc_output_kind output;
-        scc_optimization_opts optimization;
-} scc_cc_opts;
-
-typedef struct _scc_cc
-{
-        base_allocator alloc;
-        scc_cc_opts opts;
-        FILE* log;
-        FILE* out;
         dseq sources;
         dseq libs;
         file_lookup source_lookup;
         file_lookup lib_lookup;
-        tree_target_info target;
-        tree_context tree;
-        ccontext c;
-        ssa_context ssa;
-} scc_cc;
+} cc_input;
 
-extern void scc_cc_init(scc_cc* self, FILE* log, jmp_buf on_fatal_error);
-extern void scc_cc_dispose(scc_cc* self);
+typedef struct
+{
+        cc_output_kind kind;
+        FILE* message;
+        FILE* file;
+} cc_output;
 
-extern allocator* scc_cc_alloc(scc_cc* self);
-extern void scc_cc_error(scc_cc* self, const char* format, ...);
-extern void scc_cc_file_doesnt_exist(scc_cc* self, const char* file);
-extern void scc_cc_unable_to_open(scc_cc* self, const char* file);
-extern FILE* scc_cc_open_existing_file(scc_cc* self, const char* file, const char* mode);
-extern FILE* scc_cc_open_file(scc_cc* self, const char* file, const char* mode);
+typedef struct
+{
+        cc_target_kind target;
 
-extern void scc_cc_set_mode(scc_cc* self, scc_cc_run_mode mode);
-extern void scc_cc_set_output(scc_cc* self, FILE* out);
-extern void scc_cc_set_log(scc_cc* self, FILE* log);
+        struct
+        {
+                bool eliminate_dead_code;
+                bool fold_constants;
+        } optimization;
 
-extern serrcode scc_cc_add_source_file(scc_cc* self, const char* file);
-extern serrcode scc_cc_emulate_source_file(
-        scc_cc* self, const char* filename, const char* content);
+        struct
+        {
+                bool print_expr_value;
+                bool print_expr_type;
+                bool print_impl_casts;
+                bool print_eval_result;
+                bool force_brackets;
+        } cprint;
+} cc_opts;
 
-extern void scc_cc_add_source_dir(scc_cc* self, const char* dir);
+typedef struct _cc_instance
+{
+        cc_input input;
+        cc_output output;
+        cc_opts opts;
+        allocator* alloc;
+} cc_instance;
 
-extern serrcode scc_cc_run(scc_cc* self);
+extern void cc_init(cc_instance* self, FILE* message);
+extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc);
+extern void cc_dispose(cc_instance* self);
 
-extern serrcode scc_cc_parse_opts(scc_cc* self, int argc, const char** argv);
+extern serrcode cc_set_output_file(cc_instance* self, const char* file);
+
+extern serrcode cc_add_lib_dir(cc_instance* self, const char* dir);
+extern serrcode cc_add_lib(cc_instance* self, const char* lib);
+extern serrcode cc_add_source_dir(cc_instance* self, const char* dir);
+extern serrcode cc_add_source_file(cc_instance* self, const char* file);
+extern serrcode cc_emulate_source_file(
+        cc_instance* self, const char* file, const char* content);
+
+extern serrcode cc_parse_opts(cc_instance* self, int argc, const char** argv);
+extern serrcode cc_run(cc_instance* self);
 
 #endif

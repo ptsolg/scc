@@ -1,5 +1,5 @@
-#ifndef SCC_LLVM_H
-#define SCC_LLVM_H
+#ifndef CC_LLVM_H
+#define CC_LLVM_H
 
 #include "tool.h"
 #include "scc/scl/file.h"

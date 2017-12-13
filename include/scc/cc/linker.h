@@ -1,5 +1,5 @@
-#ifndef SCC_LINKER_H
-#define SCC_LINKER_H
+#ifndef CC_LINKER_H
+#define CC_LINKER_H
 
 #include "tool.h"
 

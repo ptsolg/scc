@@ -1,1 +1,1 @@
-cmds = ['%test', '-flex-only', '-log', '%output']
+cmds = ['%test', '-dump-tokens', '-log', '%output']

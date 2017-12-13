@@ -1,1 +1,1 @@
-cmds = ['%test', '-fsyntax-only', '-fforce-brackets', '-o', '%output']
+cmds = ['%test', '-fsyntax-only', '-fforce-brackets', '-dump-tree', '-o', '%output']

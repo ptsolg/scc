@@ -1,218 +1,254 @@
 #include "scc/cc/cc.h"
+#include "cc-impl.h"
 #include "scc/scl/args.h"
 
-static void scc_cc_missing_argument(scc_cc* self, const char* arg)
+static void cc_missing_argument(cc_instance* self, const char* arg)
 {
-        scc_cc_error(self, "argument to '%s' is missing", arg);
+        cc_error(self, "argument to '%s' is missing", arg);
 }
 
 typedef enum
 {
-        SCAK_FILE,
+        CRM_ASSEMBLE,
+        CRM_COMPILE,
+        CRM_LINK,
+} cc_run_mode;
 
-        SCAK_S,
-        SCAK_o,
-        SCAK_help,
-        SCAK_fsyntax_only,
-        SCAK_flex_only,
-        SCAK_fprint_eval_result,
-        SCAK_fprint_expr_value,
-        SCAK_fprint_expr_type,
-        SCAK_fprint_impl_casts,
-        SCAK_fforce_brackets,
-        SCAK_fdce,
-        SCAK_fcf,
-        SCAK_emit_ssa,
-        SCAK_I,
-        SCAK_l,    
-        SCAK_L,
-        SCAK_m32,
-        SCAK_m64,
-} scc_cc_arg_kind;
-
-static void scc_cc_S(scc_cc* self, aparser* parser)
+typedef struct
 {
-        scc_cc_set_mode(self, SCRM_ASM_ONLY);
+        cc_instance* cc;
+        cc_run_mode mode;
+} cc_arg_info;
+
+extern void cc_arg_info_init(cc_arg_info* self, cc_instance* cc)
+{
+        self->cc = cc;
+        self->mode = CRM_LINK;
 }
 
-static void scc_cc_o(scc_cc* self, aparser* parser)
+typedef enum
 {
-        const char* filename = aparser_get_string(parser);
-        if (!filename)
-        {
-                scc_cc_missing_argument(self, "-o");
-                return;
-        }
+        CAK_S,
+        CAK_o,
+        CAK_log,
+        CAK_help,
+        CAK_fsyntax_only,
+        CAK_dump_tokens,
+        CAK_dump_tree,
+        CAK_fprint_eval_result,
+        CAK_fprint_expr_value,
+        CAK_fprint_expr_type,
+        CAK_fprint_impl_casts,
+        CAK_fforce_brackets,
+        CAK_fdce,
+        CAK_fcf,
+        CAK_emit_ssa,
+        CAK_emit_llvm,
+        CAK_I,
+        CAK_l,    
+        CAK_L,
+        CAK_m32,
+        CAK_m64,
+} cc_arg_kind;
 
-        char path[S_MAX_PATH_LEN];
-        if (S_FAILED(path_get_cd(path)) || S_FAILED(path_join(path, filename)))
-        {
-                scc_cc_unable_to_open(self, filename);
-                return;
-        }
-
-        FILE* out = scc_cc_open_file(self, filename, "w");
-        if (!out)
-        {
-                scc_cc_unable_to_open(self, filename);
-                return;
-        }
-
-        scc_cc_set_output(self, out);
+static void cc_parse_S(cc_arg_info* self, aparser* parser)
+{
+        self->mode = CRM_ASSEMBLE;
+        self->cc->output.kind = COK_ASM;
 }
 
-static void scc_cc_log(scc_cc* self, aparser* parser)
+static void cc_parse_o(cc_arg_info* self, aparser* parser)
 {
-        const char* filename = aparser_get_string(parser);
-        if (!filename)
+        const char* file = aparser_get_string(parser);
+        if (!file)
         {
-                scc_cc_missing_argument(self, "-log");
+                cc_missing_argument(self->cc, "-o");
+                return;
+        }
+        cc_set_output_file(self->cc, file);
+}
+
+static void cc_parse_log(cc_arg_info* self, aparser* parser)
+{
+        const char* file = aparser_get_string(parser);
+        if (!file)
+        {
+                cc_missing_argument(self->cc, "-log");
                 return;
         }
 
-        FILE* log = scc_cc_open_file(self, filename, "w");
+        FILE* log = cc_open_file(self->cc, file, "w");
         if (!log)
                 return;
 
-        scc_cc_set_log(self, log);
+        self->cc->output.message = log;
 }
 
-static void scc_cc_help(scc_cc* self, aparser* parser)
+static void cc_parse_help(cc_arg_info* self, aparser* parser)
 {
 }
 
-static void scc_cc_fsyntax_only(scc_cc* self, aparser* parser)
+static void cc_parse_fsyntax_only(cc_arg_info* self, aparser* parser)
 {
-        scc_cc_set_mode(self, SCRM_SYNTAX_ONLY);
+        self->cc->output.kind = COK_NONE;
 }
 
-static void scc_cc_flex_only(scc_cc* self, aparser* parser)
+static void cc_parse_dump_tokens(cc_arg_info* self, aparser* parser)
 {
-        scc_cc_set_mode(self, SCRM_LEX_ONLY);
+        self->cc->output.kind = COK_LEXEMES;
 }
 
-static void scc_cc_fprint_eval_result(scc_cc* self, aparser* parser)
+static void cc_parse_dump_tree(cc_arg_info* self, aparser* parser)
 {
-        self->opts.print.flags |= SCPF_PRINT_EVAL_RESULT;
+        self->cc->output.kind = COK_C;
 }
 
-static void scc_cc_fprint_expr_value(scc_cc* self, aparser* parser)
+static void cc_parse_fprint_eval_result(cc_arg_info* self, aparser* parser)
 {
-        self->opts.print.flags |= SCPF_PRINT_EXPR_VALUE;
+        self->cc->opts.cprint.print_eval_result = true;
 }
 
-static void scc_cc_fprint_expr_type(scc_cc* self, aparser* parser)
+static void cc_parse_fprint_expr_value(cc_arg_info* self, aparser* parser)
 {
-        self->opts.print.flags |= SCPF_PRINT_EXPR_TYPE;
+        self->cc->opts.cprint.print_expr_value = true;
 }
 
-static void scc_cc_fprint_impl_casts(scc_cc* self, aparser* parser)
+static void cc_parse_fprint_expr_type(cc_arg_info* self, aparser* parser)
 {
-        self->opts.print.flags |= SCPF_PRINT_IMPL_CASTS;
+        self->cc->opts.cprint.print_expr_type = true;
 }
 
-static void scc_cc_fforce_brackets(scc_cc* self, aparser* parser)
+static void cc_parse_fprint_impl_casts(cc_arg_info* self, aparser* parser)
 {
-        self->opts.print.flags |= SCPF_FORCE_BRACKETS;
+        self->cc->opts.cprint.print_impl_casts = true;
 }
 
-static void scc_cc_fdce(scc_cc* self, aparser* parser)
+static void cc_parse_fforce_brackets(cc_arg_info* self, aparser* parser)
 {
-        self->opts.optimization.eliminate_dead_code = true;
+        self->cc->opts.cprint.force_brackets = true;
 }
 
-static void scc_cc_fcf(scc_cc* self, aparser* parser)
+static void cc_parse_fdce(cc_arg_info* self, aparser* parser)
 {
-        self->opts.optimization.fold_constants = true;
+        self->cc->opts.optimization.eliminate_dead_code = true;
 }
 
-static void scc_cc_emit_ssa(scc_cc* self, aparser* parser)
+static void cc_parse_fcf(cc_arg_info* self, aparser* parser)
 {
-        self->opts.output = SCOK_SSA;
+        self->cc->opts.optimization.fold_constants = true;
 }
 
-static void scc_cc_I(scc_cc* self, aparser* parser)
+static void cc_parse_emit_ssa(cc_arg_info* self, aparser* parser)
+{
+        if (self->mode != CRM_ASSEMBLE)
+        {
+                cc_error(self->cc, "-emit-ssa cannot be used when linking");
+                return;
+        }
+
+        self->cc->output.kind = COK_SSA;
+}
+
+static void cc_parse_emit_llvm(cc_arg_info* self, aparser* parser)
+{
+        if (self->mode != CRM_ASSEMBLE)
+        {
+                cc_error(self->cc, "-emit-llvm cannot be used when linking");
+                return;
+        }
+
+        self->cc->output.kind = COK_LLVM_IR;
+}
+
+static void cc_parse_I(cc_arg_info* self, aparser* parser)
 {
         const char* dir = aparser_get_string(parser);
         if (!dir)
         {
-                scc_cc_missing_argument(self, "-i");
+                cc_missing_argument(self->cc, "-I");
                 return;
         }
 
-        if (path_is_dir(dir))
+        cc_add_source_dir(self->cc, dir);
+}
+
+static void cc_parse_l(cc_arg_info* self, aparser* parser)
+{
+        const char* lib = aparser_get_string(parser);
+        if (!lib)
         {
-                scc_cc_add_source_dir(self, dir);
+                cc_missing_argument(self->cc, "-l");
                 return;
         }
 
-        char path[S_MAX_PATH_LEN];
-        if (S_FAILED(path_get_cd(path))
-                || S_FAILED(path_join(path, dir)) || !path_is_dir(path))
+        cc_add_lib(self->cc, lib);
+}
+
+static void cc_parse_L(cc_arg_info* self, aparser* parser)
+{
+        const char* dir = aparser_get_string(parser);
+        if (!dir)
         {
-                scc_cc_file_doesnt_exist(self, dir);
+                cc_missing_argument(self->cc, "-L");
                 return;
         }
 
-        scc_cc_add_source_dir(self, path);
+        cc_add_lib_dir(self->cc, dir);
 }
 
-static void scc_cc_l(scc_cc* self, aparser* parser)
+static void cc_parse_m32(cc_arg_info* self, aparser* parser)
 {
+        self->cc->opts.target = CTK_X86_32;
 }
 
-static void scc_cc_L(scc_cc* self, aparser* parser)
+static void cc_parse_m64(cc_arg_info* self, aparser* parser)
 {
+        self->cc->opts.target = CTK_X86_64;
 }
 
-static void scc_cc_m32(scc_cc* self, aparser* parser)
-{
-        self->opts.target = SCTK_32;
-}
-
-static void scc_cc_m64(scc_cc* self, aparser* parser)
-{
-        self->opts.target = SCTK_64;
-}
-
-static void scc_cc_file(scc_cc* self, aparser* parser)
+static void cc_source_file(cc_arg_info* self, aparser* parser)
 {
         const char* file = aparser_get_string(parser);
         if (!file)
                 return;
 
-        scc_cc_add_source_file(self, file);
+        cc_add_source_file(self->cc, file);
 }
 
-extern serrcode scc_cc_parse_opts(scc_cc* self, int argc, const char** argv)
+extern serrcode cc_parse_opts(cc_instance* self, int argc, const char** argv)
 {
+        cc_arg_info info;
+        cc_arg_info_init(&info, self);
+
         arg_handler handlers[] = 
         {
-                ARG_HANDLER_INIT("-S", &scc_cc_S, self),
-                ARG_HANDLER_INIT("-o", &scc_cc_o, self),
-                ARG_HANDLER_INIT("-log", &scc_cc_log, self),
-                ARG_HANDLER_INIT("--help", &scc_cc_help, self),
-                ARG_HANDLER_INIT("-fsyntax-only", &scc_cc_fsyntax_only, self),
-                ARG_HANDLER_INIT("-flex-only", &scc_cc_flex_only, self),
-                ARG_HANDLER_INIT("-fprint-eval-result", &scc_cc_fprint_eval_result, self),
-                ARG_HANDLER_INIT("-fprint-expr-value", &scc_cc_fprint_expr_value, self),
-                ARG_HANDLER_INIT("-fprint-expr-type", &scc_cc_fprint_expr_type, self),
-                ARG_HANDLER_INIT("-fprint-impl-casts", &scc_cc_fprint_impl_casts, self),
-                ARG_HANDLER_INIT("-fforce-brackets", &scc_cc_fforce_brackets, self),
-                ARG_HANDLER_INIT("-fdce", &scc_cc_fdce, self),
-                ARG_HANDLER_INIT("-fcf", &scc_cc_fcf, self),
-                ARG_HANDLER_INIT("-emit-ssa", &scc_cc_emit_ssa, self),
-                ARG_HANDLER_INIT("-I", &scc_cc_I, self),
-                ARG_HANDLER_INIT("-L", &scc_cc_L, self),
-                ARG_HANDLER_INIT("-m32", &scc_cc_m32, self),
-                ARG_HANDLER_INIT("-m64", &scc_cc_m64, self),
+                ARG_HANDLER_INIT("-S", &cc_parse_S, &info),
+                ARG_HANDLER_INIT("-o", &cc_parse_o, &info),
+                ARG_HANDLER_INIT("-log", &cc_parse_log, &info),
+                ARG_HANDLER_INIT("-fsyntax-only", &cc_parse_fsyntax_only, &info),
+                ARG_HANDLER_INIT("-dump-tokens", &cc_parse_dump_tokens, &info),
+                ARG_HANDLER_INIT("-dump-tree", &cc_parse_dump_tree, &info),
+                ARG_HANDLER_INIT("-fprint-eval-result", &cc_parse_fprint_eval_result, &info),
+                ARG_HANDLER_INIT("-fprint-expr-value", &cc_parse_fprint_expr_value, &info),
+                ARG_HANDLER_INIT("-fprint-expr-type", &cc_parse_fprint_expr_type, &info),
+                ARG_HANDLER_INIT("-fprint-impl-casts", &cc_parse_fprint_impl_casts, &info),
+                ARG_HANDLER_INIT("-fforce-brackets", &cc_parse_fforce_brackets, &info),
+                ARG_HANDLER_INIT("-fdce", &cc_parse_fdce, &info),
+                ARG_HANDLER_INIT("-fcf", &cc_parse_fcf, &info),
+                ARG_HANDLER_INIT("-emit-ssa", &cc_parse_emit_ssa, &info),
+                ARG_HANDLER_INIT("-emit-llvm", &cc_parse_emit_llvm, &info),
+                ARG_HANDLER_INIT("-I", &cc_parse_I, &info),
+                ARG_HANDLER_INIT("-l", &cc_parse_l, &info),
+                ARG_HANDLER_INIT("-L", &cc_parse_L, &info),
+                ARG_HANDLER_INIT("-m32", &cc_parse_m32, &info),
+                ARG_HANDLER_INIT("-m64", &cc_parse_m64, &info),
         };
 
-        arg_handler def;
-        arg_handler_init(&def, "", &scc_cc_file, self);
+        arg_handler source;
+        arg_handler_init(&source, "", &cc_source_file, &info);
 
         aparser parser;
         aparser_init(&parser, argc, argv);
-        aparse(&parser, handlers, S_ARRAY_SIZE(handlers), &def);
+        aparse(&parser, handlers, S_ARRAY_SIZE(handlers), &source);
         return S_NO_ERROR;
 }

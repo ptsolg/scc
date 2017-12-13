@@ -1,5 +1,5 @@
-#ifndef SCC_TOOL_H
-#define SCC_TOOL_H
+#ifndef CC_TOOL_H
+#define CC_TOOL_H
 
 #include "scc/scl/common.h"
 #include "scc/scl/dseq-ext.h"
