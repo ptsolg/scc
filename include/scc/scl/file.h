@@ -31,6 +31,7 @@ extern bool path_is_abs(const char* path);
 extern serrcode path_get_abs(char* abs, const char* loc);
 extern void path_fix_delimeter(char* path);
 extern serrcode path_change_ext(char* path, const char* ext);
+extern serrcode path_delete_file(const char* path);
 
 typedef struct _fread_cb
 {
@@ -92,6 +93,14 @@ extern void flookup_init(file_lookup* self);
 extern void flookup_init_ex(file_lookup* self, allocator* alloc);
 extern void flookup_dispose(file_lookup* self);
 extern serrcode flookup_add(file_lookup* self, const char* dir);
+
+extern const char** flookup_dirs_begin(const file_lookup* self);
+extern const char** flookup_dirs_end(const file_lookup* self);
+
+#define FLOOKUP_FOREACH_DIR(PLOOKUP, ITNAME, ENDNAME)\
+        for (const char** ITNAME = flookup_dirs_begin(PLOOKUP), \
+                **ENDNAME = flookup_dirs_end(PLOOKUP); \
+                ITNAME != ENDNAME; ITNAME++)
 
 extern bool file_exists(file_lookup* lookup, const char* path);
 extern file_entry* file_get(file_lookup* lookup, const char* path);

@@ -54,7 +54,7 @@ extern serrcode path_join(char* path, const char* other)
         if (strlen(path) + strlen(other) >= S_MAX_PATH_LEN)
                 return S_ERROR;
 
-        if (!path_has_trailing_slash(path))
+        if (*path && !path_has_trailing_slash(path))
                 if (S_FAILED(path_add_trailing_slash(path)))
                         return S_ERROR;
 
@@ -212,6 +212,15 @@ extern serrcode path_change_ext(char* path, const char* ext)
         *pos++ = '.';
         strcpy(pos, ext);
         return S_NO_ERROR;
+}
+
+extern serrcode path_delete_file(const char* path)
+{
+#if S_WIN
+        return DeleteFile(path) ? S_NO_ERROR : S_ERROR;
+#else
+#error
+#endif
 }
 
 extern serrcode path_get_abs(char* abs, const char* loc)
@@ -411,6 +420,16 @@ extern serrcode flookup_add(file_lookup* self, const char* dir)
 
         strcpy(copy, dir);
         return dseq_append_ptr(&self->_dirs, copy);
+}
+
+extern const char** flookup_dirs_begin(const file_lookup* self)
+{
+        return (const char**)dseq_begin_ptr(&self->_dirs);
+}
+
+extern const char** flookup_dirs_end(const file_lookup* self)
+{
+        return (const char**)dseq_end_ptr(&self->_dirs);
 }
 
 extern bool file_exists(file_lookup* lookup, const char* path)
