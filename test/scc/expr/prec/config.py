@@ -1,1 +1,2 @@
-cmds = ['%test', '-fsyntax-only', '-fforce-brackets', '-dump-tree', '-o', '%output']
+def run(test):
+	presets.parse(test, ['-fforce-brackets'])

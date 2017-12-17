@@ -1,1 +1,2 @@
-cmds = ['%test', '-S', '-emit-ssa', '-m32', '-fcf', '-o', '%output']
+def run(test):
+	presets.ssaize(test, ['-m32', '-fcf'])

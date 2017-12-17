@@ -1,1 +1,2 @@
-cmds = ['%test', '-fsyntax-only', '-log', '%output']
+def run(test):
+	presets.parse_errors(test)

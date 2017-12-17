@@ -1,1 +1,2 @@
-cmds = ['%test', '-dump-tokens', '-log', '%output']
+def run(test):
+	presets.lex_errors(test)

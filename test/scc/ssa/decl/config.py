@@ -1,1 +1,2 @@
-cmds = ['%test', '-S', '-emit-ssa', '-o', '%output']
+def run(test):
+	presets.ssaize(test)

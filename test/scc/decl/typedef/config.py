@@ -1,1 +1,2 @@
-cmds = ['%test', '-fsyntax-only', '-dump-tree', '-o', '%output']
+def run(test):
+	presets.parse(test)

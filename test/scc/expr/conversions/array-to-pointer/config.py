@@ -1,1 +1,2 @@
-cmds = ['%test', '-fsyntax-only', '-fprint-impl-casts', '-dump-tree', '-o', '%output']
+def run(test):
+	presets.parse(test, ['-fprint-impl-casts'])
