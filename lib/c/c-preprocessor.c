@@ -127,6 +127,7 @@ extern void cpplexer_init(
         self->chars[1] = RB_ENDC;
         self->chars[2] = RB_ENDC;
         self->loc = TREE_INVALID_LOC;
+        self->angle_string_expected = false;
 }
 
 extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source)
@@ -256,6 +257,16 @@ extern ctoken* cpplex_string_literal(cpplexer* self)
                 return NULL;
 
         return ctoken_new_string(self->context, schar.loc, cpplexer_pool_seq(self, &schar));
+}
+
+extern ctoken* cpplex_angle_string_literal(cpplexer* self)
+{
+        csequence seq;
+        csequence_init(&seq);
+        if (!cpplex_quoted_seq(self, &seq, '>'))
+                return NULL;
+
+        return ctoken_new_angle_string(self->context, seq.loc, cpplexer_pool_seq(self, &seq));
 }
 
 extern ctoken* cpplex_const_char(cpplexer* self)
@@ -536,6 +547,8 @@ static ctoken* cpplex_symbols(cpplexer* self)
                 return cpplex_string_literal(self);
         else if (c == '\'')
                 return cpplex_const_char(self);
+        else if (c == '<' && self->angle_string_expected)
+                return cpplex_angle_string_literal(self);
 
         int next = cpplexer_get_nextc(self);
         if (c == '.' && char_is_digit(next))
@@ -678,7 +691,9 @@ static ctoken* cpproc_lex_directive(cpproc*);
 
 static ctoken* cpproc_lex_include(cpproc* self)
 {
+        self->state->lexer.angle_string_expected = true;
         ctoken* t = cpproc_lex_wspace(self, false);
+        self->state->lexer.angle_string_expected = false;
         if (!t)
                 return NULL;
 
@@ -741,14 +756,17 @@ static ctoken* cpproc_lex_directive(cpproc* self)
                 return false;
         }
 
-        switch (directive)
+        self->state->in_directive = true;
+        if (directive == CTK_PP_INCLUDE)
+                t = cpproc_lex_include(self);
+        else
         {
-                case CTK_PP_INCLUDE: return cpproc_lex_include(self);
-
-                default:
-                        S_UNREACHABLE(); // todo
-                        return NULL;
+                t = NULL;
+                cerror(self->error_manager, CES_ERROR, ctoken_get_loc(t),
+                        "unsupported preprocessor directive");
         }
+        self->state->in_directive = false;
+        return t;
 }
 
 static ctoken* cpproc_lex_macro_id(cpproc* self)

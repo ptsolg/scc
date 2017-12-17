@@ -37,6 +37,7 @@ typedef struct _cpplexer
         // prev, current and next
         int chars[3];
         readbuf* buf;
+        bool angle_string_expected;
         const creswords* reswords;
         csource* source;
         csource_manager* source_manager;
@@ -98,6 +99,7 @@ extern ctoken* cpplex_identifier(cpplexer* self);
 // the double-quote ", backslash \, or new-line character
 // escape-sequence
 extern ctoken* cpplex_string_literal(cpplexer* self);
+extern ctoken* cpplex_angle_string_literal(cpplexer* self);
 
 // c99 6.4.4.4 character-constant:
 // ' c-char-sequence '
