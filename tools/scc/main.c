@@ -1,21 +1,12 @@
-#include "scc/cc/cc.h"
+#include "scc.h"
 
 int main(int argc, const char** argv)
 {
         serrcode result = S_ERROR;
-        cc_instance cc;
-        cc_init(&cc, stdout);
-
-        char cd[S_MAX_PATH_LEN + 1];
-        if (S_FAILED(path_get_cd(cd)))
-                goto cleanup;
-        if (S_FAILED(cc_add_source_dir(&cc, cd)))
-                goto cleanup;
-
-        if (S_SUCCEEDED(cc_parse_opts(&cc, argc, argv)))
-                result = cc_run(&cc);
-
-cleanup:
-        cc_dispose(&cc);
+        scc_env env;
+        scc_env_init(&env);
+        if (S_SUCCEEDED(scc_env_setup(&env, argc, argv)))
+                result = cc_run(&env.cc);
+        scc_env_dispose(&env);
         return result;
 }
