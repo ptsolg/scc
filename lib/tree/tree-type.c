@@ -28,9 +28,15 @@ extern tree_type* tree_new_builtin_type(tree_context* context, tree_builtin_type
         tree_type* t = tree_new_type(context, TTK_BUILTIN, sizeof(struct _tree_builtin_type));
         if (!t)
                 return NULL;
-
+        
         tree_set_builtin_type_kind(t, kind);
         return t;
+}
+
+extern tree_type* tree_new_size_type(tree_context* context)
+{
+        bool x32 = tree_target_is(tree_get_target(context), TTARGET_X32);
+        return tree_new_builtin_type(context, x32 ? TBTK_UINT32 : TBTK_UINT64);
 }
 
 extern tree_type* tree_new_function_type(tree_context* context, tree_type* restype)

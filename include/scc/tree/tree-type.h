@@ -87,6 +87,8 @@ struct _tree_builtin_type
 };
 
 extern tree_type* tree_new_builtin_type(tree_context* context, tree_builtin_type_kind kind);
+// uint32_t or uint64_t
+extern tree_type* tree_new_size_type(tree_context* context);
 
 static inline struct _tree_builtin_type* _tree_get_builtin_type(tree_type* self);
 static inline const struct _tree_builtin_type* _tree_get_builtin_ctype(const tree_type* self);
