@@ -1,6 +1,7 @@
 add_scc_lib(codegen
-	codegen-llvm.c
-
+	codegen.c
+	llvm-printer.c
+	
 	DEPENDS
 	ssa
 

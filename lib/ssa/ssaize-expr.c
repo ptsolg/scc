@@ -4,6 +4,7 @@
 #include "scc/ssa/ssa-instr.h"
 #include "scc/ssa/ssa-block.h"
 #include "scc/ssa/ssa-function.h"
+#include "scc/ssa/ssa-module.h"
 #include "scc/tree/tree-expr.h"
 
 static ssa_value* ssaize_mul(ssaizer* self, ssa_value* lhs, ssa_value* rhs)
@@ -462,6 +463,12 @@ extern ssa_value* ssaize_call_expr(ssaizer* self, const tree_expr* expr)
         return call;
 }
 
+static ssa_value* ssaizer_build_cast_to_builtin_type(
+        ssaizer* self, ssa_value* value, tree_builtin_type_kind builtin)
+{
+        ;
+}
+
 extern ssa_value* ssaize_subscript_expr(ssaizer* self, const tree_expr* expr)
 {
         tree_expr* pointer = tree_get_subscript_lhs(expr);
@@ -483,6 +490,13 @@ extern ssa_value* ssaize_subscript_expr(ssaizer* self, const tree_expr* expr)
         if (!ssa_index)
                 return NULL;
 
+        tree_type* size_type = tree_new_size_type(ssa_get_tree(self->context));
+        if (!size_type)
+                return NULL;
+
+        if (!(ssa_index = ssa_build_cast(&self->builder, size_type, ssa_index)))
+                return NULL;
+        
         ssa_value* element_ptr = ssa_build_getaddr(&self->builder,
                 tree_get_pointer_target(tree_get_expr_type(pointer)), ssa_pointer, ssa_index, NULL);
         if (!element_ptr)
@@ -555,8 +569,13 @@ extern ssa_value* ssaize_floating_literal(ssaizer* self, const tree_expr* expr)
 
 extern ssa_value* ssaize_string_literal(ssaizer* self, const tree_expr* expr)
 {
-        return ssa_build_string(&self->builder,
+        ssa_value* string = ssa_build_string(&self->builder,
                 tree_get_expr_type(expr), tree_get_string_literal(expr));
+        if (!string)
+                return NULL;
+
+        ssa_module_add_global(self->module, string);
+        return string;
 }
 
 static ssa_value* ssaizer_get_global_decl_ptr(ssaizer* self, tree_decl* decl)

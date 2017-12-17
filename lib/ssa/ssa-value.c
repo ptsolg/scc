@@ -60,13 +60,13 @@ extern ssa_value* ssa_new_param(ssa_context* context, ssa_id id, tree_type* type
         return p;
 }
 
-extern ssa_value* ssa_new_string(ssa_context* context, tree_type* type, tree_id id)
+extern ssa_value* ssa_new_string(ssa_context* context, ssa_id uid, tree_type* type, tree_id id)
 {
         ssa_value* s = ssa_allocate(context, sizeof(ssa_string));
         if (!s)
                 return NULL;
 
-        ssa_init_typed_value(s, SVK_STRING, 0, type);
+        ssa_init_typed_value(s, SVK_STRING, uid, type);
         ssa_set_string_value(s, id);
         return s;
 }

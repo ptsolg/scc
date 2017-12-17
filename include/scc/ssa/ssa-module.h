@@ -13,17 +13,20 @@ extern "C" {
 
 typedef struct _ssa_context ssa_context;
 typedef struct _ssa_function ssa_function;
+typedef struct _ssa_value ssa_value;
 typedef struct _tree_decl tree_decl;
 
 typedef struct _ssa_module
 {
         htab _lookup;
         list_head _defs;
+        dseq _strings;
 } ssa_module;
 
 extern ssa_module* ssa_new_module(ssa_context* context);
 
 extern void ssa_module_add_func_def(ssa_module* self, ssa_function* func);
+extern void ssa_module_add_global(ssa_module* self, ssa_value* string);
 extern ssa_function* ssa_module_lookup(const ssa_module* self, const tree_decl* func);
 
 static inline ssa_function* ssa_get_module_defs_begin(const ssa_module* self)
@@ -41,10 +44,25 @@ static inline const ssa_function* ssa_get_module_defs_cend(const ssa_module* sel
         return (const ssa_function*)list_cend(&self->_defs);
 }
 
+static inline ssa_value** ssa_get_module_globals_begin(const ssa_module* self)
+{
+        return (ssa_value**)dseq_begin_ptr(&self->_strings);
+}
+
+static inline ssa_value** ssa_get_module_globals_end(const ssa_module* self)
+{
+        return (ssa_value**)dseq_end_ptr(&self->_strings);
+}
+
 #define SSA_FOREACH_MODULE_DEF(PMODULE, ITNAME) \
         for (ssa_function* ITNAME = ssa_get_module_defs_begin(PMODULE); \
                 ITNAME != ssa_get_module_defs_cend(PMODULE); \
                 ITNAME = ssa_get_next_function(ITNAME))
+
+#define SSA_FOREACH_MODULE_GLOBAL(PMODULE, ITNAME, ENDNAME) \
+        for (ssa_value** ITNAME = ssa_get_module_globals_begin(PMODULE), \
+                **ENDNAME = ssa_get_module_globals_end(PMODULE); \
+                ITNAME != ENDNAME; ITNAME++)
 
 #ifdef __cplusplus
 }

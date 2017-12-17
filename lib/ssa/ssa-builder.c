@@ -9,6 +9,7 @@ extern void ssa_init_builder(ssa_builder* self, ssa_context* context, ssa_block*
         self->context = context;
         self->block = block;
         self->uid = 0;
+        self->string_uid = 0;
 }
 
 extern void ssa_dispose_builder(ssa_builder* self)
@@ -199,15 +200,18 @@ extern ssa_value* ssa_build_getaddr(
         ssa_value* offset)
 {
         if (!index)
-                index = ssa_build_zero_u32(self);
+                index = ssa_build_zero_size_t(self);
         if (!offset)
-                offset = ssa_build_zero_u32(self);
+                offset = ssa_build_zero_size_t(self);
         if (!index || !offset)
                 return NULL;
 
         S_ASSERT(tree_type_is_pointer(ssa_get_value_type(operand)));
-        S_ASSERT(tree_type_is_integer(ssa_get_value_type(index)));
-        S_ASSERT(tree_type_is_integer(ssa_get_value_type(offset)));
+
+        tree_type_kind size_type = tree_target_is(ssa_get_target(self->context), TTARGET_X32)
+                ? TBTK_UINT32 : TBTK_UINT64;
+        S_ASSERT(tree_builtin_type_is(ssa_get_value_type(index), size_type));
+        S_ASSERT(tree_builtin_type_is(ssa_get_value_type(offset), size_type));
 
         tree_type* value_type = tree_new_pointer_type(ssa_get_tree(self->context), target_type);
         if (!value_type)
@@ -268,7 +272,7 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
 
 extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id id)
 {
-        return ssa_new_string(self->context, type, id);
+        return ssa_new_string(self->context, self->string_uid++, type, id);
 }
 
 extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, suint64 val)
@@ -304,13 +308,13 @@ extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, doub
         return ssa_new_constant(self->context, type, v);
 }
 
-extern ssa_value* ssa_build_zero_u32(ssa_builder* self)
+extern ssa_value* ssa_build_zero_size_t(ssa_builder* self)
 {
-        tree_type* u32 = tree_new_builtin_type(ssa_get_tree(self->context), TBTK_UINT32);
-        if (!u32)
+        tree_type* size_type = tree_new_size_type(ssa_get_tree(self->context));
+        if (!size_type)
                 return NULL;
 
-        return ssa_build_int_constant(self, u32, 0);
+        return ssa_build_int_constant(self, size_type, 0);
 }
 
 extern ssa_value* ssa_build_inc(ssa_builder* self, ssa_value* operand)

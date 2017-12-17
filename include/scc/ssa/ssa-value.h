@@ -120,7 +120,7 @@ typedef struct _ssa_string
         tree_id _id;
 } ssa_string;
 
-extern ssa_value* ssa_new_string(ssa_context* context, tree_type* type, tree_id id);
+extern ssa_value* ssa_new_string(ssa_context* context, ssa_id uid, tree_type* type, tree_id id);
 
 static inline ssa_string* _ssa_get_string(ssa_value* self);
 static inline const ssa_string* _ssa_get_cstring(const ssa_value* self);

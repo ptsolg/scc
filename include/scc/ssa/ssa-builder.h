@@ -24,6 +24,7 @@ typedef struct _ssa_builder
         ssa_context* context;
         ssa_block* block;
         ssa_id uid;
+        ssa_id string_uid;
 } ssa_builder;
 
 extern void ssa_init_builder(ssa_builder* self, ssa_context* context, ssa_block* block);
@@ -46,6 +47,7 @@ extern ssa_value* ssa_build_geq(ssa_builder* self, ssa_value* lhs, ssa_value* rh
 extern ssa_value* ssa_build_eq(ssa_builder* self, ssa_value* lhs, ssa_value* rhs);
 extern ssa_value* ssa_build_neq(ssa_builder* self, ssa_value* lhs, ssa_value* rhs);
 extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* type, ssa_value* operand);
+
 extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const dseq* args);
 extern ssa_value* ssa_build_getaddr(
         ssa_builder* self,
@@ -62,7 +64,7 @@ extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id i
 extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, suint64 val);
 extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, float val);
 extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, double val);
-extern ssa_value* ssa_build_zero_u32(ssa_builder* self);
+extern ssa_value* ssa_build_zero_size_t(ssa_builder* self);
 
 extern ssa_value* ssa_build_inc(ssa_builder* self, ssa_value* operand);
 extern ssa_value* ssa_build_dec(ssa_builder* self, ssa_value* operand);
