@@ -199,9 +199,13 @@ extern tree_expr* tree_new_floating_literal(
 }
 
 extern tree_expr* tree_new_string_literal(
-        tree_context* context, tree_type* type, tree_location loc, tree_id ref)
+        tree_context* context,
+        tree_value_kind value,
+        tree_type* type,
+        tree_location loc,
+        tree_id ref)
 {
-        tree_expr* e = tree_new_expr(context, TEK_STRING_LITERAL, TVK_RVALUE, type, loc,
+        tree_expr* e = tree_new_expr(context, TEK_STRING_LITERAL, value, type, loc,
                 sizeof(struct _tree_string_literal_expr));
         if (!e)
                 return NULL;

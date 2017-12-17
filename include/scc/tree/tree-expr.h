@@ -360,7 +360,11 @@ struct _tree_string_literal_expr
 };
 
 extern tree_expr* tree_new_string_literal(
-        tree_context* context, tree_type* type, tree_location loc, tree_id ref);
+        tree_context* context,
+        tree_value_kind value,
+        tree_type* type,
+        tree_location loc,
+        tree_id ref);
 
 static inline struct _tree_string_literal_expr* _tree_get_string_literal(tree_expr* self);
 static inline const struct _tree_string_literal_expr* _tree_get_cstring_literal(const tree_expr* self);

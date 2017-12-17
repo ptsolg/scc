@@ -223,7 +223,7 @@ extern tree_expr* csema_new_integer_literal(
 
 extern tree_expr* csema_new_string_literal(csema* self, tree_location loc, tree_id ref)
 {
-        return tree_new_string_literal(self->context,
+        return tree_new_string_literal(self->context, TVK_LVALUE,
                 csema_get_type_for_string_literal(self, ref), loc, ref);
 }
 
@@ -236,29 +236,26 @@ extern tree_expr* csema_new_subscript_expr(
         if (!lhs || !rhs)
                 return NULL;
 
-        tree_type* lt = tree_desugar_type(csema_unary_conversion(self, &lhs));
-        tree_type* rt = tree_desugar_type(tree_get_expr_type(rhs));
-        tree_location rl = tree_get_expr_loc(rhs);
-        tree_type* t = NULL;
+        csema_unary_conversion(self, &lhs);
+        tree_type* rt = csema_unary_conversion(self, &rhs);
 
-        if (tree_type_is_pointer(lt))
+        tree_expr* base = lhs;
+        tree_expr* index = rhs;
+        if (tree_type_is_pointer(rt))
         {
-                if (!csema_require_integral_expr_type(self, rt, rl))
-                        return NULL;
-
-                t = tree_get_pointer_target(lt);
+                base = rhs;
+                index = lhs;
         }
-        else if (csema_require_object_pointer_expr_type(self, rt, rl))
+
+        tree_type* base_type = tree_get_expr_type(base);
+        tree_type* index_type = tree_get_expr_type(index);
+        if (!csema_require_object_pointer_expr_type(self, base_type, tree_get_expr_loc(base))
+                || !csema_require_integral_expr_type(self, index_type, tree_get_expr_loc(index)))
         {
-                if (!csema_require_integral_expr_type(self, lt, tree_get_expr_loc(lhs)))
-                        return NULL;
-
-                t = tree_get_pointer_target(rt);
-        }
-        else
                 return NULL;
-
-        return tree_new_subscript_expr(self->context, TVK_LVALUE, t, loc, lhs, rhs);
+        }
+        return tree_new_subscript_expr(self->context,
+                TVK_LVALUE, tree_get_pointer_target(base_type), loc, lhs, rhs);
 }
 
 static bool csema_check_call_argument(
