@@ -18,6 +18,7 @@ extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc)
         self->output.kind = COK_EXEC;
         self->output.message = message;
         self->output.file = NULL;
+        self->output.file_path = NULL;
 
         self->opts.target = CTK_X86_32;
         self->opts.optimization.eliminate_dead_code = false;
@@ -27,6 +28,8 @@ extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc)
         self->opts.cprint.print_impl_casts = false;
         self->opts.cprint.print_eval_result = false;
         self->opts.cprint.force_brackets = false;
+        self->opts.llc_path = NULL;
+        self->opts.lld_path = NULL;
 }
 
 extern void cc_dispose(cc_instance* self)
@@ -40,6 +43,12 @@ extern void cc_dispose(cc_instance* self)
         dseq_dispose(&self->input.sources);
 }
 
+extern void cc_set_output_stream(cc_instance* self, FILE* out)
+{
+        self->output.file_path = NULL;
+        self->output.file = out;
+}
+
 extern serrcode cc_set_output_file(cc_instance* self, const char* file)
 {
         if (self->output.file)
@@ -51,6 +60,7 @@ extern serrcode cc_set_output_file(cc_instance* self, const char* file)
                 return S_ERROR;
         }
 
+        self->output.file_path = file;
         return S_NO_ERROR;
 }
 

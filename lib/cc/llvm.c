@@ -1,80 +1,159 @@
 #include "scc/cc/llvm.h"
+#include "scc/scl/file.h"
+#include "scc/scl/args.h"
 #include <stdio.h>
 #include <string.h>
 
+#define MAX_ARGC 1024
+
+typedef struct
+{
+        int argc;
+        const char* argv[MAX_ARGC];
+} arg_info;
+
+static void arg_info_init(arg_info* self)
+{
+        *self->argv = NULL;
+        self->argc = 0;
+}
+
+static void arg_append(arg_info* self, const char* arg)
+{
+        if (self->argc + 1 >= MAX_ARGC)
+                return;
+
+        self->argv[self->argc++] = arg;
+        self->argv[self->argc] = NULL;
+}
+
 extern void llvm_compiler_init(llvm_compiler* self, const char* path)
 {
-        scc_tool_init(&self->tool, "llc", path);
+        self->path = path;
         self->opt_level = LCOL_O0;
+        self->output_kind = LCOK_ASM;
+        self->arch = LCAK_X86;
         self->file = NULL;
+        self->output = NULL;
 }
 
-extern void llvm_compiler_set_file(llvm_compiler* self, const char* file)
+extern serrcode llvm_compile(llvm_compiler* self, int* exit_code)
 {
-        self->file = file;
-}
+        arg_info args;
+        arg_info_init(&args);
+        arg_append(&args, self->file);
 
-extern void llvm_compiler_set_opt_level(llvm_compiler* self, llvm_compiler_opt_level level)
-{
-        self->opt_level = level;
-}
-
-extern serrcode llvm_compiler_run(llvm_compiler* self, int* code)
-{
         char opt[8];
         snprintf(opt, S_ARRAY_SIZE(opt), "-O=%u", self->opt_level);
+        arg_append(&args, opt);
 
-        const char* argv[] = 
+        char filetype[64];
+        snprintf(filetype, S_ARRAY_SIZE(filetype), "-filetype=%s",
+                (self->output_kind == LCOK_OBJ ? "obj" : "asm"));
+        arg_append(&args, filetype);
+
+        char arch[64];
+        snprintf(arch, S_ARRAY_SIZE(arch), "-march=%s",
+                (self->arch == LCAK_X86 ? "x86" : "x86-64"));
+        arg_append(&args, arch);
+
+        if (self->output)
         {
-                self->file,
-                opt,
-                "-filetype=obj",
-                NULL
-        };
+                arg_append(&args, "-o");
+                arg_append(&args, self->output);
+        }
 
-        return scc_tool_exec(&self->tool, code, argv);
+        //for (int i = 0; i < args.argc; i++)
+        //        printf("llc >> %s\n", args.argv[i]);
+
+        return execute(self->path, exit_code, args.argc, args.argv);
 }
 
-static char* llvm_get_tool_path(llvm_tools* self, const char* tool_name)
+extern serrcode llvm_linker_add_dir(llvm_linker* self, const char* dir)
 {
-        char path[S_MAX_PATH_LEN + 1];
-        strncpy(path, self->dir, S_MAX_PATH_LEN);
-        if (S_FAILED(path_join(path, tool_name)))
-                return NULL;
+        ssize len = strlen(dir) + sizeof("/LIBPATH:\"\"");
+        char* copy = allocate(self->alloc, len + 1);
+        if (!copy)
+                return S_ERROR;
 
-        char* result = allocate(STDALLOC, strlen(path) + 1);
-        if (!result)
-                return NULL;
-
-        strcpy(result, path);
-        return result;
-}
-
-extern serrcode llvm_tools_init(llvm_tools* self, const char* dir)
-{
-        self->llc_path = NULL;
-        self->dir = dir;
-
-#if S_WIN
-        const char* llc = "llc.exe";
-#elif S_OSX
-        const char* llc = "llc";
-#else
-#error todo
-#endif
-
-        if (!(self->llc_path = llvm_get_tool_path(self, llc)))
-                goto error;
-
-        llvm_compiler_init(&self->llc, self->llc_path);
+        snprintf(copy, len, "/LIBPATH:\"%s\"", dir);
+        if (S_FAILED(dseq_append_ptr(&self->dirs, copy)))
+        {
+                deallocate(self->alloc, copy);
+                return S_ERROR;
+        }
         return S_NO_ERROR;
-
-error:
-        llvm_tools_dispose(self);
-        return S_ERROR;
 }
 
-extern void llvm_tools_dispose(llvm_tools* self)
+extern serrcode llvm_linker_add_file(llvm_linker* self, const char* file)
 {
-        deallocate(STDALLOC, self->llc_path);
+        char* copy = allocate(self->alloc, strlen(file) + 1);
+        if (!copy)
+                return S_ERROR;
+
+        strcpy(copy, file);
+        if (S_FAILED(dseq_append_ptr(&self->files, copy)))
+        {
+                deallocate(self->alloc, copy);
+                return S_ERROR;
+        }
+        return S_NO_ERROR;
+}
+
+extern void llvm_linker_init(llvm_linker* self, const char* path)
+{
+        self->path = path;
+        self->output = NULL;
+        self->alloc = STDALLOC;
+        dseq_init_ex_ptr(&self->files, self->alloc);
+        dseq_init_ex_ptr(&self->dirs, self->alloc);
+}
+
+extern void llvm_linker_dispose(llvm_linker* self)
+{
+        for (void** it = dseq_begin_ptr(&self->files),
+                **end = dseq_end_ptr(&self->files); it != end; it++)
+        {
+                deallocate(self->alloc, *it);
+        }
+
+        for (void** it = dseq_begin_ptr(&self->dirs),
+                **end = dseq_end_ptr(&self->dirs); it != end; it++)
+        {
+                deallocate(self->alloc, *it);
+        }
+
+        dseq_dispose(&self->files);
+        dseq_dispose(&self->dirs);
+}
+
+extern serrcode llvm_link(llvm_linker* self, int* exit_code)
+{
+        arg_info args;
+        arg_info_init(&args);
+
+        for (void** it = dseq_begin_ptr(&self->files),
+                **end = dseq_end_ptr(&self->files); it != end; it++)
+        {
+                arg_append(&args, *it);
+        }
+
+        for (void** it = dseq_begin_ptr(&self->dirs),
+                **end = dseq_end_ptr(&self->dirs); it != end; it++)
+        {
+                arg_append(&args, *it);
+        }
+
+        char output[S_MAX_PATH_LEN + sizeof("/OUT:\"\"")];
+        if (self->output)
+        {
+                snprintf(output, S_ARRAY_SIZE(output), "/OUT:\"%s\"", self->output);
+                arg_append(&args, output);
+        }
+
+        //printf("lld >> %s\n", self->path);
+        //for (int i = 0; i < args.argc; i++)
+        //        printf("lld >> %s\n", args.argv[i]);
+
+        return execute(self->path, exit_code, args.argc, args.argv);
 }

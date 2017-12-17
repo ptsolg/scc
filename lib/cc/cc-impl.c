@@ -4,7 +4,13 @@
 #include "scc/c/c-printer.h"
 #include "scc/ssa/ssa-context.h"
 #include "scc/codegen/codegen.h"
+#include "scc/cc/llvm.h"
 #include <stdarg.h>
+
+#define LL_EXT "ll"
+#define SSA_EXT "ssa"
+#define OBJ_EXT "obj"
+#define ASM_EXT "s"
 
 typedef struct
 {
@@ -53,6 +59,10 @@ static file_entry** cc_libs_end(cc_instance* self)
 {
         return (file_entry**)dseq_end_ptr(&self->input.libs);
 }
+
+#define CC_FOREACH_LIB(PCC, ITNAME, ENDNAME) \
+        for(file_entry** ITNAME = cc_libs_begin(PCC),\
+                **ENDNAME = cc_libs_end(PCC); ITNAME != ENDNAME; ITNAME++)
 
 extern void cc_error(cc_instance* self, const char* format, ...)
 {
@@ -228,23 +238,13 @@ extern serrcode cc_perform_syntax_analysis(cc_instance* self)
         return result;
 }
 
-extern serrcode cc_generate_obj(cc_instance* self)
-{
-        return S_ERROR;
-}
-
-extern serrcode cc_generate_asm(cc_instance* self)
-{
-        return S_ERROR;
-}
-
 static void cc_set_ssa_optimizer_opts(cc_instance* self, ssa_optimizer_opts* opts)
 {
         opts->eliminate_dead_code = self->opts.optimization.eliminate_dead_code;
         opts->fold_constants = self->opts.optimization.fold_constants;
 }
 
-static serrcode cc_codegen_file(cc_instance* self,
+static serrcode cc_codegen_file_ex(cc_instance* self,
         codegen_output_kind kind, file_entry* file, FILE* output)
 {
         serrcode result = S_ERROR;
@@ -272,49 +272,219 @@ cleanup:
         return result;
 }
 
+static serrcode get_file_as(char* buffer, const file_entry* file, const char* ext)
+{
+        strncpy(buffer, file_get_path(file), S_MAX_PATH_LEN);
+        return path_change_ext(buffer, ext);
+}
+
+static serrcode cc_codegen_file(cc_instance* self,
+        codegen_output_kind kind, file_entry* file)
+{
+        const char* ext = kind == CGOK_SSA ? SSA_EXT : LL_EXT;
+        char out[S_MAX_PATH_LEN + 1];
+        if (S_FAILED(get_file_as(out, file, ext)))
+                return S_ERROR;
+
+        FILE* fout = fopen(out, "w");
+        if (!fout)
+                return S_ERROR;
+
+        serrcode result = cc_codegen_file_ex(self, kind, file, fout);
+        fclose(fout);
+        return result;
+}
+
+static void cc_cleanup_codegen(cc_instance* self, codegen_output_kind kind)
+{
+        CC_FOREACH_SOURCE(self, it, end)
+        {
+                const char* ext = kind == CGOK_SSA ? SSA_EXT : LL_EXT;
+                char file[S_MAX_PATH_LEN + 1];
+                if (S_FAILED(get_file_as(file, *it, ext)))
+                        return;
+
+                path_delete_file(file);
+        }
+}
+
 static serrcode cc_codegen(cc_instance* self, codegen_output_kind kind)
+{
+        CC_FOREACH_SOURCE(self, it, end)
+                if (S_FAILED(cc_codegen_file(self, kind, *it)))
+                {
+                        cc_cleanup_codegen(self, kind);
+                        return S_ERROR;
+                }
+        return S_NO_ERROR;
+}
+
+static serrcode cc_check_return_code(cc_instance* self, const char* tool, int code)
+{
+        if (code)
+        {
+                cc_error(self, "%s returned %d", tool, code);
+                return S_ERROR;
+        }
+        return S_NO_ERROR;
+}
+
+static serrcode cc_compile_file(cc_instance* self,
+        file_entry* file, llvm_compiler_output_kind output_kind, const char* output)
+{
+        if (S_FAILED(cc_codegen_file(self, CGOK_LLVM, file)))
+                return S_ERROR;
+
+        char ll_file[S_MAX_PATH_LEN + 1];
+        if (S_FAILED(get_file_as(ll_file, file, LL_EXT)))
+                return S_ERROR;
+
+        int exit_code;
+        llvm_compiler llc;
+        llvm_compiler_init(&llc, self->opts.llc_path);
+        // todo: set optimization opts
+        llc.file = ll_file;
+        llc.output_kind = output_kind;
+        llc.arch = self->opts.target == CTK_X86_32 ? LCAK_X86 : LCAK_X86_64;
+        llc.output = output;
+
+        bool failed = S_FAILED(llvm_compile(&llc, &exit_code));
+        path_delete_file(ll_file);
+        if (failed)
+                return S_ERROR;
+
+        return cc_check_return_code(self, "llc", exit_code);
+}
+
+static void cc_cleanup_compilation(cc_instance* self, llvm_compiler_output_kind output_kind)
+{
+        const char* ext = output_kind == LCOK_ASM ? ASM_EXT : OBJ_EXT;
+        CC_FOREACH_SOURCE(self, it, end)
+        {
+                char file[S_MAX_PATH_LEN + 1];
+                strncpy(file, file_get_path(*it), S_MAX_PATH_LEN);
+                if (S_FAILED(path_change_ext(file, ext)))
+                        continue;
+
+                path_delete_file(file);
+        }
+}
+
+static serrcode cc_compile(cc_instance* self, llvm_compiler_output_kind output_kind)
+{
+        CC_FOREACH_SOURCE(self, it, end)
+                if (S_FAILED(cc_compile_file(self, *it, output_kind, NULL)))
+                {
+                        cc_cleanup_compilation(self, output_kind);
+                        return S_ERROR;
+                }
+        return S_NO_ERROR;
+}
+
+static void cc_close_output_stream(cc_instance* self)
+{
+        if (self->output.file)
+        {
+                fclose(self->output.file);
+                self->output.file = NULL;
+        }
+}
+
+extern serrcode cc_generate_obj(cc_instance* self)
 {
         if (self->output.file)
         {
                 if (!cc_check_single_input(self))
                         return S_ERROR;
 
-                return cc_codegen_file(self, kind,
-                        *cc_sources_begin(self), self->output.file);
+                cc_close_output_stream(self);
+                return cc_compile_file(self,
+                        *cc_sources_begin(self), LCOK_OBJ, self->output.file_path);
         }
 
-        const char* ext = kind == CGOK_SSA ? "ssa" : "ll";
-        CC_FOREACH_SOURCE(self, it, end)
+        return cc_compile(self, LCOK_OBJ);
+}
+
+extern serrcode cc_generate_asm(cc_instance* self)
+{
+        if (self->output.file)
         {
-                file_entry* file = *it;
-                char path[S_MAX_PATH_LEN + 1];
-                strncpy(path, file_get_path(file), S_MAX_PATH_LEN);
-                if (S_FAILED(path_change_ext(path, ext)))
-                        return S_ERROR;
-                
-                FILE* output = fopen(path, "w");
-                if (!output)
+                if (!cc_check_single_input(self))
                         return S_ERROR;
 
-                serrcode result = cc_codegen_file(self, kind, file, output);
-                fclose(output);
-                if (S_FAILED(result))
-                        return S_ERROR;
+                cc_close_output_stream(self);
+                return cc_compile_file(self,
+                        *cc_sources_begin(self), LCOK_ASM, self->output.file_path);
         }
-        return S_NO_ERROR;
+
+        return cc_compile(self, LCOK_ASM);
 }
 
 extern serrcode cc_generate_ssa(cc_instance* self)
 {
+        if (self->output.file)
+        {
+                if (!cc_check_single_input(self))
+                        return S_ERROR;
+
+                return cc_codegen_file_ex(self,
+                        CGOK_SSA, *cc_sources_begin(self), self->output.file);
+        }
+
         return cc_codegen(self, CGOK_SSA);
 }
 
 extern serrcode cc_generate_llvm_ir(cc_instance* self)
 {
+        if (self->output.file)
+        {
+                if (!cc_check_single_input(self))
+                        return S_ERROR;
+
+                return cc_codegen_file_ex(self,
+                        CGOK_LLVM, *cc_sources_begin(self), self->output.file);
+        }
+
         return cc_codegen(self, CGOK_LLVM);
+}
+
+static serrcode cc_link(cc_instance* self, llvm_linker* lld)
+{
+        char obj_file[S_MAX_PATH_LEN + 1];
+        CC_FOREACH_SOURCE(self, it, end)
+        {
+                if (S_FAILED(get_file_as(obj_file, *it, OBJ_EXT)))
+                        return S_ERROR;
+                if (S_FAILED(llvm_linker_add_file(lld, obj_file)))
+                        return S_ERROR;
+        }
+
+        CC_FOREACH_LIB(self, it, end)
+                if (S_FAILED(llvm_linker_add_file(lld, file_get_path(*it))))
+                        return S_ERROR;
+
+        FLOOKUP_FOREACH_DIR(&self->input.lib_lookup, it, end)
+                if (S_FAILED(llvm_linker_add_dir(lld, *it)))
+                        return S_ERROR;
+
+        int code;
+        if (S_FAILED(llvm_link(lld, &code)))
+                return S_ERROR;
+
+        return cc_check_return_code(self, "lld", code);
 }
 
 extern serrcode cc_generate_exec(cc_instance* self)
 {
-        return S_ERROR;
+        cc_close_output_stream(self);
+        if (S_FAILED(cc_compile(self, LCOK_OBJ)))
+                return S_ERROR;
+
+        llvm_linker lld;
+        llvm_linker_init(&lld, self->opts.lld_path);
+        lld.output = self->output.file_path;
+        serrcode result = cc_link(self, &lld);
+        cc_cleanup_compilation(self, LCOK_OBJ);
+        llvm_linker_dispose(&lld);
+        return result;
 }

@@ -34,6 +34,7 @@ typedef struct
         cc_output_kind kind;
         FILE* message;
         FILE* file;
+        const char* file_path;
 } cc_output;
 
 typedef struct
@@ -54,6 +55,9 @@ typedef struct
                 bool print_eval_result;
                 bool force_brackets;
         } cprint;
+
+        const char* llc_path;
+        const char* lld_path;
 } cc_opts;
 
 typedef struct _cc_instance
@@ -68,6 +72,7 @@ extern void cc_init(cc_instance* self, FILE* message);
 extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc);
 extern void cc_dispose(cc_instance* self);
 
+extern void cc_set_output_stream(cc_instance* self, FILE* out);
 extern serrcode cc_set_output_file(cc_instance* self, const char* file);
 
 extern serrcode cc_add_lib_dir(cc_instance* self, const char* dir);

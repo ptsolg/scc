@@ -29,6 +29,7 @@ extern void cc_arg_info_init(cc_arg_info* self, cc_instance* cc)
 typedef enum
 {
         CAK_S,
+        CAK_c,
         CAK_o,
         CAK_log,
         CAK_help,
@@ -55,6 +56,12 @@ static void cc_parse_S(cc_arg_info* self, aparser* parser)
 {
         self->mode = CRM_ASSEMBLE;
         self->cc->output.kind = COK_ASM;
+}
+
+static void cc_parse_c(cc_arg_info* self, aparser* parser)
+{
+        self->mode = CRM_COMPILE;
+        self->cc->output.kind = COK_OBJ;
 }
 
 static void cc_parse_o(cc_arg_info* self, aparser* parser)
@@ -223,6 +230,7 @@ extern serrcode cc_parse_opts(cc_instance* self, int argc, const char** argv)
         arg_handler handlers[] = 
         {
                 ARG_HANDLER_INIT("-S", &cc_parse_S, &info),
+                ARG_HANDLER_INIT("-c", &cc_parse_c, &info),
                 ARG_HANDLER_INIT("-o", &cc_parse_o, &info),
                 ARG_HANDLER_INIT("-log", &cc_parse_log, &info),
                 ARG_HANDLER_INIT("-fsyntax-only", &cc_parse_fsyntax_only, &info),

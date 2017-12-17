@@ -3,9 +3,7 @@ add_scc_lib(cc
 	cc-args.c
 	cc-impl.h
 	cc-impl.c
-	tool.c
 	llvm.c
-	linker.c
 
 	DEPENDS
 	c
