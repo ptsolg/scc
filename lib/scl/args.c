@@ -105,7 +105,11 @@ static void _arg_to_cmd(cmd_data* cmd, const char* arg)
 {
 #if S_WIN
 
-        bool has_spaces = strchr(arg, ' ');
+        const char* quote_pos = strchr(arg, '"');
+        const char* space_pos = strchr(arg, ' ');
+        bool has_spaces = quote_pos
+                ? space_pos && space_pos < quote_pos
+                : space_pos;
         if (has_spaces)
                 cmd_data_append(cmd, '"');
         while (*arg)
