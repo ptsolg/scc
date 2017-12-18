@@ -6,7 +6,6 @@
 extern void cc_error(cc_instance* self, const char* format, ...);
 extern void cc_unable_to_open(cc_instance* self, const char* path);
 extern void cc_file_doesnt_exit(cc_instance* self, const char* file);
-extern FILE* cc_open_file(cc_instance* self, const char* file, const char* mode);
 
 extern serrcode cc_dump_tokens(cc_instance* self);
 extern serrcode cc_dump_tree(cc_instance* self);

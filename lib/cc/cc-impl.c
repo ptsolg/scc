@@ -66,7 +66,7 @@ static file_entry** cc_libs_end(cc_instance* self)
 
 extern void cc_error(cc_instance* self, const char* format, ...)
 {
-        fprintf(self->output.message, "scc: error: ");
+        fprintf(self->output.message, "%s: error: ", self->opts.name);
         va_list args;
         va_start(args, format);
         vfprintf(self->output.message, format, args);
@@ -81,23 +81,6 @@ extern void cc_unable_to_open(cc_instance* self, const char* path)
 extern void cc_file_doesnt_exit(cc_instance* self, const char* file)
 {
         cc_error(self, "no such file or directory '%s'", file);
-}
-
-extern FILE* cc_open_file(cc_instance* self, const char* file, const char* mode)
-{
-        FILE* f = fopen(file, mode);
-        if (f)
-                return f;
-
-        char path[S_MAX_PATH_LEN + 1];
-        if (S_FAILED(path_get_cd(path)
-                || S_FAILED(path_join(path, file))) || !(f = fopen(path, mode)))
-        {
-                cc_file_doesnt_exit(self, file);
-                return NULL;
-        }
-
-        return f;
 }
 
 static bool cc_check_single_input(cc_instance* self)
@@ -341,7 +324,7 @@ static serrcode cc_compile_file(cc_instance* self,
 
         int exit_code;
         llvm_compiler llc;
-        llvm_compiler_init(&llc, self->opts.llc_path);
+        llvm_compiler_init(&llc, self->input.llc_path);
         // todo: set optimization opts
         llc.file = ll_file;
         llc.output_kind = output_kind;
@@ -481,7 +464,8 @@ extern serrcode cc_generate_exec(cc_instance* self)
                 return S_ERROR;
 
         llvm_linker lld;
-        llvm_linker_init(&lld, self->opts.lld_path);
+        llvm_linker_init(&lld, self->input.lld_path);
+        lld.entry = self->input.entry;
         lld.output = self->output.file_path;
         serrcode result = cc_link(self, &lld);
         cc_cleanup_compilation(self, LCOK_OBJ);

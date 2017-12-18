@@ -27,6 +27,9 @@ typedef struct
         dseq libs;
         file_lookup source_lookup;
         file_lookup lib_lookup;
+        const char* llc_path;
+        const char* lld_path;
+        const char* entry;
 } cc_input;
 
 typedef struct
@@ -40,6 +43,7 @@ typedef struct
 typedef struct
 {
         cc_target_kind target;
+        const char* name;
 
         struct
         {
@@ -55,9 +59,6 @@ typedef struct
                 bool print_eval_result;
                 bool force_brackets;
         } cprint;
-
-        const char* llc_path;
-        const char* lld_path;
 } cc_opts;
 
 typedef struct _cc_instance
@@ -82,7 +83,6 @@ extern serrcode cc_add_source_file(cc_instance* self, const char* file);
 extern serrcode cc_emulate_source_file(
         cc_instance* self, const char* file, const char* content);
 
-extern serrcode cc_parse_opts(cc_instance* self, int argc, const char** argv);
 extern serrcode cc_run(cc_instance* self);
 
 #endif

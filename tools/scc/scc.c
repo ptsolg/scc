@@ -1,18 +1,31 @@
 #include "scc.h"
 #include <string.h>
+#include <stdarg.h>
 
 extern void scc_env_init(scc_env* self)
 {
         cc_init(&self->cc, stdout);
         self->llc_path[0] = '\0';
         self->lld_path[0] = '\0';
-        self->cc.opts.llc_path = self->llc_path;
-        self->cc.opts.lld_path = self->lld_path;
+        self->cc.input.llc_path = self->llc_path;
+        self->cc.input.lld_path = self->lld_path;
+        self->cc.opts.name = "scc";
+        self->link_stdlib = true;
+        self->mode = SRM_LINK;
 }
 
 extern void scc_env_dispose(scc_env* self)
 {
         cc_dispose(&self->cc);
+}
+
+extern void scc_error(scc_env* self, const char* format, ...)
+{
+        printf("scc: error: ");
+        va_list args;
+        va_start(args, format);
+        vprintf(format, args);
+        printf("\n");
 }
 
 static serrcode scc_env_add_cd_dir(scc_env* self)
@@ -79,11 +92,15 @@ static serrcode scc_env_setup_llc_lld(scc_env* self, const char* argv0)
 
 extern serrcode scc_env_setup(scc_env* self, int argc, const char** argv)
 {
+        extern serrcode scc_parse_opts(scc_env*, int, const char**);
+        if (S_FAILED(scc_parse_opts(self, argc, argv)))
+                return S_ERROR;
+
+        self->cc.input.entry = self->link_stdlib ? NULL : "main";
         return 0
-                || S_FAILED(cc_parse_opts(&self->cc, argc, argv))
                 || S_FAILED(scc_env_add_cd_dir(self))
                 || S_FAILED(scc_env_add_stdlibc_dir(self, argv[0]))
-                || S_FAILED(scc_env_add_stdlibc_libs(self, argv[0]))
+                || self->link_stdlib && S_FAILED(scc_env_add_stdlibc_libs(self, argv[0]))
                 || S_FAILED(scc_env_setup_llc_lld(self, argv[0]))
                 ? S_ERROR : S_NO_ERROR;
 }

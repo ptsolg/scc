@@ -9,7 +9,11 @@ extern void cc_init(cc_instance* self, FILE* message)
 extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc)
 {
         self->alloc = alloc;
+        self->opts.name = "cc";
 
+        self->input.llc_path = NULL;
+        self->input.lld_path = NULL;
+        self->input.entry = NULL;
         dseq_init_ex_ptr(&self->input.sources, alloc);
         dseq_init_ex_ptr(&self->input.libs, alloc);
         flookup_init_ex(&self->input.source_lookup, alloc);
@@ -28,8 +32,6 @@ extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc)
         self->opts.cprint.print_impl_casts = false;
         self->opts.cprint.print_eval_result = false;
         self->opts.cprint.force_brackets = false;
-        self->opts.llc_path = NULL;
-        self->opts.lld_path = NULL;
 }
 
 extern void cc_dispose(cc_instance* self)
