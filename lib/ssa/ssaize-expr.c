@@ -463,12 +463,6 @@ extern ssa_value* ssaize_call_expr(ssaizer* self, const tree_expr* expr)
         return call;
 }
 
-static ssa_value* ssaizer_build_cast_to_builtin_type(
-        ssaizer* self, ssa_value* value, tree_builtin_type_kind builtin)
-{
-        ;
-}
-
 extern ssa_value* ssaize_subscript_expr(ssaizer* self, const tree_expr* expr)
 {
         tree_expr* pointer = tree_get_subscript_lhs(expr);
@@ -488,13 +482,6 @@ extern ssa_value* ssaize_subscript_expr(ssaizer* self, const tree_expr* expr)
 
         ssa_value* ssa_index = ssaize_expr(self, index);
         if (!ssa_index)
-                return NULL;
-
-        tree_type* size_type = tree_new_size_type(ssa_get_tree(self->context));
-        if (!size_type)
-                return NULL;
-
-        if (!(ssa_index = ssa_build_cast(&self->builder, size_type, ssa_index)))
                 return NULL;
         
         ssa_value* element_ptr = ssa_build_getaddr(&self->builder,
