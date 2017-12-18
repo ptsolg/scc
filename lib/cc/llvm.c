@@ -104,6 +104,7 @@ extern void llvm_linker_init(llvm_linker* self, const char* path)
 {
         self->path = path;
         self->output = NULL;
+        self->entry = NULL;
         self->alloc = STDALLOC;
         dseq_init_ex_ptr(&self->files, self->alloc);
         dseq_init_ex_ptr(&self->dirs, self->alloc);
@@ -149,6 +150,13 @@ extern serrcode llvm_link(llvm_linker* self, int* exit_code)
         {
                 snprintf(output, S_ARRAY_SIZE(output), "/OUT:\"%s\"", self->output);
                 arg_append(&args, output);
+        }
+
+        char entry[128];
+        if (self->entry)
+        {
+                snprintf(entry, S_ARRAY_SIZE(entry), "/ENTRY:%s", self->entry);
+                arg_append(&args, entry);
         }
 
         //printf("lld >> %s\n", self->path);

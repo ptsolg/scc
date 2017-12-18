@@ -43,6 +43,7 @@ typedef struct
 {
         const char* path;
         const char* output;
+        const char* entry;
         dseq files;
         dseq dirs;
         allocator* alloc;
@@ -55,6 +56,5 @@ extern void llvm_linker_dispose(llvm_linker* self);
 extern serrcode llvm_linker_add_dir(llvm_linker* self, const char* dir);
 extern serrcode llvm_linker_add_file(llvm_linker* self, const char* file);
 extern serrcode llvm_link(llvm_linker* self, int* exit_code);
-
 
 #endif
