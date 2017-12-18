@@ -3,9 +3,9 @@
     $1 = alloca 800
     $2 = alloca 4
     $3 = cast $1
-    $4 = getaddr $3, 1, 0
+    $4 = getaddr $3, 1
     $5 = cast $4
-    $6 = getaddr $5, 2, 0
+    $6 = getaddr $5, 2
     $7 = load $6
     store $7, $2
     ret

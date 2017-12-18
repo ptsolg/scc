@@ -199,19 +199,11 @@ extern ssa_value* ssa_build_getaddr(
         ssa_value* index,
         ssa_value* offset)
 {
-        if (!index)
-                index = ssa_build_zero_size_t(self);
-        if (!offset)
-                offset = ssa_build_zero_size_t(self);
-        if (!index || !offset)
-                return NULL;
-
+        S_ASSERT(index);
         S_ASSERT(tree_type_is_pointer(ssa_get_value_type(operand)));
-
-        tree_type_kind size_type = tree_target_is(ssa_get_target(self->context), TTARGET_X32)
-                ? TBTK_UINT32 : TBTK_UINT64;
-        S_ASSERT(tree_builtin_type_is(ssa_get_value_type(index), size_type));
-        S_ASSERT(tree_builtin_type_is(ssa_get_value_type(offset), size_type));
+        S_ASSERT(tree_type_is_integer(ssa_get_value_type(index)));
+        if (offset)
+                S_ASSERT(tree_type_is_integer(ssa_get_value_type(offset)));
 
         tree_type* value_type = tree_new_pointer_type(ssa_get_tree(self->context), target_type);
         if (!value_type)

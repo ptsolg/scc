@@ -201,8 +201,13 @@ static void ssa_print_getaddr(ssa_printer* self, const ssa_instr* instr)
         ssa_print_value_ref(self, ssa_get_getaddr_operand(instr));
         ssa_prints(self, ", ");
         ssa_print_value_ref(self, ssa_get_getaddr_index(instr));
-        ssa_prints(self, ", ");
-        ssa_print_value_ref(self, ssa_get_getaddr_offset(instr));
+
+        ssa_value* offset = ssa_get_getaddr_offset(instr);
+        if (offset)
+        {
+                ssa_prints(self, ", ");
+                ssa_print_value_ref(self, offset);
+        }
 }
 
 static void ssa_print_call(ssa_printer* self, const ssa_instr* instr)

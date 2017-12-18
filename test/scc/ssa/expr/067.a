@@ -2,7 +2,7 @@
 @0:
     $1 = alloca 4
     $2 = cast %foo
-    $3 = getaddr $2, 5, 0
+    $3 = getaddr $2, 5
     $4 = load $3
     $5 = call $4 ()
     store $5, $1
