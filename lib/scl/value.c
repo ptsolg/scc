@@ -233,6 +233,18 @@ extern int float_print(const float_value* val, char* buf, ssize count, int preci
                 return snprintf(buf, count, "%.*lf", precision, float_get_dp(val));
 }
 
+extern int float_print_as_hex(const float_value* val, char* buf, ssize count)
+{
+        union
+        {
+                double dp;
+                suint64 u64;
+        } v = { .u64 = 0ULL };
+
+        v.dp = float_get_dp(val);
+        return snprintf(buf, count, "0x%016llX", v.u64);
+}
+
 extern void int_init(int_value* self, uint bits, bool signed_, suint64 val)
 {
         self->_val = val;
@@ -479,6 +491,11 @@ extern int int_print(const int_value* val, char* buf, ssize count)
 {
         return snprintf(buf, count,
                 (int_is_signed(val) ? "%lld" : "%llu"), int_get_u64(val));
+}
+
+extern int int_print_as_hex(const int_value* val, char* buf, ssize count)
+{
+        return snprintf(buf, count, "0x%llX", int_get_u64(val));
 }
 
 extern void avalue_init_int(avalue* self, uint bits, bool signed_, suint64 val)
@@ -796,4 +813,12 @@ extern int avalue_print(const avalue* self, char* buf, ssize count, int precisio
                 return float_print(&self->_float, buf, count, precision);
         else
                 return int_print(&self->_int, buf, count);
+}
+
+extern int avalue_print_as_hex(const avalue* val, char* buf, ssize count)
+{
+        if (avalue_is_float(val))
+                return float_print_as_hex(&val->_float, buf, count);
+        else
+                return int_print_as_hex(&val->_int, buf, count);
 }
