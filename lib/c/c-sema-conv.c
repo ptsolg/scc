@@ -53,9 +53,9 @@ extern tree_type* csema_function_to_pointer_conversion(csema* self, tree_expr** 
         return t;
 }
 
-extern tree_type* csema_integer_promotion(csema* self, tree_expr** e)
+static tree_type* csema_get_type_for_integer_promotion(csema* self, tree_type* type)
 {
-        tree_type* t = tree_desugar_type(tree_get_expr_type(*e));
+        tree_type* t = tree_desugar_type(type);
         tree_type_kind tk = tree_get_type_kind(t);
         if (tk != TTK_BUILTIN)
                 return t;
@@ -64,16 +64,21 @@ extern tree_type* csema_integer_promotion(csema* self, tree_expr** e)
         tree_type_quals quals = tree_get_type_quals(t);
 
         if (btk == TBTK_INT8 || btk == TBTK_INT16)
-        {
-                t = csema_new_builtin_type(self, quals, TBTK_INT32);
-                *e = csema_new_impl_cast(self, *e, t);
-        }
+                return csema_new_builtin_type(self, quals, TBTK_INT32);
         else if (btk == TBTK_UINT8 || btk == TBTK_UINT16)
-        {
-                t = csema_new_builtin_type(self, quals, TBTK_UINT32);
-                *e = csema_new_impl_cast(self, *e, t);
-        }
+                return  csema_new_builtin_type(self, quals, TBTK_UINT32);
         return t;
+}
+
+extern tree_type* csema_integer_promotion(csema* self, tree_expr** e)
+{
+        tree_type* expr_type = tree_desugar_type(tree_get_expr_type(*e));
+        tree_type* promoted_type = csema_get_type_for_integer_promotion(self, expr_type);
+        if (expr_type == promoted_type)
+                return expr_type;
+
+        *e = csema_new_impl_cast(self, *e, promoted_type);
+        return promoted_type;
 }
 
 extern tree_type* csema_array_function_to_pointer_conversion(csema* self, tree_expr** e)
@@ -88,10 +93,47 @@ extern tree_type* csema_unary_conversion(csema* self, tree_expr** e)
         return csema_lvalue_conversion(self, e);
 }
 
-extern tree_type* csema_usual_arithmetic_conversion(
-        csema* self, tree_expr** lhs, tree_expr** rhs)
+static tree_type* csema_get_type_for_usual_arithmetic_conversion(
+        csema* self, tree_type* lhs, tree_type* rhs)
 {
-        tree_type* lt = csema_integer_promotion(self, lhs);
+        // make rhs greater type
+        if (cget_type_rank(lhs) > cget_type_rank(rhs))
+        {
+                tree_type* tmp = rhs;
+                rhs = lhs;
+                lhs = tmp;
+        }
+
+        if (tree_type_is_floating(rhs))
+                return rhs;
+
+        tree_builtin_type_kind lk = tree_declared_type_is(lhs, TDK_ENUM)
+                ? TBTK_INT32 : tree_get_builtin_type_kind(lhs);
+        tree_builtin_type_kind rk = tree_declared_type_is(rhs, TDK_ENUM)
+                ? TBTK_INT32 : tree_get_builtin_type_kind(rhs);
+
+        uint lsize = tree_get_builtin_type_size(self->target, lk);
+        uint rsize = tree_get_builtin_type_size(self->target, rk);
+        if (rsize > lsize)
+                return rhs;
+
+        S_ASSERT(lsize == rsize);
+        if (tree_type_is_unsigned_integer(lhs) == tree_type_is_unsigned_integer(rhs))
+                return rhs;
+
+        if (tree_type_is_signed_integer(rhs))
+                return csema_new_builtin_type(self,
+                        TTQ_UNQUALIFIED, tree_get_integer_counterpart(rhs));
+
+        return rhs;
+}
+
+extern tree_type* csema_usual_arithmetic_conversion(
+        csema* self, tree_expr** lhs, tree_expr** rhs, bool convert_lhs)
+{
+        tree_type* lt = convert_lhs 
+                ? csema_integer_promotion(self, lhs)
+                : csema_get_type_for_integer_promotion(self, tree_get_expr_type(*lhs));
         tree_type* rt = csema_integer_promotion(self, rhs);
 
         S_ASSERT(tree_type_is_arithmetic(lt));
@@ -99,51 +141,11 @@ extern tree_type* csema_usual_arithmetic_conversion(
         if (tree_types_are_same(lt, rt))
                 return lt;
 
-        tree_builtin_type_kind lk = tree_declared_type_is(lt, TDK_ENUM)
-                ? TBTK_INT32 : tree_get_builtin_type_kind(lt);
-        tree_builtin_type_kind rk = tree_declared_type_is(rt, TDK_ENUM)
-                ? TBTK_INT32 : tree_get_builtin_type_kind(rt);
-
-        if (cget_type_rank(lt) > cget_type_rank(rt))
-        {
-                tree_builtin_type_kind tk = rk;
-                rk = lk;
-                lk = tk;
-                tree_type* tt = rt;
-                rt = lt;
-                lt = tt;
-                tree_expr** te = rhs;
-                rhs = lhs;
-                lhs = te;
-        }
-
-        if (tree_type_is_floating(rt))
-        {
-                *lhs = csema_new_impl_cast(self, *lhs, rt);
-                return rt;
-        }
-
-        uint lsize = tree_get_builtin_type_size(self->target, lk);
-        uint rsize = tree_get_builtin_type_size(self->target, rk);
-        if (rsize > lsize)
-        {
-                *lhs = csema_new_impl_cast(self, *lhs, rt);
-                return rt;
-        }
-
-        S_ASSERT(lsize == rsize);
-        if (tree_type_is_unsigned_integer(lt) == tree_type_is_unsigned_integer(rt))
-                return rt;
-
-        tree_type* counterpart = rt;
-        if (tree_type_is_signed_integer(rt))
-                counterpart = csema_new_builtin_type(self,
-                        TTQ_UNQUALIFIED, tree_get_integer_counterpart(rt));
-
-        *lhs = csema_new_impl_cast(self, *lhs, counterpart);
-        *rhs = csema_new_impl_cast(self, *rhs, counterpart);
-
-        return counterpart;
+        tree_type* result = csema_get_type_for_usual_arithmetic_conversion(self, lt, rt);
+        if (convert_lhs)
+                *lhs = csema_new_impl_cast(self, *lhs, result);
+        *rhs = csema_new_impl_cast(self, *rhs, result);
+        return result;
 }
 
 extern tree_type* csema_default_argument_promotion(csema* self, tree_expr** e)

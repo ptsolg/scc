@@ -19,7 +19,7 @@ extern tree_type* csema_integer_promotion(csema* self, tree_expr** e);
 extern tree_type* csema_array_function_to_pointer_conversion(csema* self, tree_expr** e);
 extern tree_type* csema_unary_conversion(csema* self, tree_expr** e);
 extern tree_type* csema_usual_arithmetic_conversion(
-        csema* self, tree_expr** lhs, tree_expr** rhs);
+        csema* self, tree_expr** lhs, tree_expr** rhs, bool convert_lhs);
 
 extern tree_type* csema_default_argument_promotion(csema* self, tree_expr** e);
 
