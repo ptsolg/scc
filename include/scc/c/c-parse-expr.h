@@ -36,7 +36,7 @@ extern tree_expr* cparse_primary_expr(cparser* self);
 //       postfix-expression ++
 //       postfix-expression --
 //      
-//       argument-expression-list:
+// argument-expression-list:
 //       assignment-expression
 //       argument-expression-list , assignment-expression
 extern tree_expr* cparse_postfix_expr(cparser* self);
@@ -59,7 +59,7 @@ extern tree_expr* cparse_unary_expr(cparser* self);
 extern tree_expr* cparse_cast_expr(cparser* self);
 
 // c99 6.5.5 multiplicative-expression:
-// cast-expression
+//       cast-expression
 //       multiplicative-expression * cast-expression
 //       multiplicative-expression / cast-expression
 //       multiplicative-expression % cast-expression
@@ -91,8 +91,8 @@ extern tree_expr* cparse_cast_expr(cparser* self);
 //      and-expression & equality-expression
 //
 // c99 6.5.11 xor-expression:
-//       and-expression
-//       xor-expression ^ and-expression
+//      and-expression
+//      xor-expression ^ and-expression
 //
 // c99 6.5.12 or-expression:
 //      xor-expression
@@ -107,15 +107,15 @@ extern tree_expr* cparse_cast_expr(cparser* self);
 //      logical-or-expression || logical-and-expression
 //
 // c99 6.5.15 conditional-expression
-//       logical-or-expression
-//       logical-or-expression ? expression : conditional-expression
+//      logical-or-expression
+//      logical-or-expression ? expression : conditional-expression
 //
 // c99 6.5.16 assignment-expression:
 //      conditional-expression
 //      unary-expression assignment-operator assignment-expression
 //
 // asignment-operator: one of
-//       = *= /= %= += -= <<= >>= &= ^= |=
+//      = *= /= %= += -= <<= >>= &= ^= |=
 extern tree_expr* cparse_assignment_expr(cparser* self);
 
 // c99 6.5.17 expression:
@@ -129,7 +129,7 @@ extern tree_expr* cparse_expr_ex(cparser* self, int min_prec);
 extern tree_expr* cparse_const_expr(cparser* self);
 
 // c99 6.7.8 initializer:
-// assignment-expression
+//      assignment-expression
 //      { initializer-list
 //      { initializer-list , }
 //
