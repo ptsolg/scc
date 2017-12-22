@@ -194,13 +194,8 @@ extern bool ssaize_while_stmt(ssaizer* self, const tree_stmt* stmt)
         if (!ssaizer_start_loop(self, cond, exit, cond))
                 return false;
 
-        bool succeeded = true;
-        if (!ssaize_loop_cond(self, tree_get_while_condition(stmt), cond, body, exit)
-         || !ssaize_loop_body(self, tree_get_while_body(stmt), body, cond))
-        {
-                succeeded = false;
-        }
-
+        bool succeeded = ssaize_loop_cond(self, tree_get_while_condition(stmt), cond, body, exit)
+                && ssaize_loop_body(self, tree_get_while_body(stmt), body, cond);
         ssaizer_cleanup_loop(self);
         if (succeeded)
                 ssaizer_enter_block(self, exit);
@@ -213,16 +208,11 @@ extern bool ssaize_do_while_stmt(ssaizer* self, const tree_stmt* stmt)
         ssa_block* cond = ssaizer_new_block(self);
         ssa_block* exit = ssaizer_new_block(self);
 
-        if (!ssaizer_start_loop(self, cond, exit, cond))
+        if (!ssaizer_start_loop(self, body, exit, cond))
                 return false;
 
-        bool succeeded = true;
-        if (!ssaize_loop_body(self, tree_get_do_while_body(stmt), body, cond)
-         || !ssaize_loop_cond(self, tree_get_do_while_condition(stmt), cond, body, exit))
-        {
-                succeeded = false;
-        }
-
+        bool succeeded = ssaize_loop_body(self, tree_get_do_while_body(stmt), body, cond)
+                && ssaize_loop_cond(self, tree_get_do_while_condition(stmt), cond, body, exit);
         ssaizer_cleanup_loop(self);
         if (succeeded)
                 ssaizer_enter_block(self, exit);
