@@ -10,6 +10,7 @@ extern void llvm_printer_init(llvm_printer* self, write_cb* write, const ssa_con
 {
         self->ssa = ssa;
         self->tree = ssa_get_tree(ssa);
+        self->tmp_uid = 0;
         writebuf_init(&self->buf, write);
 }
 
@@ -82,7 +83,11 @@ static void llvm_printer_emit_builtin_type(llvm_printer* self, const tree_type* 
 
 static void llvm_printer_emit_pointer_type(llvm_printer* self, const tree_type* type)
 {
-        llvm_printer_emit_type(self, tree_get_pointer_target(type));
+        tree_type* target = tree_get_pointer_target(type);
+        if (tree_type_is_void(target))
+                llvm_prints(self, llvm_builtin_type_table[TBTK_INT8]);
+        else
+                llvm_printer_emit_type(self, tree_get_pointer_target(type));
         llvm_printc(self, '*');
 }
 
@@ -136,13 +141,7 @@ extern void llvm_printer_emit_value(
         llvm_printer* self, const ssa_value* value, bool emit_type)
 {
         ssa_value_kind k = ssa_get_value_kind(value);
-        if (k == SVK_LABEL)
-        {
-                llvm_printf(self, "%%%u", ssa_get_value_id(value));
-                return;
-        }
-
-        if (emit_type)
+        if (emit_type && ssa_value_has_type(value))
         {
                 llvm_printer_emit_type(self, ssa_get_value_type(value));
                 if (k == SVK_STRING)
@@ -150,13 +149,16 @@ extern void llvm_printer_emit_value(
                 llvm_print_wspace(self);
         }
 
-        if (k == SVK_VARIABLE)
+        if (k == SVK_VARIABLE || k == SVK_PARAM)
                 llvm_printf(self, "%%%u", ssa_get_value_id(value));
         else if (k == SVK_CONSTANT)
         {
-                char num[64];
+                char num[128];
                 avalue val = ssa_get_constant_value(value);
-                avalue_print(&val, num, S_ARRAY_SIZE(num), 4);
+                if (avalue_is_float(&val))
+                        avalue_print_as_hex(&val, num, S_ARRAY_SIZE(num));
+                else
+                        avalue_print(&val, num, S_ARRAY_SIZE(num), 0);
                 llvm_prints(self, num);
         }
         else if (k == SVK_DECL)
@@ -164,6 +166,10 @@ extern void llvm_printer_emit_value(
                         tree_get_decl_name(ssa_get_decl_entity(value))));
         else if (k == SVK_STRING)
                 llvm_printf(self, "@.str.%u", ssa_get_value_id(value));
+        else if (k == SVK_LABEL)
+                llvm_printf(self, "%%%u", ssa_get_value_id(value));
+        else if (k == SVK_NULL)
+                llvm_prints(self, "null");
 }
 
 static void llvm_printer_emit_alloca(llvm_printer* self, const ssa_instr* instr)
@@ -184,7 +190,7 @@ typedef enum
 
 static llvm_binary_instr_kind llvm_get_binary_instr_kind(const ssa_instr* instr)
 {
-        const tree_type* t = ssa_get_value_type(ssa_get_instr_cvar(instr));
+        const tree_type* t = ssa_get_value_type(ssa_get_binop_lhs(instr));
         if (tree_type_is_floating(t))
                 return LBIK_FLOATING;
 
@@ -193,36 +199,70 @@ static llvm_binary_instr_kind llvm_get_binary_instr_kind(const ssa_instr* instr)
 
 static const char* llvm_binary_instr_table[SBIK_SIZE][LBIK_SIZE] =
 {
-        { NULL,       NULL,       NULL,  },
-        { "mul nsw",  "mul",      "fmul", },
-        { "sdiv",     "udiv",     "fdiv", },
-        { "srem",     "urem",     "frem", },
-        { "add nsw",  "add",      "fadd", },
-        { "sub nsw",  "sub",      "fsub", },
-        { "shl",      "shl",      NULL, },
-        { "shr",      "shr",      NULL, },
-        { "and",      "and",      NULL, },
-        { "or",       "or",       NULL, },
-        { "xor",      "xor",      NULL, },
-        { "icmp slt", "icmp ult", "fcmp olt", },
-        { "icmp sgt", "icmp ugt", "fcmp ogt", },
-        { "icmp sle", "icmp ule", "fcmp ole", },
-        { "icmp sge", "icmp uge", "fcmp oge", },
-        { "icmp eq",  "icmp eq",  "fcmp oeq", },
-        { "icmp ne",  "icmp ne",  "fcmp one", },
+        { NULL,        NULL,        NULL,  },
+        { "mul nsw",   "mul",       "fmul", },
+        { "sdiv",      "udiv",      "fdiv", },
+        { "srem",      "urem",      "frem", },
+        { "add nsw",   "add",       "fadd", },
+        { "sub nsw",   "sub",       "fsub", },
+        { "shl",       "shl",       NULL, },
+        { "ashr",      "lshr",      NULL, },
+        { "and",       "and",       NULL, },
+        { "or",        "or",        NULL, },
+        { "xor",       "xor",       NULL, },
+        { "icmp slt",  "icmp ult",  "fcmp olt", },
+        { "icmp sgt",  "icmp ugt",  "fcmp ogt", },
+        { "icmp sle",  "icmp ule",  "fcmp ole", },
+        { "icmp sge",  "icmp uge",  "fcmp oge", },
+        { "icmp eq",   "icmp eq",   "fcmp oeq", },
+        { "icmp ne",   "icmp ne",   "fcmp one", },
 };
+
+static void _llvm_printer_emit_binary_instr(llvm_printer* self, const ssa_instr* instr)
+{
+        const char* s = llvm_binary_instr_table
+                [ssa_get_binop_kind(instr)][llvm_get_binary_instr_kind(instr)];
+        llvm_printf(self, "%s ", s);
+        llvm_printer_emit_value(self, ssa_get_binop_lhs(instr), true);
+        llvm_prints(self, ", ");
+        llvm_printer_emit_value(self, ssa_get_binop_rhs(instr), false);
+}
+
+static void llvm_printer_generate_tmp_var(llvm_printer* self, char* buffer)
+{
+        sprintf(buffer, "%%tmp.%u", self->tmp_uid++);
+}
+
+static void llvm_printer_emit_cmp_instr(llvm_printer* self, const ssa_instr* instr)
+{
+        // since llvm cmp instruction yields i1
+        // we need to implicitly cast it to a type specified by instruction variable
+        char tmp[64];
+        llvm_printer_generate_tmp_var(self, tmp);
+
+        llvm_printf(self, "%s = ", tmp);
+        _llvm_printer_emit_binary_instr(self, instr);
+        llvm_print_endl(self);
+        llvm_print_indent(self);
+
+        const ssa_value* var = ssa_get_instr_cvar(instr);
+        llvm_printer_emit_value(self, var, false);
+        S_ASSERT(tree_builtin_type_is(ssa_get_value_type(var), TBTK_INT32));
+        llvm_printf(self, " = zext i1 %s to i32", tmp);
+}
 
 static void llvm_printer_emit_binary_instr(llvm_printer* self, const ssa_instr* instr)
 {
         ssa_binary_instr_kind k = ssa_get_binop_kind(instr);
+        if (k >= SBIK_LE && k <= SBIK_NEQ)
+        {
+                llvm_printer_emit_cmp_instr(self, instr);
+                return;
+        }
+
         llvm_printer_emit_value(self, ssa_get_instr_cvar(instr), false);
         llvm_prints(self, " = ");
-
-        llvm_binary_instr_kind lk = llvm_get_binary_instr_kind(instr);
-        llvm_printf(self, "%s ", llvm_binary_instr_table[k][lk]);
-        llvm_printer_emit_value(self, ssa_get_binop_lhs(instr), true);
-        llvm_prints(self, ", ");
-        llvm_printer_emit_value(self, ssa_get_binop_rhs(instr), false);
+        _llvm_printer_emit_binary_instr(self, instr);
 }
 
 static void llvm_printer_emit_store(llvm_printer* self, const ssa_instr* instr)
@@ -390,6 +430,23 @@ extern void llvm_printer_emit_instr(llvm_printer* self, const ssa_instr* instr)
                 llvm_printer_emit_getaddr(self, instr);
 }
 
+static void llvm_printer_emit_if_branch(llvm_printer* self, const ssa_branch* br)
+{
+        char tmp[64];
+        llvm_printer_generate_tmp_var(self, tmp);
+
+        ssa_value* cond = ssa_get_if_cond(br);
+        S_ASSERT(tree_builtin_type_is(ssa_get_value_type(cond), TBTK_INT32));
+        llvm_printf(self, "%s = trunc i32 %%%u to i1", tmp, ssa_get_value_id(cond));
+        llvm_print_endl(self);
+        llvm_print_indent(self);
+
+        llvm_printf(self, "br i1 %s, label ", tmp);
+        llvm_printer_emit_value(self, ssa_get_if_true_block(br), false);
+        llvm_prints(self, ", label ");
+        llvm_printer_emit_value(self, ssa_get_if_false_block(br), false);
+}
+
 static void llvm_printer_emit_branch(llvm_printer* self, const ssa_branch* br)
 {
         llvm_print_endl(self);
@@ -406,19 +463,13 @@ static void llvm_printer_emit_branch(llvm_printer* self, const ssa_branch* br)
                         llvm_prints(self, "void");
         }
         else if (k == SBK_IF)
-        {
-                llvm_prints(self, "br i1 ");
-                llvm_printer_emit_value(self, ssa_get_if_cond(br), false);
-                llvm_prints(self, ", label ");
-                llvm_printer_emit_value(self, ssa_get_if_true_block(br), true);
-                llvm_prints(self, ", label ");
-                llvm_printer_emit_value(self, ssa_get_if_false_block(br), true);
-        }
+                llvm_printer_emit_if_branch(self, br);
         else if (k == SBK_JUMP)
         {
                 llvm_prints(self, "br label ");
                 llvm_printer_emit_value(self, ssa_get_jump_dest(br), false);
         }
+        llvm_print_endl(self);
 }
 
 extern void llvm_printer_emit_block(llvm_printer* self, const ssa_block* block)
@@ -452,6 +503,7 @@ extern void llvm_printer_emit_decl(llvm_printer* self, const tree_decl* decl)
 
 extern void llvm_printer_emit_function_decl(llvm_printer* self, const ssa_function* func)
 {
+        self->tmp_uid = 0;
         llvm_print_endl(self);
         llvm_printer_emit_function_header(self, "define ", ssa_get_function_entity(func));
         llvm_print_endl(self);

@@ -2,6 +2,7 @@
 #define CG_LLVM_PRINTER_H
 
 #include "scc/scl/read-write.h"
+#include "scc/ssa/ssa-common.h"
 
 typedef struct _ssa_module ssa_module;
 typedef struct _tree_module tree_module;
@@ -19,6 +20,7 @@ typedef struct _llvm_printer
         writebuf buf;
         const ssa_context* ssa;
         const tree_context* tree;
+        ssa_id tmp_uid;
 } llvm_printer;
 
 extern void llvm_printer_init(llvm_printer* self, write_cb* write, const ssa_context* ssa);
