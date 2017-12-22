@@ -218,8 +218,8 @@ extern serrcode path_delete_file(const char* path)
 {
 #if S_WIN
         return DeleteFile(path) ? S_NO_ERROR : S_ERROR;
-#else
-#error
+#elif S_OSX
+        return remove(path) == 0 ? S_NO_ERROR : S_ERROR;
 #endif
 }
 
