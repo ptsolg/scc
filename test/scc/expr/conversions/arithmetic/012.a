@@ -1,5 +1,5 @@
 void test()
 {
 	char a, b;
-	a + b;
+	(int)a + (int)b;
 }

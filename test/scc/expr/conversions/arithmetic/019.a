@@ -2,5 +2,5 @@ void test()
 {
 	long long a;
 	unsigned b;
-	a + b;
+	a + (long long)b;
 }

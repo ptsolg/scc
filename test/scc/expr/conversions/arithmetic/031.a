@@ -1,6 +1,6 @@
 void test()
 {
-	long long a;
+	int* a;
 	int b;
-	a + b;
+	a += b;
 }

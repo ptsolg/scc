@@ -1,6 +1,6 @@
 void test()
 {
-	unsigned a;
+	unsigned a = 0U;
 	unsigned long long b;
-	a + b;
+	a /= b;
 }

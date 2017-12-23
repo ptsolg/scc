@@ -1,0 +1,6 @@
+void test()
+{
+	unsigned a;
+	char b;
+	a += (unsigned)(int)b;
+}

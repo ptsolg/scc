@@ -2,5 +2,5 @@ void test()
 {
 	long long a;
 	int b;
-	a + b;
+	a + (long long)b;
 }

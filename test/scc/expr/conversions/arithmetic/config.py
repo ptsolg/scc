@@ -1,2 +1,2 @@
 def run(test):
-	presets.parse(test, ['-fprint-expr-type'])
+	presets.parse(test, ['-fprint-impl-casts'])

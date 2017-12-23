@@ -1,6 +1,6 @@
 void test()
 {
-	float a;
+	int a;
 	double b;
-	a + b;
+	(double)a + b;
 }

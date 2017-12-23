@@ -1,6 +1,6 @@
 void test()
 {
-	long long a;
+	char a;
 	int b;
-	a + b;
+	(int)a + b;
 }
