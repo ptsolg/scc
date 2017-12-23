@@ -1,0 +1,7 @@
+; Definition for test
+@0:
+    $1 = alloca 4
+    $2 = load $1
+    $3 = getaddr $2, 1
+    store $3, $1
+    ret

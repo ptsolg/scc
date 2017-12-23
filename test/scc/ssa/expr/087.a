@@ -1,0 +1,11 @@
+; Definition for test
+@0:
+    $1 = alloca 4
+    $2 = alloca 8
+    $3 = load $2
+    $4 = load $1
+    $5 = cast $4
+    $6 = or $5, $3
+    $7 = cast $6
+    store $7, $1
+    ret
