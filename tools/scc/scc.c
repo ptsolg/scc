@@ -1,6 +1,7 @@
 #include "scc.h"
 #include <string.h>
 #include <stdarg.h>
+#include <scc/cc/cc.h>
 
 extern void scc_env_init(scc_env* self)
 {
@@ -66,7 +67,7 @@ static serrcode scc_env_add_stdlibc_libs(scc_env* self, const char* argv0)
         if (S_FAILED(cc_add_lib(&self->cc, "legacy_stdio_definitions.lib")))
                 return S_ERROR;
 #else
-#error
+        // todo
 #endif
         return S_NO_ERROR;
 }
@@ -85,7 +86,10 @@ static serrcode scc_env_setup_llc_lld(scc_env* self, const char* argv0)
         if (S_FAILED(path_join(self->lld_path, "win\\lld-link.exe")))
                 return S_ERROR;
 #else
-#error
+        if (S_FAILED(path_join(self->llc_path, "osx/llc")))
+                return S_ERROR;
+        if (S_FAILED(path_join(self->lld_path, "osx/ld")))
+                return S_ERROR;
 #endif
         return S_NO_ERROR;
 }
@@ -96,11 +100,16 @@ extern serrcode scc_env_setup(scc_env* self, int argc, const char** argv)
         if (S_FAILED(scc_parse_opts(self, argc, argv)))
                 return S_ERROR;
 
+#if S_WIN
         self->cc.input.entry = self->link_stdlib ? NULL : "main";
-        return 0
-                || S_FAILED(scc_env_add_cd_dir(self))
+#elif S_OSX
+        self->cc.input.entry = "_main";
+#else
+#error
+#endif
+        return S_FAILED(scc_env_add_cd_dir(self))
                 || S_FAILED(scc_env_add_stdlibc_dir(self, argv[0]))
-                || self->link_stdlib && S_FAILED(scc_env_add_stdlibc_libs(self, argv[0]))
+                || (self->link_stdlib && S_FAILED(scc_env_add_stdlibc_libs(self, argv[0])))
                 || S_FAILED(scc_env_setup_llc_lld(self, argv[0]))
                 ? S_ERROR : S_NO_ERROR;
 }

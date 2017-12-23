@@ -9,7 +9,13 @@
 
 #define LL_EXT "ll"
 #define SSA_EXT "ssa"
+#if S_WIN
 #define OBJ_EXT "obj"
+#elif S_OSX
+#define OBJ_EXT "o"
+#else
+#error
+#endif
 #define ASM_EXT "s"
 
 typedef struct
@@ -247,6 +253,11 @@ static serrcode cc_codegen_file_ex(cc_instance* self,
 
         ssa_optimizer_opts opts;
         cc_set_ssa_optimizer_opts(self, &opts);
+        if (kind == CGOK_LLVM)
+        {
+                opts.fold_constants = true;
+                opts.eliminate_dead_code = true;
+        }
 
         result = codegen_module(fwrite_cb_base(&write), &context.ssa, module, kind, &opts);
 

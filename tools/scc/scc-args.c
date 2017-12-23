@@ -252,8 +252,7 @@ extern serrcode scc_parse_opts(scc_env* self, int argc, const char** argv)
                 ARG_HANDLER_INIT("-m64", &scc_m64, self),
         };
 
-        arg_handler source;
-        arg_handler_init(&source, "", &scc_source_file, self);
+        arg_handler source = ARG_HANDLER_INIT("", &scc_source_file, self);
 
         aparser parser;
         aparser_init(&parser, argc, argv);

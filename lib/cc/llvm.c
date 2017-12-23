@@ -3,6 +3,7 @@
 #include "scc/scl/args.h"
 #include <stdio.h>
 #include <string.h>
+#include <scc/cc/llvm.h>
 
 #define MAX_ARGC 1024
 
@@ -71,6 +72,7 @@ extern serrcode llvm_compile(llvm_compiler* self, int* exit_code)
 
 extern serrcode llvm_linker_add_dir(llvm_linker* self, const char* dir)
 {
+#if S_WIN
         ssize len = strlen(dir) + sizeof("/LIBPATH:\"\"");
         char* copy = allocate(self->alloc, len + 1);
         if (!copy)
@@ -83,6 +85,20 @@ extern serrcode llvm_linker_add_dir(llvm_linker* self, const char* dir)
                 return S_ERROR;
         }
         return S_NO_ERROR;
+#elif S_OSX
+        char* copy = allocate(self->alloc, strlen(dir) + 1);
+        if (!copy)
+                return S_ERROR;
+        if (S_FAILED(dseq_append_ptr(&self->dirs, copy)))
+        {
+                deallocate(self->alloc, copy);
+                return S_ERROR;
+        }
+        strcpy(copy, dir);
+        return S_NO_ERROR;
+#else
+#error
+#endif
 }
 
 extern serrcode llvm_linker_add_file(llvm_linker* self, const char* file)
@@ -145,6 +161,7 @@ extern serrcode llvm_link(llvm_linker* self, int* exit_code)
                 arg_append(&args, *it);
         }
 
+#if S_WIN
         char output[S_MAX_PATH_LEN + sizeof("/OUT:\"\"")];
         if (self->output)
         {
@@ -158,6 +175,23 @@ extern serrcode llvm_link(llvm_linker* self, int* exit_code)
                 snprintf(entry, S_ARRAY_SIZE(entry), "/ENTRY:%s", self->entry);
                 arg_append(&args, entry);
         }
+#elif S_OSX
+        if (self->output)
+        {
+                arg_append(&args, "-o");
+                arg_append(&args, self->output);
+        }
+        if (self->entry)
+        {
+                arg_append(&args, "-e");
+                arg_append(&args, self->entry);
+        }
+        arg_append(&args, "-lSystem");
+        arg_append(&args, "-macosx_version_min");
+        arg_append(&args, "10.12");
+#else
+#error
+#endif
 
         //printf("lld >> %s\n", self->path);
         //for (int i = 0; i < args.argc; i++)
