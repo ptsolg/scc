@@ -1,1 +1,1 @@
-101.t:5:10: error: expression must have arithmetic type
+101.t:5:7: error: invalid operands to binary '-='
