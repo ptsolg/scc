@@ -3,6 +3,7 @@
 
 !.gitignore
 !*.txt
+!*.md
 !*.c
 !*.h
 !*.inc
