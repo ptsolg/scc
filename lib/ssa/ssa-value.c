@@ -18,6 +18,23 @@ extern void ssa_init_typed_value(ssa_value* self, ssa_value_kind k, ssa_id id, t
         ssa_set_value_type(self, t);
 }
 
+extern bool ssa_value_has_type(const ssa_value* self)
+{
+        switch (ssa_get_value_kind(self))
+        {
+                case SVK_CONSTANT:
+                case SVK_VARIABLE:
+                case SVK_DECL:
+                case SVK_PARAM:
+                case SVK_STRING:
+                case SVK_NULL:
+                        return true;
+
+                default:
+                        return false;
+        }
+}
+
 extern void ssa_init_variable(ssa_value* self, ssa_id id, tree_type* t)
 {
         ssa_init_typed_value(self, SVK_VARIABLE, id, t);
@@ -69,4 +86,14 @@ extern ssa_value* ssa_new_string(ssa_context* context, ssa_id uid, tree_type* ty
         ssa_init_typed_value(s, SVK_STRING, uid, type);
         ssa_set_string_value(s, id);
         return s;
+}
+
+extern ssa_value* ssa_new_null_pointer(ssa_context* context, tree_type* type)
+{
+        ssa_value* n = ssa_allocate(context, sizeof(ssa_null_pointer));
+        if (!n)
+                return NULL;
+
+        ssa_init_typed_value(n, SVK_NULL, 0, type);
+        return n;
 }

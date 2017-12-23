@@ -113,6 +113,8 @@ static inline void ssa_print_value_ref(ssa_printer* self, const ssa_value* val)
         }
         else if (k == SVK_STRING)
                 ssa_print_string(self, ssa_get_string_value(val));
+        else if (k == SVK_NULL)
+                ssa_prints(self, "null");
 }
 
 static const char* ssa_binary_instr_table[SBIK_SIZE] =

@@ -27,6 +27,7 @@ typedef enum
         SVK_DECL,
         SVK_PARAM,
         SVK_STRING,
+        SVK_NULL,
 } ssa_value_kind;
 
 struct _ssa_value_base
@@ -60,6 +61,7 @@ struct _ssa_typed_value_base
 };
 
 extern void ssa_init_typed_value(ssa_value* self, ssa_value_kind k, ssa_id id, tree_type* t);
+extern bool ssa_value_has_type(const ssa_value* self);
 
 static inline struct _ssa_typed_value_base* _ssa_get_typed_value_base(ssa_value* self);
 static inline const struct _ssa_typed_value_base* _ssa_get_typed_value_cbase(const ssa_value* self);
@@ -129,6 +131,13 @@ static inline tree_id ssa_get_string_value(const ssa_value* self);
 
 static inline void ssa_set_string_value(ssa_value* self, tree_id id);
 
+typedef struct _ssa_null_pointer
+{
+        struct _ssa_typed_value_base _base;
+} ssa_null_pointer;
+
+extern ssa_value* ssa_new_null_pointer(ssa_context* context, tree_type* type);
+
 typedef struct _ssa_value
 {
         union
@@ -137,6 +146,7 @@ typedef struct _ssa_value
                 ssa_variable _var;
                 ssa_constant _const;
                 ssa_decl _decl;
+                ssa_null_pointer _null;
         };
 } ssa_value;
 
@@ -172,22 +182,15 @@ static inline void ssa_set_value_id(ssa_value* self, ssa_id id)
         _ssa_get_value_base(self)->_id = id;
 }
 
-#define SSA_ASSERT_TYPED_VALUE(P) \
-        S_ASSERT((P) && (ssa_get_value_kind(P) == SVK_CONSTANT \
-                      || ssa_get_value_kind(P) == SVK_VARIABLE \
-                      || ssa_get_value_kind(P) == SVK_DECL \
-                      || ssa_get_value_kind(P) == SVK_PARAM \
-                      || ssa_get_value_kind(P) == SVK_STRING))
-
 static inline struct _ssa_typed_value_base* _ssa_get_typed_value_base(ssa_value* self)
 {
-        SSA_ASSERT_TYPED_VALUE(self);
+        S_ASSERT(ssa_value_has_type(self));
         return (struct _ssa_typed_value_base*)self;
 }
 
 static inline const struct _ssa_typed_value_base* _ssa_get_typed_value_cbase(const ssa_value* self)
 {
-        SSA_ASSERT_TYPED_VALUE(self);
+        S_ASSERT(ssa_value_has_type(self));
         return (const struct _ssa_typed_value_base*)self;
 }
 
