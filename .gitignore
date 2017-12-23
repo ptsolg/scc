@@ -18,5 +18,6 @@ CMakeFiles/
 
 # tests
 test/scc/*.txt
+test/scc/__tmp__
 !test/**/*.t
 !test/**/*.a

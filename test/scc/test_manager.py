@@ -1,11 +1,15 @@
 import utils, os, time, re
 
 class TestCase:
-	def __init__(self, input, output, output_dir, test_dir):
+	def __init__(self, input, answer, output, output_dir, test_dir):
 		self.input = input
 		self.output = output
 		self.output_dir = output_dir
 		self.cd = test_dir
+		self.answer = answer
+		self.ignore = False
+		self.exit_code = 123
+		self.ignore_exit_code = False
 
 class TestManager:
 
@@ -20,18 +24,33 @@ class TestManager:
 		self.failed = 0
 		self.presets = __import__('presets')
 
-	def check_test(self, test, answer):
-		print('Testing ' + os.path.basename(test) + ': ', end='')
-		result = open(self.test_output, 'r').read()
-		answer = open(answer, 'r').read()
+	def test_failed(self, msg):
+		self.failed += 1
+		print('FAILED\n' + msg)
 
+	def test_passed(self):
+		self.passed += 1
+		print('PASSED')
+
+	def check_test(self, test):
 		self.total += 1
+		print('Testing ' + os.path.basename(test.input) + ': ', end='')
+
+		if not test.ignore_exit_code and test.exit_code != 0:
+			self.test_failed('exit code = {}\n'.format(test.exit_code))
+			return
+
+		if test.ignore:
+			self.test_passed()
+			return
+
+		result = open(self.test_output, 'r').read()
+		answer = open(test.answer, 'r').read()
+
 		if re.sub('\s+', '', result) != re.sub('\s+', '', answer):
-			print('FAILED\ngot:\n' + result + '\nexpected:\n' + answer + '\n')
-			self.failed += 1
+			self.test_failed('got:\n' + result + '\nexpected:\n' + answer + '\n')
 		else:
-			print('PASSED')
-			self.passed += 1
+			self.test_passed()
 
 	def print_stats(self):
 		print('\n\n-=====================================================================-')
@@ -52,18 +71,26 @@ class TestManager:
 		if 'run' not in config_scope:
 			return
 
-		files = utils.get_files(dir, '.t')
+		test_ext = '.t'
+		ans_ext = '.a'
+		if 'test_ext' in config_scope:
+			test_ext = config_scope['test_ext']
+		if 'ans_ext' in config_scope:
+			ans_ext = config_scope['ans_ext']
+
+		files = utils.get_files(dir, test_ext)
 		if not files:
 			return
 
 		print(dir)
 		for test in files:
-			answer = test.replace('.t', '.a')
+			answer = test.replace(test_ext, ans_ext)
 			if not os.path.isfile(answer):
 				answer = test
 
-			config_scope['run'](TestCase(test, self.test_output, self.test_output_dir, dir))
-			self.check_test(test, answer)
+			test_case = TestCase(test, answer, self.test_output, self.test_output_dir, dir)
+			config_scope['run'](test_case)
+			self.check_test(test_case)
 
 	def run(self, root):
 		start = time.time()
