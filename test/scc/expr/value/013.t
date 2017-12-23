@@ -1,5 +1,5 @@
 void test()
 {
 	int* a;
-	*a; // lvalue
+	*a; // rvalue
 }
