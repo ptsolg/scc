@@ -32,9 +32,11 @@ static op_result ssa_eval_binop(ssa_binary_instr_kind opcode, avalue *l, avalue*
                 case SBIK_GEQ: return ssa_eval_cmp(CR_GR, CR_EQ, l, r);
                 case SBIK_EQ: return ssa_eval_cmp(CR_EQ, CR_EQ, l, r);
                 case SBIK_NEQ: return ssa_eval_cmp(CR_LE, CR_GR, l, r);
+
+                default:
+                        S_ASSERT(0 && "Invalid binary instruction");
+                        return OR_INVALID;
         }
-        S_UNREACHABLE();
-        return OR_INVALID;
 }
 
 static ssa_value* ssa_opt_constant_fold_binop(ssa_context* context, ssa_instr* instr)
@@ -67,7 +69,12 @@ static ssa_value* ssa_opt_constant_fold_cast(ssa_context* context, ssa_instr* in
         const tree_target_info* target = ssa_get_target(context);
 
         if (tree_type_is_pointer(t))
+        {
+                if (avalue_is_zero(&v))
+                        return ssa_new_null_pointer(context, t);
+
                 avalue_to_int(&v, 8 * tree_get_pointer_size(target), false);
+        }
         else if (tree_type_is_integer(t))
                 avalue_to_int(&v, 8 * tree_get_sizeof(target, t),
                         tree_type_is_signed_integer(t));
@@ -100,6 +107,11 @@ static void ssa_constant_fold_instr_operands(ssa_instr* instr, htab* constants)
         for (ssa_value** it = ssa_get_instr_operands_begin(instr),
                 **end = ssa_get_instr_operands_end(instr); it != end; it++)
         {
+                // todo: ??
+                // offset of getaddr maybe NULL
+                if (!*it)
+                        continue;
+
                 hiter res;
                 if (htab_find(constants, ssa_get_value_id(*it), &res))
                         *it = hiter_get_ptr(&res);
