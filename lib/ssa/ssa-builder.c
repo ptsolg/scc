@@ -194,7 +194,7 @@ extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const dseq*
 
 extern ssa_value* ssa_build_getaddr(
         ssa_builder* self,
-        tree_type* target_type,
+        tree_type* pointer_type,
         ssa_value* operand,
         ssa_value* index,
         ssa_value* offset)
@@ -205,12 +205,10 @@ extern ssa_value* ssa_build_getaddr(
         if (offset)
                 S_ASSERT(tree_type_is_integer(ssa_get_value_type(offset)));
 
-        tree_type* value_type = tree_new_pointer_type(ssa_get_tree(self->context), target_type);
-        if (!value_type)
-                return NULL;
-
+        tree_type* restype = offset
+                ? tree_get_pointer_target(pointer_type) : pointer_type;
         ssa_instr* i = ssa_new_getaddr(self->context,
-                ssa_builder_gen_uid(self), value_type, operand, index, offset);
+                ssa_builder_gen_uid(self), restype, operand, index, offset);
         if (!i)
                 return NULL;
 
@@ -249,11 +247,7 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
         tree_type* where_type = ssa_get_value_type(where);
         S_ASSERT(what_type && where_type);
         S_ASSERT(tree_type_is_object_pointer(where_type));
-
-        tree_type* uu1 = tree_get_unqualified_type(what_type);
-        tree_type* uu2 = tree_get_unqualified_type(where_type);
         S_ASSERT(tree_types_are_same(what_type, tree_get_pointer_target(where_type)));
-
 
         ssa_instr* i = ssa_new_store(self->context, what, where);
         if (!i)
@@ -278,6 +272,15 @@ extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, sui
         return ssa_new_constant(self->context, type, v);
 }
 
+extern ssa_value* ssa_build_size_t_constant(ssa_builder* self, size_t val)
+{
+        tree_type* size_type = tree_new_size_type(ssa_get_tree(self->context));
+        if (!size_type)
+                return NULL;
+
+        return ssa_build_int_constant(self, size_type, val);
+}
+
 extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, float val)
 {
         type = tree_desugar_type(type);
@@ -300,37 +303,26 @@ extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, doub
         return ssa_new_constant(self->context, type, v);
 }
 
-extern ssa_value* ssa_build_zero_size_t(ssa_builder* self)
+extern ssa_value* ssa_build_zero(ssa_builder* self, tree_type* type)
 {
-        tree_type* size_type = tree_new_size_type(ssa_get_tree(self->context));
-        if (!size_type)
-                return NULL;
-
-        return ssa_build_int_constant(self, size_type, 0);
+        S_ASSERT(tree_type_is_scalar(type));
+        if (tree_type_is_pointer(type))
+                return ssa_new_null_pointer(self->context, type);
+        else if (tree_builtin_type_is(type, TBTK_FLOAT))
+                return ssa_build_sp_constant(self, type, 0.0f);
+        else if (tree_builtin_type_is(type, TBTK_DOUBLE))
+                return ssa_build_dp_constant(self, type, 0.0);
+        return ssa_build_int_constant(self, type, 0);
 }
 
-extern ssa_value* ssa_build_inc(ssa_builder* self, ssa_value* operand)
+extern ssa_value* ssa_build_one(ssa_builder* self, tree_type* type)
 {
-        tree_type* t = ssa_get_value_type(operand);
-        S_ASSERT(t && tree_type_is_arithmetic(t));
-
-        ssa_value* one = ssa_build_int_constant(self, t, 1);
-        if (!one)
-                return NULL;
-
-        return ssa_build_add(self, operand, one);
-}
-
-extern ssa_value* ssa_build_dec(ssa_builder* self, ssa_value* operand)
-{
-        tree_type* t = ssa_get_value_type(operand);
-        S_ASSERT(t && tree_type_is_arithmetic(t));
-
-        ssa_value* one = ssa_build_int_constant(self, t, 1);
-        if (!one)
-                return NULL;
-
-        return ssa_build_sub(self, operand, one);
+        S_ASSERT(tree_type_is_arithmetic(type));
+        if (tree_builtin_type_is(type, TBTK_FLOAT))
+                return ssa_build_sp_constant(self, type, 1.0f);
+        else if (tree_builtin_type_is(type, TBTK_DOUBLE))
+                return ssa_build_sp_constant(self, type, 1.0);
+        return ssa_build_int_constant(self, type, 1);
 }
 
 extern ssa_value* ssa_build_not(ssa_builder* self, ssa_value* operand)
@@ -348,7 +340,7 @@ extern ssa_value* ssa_build_not(ssa_builder* self, ssa_value* operand)
 
 extern ssa_value* ssa_build_log_not(ssa_builder* self, ssa_value* operand)
 {
-        ssa_value* zero = ssa_build_int_constant(self, ssa_get_value_type(operand), 0);
+        ssa_value* zero = ssa_build_zero(self, ssa_get_value_type(operand));
         if (!zero)
                 return NULL;
 
@@ -357,7 +349,7 @@ extern ssa_value* ssa_build_log_not(ssa_builder* self, ssa_value* operand)
 
 extern ssa_value* ssa_build_neg(ssa_builder* self, ssa_value* operand)
 {
-        ssa_value* zero = ssa_build_int_constant(self, ssa_get_value_type(operand), 0);
+        ssa_value* zero = ssa_build_zero(self, ssa_get_value_type(operand));
         if (!zero)
                 return NULL;
 
@@ -366,7 +358,10 @@ extern ssa_value* ssa_build_neg(ssa_builder* self, ssa_value* operand)
 
 extern ssa_value* ssa_build_neq_zero(ssa_builder* self, ssa_value* operand)
 {
-        ssa_value* zero = ssa_build_int_constant(self, ssa_get_value_type(operand), 0);
+        tree_type* type = ssa_get_value_type(operand);
+        S_ASSERT(tree_type_is_scalar(type));
+
+        ssa_value* zero = ssa_build_zero(self, type);
         if (!zero)
                 return NULL;
 

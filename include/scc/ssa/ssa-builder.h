@@ -49,9 +49,10 @@ extern ssa_value* ssa_build_neq(ssa_builder* self, ssa_value* lhs, ssa_value* rh
 extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* type, ssa_value* operand);
 
 extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const dseq* args);
+
 extern ssa_value* ssa_build_getaddr(
         ssa_builder* self,
-        tree_type* target_type,
+        tree_type* pointer_type,
         ssa_value* operand,
         ssa_value* index,
         ssa_value* offset);
@@ -62,12 +63,11 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
 
 extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id id);
 extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, suint64 val);
+extern ssa_value* ssa_build_size_t_constant(ssa_builder* self, size_t val);
 extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, float val);
 extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, double val);
-extern ssa_value* ssa_build_zero_size_t(ssa_builder* self);
-
-extern ssa_value* ssa_build_inc(ssa_builder* self, ssa_value* operand);
-extern ssa_value* ssa_build_dec(ssa_builder* self, ssa_value* operand);
+extern ssa_value* ssa_build_zero(ssa_builder* self, tree_type* type);
+extern ssa_value* ssa_build_one(ssa_builder* self, tree_type* type);
 
 extern ssa_value* ssa_build_not(ssa_builder* self, ssa_value* operand);
 extern ssa_value* ssa_build_log_not(ssa_builder* self, ssa_value* operand);
