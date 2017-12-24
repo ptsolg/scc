@@ -11,7 +11,7 @@ extern "C" {
 
 #include "c-lexer.h"
 
-typedef struct _cerror_manager cerror_manager;
+typedef struct _clogger clogger;
 typedef struct _csema csema;
 typedef struct _tree_scope tree_scope;
 typedef struct _tree_decl_scope tree_decl_scope;
@@ -23,11 +23,11 @@ typedef struct _cparser
         ctoken* buffer[3];
         clexer* lexer;
         csema* sema;
-        cerror_manager* error_manager;
+        clogger* logger;
         int* on_error;
 } cparser;
 
-extern void cparser_init(cparser* self, clexer* lexer, csema* sema, cerror_manager* error_manager);
+extern void cparser_init(cparser* self, clexer* lexer, csema* sema, clogger* logger);
 
 extern void cparser_dispose(cparser* self);
 extern void cparser_set_on_error(cparser* self, int* b);

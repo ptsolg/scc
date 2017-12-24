@@ -33,11 +33,11 @@ extern void cenv_init(cenv* self, ccontext* context, file_lookup* source_lookup,
 {
         self->context = context;
         csource_manager_init(&self->source_manager, source_lookup, context);
-        cerror_manager_init(&self->error_manager, &self->source_manager, err);
-        clexer_init(&self->lexer, &self->source_manager, &self->error_manager, context);
+        clogger_init(&self->logger, &self->source_manager, self->context->tree, err);
+        clexer_init(&self->lexer, &self->source_manager, &self->logger, context);
         clexer_init_reswords(&self->lexer);
-        csema_init(&self->sema, context, &self->error_manager);
-        cparser_init(&self->parser, &self->lexer, &self->sema, &self->error_manager);
+        csema_init(&self->sema, context, &self->logger);
+        cparser_init(&self->parser, &self->lexer, &self->sema, &self->logger);
 }
 
 extern void cenv_dispose(cenv* self)

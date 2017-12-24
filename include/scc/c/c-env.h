@@ -30,7 +30,7 @@ extern tree_module* cparse_source(
 typedef struct _cenv
 {
         csource_manager source_manager;
-        cerror_manager error_manager;
+        clogger logger;
         clexer lexer;
         csema sema;
         cparser parser;

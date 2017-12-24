@@ -21,7 +21,7 @@ typedef struct _clexer
 extern void clexer_init(
         clexer* self,
         csource_manager* source_manager,
-        cerror_manager* error_manager,
+        clogger* logger,
         ccontext* context);
 
 extern serrcode clexer_enter_source_file(clexer* self, csource* source);

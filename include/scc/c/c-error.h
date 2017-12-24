@@ -10,25 +10,31 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-#include "scc/scl/error.h"
-#include "c-source.h"
+#include "scc/tree/tree-common.h"
 
-typedef struct _cerror_manager
+typedef struct _csource_manager csource_manager;
+typedef struct _tree_context tree_context;
+
+typedef struct _clogger
 {
         int errors;
         int warnings;
         bool errors_as_warnings;
         bool enabled;
         const csource_manager* source_manager;
-        FILE* log;
-} cerror_manager;
+        const tree_context* tree;
+        FILE* output;
+} clogger;
 
-extern void cerror_manager_init(
-        cerror_manager* self, const csource_manager* source_manager, FILE* log);
+extern void clogger_init(
+        clogger* self,
+        const csource_manager* source_manager,
+        const tree_context* tree,
+        FILE* log);
 
-extern void cerror_manager_set_output(cerror_manager* self, FILE* log);
-extern void cerror_manager_set_enabled(cerror_manager* self);
-extern void cerror_manager_set_disabled(cerror_manager* self);
+extern void clogger_set_output(clogger* self, FILE* output);
+extern void clogger_set_enabled(clogger* self);
+extern void clogger_set_disabled(clogger* self);
 
 typedef enum
 {
@@ -38,10 +44,11 @@ typedef enum
 } cerror_severity;
 
 extern void cerror(
-        cerror_manager* self,
+        clogger* self,
         cerror_severity severity,
         tree_location location,
-        const char* description, ...);
+        const char* description,
+        ...);
 
 #ifdef __cplusplus
 }

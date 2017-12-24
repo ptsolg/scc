@@ -29,7 +29,7 @@ extern ctoken_kind creswords_get_h(const creswords* self, hval h);
 extern ctoken_kind creswords_get_pp(const creswords* self, const char* string, ssize len);
 extern ctoken_kind creswords_get_pp_h(const creswords* self, hval h);
 
-typedef struct _cerror_manager cerror_manager;
+typedef struct _clogger clogger;
 typedef struct _ctoken ctoken;
 
 typedef struct _cpplexer
@@ -41,7 +41,7 @@ typedef struct _cpplexer
         const creswords* reswords;
         csource* source;
         csource_manager* source_manager;
-        cerror_manager* error_manager;
+        clogger* logger;
         ccontext* context;
         tree_location loc;
         int tab_to_space;
@@ -51,7 +51,7 @@ extern void cpplexer_init(
         cpplexer* self,
         const creswords* reswords,
         csource_manager* source_manager,
-        cerror_manager* error_manager,
+        clogger* logger,
         ccontext* context);
 
 extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source);
@@ -182,7 +182,7 @@ typedef struct _cpproc
         cpproc_state files[CMAX_INCLUDE_NESTING];
         const creswords* reswords;
         csource_manager* source_manager;
-        cerror_manager* error_manager;
+        clogger* logger;
         ccontext* context;
 } cpproc;
 
@@ -190,7 +190,7 @@ extern void cpproc_init(
         cpproc* self,
         const creswords* reswords,
         csource_manager* source_manager,
-        cerror_manager* error_manager,
+        clogger* logger,
         ccontext* context);
 
 extern void cpproc_dispose(cpproc* self);
