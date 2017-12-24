@@ -39,11 +39,11 @@ static inline const int get_char_info(ascii_char c)
 }
 
 static inline bool char_is_unknown(ascii_char c) { return !get_char_info(c); }
-static inline bool char_is_alpha (ascii_char c) { return get_char_info(c) & ACK_ALPHA; }
-static inline bool char_is_digit (ascii_char c) { return get_char_info(c) & ACK_DIGIT; }
-static inline bool char_is_symbol (ascii_char c) { return get_char_info(c) & ACK_SYMBOL; }
+static inline bool char_is_alpha(ascii_char c) { return get_char_info(c) & ACK_ALPHA; }
+static inline bool char_is_digit(ascii_char c) { return get_char_info(c) & ACK_DIGIT; }
+static inline bool char_is_symbol(ascii_char c) { return get_char_info(c) & ACK_SYMBOL; }
 static inline bool char_is_newline(ascii_char c) { return get_char_info(c) & ACK_NEWLINE; }
-static inline bool char_is_wspace (ascii_char c) { return get_char_info(c) & ACK_WSPACE; }
+static inline bool char_is_wspace(ascii_char c) { return get_char_info(c) & ACK_WSPACE; }
 
 static inline bool char_is_escape(ascii_char c)
 {
