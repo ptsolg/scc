@@ -1,10 +1,11 @@
 #include "scc/c/c-sema.h"
 #include "scc/c/c-info.h"
+#include "scc/c/c-errors.h"
 #include "scc/scl/bit-utils.h"
 
 DSEQ_GEN(cssi, cswitch_stmt_info);
 
-extern void csema_init(csema* self, ccontext* context, cerror_manager* error_manager)
+extern void csema_init(csema* self, ccontext* context, clogger* logger)
 {
         self->ccontext = context;
         self->context = cget_tree(context);
@@ -15,7 +16,7 @@ extern void csema_init(csema* self, ccontext* context, cerror_manager* error_man
         self->function = NULL;
         self->labels = NULL;
         self->scope = NULL;
-        self->error_manager = error_manager;
+        self->logger = logger;
         dseq_init_ex_cssi(&self->switch_stack, cget_alloc(self->ccontext));
 }
 
@@ -189,9 +190,7 @@ extern tree_decl* csema_require_decl(
         tree_decl* d = csema_get_any_decl(self, scope, name, parent_lookup);
         if (!d)
         {
-                cerror(self->error_manager, CES_ERROR, name_loc,
-                        "undeclared identifier '%s'",
-                        tree_get_id_cstr(self->context, name));
+                cerror_undeclared_identifier(self->logger, name_loc, name);
                 return NULL;
         }
 
@@ -231,8 +230,7 @@ extern bool csema_require_complete_type(
 {
         if (tree_type_is_incomplete(type))
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "incomplete type is not allowed");
+                cerror_incomplete_type(self->logger, loc);
                 return false;
         }
         return true;

@@ -1,4 +1,5 @@
 #include "scc/c/c-sema-type.h"
+#include "scc/c/c-errors.h"
 #include "scc/tree/tree-eval.h"
 
 extern tree_type* csema_get_int_type(csema* self, bool signed_, bool extended)
@@ -150,8 +151,7 @@ extern bool csema_check_array_type(const csema* self, const tree_type* t, tree_l
 
         if (tree_type_is(tree_desugar_type(el), TTK_FUNCTION))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "array of functions is not allowed");
+                cerror_array_of_functions(self->logger, l);
                 return false;
         }
 
@@ -166,8 +166,7 @@ extern bool csema_check_array_type(const csema* self, const tree_type* t, tree_l
 
         if (!tree_type_is_integer(tree_get_expr_type(size_expr)))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "size of array has non-integer type");
+                cerror_array_size_isnt_integer(self->logger, l);
                 return false;
         }
 
@@ -175,8 +174,7 @@ extern bool csema_check_array_type(const csema* self, const tree_type* t, tree_l
         if (int_is_zero(size_value)
                 || (int_is_signed(size_value) && int_get_i64(size_value) < 0))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "size of array must be greater than zero");
+                cerror_array_must_be_greater_than_zero(self->logger, l);
                 return false;
         }
 
@@ -190,14 +188,12 @@ extern bool csema_check_function_type(const csema* self, const tree_type* t, tre
         tree_type* r = tree_desugar_type(tree_get_function_type_result(t));
         if (tree_type_is(r, TTK_ARRAY))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "function returning array is not allowed");
+                cerror_function_returning_array(self->logger, l);
                 return false;
         }
         else if (tree_type_is(r, TTK_FUNCTION))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "function returning function is not allowed");
+                cerror_function_returning_function(self->logger, l);
                 return false;
         }
         return true;
@@ -208,7 +204,7 @@ extern bool csema_check_type_quals(const csema* self, const tree_type* t, tree_l
         tree_type_quals q = tree_get_type_quals(t);
         if ((q & TTQ_RESTRICT) && !tree_type_is_pointer(t))
         {
-                cerror(self->error_manager, CES_ERROR, l, "invalid use of 'restrict'");
+                cerror_invalid_use_of_restrict(self->logger, l);
                 return false;
         }
         return true;

@@ -1,5 +1,6 @@
 add_scc_lib(c
 	c-error.c
+	c-errors.c
 	c-token.c
 	c-source.c
 	c-lexer.c

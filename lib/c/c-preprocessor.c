@@ -1,6 +1,6 @@
 #include "scc/c/c-preprocessor.h"
 #include "scc/c/c-token.h"
-#include "scc/c/c-error.h"
+#include "scc/c/c-errors.h"
 #include "scc/c/c-tree.h"
 #include "scc/c/c-info.h"
 #include "scc/scl/char-info.h"
@@ -113,12 +113,12 @@ extern void cpplexer_init(
         cpplexer* self,
         const creswords* reswords,
         csource_manager* source_manager,
-        cerror_manager* error_manager,
+        clogger* logger,
         ccontext* context)
 {
         self->reswords = reswords;
         self->context = context;
-        self->error_manager = error_manager;
+        self->logger = logger;
         self->source = NULL;
         self->source_manager = source_manager;
         self->buf = NULL;
@@ -137,8 +137,7 @@ extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source)
         
         if (!(self->buf = csource_open(source)))
         {
-                cerror(self->error_manager, CES_ERROR, 0,
-                        "cannot open source file %s", csource_get_name(source));
+                cerror_cannot_open_source_file(self->logger, 0, csource_get_name(source));
                 return S_ERROR;
         }
 
@@ -178,8 +177,7 @@ static inline bool csequence_append(csequence* self, const cpplexer* lexer, int 
 {
         if (self->size == CMAX_LINE_LENGTH)
         {
-                cerror(lexer->error_manager, CES_ERROR, self->loc,
-                        "token overflowed internal buffer");
+                cerror_token_is_too_long(lexer->logger, self->loc);
                 return false;
         }
 
@@ -228,8 +226,7 @@ static bool cpplex_quoted_seq(cpplexer* self, csequence* seq, int quote)
                 int c = cpplexer_readc(self);
                 if (char_is_newline(c) || cpplexer_at_eof(self))
                 {
-                        cerror(self->error_manager,
-                                CES_ERROR, seq->loc, "missing closing quote");
+                        cerror_missing_closing_quote(self->logger, seq->loc);
                         return false;
                 }
                 else if (c == '\\')
@@ -279,12 +276,12 @@ extern ctoken* cpplex_const_char(cpplexer* self)
         bool escape = cchar.val[0] == '\\';
         if (cchar.size == 1)
         {
-                cerror(self->error_manager, CES_ERROR, cchar.loc, "empty character constant");
+                cerror_empty_character_constant(self->logger, cchar.loc);
                 return NULL;
         }
         else if ((escape && cchar.size > 3) || (!escape && cchar.size > 2))
         {
-                cerror(self->error_manager, CES_ERROR, cchar.loc, "invalid character constant");
+                cerror_invalid_character_constant(self->logger, cchar.loc);
                 return NULL;
         }
 
@@ -326,7 +323,6 @@ extern ctoken* cpplex_number(cpplexer* self)
 static ctoken* cpplex_comment(cpplexer* self)
 {
         tree_location loc = cpplexer_loc(self);
-
         int c = cpplexer_readc(self); // '/'
         if (c == '/')
         {
@@ -345,8 +341,7 @@ static ctoken* cpplex_comment(cpplexer* self)
                         }
                         else if (cpplexer_at_eof(self))
                         {
-                                cerror(self->error_manager, CES_ERROR, loc,
-                                        "comment unclosed at end of file");
+                                cerror_unclosed_comment(self->logger, loc);
                                 return NULL;
                         }
                 }
@@ -533,8 +528,7 @@ static ctoken* cpplex_punctuator(cpplexer* self)
         ctoken_kind k = _cpplex_punctuator(self);
         if (k == CTK_UNKNOWN)
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "unknown punctuator '%c'", cpplexer_getc(self));
+                cerror_unknown_punctuator(self->logger, loc, cpplexer_getc(self));
                 return NULL;
         }
         return ctoken_new(self->context, k, loc);
@@ -599,8 +593,7 @@ extern ctoken* cpplex_token(cpplexer* self)
                 return ctoken_new(self->context, CTK_EOF, loc);
         }
 
-        cerror(self->error_manager, CES_ERROR, cpplexer_loc(self),
-                "unknown symbol '%c'", c);
+        cerror_unknown_symbol(self->logger, cpplexer_loc(self), c);
         return NULL;
 }
 
@@ -608,13 +601,13 @@ extern void cpproc_init(
         cpproc* self,
         const creswords* reswords,
         csource_manager* source_manager,
-        cerror_manager* error_manager,
+        clogger* logger,
         ccontext* context)
 {
         self->reswords = reswords;
         self->state = self->files - 1;
         self->source_manager = source_manager;
-        self->error_manager = error_manager;
+        self->logger = logger;
         self->context = context;
         dseq_init_ex_ptr(&self->expansion, cget_alloc(context));
 }
@@ -634,8 +627,7 @@ extern serrcode cpproc_enter_source_file(cpproc* self, csource* source)
                 return S_ERROR;
         if (self->state - self->files >= CMAX_INCLUDE_NESTING)
         {
-                cerror(self->error_manager, CES_ERROR, 0,
-                        "maximum include nesting is %d", CMAX_INCLUDE_NESTING);
+                cerror_too_deep_include_nesting(self->logger);
                 return S_ERROR;
         }
 
@@ -645,7 +637,7 @@ extern serrcode cpproc_enter_source_file(cpproc* self, csource* source)
                 pplexer,
                 self->reswords,
                 self->source_manager,
-                self->error_manager, 
+                self->logger, 
                 self->context);
         if (S_FAILED(cpplexer_enter_source_file(pplexer, source)))
                 return S_ERROR;
@@ -697,10 +689,10 @@ static ctoken* cpproc_lex_include(cpproc* self)
         if (!t)
                 return NULL;
 
+        tree_location token_loc = ctoken_get_loc(t);
         if (!ctoken_is(t, CTK_CONST_STRING) && !ctoken_is(t, CTK_ANGLE_STRING))
         {
-                cerror(self->error_manager, CES_ERROR, ctoken_get_loc(t),
-                        "expected a file name");
+                cerror_expected_file_name(self->logger, token_loc);
                 return NULL;
         }
 
@@ -710,16 +702,14 @@ static ctoken* cpproc_lex_include(cpproc* self)
 
         if (!*filename)
         {
-                cerror(self->error_manager, CES_ERROR, ctoken_get_loc(t),
-                        "empty file name in #include");
+                cerror_empty_file_name_in_include(self->logger, token_loc);
                 return NULL;
         }
 
         csource* source = csource_find(self->source_manager, filename);
         if (!source)
         {
-                cerror(self->error_manager, CES_ERROR, ctoken_get_loc(t),
-                        "cannot open source file \"%s\"", filename);
+                cerror_cannot_open_source_file(self->logger, token_loc, filename);
                 return NULL;
         }
 
@@ -737,8 +727,7 @@ static ctoken* cpproc_lex_directive(cpproc* self)
 
         if (!self->state->hash_expected)
         {
-                cerror(self->error_manager, CES_ERROR, ctoken_get_loc(t),
-                        "'#' is not expected here");
+                cerror_unexpected_hash(self->logger, ctoken_get_loc(t));
                 return NULL;
         }
 
@@ -751,8 +740,7 @@ static ctoken* cpproc_lex_directive(cpproc* self)
 
         if (directive == CTK_UNKNOWN)
         {
-                cerror(self->error_manager, CES_ERROR, ctoken_get_loc(t),
-                        "unkown preprocessing directive");
+                cerror_unknown_preprocessor_directive(self->logger, ctoken_get_loc(t));
                 return false;
         }
 
@@ -762,8 +750,7 @@ static ctoken* cpproc_lex_directive(cpproc* self)
         else
         {
                 t = NULL;
-                cerror(self->error_manager, CES_ERROR, ctoken_get_loc(t),
-                        "unsupported preprocessor directive");
+                cerror_unsupported_preprocessor_directive(self->logger, ctoken_get_loc(t));
         }
         self->state->in_directive = false;
         return t;

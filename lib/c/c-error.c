@@ -1,29 +1,34 @@
 #include "scc/c/c-error.h"
 #include "scc/c/c-limits.h"
+#include "scc/c/c-source.h"
 #include <stdarg.h>
 
-extern void cerror_manager_init(
-        cerror_manager* self, const csource_manager* source_manager, FILE* log)
+extern void clogger_init(
+        clogger* self,
+        const csource_manager* source_manager,
+        const tree_context* tree,
+        FILE* log)
 {
         self->enabled = true;
         self->errors = 0;
         self->warnings = 0;
         self->errors_as_warnings = false;
         self->source_manager = source_manager;
-        self->log = log;
+        self->tree = tree;
+        self->output = log;
 }
 
-extern void cerror_manager_set_output(cerror_manager* self, FILE* log)
+extern void clogger_set_output(clogger* self, FILE* output)
 {
-        self->log = log;
+        self->output = output;
 }
 
-extern void cerror_manager_set_enabled(cerror_manager* self)
+extern void clogger_set_enabled(clogger* self)
 {
         self->enabled = true;
 }
 
-extern void cerror_manager_set_disabled(cerror_manager* self)
+extern void clogger_set_disabled(clogger* self)
 {
         self->enabled = false;
 }
@@ -36,7 +41,7 @@ static const char* cerror_severity_to_str[] =
 };
 
 extern void cerror(
-        cerror_manager* self,
+        clogger* self,
         cerror_severity severity,
         tree_location location,
         const char* description, ...)
@@ -52,7 +57,7 @@ extern void cerror(
         va_start(args, description);
         vsnprintf(buffer, CMAX_LINE_LENGTH, description, args);
 
-        fprintf(self->log, "%s:%d:%d: %s: %s\n",
+        fprintf(self->output, "%s:%d:%d: %s: %s\n",
                 path_get_cfile(l.file),
                 l.line,
                 l.column,

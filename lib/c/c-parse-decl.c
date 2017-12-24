@@ -1,11 +1,11 @@
 #include "scc/c/c-parse-decl.h"
-#include "scc/c/c-info.h"
 #include "scc/c/c-sema-decl.h"
 #include "scc/c/c-sema-type.h"
 #include "scc/c/c-parse-stmt.h"
 #include "scc/c/c-parse-expr.h" // cparse_const_expr
-#include "scc/c/c-reswords.h"
+#include "scc/c/c-info.h"
 #include "scc/c/c-tree.h"
+#include "scc/c/c-errors.h"
 
 static bool cparse_function_definition(cparser* self, tree_decl* func)
 {
@@ -195,15 +195,12 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
         {
                 if (cparser_at(self, CTK_ID))
                 {
-                        ctoken* id_tok = cparser_get_token(self);
-                        tree_id id = ctoken_get_string(id_tok);
-                        cerror(self->error_manager, CES_ERROR, ctoken_get_loc(id_tok),
-                                "unknown type name '%s'", csema_get_id_cstr(self->sema, id));
+                        cerror_unknown_type_name(self->logger, cparser_get_token(self));
                         return false;
                 }
-
-                cerror(self->error_manager, CES_ERROR,
-                        cdecl_specs_get_start_loc(result), "expected type specifier");
+               
+                cerror_expected_type_specifier(self->logger,
+                        cdecl_specs_get_start_loc(result));
                 return false;
         }
 
@@ -258,8 +255,7 @@ extern tree_type* cparse_type_specifier(cparser* self)
 
                 if (!res)
                 {
-                        cerror(self->error_manager, CES_ERROR, begin,
-                                "invalid combination of type specifiers");
+                        cerror_invalid_type_specifier(self->logger, begin);
                         return NULL;
                 }
                 cparser_consume_token(self);
@@ -268,8 +264,7 @@ extern tree_type* cparse_type_specifier(cparser* self)
         tree_builtin_type_kind btk = cbuiltin_type_info_get_type(&info);
         if (btk == TBTK_INVALID)
         {
-                cerror(self->error_manager, CES_ERROR, cparser_get_loc(self),
-                        "expected type specifier");
+                cerror_expected_type_specifier(self->logger, cparser_get_loc(self));
                 return NULL;
         }
         return csema_new_builtin_type(self->sema, TTQ_UNQUALIFIED, btk);
@@ -352,8 +347,7 @@ static bool cparse_struct_declaration_list(cparser* self, tree_decl* record)
 {
         if (cparser_at(self, CTK_RBRACE))
         {
-                cerror(self->error_manager, CES_ERROR, cparser_get_loc(self),
-                        "empty struct/union is invalid in C99");
+                cerror_empty_struct(self->logger, cparser_get_loc(self));
                 return false;
         }
 
@@ -447,8 +441,7 @@ static bool cparse_enumerator_list(cparser* self, tree_decl* enum_)
 {
         if (cparser_at(self, CTK_RBRACE))
         {
-                cerror(self->error_manager, CES_ERROR, cparser_get_loc(self),
-                        "empty enum is invalid in C99");
+                cerror_empty_enum(self->logger, cparser_get_loc(self));
                 return false;
         }
         bool res = false;

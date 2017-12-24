@@ -2,6 +2,7 @@
 #include "scc/c/c-parse-decl.h"
 #include "scc/c/c-info.h"
 #include "scc/c/c-sema-expr.h"
+#include "scc/c/c-errors.h"
 
 const ctoken_kind ctk_rbracket_or_comma[] =
 {
@@ -53,7 +54,7 @@ extern tree_expr* cparse_primary_expr(cparser* self)
                         loc, ctoken_get_int(t), signed_, ext);
         }
        
-        cerror(self->error_manager, CES_ERROR, loc, "expected an expression");
+        cerror_expected_expr(self->logger, loc);
         return NULL;
 }
 
@@ -152,7 +153,7 @@ extern tree_expr* cparse_unary_expr(cparser* self)
         if (cparser_at(self, CTK_SIZEOF))
         {
                 cparser_consume_token(self);
-                csizeof_rhs rhs;
+                csizeof_operand rhs;
 
                 if (cparser_at(self, CTK_LBRACKET))
                 {
@@ -323,8 +324,7 @@ static tree_expr* cparse_initializer_list(cparser* self, tree_type* t)
 {
         if (cparser_at(self, CTK_RBRACE))
         {
-                cerror(self->error_manager, CES_ERROR, cparser_get_loc(self),
-                        "empty initializer list is invalid in C99");
+                cerror_empty_initializer(self->logger, cparser_get_loc(self));
                 return NULL;
         }
       

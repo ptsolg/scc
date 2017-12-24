@@ -1,7 +1,7 @@
 #include "scc/c/c-lexer.h"
 #include "scc/c/c-info.h"
 #include "scc/c/c-tree.h"
-#include "scc/c/c-error.h"
+#include "scc/c/c-errors.h"
 #include "scc/c/c-reswords.h"
 #include <stdlib.h> // strtoll, strtod, ...
 #include <ctype.h> // toupper
@@ -9,11 +9,11 @@
 extern void clexer_init(
         clexer* self,
         csource_manager* source_manager,
-        cerror_manager* error_manager,
+        clogger* logger,
         ccontext* context)
 {
         creswords_init(&self->reswords, context);
-        cpproc_init(&self->pp, &self->reswords, source_manager, error_manager, context);
+        cpproc_init(&self->pp, &self->reswords, source_manager, logger, context);
 }
 
 extern serrcode clexer_enter_source_file(clexer* self, csource* source)
@@ -109,8 +109,7 @@ static inline ctoken* clex_integer_constant(clexer* self, ctoken* pp)
         int ls = 0;
         if (!clex_integer_suffix(self, suffix, &is_signed, &ls))
         {
-                cerror(self->pp.error_manager, CES_ERROR, ctoken_get_loc(pp),
-                        "invalid integer literal '%s'", num);
+                cerror_invalid_integer_literal(self->pp.logger, ctoken_get_loc(pp), num);
                 return NULL;
         }
 
@@ -138,8 +137,7 @@ static inline ctoken* clex_floating_constant(clexer* self, ctoken* pp)
         ssize suffix_len = strlen(suffix);
         if ((is_float && suffix_len > 1) || (!is_float && suffix_len))
         {
-                cerror(self->pp.error_manager, CES_ERROR, ctoken_get_loc(pp),
-                        "invalid floating literal '%s'", num);
+                cerror_invalid_floating_literal(self->pp.logger, ctoken_get_loc(pp), num);
                 return NULL;
         }
                 

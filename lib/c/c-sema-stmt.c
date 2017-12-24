@@ -3,6 +3,7 @@
 #include "scc/c/c-sema-decl.h"
 #include "scc/c/c-sema-expr.h"
 #include "scc/c/c-info.h"
+#include "scc/c/c-errors.h"
 #include "scc/tree/tree-eval.h"
 
 extern tree_stmt* csema_add_stmt(csema* self, tree_stmt* s)
@@ -28,8 +29,7 @@ extern tree_stmt* csema_new_case_stmt(
 {
         if (!csema_in_switch_stmt(self))
         {
-                cerror(self->error_manager, CES_ERROR, kw_loc,
-                        "a case statement may only be used within a switch");
+                cerror_case_stmt_outside_switch(self->logger, kw_loc);
                 return false;
         }
 
@@ -41,8 +41,7 @@ extern tree_stmt* csema_new_case_stmt(
         tree_init_eval_info(&info, self->target);
         if (!tree_eval_as_integer(&info, expr, &value))
         {
-                cerror(self->error_manager, CES_ERROR, kw_loc,
-                        "case label does not reduce to an integer constant");
+                cerror_case_stmt_isnt_constant(self->logger, kw_loc);
                 return NULL;
         }
 
@@ -54,7 +53,7 @@ extern tree_stmt* csema_new_case_stmt(
                 tree_init_xloc(kw_loc, colon_loc), expr, &value, NULL);
         if (!csema_switch_stmt_register_case_label(self, case_stmt))
         {
-                cerror(self->error_manager, CES_ERROR, kw_loc, "duplicate case value");
+                cerror_case_stmt_duplication(self->logger, kw_loc);
                 return NULL;
         }
         return case_stmt;
@@ -70,14 +69,12 @@ extern tree_stmt* csema_new_default_stmt(
 {
         if (!csema_in_switch_stmt(self))
         {
-                cerror(self->error_manager, CES_ERROR, kw_loc,
-                        "a default statement may only be used within a switch");
+                cerror_default_stmt_outside_switch(self->logger, kw_loc);
                 return false;
         }
         if (csema_switch_stmt_has_default(self))
         {
-                cerror(self->error_manager, CES_ERROR, kw_loc,
-                        "multiple default labels in one switch");
+                cerror_default_stmt_duplication(self->logger, kw_loc);
                 return false;
         }
 
@@ -196,22 +193,16 @@ extern tree_stmt* csema_new_do_while_stmt(
 
 static bool _csema_check_iteration_stmt_decl(const csema* self, const tree_decl* d)
 {
-        tree_location loc = tree_get_decl_loc_begin(d);
-        const char* name = csema_get_id_cstr(self, tree_get_decl_name(d));
-
         if (!tree_decl_is(d, TDK_VAR))
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "declaration of non-variable '%s' in 'for' loop", name);
+                cerror_non_variable_decl_in_for_loop(self->logger, d);
                 return false;
         }
 
         tree_decl_storage_class sc = tree_get_decl_storage_class(d);
         if (sc != TDSC_NONE && sc != TDSC_AUTO && sc != TDSC_REGISTER)
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "declaration of '%s' variable '%s' in 'for' loop initial declaration",
-                        cget_decl_storage_class_string(sc), name);
+                cerror_invalid_storage_class_for_loop_decl(self->logger, d);
                 return false;
         }
         return true;
@@ -282,8 +273,7 @@ extern tree_stmt* csema_new_return_stmt(
         tree_type* restype = tree_get_function_type_result(tree_get_decl_type(self->function));
         if (tree_type_is_void(restype) && value)
         {
-                cerror(self->error_manager, CES_ERROR, tree_get_expr_loc(value),
-                        "return with a value, in function returning void");
+                cerror_return_non_void(self->logger, value);
                 return NULL;
         }
 
@@ -296,8 +286,7 @@ extern tree_stmt* csema_new_return_stmt(
         tree_location vloc = tree_get_expr_loc(value);
 
         if (r.kind == CACRK_INCOMPATIBLE)
-                cerror(self->error_manager, CES_ERROR, vloc,
-                        "return type does not match the function type");
+                cerror_return_type_doesnt_match(self->logger, value);
         else if (r.kind == CACRK_RHS_NOT_AN_ARITHMETIC)
                 csema_require_arithmetic_expr_type(self, vt, vloc);
         else if (r.kind == CACRK_RHS_NOT_A_RECORD)
@@ -305,15 +294,9 @@ extern tree_stmt* csema_new_return_stmt(
         else if (r.kind == CACRK_INCOMPATIBLE_RECORDS)
                 csema_require_compatible_expr_types(self, restype, vt, vloc);
         else if (r.kind == CACRK_QUAL_DISCARTION)
-        {
-                char quals[64];
-                cqet_qual_string(r.discarded_quals, quals);
-                cerror(self->error_manager, CES_ERROR, vloc,
-                        "return discards '%s' qualifier", quals);
-        }
+                cerror_return_discards_quals(self->logger, vloc, r.discarded_quals);
         else if (r.kind == CACRK_INCOMPATIBLE_POINTERS)
-                cerror(self->error_manager, CES_ERROR, vloc,
-                        "return from incompatible pointer type");
+                cerror_return_from_incompatible_pointer_type(self->logger, vloc);
         return NULL;
 }
 
@@ -325,24 +308,20 @@ extern bool csema_check_stmt(const csema* self, const tree_stmt* s, cstmt_contex
         tree_scope_flags flags = cstmt_context_to_scope_flags(c);
         bool is_top_level = self->scope == NULL;
         tree_stmt_kind sk = tree_get_stmt_kind(s);
-        tree_location kw_loc = tree_get_xloc_begin(tree_get_stmt_loc(s));
 
         if (sk == TSK_BREAK && !(flags & TSF_BREAK))
         {
-                cerror(self->error_manager, CES_ERROR, kw_loc,
-                       "a break statement may only be used within a loop or switch");
+                cerror_break_stmt_outside_loop_or_switch(self->logger, s);
                 return false;
         }
         else if (sk == TSK_CONTINUE && !(flags & TSF_CONTINUE))
         {
-                cerror(self->error_manager, CES_ERROR, kw_loc,
-                       "a continue statement may only be used within a loop");
+                cerror_continue_stmt_outside_loop(self->logger, s);
                 return false;
         }
         else if (sk == TSK_DECL && !(c & CSC_DECL))
         {
-                cerror(self->error_manager, CES_ERROR, kw_loc,
-                        "a declaration may only be used within a block");
+                cerror_decl_stmt_outside_block(self->logger, s);
                 return false;
         }
         else if (sk == TSK_COMPOUND && is_top_level)
@@ -352,10 +331,7 @@ extern bool csema_check_stmt(const csema* self, const tree_stmt* s, cstmt_contex
                         tree_decl* label = hiter_get_ptr(&it);
                         if (!tree_get_label_decl_stmt(label))
                         {
-                                tree_location l = tree_get_decl_loc_begin(label);
-                                const char* n = csema_get_id_cstr(self, tree_get_decl_name(label));
-                                cerror(self->error_manager, CES_ERROR, l,
-                                        "label '%s' used but not defined", n);
+                                cerror_undefined_label(self->logger, label);
                                 return false;
                         }
                 }

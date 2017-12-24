@@ -1,14 +1,14 @@
 #include "scc/c/c-parser.h"
-#include "scc/c/c-error.h"
+#include "scc/c/c-errors.h"
 #include "scc/c/c-info.h"
 #include "scc/c/c-reswords.h"
 #include <setjmp.h>
 
-extern void cparser_init(cparser* self, clexer* lexer, csema* sema, cerror_manager* error_manager)
+extern void cparser_init(cparser* self, clexer* lexer, csema* sema, clogger* logger)
 {
         self->lexer = lexer;
         self->sema = sema;
-        self->error_manager = error_manager;
+        self->logger = logger;
         self->on_error = NULL;
         self->buffer[0] = NULL;
         self->buffer[1] = NULL;
@@ -101,54 +101,18 @@ static void cparser_print_expected(const cparser* self, ctoken_kind k, const cto
         }
 
         ssize size = it - expected;
-
         tree_location loc = cparser_get_loc(self);
-        const cresword_info* current = cget_token_info(cparser_get_token(self));
+        ctoken_kind current = ctoken_get_kind(cparser_get_token(self));
+
         if (size == 0)
                 S_UNREACHABLE();
         else if (size == 1)
-        {
-                cerror(
-                        self->error_manager,
-                        CES_ERROR,
-                        loc,
-                        "expected %s before %s %s",
-                        cget_token_kind_info(expected[0])->desription,
-                        current->desription,
-                        current->kind);
-        }
+                cerror_expected_a_before_b(self->logger, loc, expected[0], current);
         else if (size == 2)
-        {
-                cerror(
-                        self->error_manager,
-                        CES_ERROR,
-                        loc,
-                        "expected %s or %s before %s %s",
-                        cget_token_kind_info(expected[0])->desription,
-                        cget_token_kind_info(expected[1])->desription,
-                        current->desription,
-                        current->kind);
-        }
+                cerror_expected_a_or_b_before_c(self->logger,
+                        loc, expected[0], expected[1], current);
         else
-        {
-                char buffer[1024];
-                sprintf(buffer, "expected one of: ");
-
-                for (ssize i = 0; i < size; i++)
-                {
-                        strcat(buffer, cget_token_kind_info(expected[i])->desription);
-                        if (i + 1 < size)
-                                strcat(buffer, ", ");
-                }
-                cerror(
-                        self->error_manager,
-                        CES_ERROR,
-                        loc,
-                        "%s before %s %s",
-                        buffer,
-                        current->desription,
-                        current->kind);
-        }
+                cerror_expected_one_of(self->logger, loc, expected, size, current);
 }
 
 extern bool cparser_require_ex(cparser* self, ctoken_kind k, const ctoken_kind expected[])

@@ -2,6 +2,7 @@
 #include "scc/c/c-sema-type.h"
 #include "scc/c/c-sema-conv.h"
 #include "scc/c/c-sema-expr.h"
+#include "scc/c/c-errors.h"
 #include "scc/tree/tree-eval.h"
 
 extern tree_decl* csema_lookup_for_duplicates(
@@ -107,17 +108,11 @@ extern bool csema_set_typespec(csema* self, cdecl_specs* specs, tree_type* types
         return true;
 }
 
-static void csema_multiple_storage_classes(const csema* self, const cdecl_specs* specs)
-{
-        cerror(self->error_manager, CES_ERROR, cdecl_specs_get_start_loc(specs),
-                "multiple storage classes in declaration specifiers");
-}
-
 extern bool csema_set_typedef_specifier(csema* self, cdecl_specs* specs)
 {
         if (specs->class_ != TDSC_NONE || specs->is_typedef)
         {
-                csema_multiple_storage_classes(self, specs);
+                cerror_multiple_storage_classes(self->logger, specs);
                 return false;
         }
 
@@ -136,7 +131,7 @@ extern bool csema_set_decl_storage_class(
 {
         if (specs->class_ != TDSC_NONE || specs->is_typedef)
         {
-                csema_multiple_storage_classes(self, specs);
+                cerror_multiple_storage_classes(self->logger, specs);
                 return false;
         }
 
@@ -212,8 +207,7 @@ static bool csema_check_specifiers(
                 if (loc == TREE_INVALID_LOC)
                         loc = cdecl_specs_get_start_loc(specs);
 
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "'inline' specifier allowed on function declarations only");
+                cerror_inline_allowed_on_functions_only(self->logger, loc);
                 return false;
         }
         return true;
@@ -229,8 +223,7 @@ extern cparam* csema_finish_param(csema* self, cparam* p)
 
         if (p->specs.class_ != TDSC_REGISTER && p->specs.class_ != TDSC_NONE)
         {
-                cerror(self->error_manager, CES_ERROR, d->id_loc,
-                        "invalid storage class for parameter '%s'", csema_get_id_cstr(self, d->id));
+                cerror_invalid_parameter_storage_class(self->logger, d);
                 return NULL;
         }
 
@@ -245,23 +238,12 @@ extern bool csema_set_declarator_has_vararg(
 
         if (dseq_size(&declarator->params) == 0)
         {
-                cerror(self->error_manager, CES_ERROR, ellipsis_loc,
-                        "ISO C requires a named argument before '...'");
+                cerror_named_argument_before_ellipsis_required(self->logger, ellipsis_loc);
+                return false;
         }
         
         tree_set_function_type_vararg(t, true);
         return true;
-}
-
-static void csema_redefinition(const csema* self, tree_location loc, tree_id id)
-{
-        cerror(self->error_manager, CES_ERROR, loc, 
-                "redefinition of '%s'", csema_get_id_cstr(self, id));
-}
-
-static void csema_decl_redifinition(const csema* self, const tree_decl* decl)
-{
-        csema_redefinition(self, tree_get_decl_loc_begin(decl), tree_get_decl_name(decl));
 }
 
 extern tree_decl* csema_export_decl(csema* self, tree_decl_scope* scope, tree_decl* decl)
@@ -272,7 +254,7 @@ extern tree_decl* csema_export_decl(csema* self, tree_decl_scope* scope, tree_de
         hval key = cget_decl_key(self->ccontext, decl);
         if (tree_decl_scope_lookup(scope, key, false))
         {
-                csema_decl_redifinition(self, decl);
+                cerror_decl_redefinition(self->logger, decl);
                 return NULL;
         }
         tree_decl_scope_add_lookup(scope, key, decl);
@@ -314,9 +296,7 @@ static bool csema_compute_enumerator_value(
                 tree_init_eval_info(&i, self->target);
                 if (!tree_eval_as_integer(&i, init, result))
                 {
-                        cerror(self->error_manager, CES_ERROR, id_loc,
-                                "enumerator value for '%s' is not an integer constant",
-                                csema_get_id_cstr(self, id));
+                        cerror_enumerator_value_isnt_constant(self->logger, id_loc, id);
                         return false;
                 }
 
@@ -362,12 +342,6 @@ extern tree_decl* csema_define_enumerator(
         return csema_export_decl(self, self->globals, e);
 }
 
-static void csema_wrong_kind_of_tag(const csema* self, tree_location loc, tree_id name)
-{
-        cerror(self->error_manager, CES_ERROR, loc,
-                "'%s' defined as wrong kind of tag", csema_get_id_cstr(self, name));
-}
-
 extern tree_decl* csema_new_enum_decl(csema* self, tree_location kw_loc, tree_id name)
 {
         return tree_new_enum_decl(
@@ -389,7 +363,7 @@ static tree_decl* _csema_declare_enum_decl(
         }
         else if (tree_get_decl_kind(e) != TDK_ENUM)
         {
-                csema_wrong_kind_of_tag(self, kw_loc, name);
+                cerror_wrong_king_of_tag(self->logger, kw_loc, name);
                 return NULL;
         }
         return e;
@@ -408,7 +382,7 @@ extern tree_decl* csema_define_enum_decl(csema* self, tree_location kw_loc, tree
 
         if (!tree_decl_scope_is_empty(tree_get_enum_scope(e)))
         {
-                csema_redefinition(self, kw_loc, name);
+                cerror_redefinition(self->logger, kw_loc, name);
                 return NULL;
         }
         return e;
@@ -437,7 +411,7 @@ extern tree_decl* _csema_declare_record_decl(
         }
         else if (!tree_decl_is(d, TDK_RECORD) || tree_record_is_union(d) != is_union)
         {
-                csema_wrong_kind_of_tag(self, kw_loc, name);
+                cerror_wrong_king_of_tag(self->logger, kw_loc, name);
                 return NULL;
         }
 
@@ -459,7 +433,7 @@ extern tree_decl* csema_define_record_decl(
 
         if (tree_record_is_complete(r))
         {
-                csema_redefinition(self, kw_loc, name);
+                cerror_redefinition(self->logger, kw_loc, name);
                 return NULL;
         }
         return r;
@@ -475,16 +449,12 @@ extern tree_decl* csema_complete_record_decl(csema* self, tree_decl* decl, tree_
 static bool csema_check_member_decl(const csema* self, const tree_decl* m)
 {
         tree_type* mt = tree_desugar_type(tree_get_decl_type(m));
-        tree_location loc = tree_get_decl_loc_begin(m);
-        const char* name = csema_get_id_cstr(self, tree_get_decl_name(m));
-
         if (tree_type_is(mt, TTK_FUNCTION))
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "field '%s' declared as function", name);
+                cerror_member_function(self->logger, m);
                 return false;
         }
-        if (!csema_require_complete_type(self, loc, mt))
+        if (!csema_require_complete_type(self, tree_get_decl_loc_begin(m), mt))
                 return false;
 
         tree_expr* bits = tree_get_member_bits(m);
@@ -493,8 +463,7 @@ static bool csema_check_member_decl(const csema* self, const tree_decl* m)
 
         if (!tree_type_is_integer(mt))
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "bit-field '%s' has invalid type", name);
+                cerror_invalid_bitfield_type(self->logger, m);
                 return false;
         }
 
@@ -503,29 +472,25 @@ static bool csema_check_member_decl(const csema* self, const tree_decl* m)
         tree_init_eval_info(&i, self->target);
         if (!tree_eval_as_integer(&i, bits, &val))
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "bit-field '%s' width not an integer constant", name);
+                cerror_bitfield_width_isnt_constant(self->logger, m);
                 return false;
         }
 
         if (int_is_zero(&val))
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "zero width for bit-field '%s'", name);
+                cerror_bitfield_width_is_zero(self->logger, m);
                 return false;
         }
 
         if (int_is_signed(&val) && int_get_i64(&val) < 0)
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "negative width in bit-field '%s'", name);
+                cerror_negative_bitfield_width(self->logger, m);
                 return false;
         }
 
         if (int_get_u64(&val) > 8 * tree_get_sizeof(self->target, mt))
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "width of '%s' exceeds its type", name);
+                cerror_bitfield_width_exceeds_type(self->logger, m);
                 return false;
         }
         return m;
@@ -599,7 +564,7 @@ extern tree_decl* csema_define_label_decl(
 
         if (tree_get_label_decl_stmt(l))
         {
-                csema_redefinition(self, id_loc, id);
+                cerror_redefinition(self->logger, id_loc, id);
                 return NULL;
         }
 
@@ -730,9 +695,7 @@ extern tree_decl* csema_declare_external_decl(
         tree_decl* d = csema_new_external_decl(self, decl_specs, declarator);
         if (!d)
                 return NULL;
-        
-        tree_location loc = tree_get_decl_loc_begin(d);
-        const char* name = csema_get_id_cstr(self, tree_get_decl_name(d));
+
         tree_decl_kind dk = tree_get_decl_kind(d);
         tree_decl_storage_class sc = dk == TDK_TYPEDEF
                 ? TDSC_NONE : tree_get_decl_storage_class(d);
@@ -740,14 +703,11 @@ extern tree_decl* csema_declare_external_decl(
         if (dk != TDK_TYPEDEF && sc == TDSC_NONE)
                 return csema_finish_decl(self, self->locals, d);
         else if (dk == TDK_FUNCTION && csema_at_block_scope(self))
-        {
                 if (sc != TDSC_EXTERN && sc != TDSC_IMPL_EXTERN)
                 {
-                        cerror(self->error_manager, CES_ERROR, loc,
-                                "invalid storage class for '%s'", name);
+                        cerror_invalid_storage_class(self->logger, d);
                         return NULL;
                 }
-        }
 
         tree_decl* orig = csema_lookup_for_duplicates(self, self->locals, d);
         if (!orig)
@@ -755,22 +715,19 @@ extern tree_decl* csema_declare_external_decl(
 
         if (tree_get_decl_kind(d) != tree_get_decl_kind(orig))
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "'%s' redeclared as different kind of symbol", name);
+                cerror_different_kind_of_symbol(self->logger, d);
                 return NULL;
         }
 
         if (dk != TDK_TYPEDEF && !tree_decls_have_same_linkage(d, orig))
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "redefinition of '%s' with different storage class", name);
+                cerror_different_storage_class(self->logger, d);
                 return NULL;
         }
 
         if (!tree_types_are_same(tree_get_decl_type(d), tree_get_decl_type(orig)))
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "conflicting types for '%s'", name);
+                cerror_conflicting_types(self->logger, d);
                 return NULL;
         }
 
@@ -790,7 +747,7 @@ extern tree_decl* csema_define_var_decl(csema* self, tree_decl* var, tree_expr* 
         tree_decl* orig = csema_get_local_decl(self, tree_get_decl_name(var), false);
         if (tree_get_var_init(orig))
         {
-                csema_decl_redifinition(self, var);
+                cerror_decl_redefinition(self->logger, var);
                 return false;
         }
 
@@ -807,7 +764,7 @@ extern tree_decl* csema_define_function_decl(csema* self, tree_decl* func, tree_
 
         if (tree_get_function_body(orig))
         {
-                csema_decl_redifinition(self, func);
+                cerror_decl_redefinition(self->logger, func);
                 return NULL;
         }
 
@@ -822,14 +779,14 @@ extern tree_decl* csema_define_function_decl(csema* self, tree_decl* func, tree_
         const tree_decl_scope* params = tree_get_function_cparams(func);
         TREE_FOREACH_DECL_IN_SCOPE(params, p)
         {
-                tree_location ploc = tree_get_decl_loc_begin(p);
-                if (tree_get_decl_name(p) == tree_get_empty_id())
+                if (tree_id_is_empty(tree_get_decl_name(p)))
                 {
-                        cerror(self->error_manager, CES_ERROR, ploc, "parameter name omitted");
+                        cerror_parameter_name_omitted(self->logger, p);
                         return NULL;
                 }
 
                 tree_type* ptype = tree_get_decl_type(p);
+                tree_location ploc = tree_get_decl_loc_begin(p);
                 if (!csema_require_complete_type(self, ploc, ptype))
                         return NULL;
         }
@@ -842,8 +799,7 @@ extern bool csema_check_function_def_loc(csema* self, tree_decl* func)
 {
         if (self->function)
         {
-                cerror(self->error_manager, CES_ERROR, tree_get_decl_loc_begin(func),
-                        "function definition is not allowed here");
+                cerror_function_isnt_allowed_here(self->logger, func);
                 return false;
         }
         return true;

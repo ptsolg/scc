@@ -2,14 +2,14 @@
 #include "scc/c/c-sema-type.h"
 #include "scc/c/c-sema-conv.h"
 #include "scc/c/c-info.h"
+#include "scc/c/c-errors.h"
 
 extern bool csema_require_object_pointer_expr_type(
         const csema* self, const tree_type* t, tree_location l)
 {
         if (!tree_type_is_object_pointer(tree_desugar_ctype(t)))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "expression must have pointer-to-object type");
+                cerror_expr_must_have_pointer_to_object_type(self->logger, l);
                 return false;
         }
         return true;
@@ -19,8 +19,7 @@ extern bool csema_require_function_pointer_expr_type(
 {
         if (!tree_type_is_function_pointer(tree_desugar_ctype(t)))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "expression must have pointer-to-function type");
+                cerror_expr_must_have_pointer_to_function_type(self->logger, l);
                 return false;
         }
         return true;
@@ -31,8 +30,7 @@ extern bool csema_require_integral_expr_type(
 {
         if (!tree_type_is_integer(tree_desugar_ctype(t)))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "expression must have integral type");
+                cerror_expr_must_have_integral_type(self->logger, l);
                 return false;
         }
         return true;
@@ -49,8 +47,7 @@ extern bool csema_require_real_expr_type(
 {
         if (!tree_type_is_real(tree_desugar_ctype(t)))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "expression must have real type");
+                cerror_expr_must_have_real_type(self->logger, l);
                 return false;
         }
         return true;
@@ -61,8 +58,7 @@ extern bool csema_require_record_expr_type(
 {
         if (!tree_type_is_record(tree_desugar_ctype(t)))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "expression must have struct or union type");
+                cerror_expr_must_have_record_type(self->logger, l);
                 return false;
         }
         return true;
@@ -73,8 +69,7 @@ extern bool csema_require_array_expr_type(
 {
         if (!tree_type_is_array(tree_desugar_ctype(t)))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "expression must have array type");
+                cerror_expr_must_have_array_type(self->logger, l);
                 return false;
         }
         return true;
@@ -85,8 +80,7 @@ extern bool csema_require_scalar_expr_type(
 {
         if (!tree_type_is_scalar(tree_desugar_ctype(t)))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "expression must have scalar type");
+                cerror_expr_must_have_scalar_type(self->logger, l);
                 return false;
         }
         return true;
@@ -103,8 +97,7 @@ extern bool csema_require_arithmetic_expr_type(
 {
         if (!tree_type_is_arithmetic(tree_desugar_ctype(t)))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "expression must have arithmetic type");
+                cerror_expr_must_have_arithmetic_type(self->logger, l);
                 return false;
         }
         return true;
@@ -116,8 +109,7 @@ extern bool csema_require_real_or_object_pointer_expr_type(
         t = tree_desugar_ctype(t);
         if (!tree_type_is_real(t) && !tree_type_is_pointer(t))
         {
-                cerror(self->error_manager, CES_ERROR, l,
-                        "expression must have real or pointer-to-object type");
+                cerror_expr_must_have_real_or_pointer_to_object_type(self->logger, l);
                 return false;
         }
         return true;
@@ -129,8 +121,7 @@ extern bool csema_require_lvalue_or_function_designator(
         tree_type* t = tree_desugar_type(tree_get_expr_type(e));
         if (!tree_expr_is_lvalue(e) && tree_get_type_kind(t) != TTK_FUNCTION)
         {
-                cerror(self->error_manager, CES_ERROR, tree_get_expr_loc(e),
-                        "expression must be an lvalue or function designator");
+                cerror_expr_must_be_lvalue_or_function_designator(self->logger, e);
                 return false;
         }
         return true;
@@ -140,8 +131,7 @@ extern bool csema_require_modifiable_lvalue(const csema* self, const tree_expr* 
 {
         if (!tree_expr_is_modifiable_lvalue(e))
         {
-                cerror(self->error_manager, CES_ERROR, tree_get_expr_loc(e),
-                        "expression must be a modifiable lvalue");
+                cerror_expr_must_be_modifiable_lvalue(self->logger, e);
                 return false;
         }
         return true;
@@ -152,8 +142,7 @@ extern bool csema_require_compatible_expr_types(
 {
         if (!tree_types_are_same(a, b))
         {
-                // todo: warning?
-                cerror(self->error_manager, CES_ERROR, l, "types are not compatible");
+                cerror_types_are_not_compatible(self->logger, l);
                 return false;
         }
         return true;
@@ -248,13 +237,14 @@ extern tree_expr* csema_new_subscript_expr(
         }
 
         tree_type* base_type = tree_get_expr_type(base);
-        tree_type* index_type = tree_get_expr_type(index);
-        if (!tree_type_is_object_pointer(base_type) || !tree_type_is_integer(index_type))
+        if (!tree_type_is_object_pointer(base_type))
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "subscripted value is not array, pointer, or vector");
+                cerror_subscripted_value_isnt_array(self->logger, loc);
                 return NULL;
         }
+        if (!csema_require_integer_expr(self, index))
+                return NULL;
+
         return tree_new_subscript_expr(self->context,
                 TVK_LVALUE, tree_get_pointer_target(base_type), loc, lhs, rhs);
 }
@@ -267,32 +257,24 @@ static bool csema_check_call_argument(
                 return true;
 
         tree_location loc = tree_get_expr_loc(*arg);
-        char quals[64];
-
         switch (r.kind)
         {
                 case CACRK_RHS_NOT_AN_ARITHMETIC:
                 case CACRK_RHS_NOT_A_RECORD:
                 case CACRK_INCOMPATIBLE_RECORDS:
                 case CACRK_INCOMPATIBLE:
-                        cerror(self->error_manager, CES_ERROR, loc,
-                                "incompatible type for argument %u in function call", pos);
+                        cerror_incompatible_type_for_argument(self->logger, loc, pos);
                         break;
-
                 case CACRK_QUAL_DISCARTION:
-                        cqet_qual_string(r.discarded_quals, quals);
-                        cerror(self->error_manager, CES_ERROR, loc,
-                                "passing argument %u discards '%s' qualifier", pos, quals);
+                        cerror_passing_argument_discards_qualifer(
+                                self->logger, loc, pos, r.discarded_quals);
                         break;
-
                 case CACRK_INCOMPATIBLE_POINTERS:
-                        cerror(self->error_manager, CES_ERROR, loc,
-                                "passing argument %u from incompatible pointer type", pos);
+                        cerror_passing_argument_from_incompatible_pointer_type(
+                                self->logger, loc, pos);
                         break;
-
                 default:
                         S_UNREACHABLE();
-
         }
         return false;
 }
@@ -319,14 +301,12 @@ extern tree_expr* csema_new_call_expr(
         ssize nargs = dseq_size(args);
         if (nargs < nparams)
         {
-                cerror(self->error_manager, CES_ERROR, tree_get_expr_loc(lhs),
-                        "too few arguments in function call");
+                cerror_to_few_arguments(self->logger, lhs);
                 return NULL;
         }
         if (!tree_function_type_is_vararg(t) && nargs > nparams)
         {
-                cerror(self->error_manager, CES_ERROR, tree_get_expr_loc(lhs),
-                        "too many arguments in function call");
+                cerror_to_many_arguments(self->logger, lhs);
                 return NULL;
         }
 
@@ -415,8 +395,6 @@ static tree_type* csema_check_address_expr(csema* self, tree_expr** expr)
 static tree_type* csema_check_dereference_expr(csema* self, tree_expr** expr, tree_value_kind* vk)
 {
         tree_type* t = tree_desugar_type(csema_unary_conversion(self, expr));
-        tree_type_kind tk = tree_get_type_kind(t);
-
         if (!csema_require_object_pointer_expr_type(self, t, tree_get_expr_loc(*expr)))
                 return NULL;
  
@@ -511,29 +489,27 @@ extern tree_expr* csema_new_unary_expr(
 // The sizeof operator shall not be applied to an expression that has function type or an
 // incomplete type, to the parenthesized name of such a type, or to an expression that
 // designates a bit - field member.
-extern tree_expr* csema_new_sizeof_expr(csema* self, tree_location loc, csizeof_rhs* rhs)
+extern tree_expr* csema_new_sizeof_expr(csema* self, tree_location loc, csizeof_operand* op)
 {
-        if (!rhs)
+        if (!op)
                 return NULL;
 
-        tree_type* rt = rhs->unary ? tree_get_expr_type(rhs->expr) : rhs->type;
+        tree_type* rt = op->unary ? tree_get_expr_type(op->expr) : op->type;
         if (tree_type_is(rt, TTK_FUNCTION))
         {
-                cerror(self->error_manager, CES_ERROR, rhs->loc,
-                        "operand of sizeof may not be a function");
+                cerror_operand_of_sizeof_is_function(self->logger, op);
                 return NULL;
         }
-        if (!csema_require_complete_type(self, rhs->loc, rt))
+        if (!csema_require_complete_type(self, op->loc, rt))
                 return NULL;
-        if (rhs->unary && tree_expr_designates_bitfield(rhs->expr))
+        if (op->unary && tree_expr_designates_bitfield(op->expr))
         {
-                cerror(self->error_manager, CES_ERROR, rhs->loc,
-                        "operand of sizeof may not be a bitfield");
+                cerror_operand_of_sizeof_is_bitfield(self->logger, op);
                 return NULL;
         }
 
         return tree_new_sizeof_expr(self->context,
-                csema_get_size_t_type(self), loc, rhs->pointer, rhs->unary);
+                csema_get_size_t_type(self), loc, op->pointer, op->unary);
 }
 
 // c99 6.5.4 cast operators
@@ -612,13 +588,6 @@ static tree_type* csema_check_log_expr(
         return csema_get_logical_operation_type(self);
 }
 
-static void csema_invalid_binop_operands(
-        const csema* self, tree_binop_kind opcode, tree_location loc)
-{
-        cerror(self->error_manager, CES_ERROR, loc,
-                "invalid operands to binary '%s'", cget_binop_string(opcode));
-}
-
 // 6.5.8 Relational operators
 // One of the following shall hold:
 // - both operands have real type;
@@ -645,7 +614,7 @@ static tree_type* csema_check_relational_expr(
         }
         else
         {
-                csema_invalid_binop_operands(self, opcode, loc);
+                cerror_invalid_binop_operands(self->logger, loc, opcode);
                 return NULL;
         }
 
@@ -680,8 +649,7 @@ static tree_type* csema_check_compare_expr(
                 if ((tree_type_is_incomplete(ltarget) && !tree_type_is_void(rtarget))
                  || (tree_type_is_incomplete(rtarget) && !tree_type_is_void(ltarget)))
                 {
-                        cerror(self->error_manager, CES_ERROR, loc,
-                                "comparison of distinct pointer types");
+                        cerror_cmp_of_distinct_pointers(self->logger, loc);
                         return NULL;
                 }
                 else if (!csema_require_compatible_expr_types(self, lt, rt, loc))
@@ -689,7 +657,7 @@ static tree_type* csema_check_compare_expr(
         }
         else
         {
-                csema_invalid_binop_operands(self, opcode, loc);
+                cerror_invalid_binop_operands(self->logger, loc, opcode);
                 return NULL;
         }
         return csema_get_logical_operation_type(self);
@@ -742,7 +710,7 @@ static tree_type* csema_check_add_expr(
 
                 return rt;
         }
-        csema_invalid_binop_operands(self, is_assign ? TBK_ADD_ASSIGN : TBK_ADD, loc);
+        cerror_invalid_binop_operands(self->logger, loc, is_assign ? TBK_ADD_ASSIGN : TBK_ADD);
         return NULL;
 }
 
@@ -774,7 +742,7 @@ static tree_type* csema_check_sub_expr(
 
                 return lt;
         }
-        csema_invalid_binop_operands(self, is_assign ? TBK_SUB_ASSIGN : TBK_SUB, loc);
+        cerror_invalid_binop_operands(self->logger, loc, is_assign ? TBK_SUB_ASSIGN : TBK_SUB);
         return NULL;
 }
 
@@ -813,7 +781,7 @@ static tree_type* csema_check_assign_expr(
         tree_location rloc = tree_get_expr_loc(*rhs);
 
         if (r.kind == CACRK_INCOMPATIBLE)
-                csema_invalid_binop_operands(self, TBK_ASSIGN, loc);
+                cerror_invalid_binop_operands(self->logger, loc, TBK_ASSIGN);
         else if (r.kind == CACRK_RHS_NOT_AN_ARITHMETIC)
                 csema_require_arithmetic_expr_type(self, rt, rloc);
         else if (r.kind == CACRK_RHS_NOT_A_RECORD)
@@ -821,15 +789,9 @@ static tree_type* csema_check_assign_expr(
         else if (r.kind == CACRK_INCOMPATIBLE_RECORDS)
                 csema_require_compatible_expr_types(self, lt, rt, loc);
         else if (r.kind == CACRK_QUAL_DISCARTION)
-        {
-                char quals[64];
-                cqet_qual_string(r.discarded_quals, quals);
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "assignment discards '%s' qualifier", quals);
-        }
+                cerror_assignment_discards_quals(self->logger, loc, r.discarded_quals);
         else if (r.kind == CACRK_INCOMPATIBLE_POINTERS)
-                cerror(self->error_manager, CES_ERROR, loc,
-                        "assignment from incompatible pointer type");
+                cerror_assignment_from_incompatible_pointer_type(self->logger, loc);
         return NULL;
 }
 
@@ -859,7 +821,7 @@ static tree_type* csema_check_add_sub_assign_expr(
         }
         else
         {
-                csema_invalid_binop_operands(self, opcode, loc);
+                cerror_invalid_binop_operands(self->logger, loc, opcode);
                 return NULL;
         }
 
@@ -988,8 +950,7 @@ static tree_type* csema_check_conditional_operator_pointer_types(
                 }
                 else
                 {
-                        cerror(self->error_manager, CES_ERROR, loc,
-                               "pointer type mismatch in conditional expression");
+                        cerror_pointer_type_mismatch(self->logger, loc);
                         return NULL;
                 }
                 quals = tree_get_type_quals(ltarget) | tree_get_type_quals(rtarget);
@@ -1042,8 +1003,7 @@ extern tree_expr* csema_new_conditional_expr(
                 ;
         else
         {
-                cerror(self->error_manager, CES_ERROR, loc,
-                       "type mismatch in conditional expression");
+                cerror_type_mismatch(self->logger, loc);
                 return NULL;
         }
 

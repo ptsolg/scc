@@ -1,6 +1,7 @@
 #include "scc/c/c-tree.h"
 #include "scc/c/c-token.h"
 #include "scc/c/c-error.h"
+#include "scc/c/c-source.h"
 #include <setjmp.h>
 
 extern void cinit(ccontext* self, tree_context* tree, jmp_buf on_bad_alloc)
@@ -67,14 +68,14 @@ extern hval cget_decl_key(const ccontext* self, const tree_decl* decl)
                 tree_decl_is(decl, TDK_ENUM) || tree_decl_is(decl, TDK_RECORD));
 }
 
-extern void csizeof_expr_init(csizeof_rhs* self, tree_expr* e)
+extern void csizeof_expr_init(csizeof_operand* self, tree_expr* e)
 {
         self->unary = true;
         self->expr = e;
         self->loc = tree_get_expr_loc(e);
 }
 
-extern void csizeof_type_init(csizeof_rhs* self, tree_type* t, tree_location loc)
+extern void csizeof_type_init(csizeof_operand* self, tree_type* t, tree_location loc)
 {
         self->unary = false;
         self->type = t;
