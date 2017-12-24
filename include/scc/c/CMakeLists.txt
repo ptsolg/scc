@@ -3,6 +3,7 @@ add_scc_target_sources(c
 	c-token-kind.h
 	c-limits.h
 	c-error.h
+	c-errors.h
 	c-token.h
 	c-source.h
 	c-lexer.h

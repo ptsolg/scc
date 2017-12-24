@@ -78,7 +78,7 @@ extern tree_expr* csema_new_member_expr(
 extern tree_expr* csema_new_unary_expr(
         csema* self, tree_location loc, tree_unop_kind opcode, tree_expr* expr);
 
-extern tree_expr* csema_new_sizeof_expr(csema* self, tree_location loc, csizeof_rhs* rhs);
+extern tree_expr* csema_new_sizeof_expr(csema* self, tree_location loc, csizeof_operand* rhs);
 
 extern tree_expr* csema_new_cast_expr(
         csema* self, tree_location loc, tree_type* type, tree_expr* expr);

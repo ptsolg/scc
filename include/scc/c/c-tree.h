@@ -52,7 +52,7 @@ static inline void* callocate(ccontext* self, ssize bytes)
         return bump_ptr_allocate(&self->node_alloc, bytes);
 }
 
-typedef struct
+typedef struct _csizeof_operand
 {
         bool unary;
         tree_location loc;
@@ -62,10 +62,10 @@ typedef struct
                 tree_expr* expr;
                 void* pointer;
         };
-} csizeof_rhs;
+} csizeof_operand;
 
-extern void csizeof_expr_init(csizeof_rhs* self, tree_expr* e);
-extern void csizeof_type_init(csizeof_rhs* self, tree_type* t, tree_location loc);
+extern void csizeof_expr_init(csizeof_operand* self, tree_expr* e);
+extern void csizeof_type_init(csizeof_operand* self, tree_type* t, tree_location loc);
 
 typedef struct
 {
@@ -104,7 +104,7 @@ extern bool cbuiltin_type_info_set_long(cbuiltin_type_info* self);
 
 extern tree_builtin_type_kind cbuiltin_type_info_get_type(const cbuiltin_type_info* self);
 
-typedef struct
+typedef struct _cdecl_specs
 {
         tree_decl_storage_class class_;
         tree_type* typespec;
@@ -139,15 +139,11 @@ typedef struct _cdeclarator
 {
         cdeclarator_kind kind;
         ctype_chain type;
-
         tree_id id;
         tree_location id_loc;
-
         tree_xlocation loc;
-
         dseq params;
         bool params_initialized;
-
         ccontext* context;
 } cdeclarator;
 
@@ -162,7 +158,7 @@ extern tree_type* cdeclarator_get_type(const cdeclarator* self);
 
 extern tree_location cdeclarator_get_id_loc_or_begin(const cdeclarator* self);
 
-typedef struct
+typedef struct _cparam
 {
         cdecl_specs specs;
         cdeclarator declarator;
