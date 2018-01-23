@@ -2,6 +2,6 @@
 @0:
     $1 = alloca 4
     $2 = load $1
-    $3 = getaddr $2, 10
+    $3 = ptradd $2, 10
     store 0, $3
     ret

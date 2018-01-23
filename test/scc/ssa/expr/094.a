@@ -3,7 +3,7 @@
     $1 = alloca 4
     $2 = alloca 4
     $3 = load $1
-    $4 = getaddr $3, 1
+    $4 = ptradd $3, 1
     store $4, $1
     store $4, $2
     ret

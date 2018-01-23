@@ -1,0 +1,15 @@
+; Definition for foo
+@1:
+    $2 = alloca 4
+    store $0, $2
+    ret
+
+; Definition for test
+@0:
+    $1 = cast %array
+    $2 = ptradd $1, 0
+    $3 = load $2
+    $4 = cast 1
+    $5 = sub $3, $4
+    call %foo ($5)
+    ret
