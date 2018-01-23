@@ -9,7 +9,6 @@ typedef struct _ssa_instr ssa_instr;
 typedef struct _ssa_block ssa_block;
 typedef struct _ssa_function ssa_function;
 typedef struct _ssa_value ssa_value;
-typedef struct _ssa_branch ssa_branch;
 
 typedef enum _ssa_pass_kind
 {
