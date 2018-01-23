@@ -1,5 +1,6 @@
 #include "scc/ssa/ssa-context.h"
 #include "scc/tree/tree-context.h"
+#include "scc/tree/tree-type.h"
 
 extern void ssa_init(ssa_context* self,
         tree_context* context, jmp_buf on_out_of_mem)
@@ -22,4 +23,10 @@ extern void ssa_init_ex(ssa_context* self,
 extern void ssa_dispose(ssa_context* self)
 {
         base_allocator_dispose(&self->base_alloc);
+}
+
+extern tree_type* ssa_get_type_for_label(ssa_context* self)
+{
+        return tree_new_pointer_type(self->_tree,
+                tree_new_builtin_type(self->_tree, TBTK_VOID));
 }
