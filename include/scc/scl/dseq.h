@@ -30,6 +30,7 @@ extern serrcode dseq_resize(dseq* self, ssize new_size);
 
 static inline membuf* dseq_base(dseq* self);
 static inline const membuf* dseq_cbase(const dseq* self);
+static inline allocator* dseq_alloc(const dseq* self);
 
 static inline ssize dseq_size(const dseq* self);
 static inline ssize dseq_obsize(const dseq* self);
@@ -53,6 +54,11 @@ static inline membuf* dseq_base(dseq* self)
 static inline const membuf* dseq_cbase(const dseq* self)
 {
         return &self->_base;
+}
+
+static inline allocator* dseq_alloc(const dseq* self)
+{
+        return membuf_alloc(dseq_cbase(self));
 }
 
 static inline ssize dseq_size(const dseq* self)
