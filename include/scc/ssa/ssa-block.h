@@ -10,7 +10,6 @@ extern "C" {
 #endif
 
 #include "ssa-common.h"
-#include "ssa-branch.h"
 #include "ssa-value.h"
 
 typedef struct _ssa_context ssa_context;
@@ -18,12 +17,11 @@ typedef struct _ssa_context ssa_context;
 typedef struct _ssa_block
 {
         list_node _node;
-        ssa_label _entry;
-        ssa_branch* _exit;
+        struct _ssa_label _entry;
         list_head _instr_list;
 } ssa_block;
 
-extern ssa_block* ssa_new_block(ssa_context* context, ssa_id entry_id, ssa_branch* exit);
+extern ssa_block* ssa_new_block(ssa_context* context, ssa_id entry_id);
 
 extern void ssa_add_block_instr(ssa_block* self, ssa_instr* i);
 
@@ -33,16 +31,14 @@ static inline ssa_value* ssa_get_block_label(ssa_block* self);
 static inline ssa_block* ssa_get_label_block(ssa_value* self);
 static inline const ssa_value* ssa_get_block_clabel(const ssa_block* self);
 
-static inline ssa_branch* ssa_get_block_exit(const ssa_block* self);
-
 static inline ssa_instr* ssa_get_block_instrs_begin(const ssa_block* self);
 static inline ssa_instr* ssa_get_block_instrs_end(ssa_block* self);
+static inline ssa_instr* ssa_get_block_terminator(const ssa_block* self);
 static inline const ssa_instr* ssa_get_block_instrs_cend(const ssa_block* self);
 
 static inline ssa_block* ssa_get_next_block(const ssa_block* self);
 static inline ssa_block* ssa_get_prev_block(const ssa_block* self);
 
-static inline void ssa_set_block_exit(ssa_block* self, ssa_branch* exit);
 static inline void ssa_remove_block(ssa_block* self);
 
 #define SSA_FOREACH_BLOCK_INSTR(PBLOCK, ITNAME)\
@@ -65,11 +61,6 @@ static inline const ssa_value* ssa_get_block_clabel(const ssa_block* self)
         return (const ssa_value*)&self->_entry;
 }
 
-static inline ssa_branch* ssa_get_block_exit(const ssa_block* self)
-{
-        return self->_exit;
-}
-
 static inline ssa_instr* ssa_get_block_instrs_begin(const ssa_block* self)
 {
         return (ssa_instr*)list_begin(&self->_instr_list);
@@ -78,6 +69,13 @@ static inline ssa_instr* ssa_get_block_instrs_begin(const ssa_block* self)
 static inline ssa_instr* ssa_get_block_instrs_end(ssa_block* self)
 {
         return (ssa_instr*)list_end(&self->_instr_list);
+}
+
+static inline ssa_instr* ssa_get_block_terminator(const ssa_block* self)
+{
+        return list_empty(&self->_instr_list)
+                ? NULL
+                : (ssa_instr*)list_last(&self->_instr_list);
 }
 
 static inline const ssa_instr* ssa_get_block_instrs_cend(const ssa_block* self)
@@ -95,14 +93,13 @@ static inline ssa_block* ssa_get_prev_block(const ssa_block* self)
         return (ssa_block*)list_node_prev(&self->_node);
 }
 
-static inline void ssa_set_block_exit(ssa_block* self, ssa_branch* exit)
-{
-        self->_exit = exit;
-}
-
 static inline void ssa_remove_block(ssa_block* self)
 {
+        S_ASSERT(!ssa_value_is_used(ssa_get_block_clabel(self))
+                && "Cannot remove used block.");
+
         list_node_remove(&self->_node);
+        ssa_set_value_kind(ssa_get_block_label(self), SVK_INVALID);
 }
 
 #ifdef __cplusplus
