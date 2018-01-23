@@ -1,6 +1,7 @@
 #include "scc/ssa/ssaize-decl.h"
 #include "scc/ssa/ssaize-expr.h"
 #include "scc/ssa/ssaize-stmt.h"
+#include "scc/ssa/ssa-instr.h"
 #include "scc/ssa/ssa-module.h"
 #include "scc/ssa/ssa-context.h"
 #include "scc/tree/tree-decl.h"
@@ -33,8 +34,10 @@ extern bool ssaize_decl_group(ssaizer* self, const tree_decl* decl)
 
 static bool ssaizer_maybe_insert_return(ssaizer* self)
 {
-        if (!self->block || ssa_get_block_exit(self->block))
+        if (!self->block || ssaizer_current_block_is_terminated(self))
+        {
                 return true;
+        }
 
         tree_type* restype = ssa_get_function_result_type(self->function);
         ssa_value* val = NULL;
@@ -63,10 +66,11 @@ static bool ssaize_function_args(ssaizer* self, ssa_function* func, tree_decl* d
         TREE_FOREACH_DECL_IN_SCOPE(params, it)
         {
                 tree_type* param_type = tree_get_decl_type(it);
-                ssa_value* param_value = ssa_new_param(self->context,
-                        ssa_builder_gen_uid(&self->builder), param_type);
-                ssa_add_function_param(func, param_value);
+                ssa_value* param_value = ssa_build_function_param(&self->builder, param_type);
+                if (!param_value)
+                        return false;
 
+                ssa_add_function_param(func, param_value);
                 ssa_value* param = ssa_build_alloca(&self->builder, param_type);
                 if (!param || !ssa_build_store(&self->builder, param_value, param))
                         return false;

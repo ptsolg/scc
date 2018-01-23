@@ -49,7 +49,14 @@ extern void ssaizer_finish_current_block(ssaizer* self)
 
 extern ssa_block* ssaizer_new_block(ssaizer* self)
 {
-        return ssa_new_block(self->context, ssa_builder_gen_uid(&self->builder), NULL);
+        return ssa_new_block(self->context, ssa_builder_gen_uid(&self->builder));
+}
+
+extern bool ssaizer_current_block_is_terminated(const ssaizer* self)
+{
+        S_ASSERT(self->block);
+        ssa_instr* terminator = ssa_get_block_terminator(self->block);
+        return terminator && ssa_get_instr_kind(terminator) == SIK_TERMINATOR;
 }
 
 static inline htab* ssaizer_get_last_scope(const ssaizer* self)

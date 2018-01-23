@@ -2,7 +2,6 @@
 #include "scc/ssa/ssa-context.h"
 #include "scc/ssa/ssa-module.h"
 #include "scc/ssa/ssa-function.h"
-#include "scc/ssa/ssa-branch.h"
 
 static op_result ssa_eval_cmp(cmp_result r1, cmp_result r2, avalue* l, avalue* r)
 {
@@ -11,9 +10,8 @@ static op_result ssa_eval_cmp(cmp_result r1, cmp_result r2, avalue* l, avalue* r
         return OR_OK;
 }
 
-static op_result ssa_eval_binop(ssa_binary_instr_kind opcode, avalue *l, avalue* r)
+static op_result ssa_eval_binop(ssa_binop_kind opcode, avalue *l, avalue* r)
 {
-        SSA_ASSERT_BINARY_INSTR_KIND(opcode);
         switch (opcode)
         {
                 case SBIK_MUL: return avalue_mul(l, r);
@@ -39,10 +37,10 @@ static op_result ssa_eval_binop(ssa_binary_instr_kind opcode, avalue *l, avalue*
         }
 }
 
-static ssa_value* ssa_opt_constant_fold_binop(ssa_context* context, ssa_instr* instr)
+static ssa_value* ssa_constant_fold_binop(ssa_context* context, ssa_instr* instr)
 {
-        ssa_value* lhs = ssa_get_binop_lhs(instr);
-        ssa_value* rhs = ssa_get_binop_rhs(instr);
+        ssa_value* lhs = ssa_get_instr_operand_value(instr, 0);
+        ssa_value* rhs = ssa_get_instr_operand_value(instr, 1);
 
         if (ssa_get_value_kind(lhs) != SVK_CONSTANT
                 || ssa_get_value_kind(rhs) != SVK_CONSTANT)
@@ -50,96 +48,55 @@ static ssa_value* ssa_opt_constant_fold_binop(ssa_context* context, ssa_instr* i
                 return NULL;
         }
 
-        avalue l = ssa_get_constant_value(lhs);
-        avalue r = ssa_get_constant_value(rhs);
+        avalue l = *ssa_get_constant_cvalue(lhs);
+        avalue r = *ssa_get_constant_cvalue(rhs);
         ssa_eval_binop(ssa_get_binop_kind(instr), &l, &r);
 
         return ssa_new_constant(context,
-                ssa_get_value_type(ssa_get_instr_cvar(instr)), l);
+                ssa_get_value_type(ssa_get_instr_cvar(instr)), &l);
 }
 
-static ssa_value* ssa_opt_constant_fold_cast(ssa_context* context, ssa_instr* instr)
+static ssa_value* ssa_constant_fold_cast(ssa_context* context, ssa_instr* instr)
 {
-        ssa_value* operand = ssa_get_cast_operand(instr);
+        ssa_value* operand = ssa_get_instr_operand_value(instr, 0);
         if (ssa_get_value_kind(operand) != SVK_CONSTANT)
                 return NULL;
 
-        avalue v = ssa_get_constant_value(operand);
-        tree_type* t = ssa_get_value_type(ssa_get_instr_cvar(instr));
+        avalue v = *ssa_get_constant_cvalue(operand);
+        tree_type* to = ssa_get_value_type(ssa_get_instr_cvar(instr));
         const tree_target_info* target = ssa_get_target(context);
 
-        if (tree_type_is_pointer(t))
-        {
-                if (avalue_is_zero(&v))
-                        return ssa_new_null_pointer(context, t);
-
-                avalue_to_int(&v, 8 * tree_get_pointer_size(target), false);
-        }
-        else if (tree_type_is_integer(t))
-                avalue_to_int(&v, 8 * tree_get_sizeof(target, t),
-                        tree_type_is_signed_integer(t));
-        else if (tree_builtin_type_is(t, TBTK_FLOAT))
+        if (tree_type_is_integer(to))
+                avalue_to_int(&v, 8 * tree_get_sizeof(target, to),
+                        tree_type_is_signed_integer(to));
+        else if (tree_builtin_type_is(to, TBTK_FLOAT))
                 avalue_to_sp(&v);
-        else if (tree_builtin_type_is(t, TBTK_DOUBLE))
+        else if (tree_builtin_type_is(to, TBTK_DOUBLE))
                 avalue_to_dp(&v);
+        else
+                return NULL; // probably cast to pointer
 
-        return ssa_new_constant(context, t, v);
+        return ssa_new_constant(context, to, &v);
 }
 
-static void ssa_constant_fold_instr(ssa_context* context, ssa_instr* instr, htab* constants)
+static void ssa_constant_fold_instr(ssa_context* context, ssa_instr* instr)
 {
         ssa_value* constant = NULL;
         ssa_instr_kind k = ssa_get_instr_kind(instr);
         if (k == SIK_BINARY)
-                constant = ssa_opt_constant_fold_binop(context, instr);
+                constant = ssa_constant_fold_binop(context, instr);
         else if (k == SIK_CAST)
-                constant = ssa_opt_constant_fold_cast(context, instr);
+                constant = ssa_constant_fold_cast(context, instr);
 
         if (!constant)
                 return;
 
-        htab_insert_ptr(constants, ssa_get_value_id(ssa_get_instr_cvar(instr)), constant);
+        ssa_replace_value_with(ssa_get_instr_var(instr), constant);
         ssa_remove_instr(instr);
-}
-
-static void ssa_constant_fold_instr_operands(ssa_instr* instr, htab* constants)
-{
-        for (ssa_value** it = ssa_get_instr_operands_begin(instr),
-                **end = ssa_get_instr_operands_end(instr); it != end; it++)
-        {
-                // todo: ??
-                // offset of getaddr maybe NULL
-                if (!*it)
-                        continue;
-
-                hiter res;
-                if (htab_find(constants, ssa_get_value_id(*it), &res))
-                        *it = hiter_get_ptr(&res);
-        }
-}
-
-static void ssa_constant_fold_branch_operands(ssa_branch* branch, htab* constants)
-{
-        ssa_branch_kind k = ssa_get_branch_kind(branch);
-        hiter res;
-        if (k == SBK_IF)
-        {
-                ssa_value* cond = ssa_get_if_cond(branch);
-                if (htab_find(constants, ssa_get_value_id(cond), &res))
-                        ssa_set_if_cond(branch, hiter_get_ptr(&res));
-        }
-        else if (k == SBK_RETURN)
-        {
-                ssa_value* val = ssa_get_return_value(branch);
-                if (val && htab_find(constants, ssa_get_value_id(val), &res))
-                        ssa_set_return_value(branch, hiter_get_ptr(&res));
-        }
 }
 
 extern void ssa_fold_constants(ssa_context* context, ssa_function* function)
 {
-        htab constants;
-        htab_init_ex_ptr(&constants, ssa_get_alloc(context));
         SSA_FOREACH_FUNCTION_BLOCK(function, block)
         {
                 ssa_instr* next = NULL;
@@ -149,85 +106,57 @@ extern void ssa_fold_constants(ssa_context* context, ssa_function* function)
                         instr = next)
                 {
                         next = ssa_get_next_instr(instr);
-                        ssa_constant_fold_instr_operands(instr, &constants);
-                        ssa_constant_fold_instr(context, instr, &constants);
+                        ssa_constant_fold_instr(context, instr);
                 }
-                ssa_constant_fold_branch_operands(ssa_get_block_exit(block), &constants);
         }
-        htab_dispose(&constants);
 }
 
-static void ssa_opt_eliminate_dead_if_branches(ssa_context* context, ssa_function* func)
+static void ssa_constant_fold_conditional_jumps(ssa_context* context, ssa_function* func)
 {
         SSA_FOREACH_FUNCTION_BLOCK(func, block)
         {
-                ssa_branch* exit = ssa_get_block_exit(block);
-                if (ssa_get_branch_kind(exit) != SBK_IF)
+                ssa_instr* cond_jump = ssa_get_block_terminator(block);
+                if (!cond_jump
+                        || ssa_value_is_used(ssa_get_block_label(block))
+                        || ssa_get_terminator_instr_kind(cond_jump) != STIK_CONDITIONAL_JUMP)
+                {
                         continue;
+                }
 
-                ssa_value* cond = ssa_get_if_cond(exit);
+                ssa_value* cond = ssa_get_instr_operand_value(cond_jump, 0);
                 if (ssa_get_value_kind(cond) != SVK_CONSTANT)
                         continue;
 
-                avalue val = ssa_get_constant_value(cond);
-                ssa_value* live_branch = avalue_is_zero(&val)
-                        ? ssa_get_if_false_block(exit)
-                        : ssa_get_if_true_block(exit);
+                bool cond_val = avalue_is_zero(ssa_get_constant_cvalue(cond));
+                ssa_value* live_branch = ssa_get_instr_operand_value(cond_jump, cond_val ? 2 : 1);
+                ssa_instr* inderect_jump = ssa_new_inderect_jump(context, live_branch);
 
-                ssa_branch* jmp = ssa_new_jump_branch(context, live_branch);
-                ssa_set_block_exit(block, jmp);
+                ssa_remove_instr(cond_jump);
+                ssa_add_block_instr(block, inderect_jump);
         }
 }
 
-static void ssa_opt_eliminate_dead_blocks(ssa_context* context, ssa_function* func)
+static void ssa_remove_unused_blocks(ssa_function* func)
 {
-        ssa_block* first = ssa_get_function_blocks_begin(func);
+        ssa_block* it = ssa_get_function_blocks_begin(func);
         ssa_block* end = ssa_get_function_blocks_end(func);
-        if (first == end)
+        if (it == end)
                 return;
 
-        htab visited;
-        htab_init_ex_i8(&visited, ssa_get_alloc(context));
-
-        dseq queue;
-        dseq_init_ex_ptr(&queue, ssa_get_alloc(context));
-        dseq_append_ptr(&queue, ssa_get_block_label(first));
-        while (dseq_size(&queue))
-        {
-                ssa_value* label = dseq_pop_ptr(&queue);
-                ssa_id id = ssa_get_value_id(label);
-                if (htab_exists(&visited, id))
-                        continue;
-
-                htab_insert_i8(&visited, id, 1);
-                ssa_branch* exit = ssa_get_block_exit(ssa_get_label_block(label));
-                if (ssa_get_branch_kind(exit) == SBK_IF)
-                {
-                        dseq_append_ptr(&queue, ssa_get_if_true_block(exit));
-                        dseq_append_ptr(&queue, ssa_get_if_false_block(exit));
-                }
-                else if (ssa_get_branch_kind(exit) == SBK_JUMP)
-                        dseq_append_ptr(&queue, ssa_get_jump_dest(exit));
-        }
-        dseq_dispose(&queue);
-
-        ssa_block* it = first;
+        it = ssa_get_next_block(it); // skip entry
         while (it != end)
         {
                 ssa_block* next = ssa_get_next_block(it);
-                ssa_id id = ssa_get_value_id(ssa_get_block_clabel(it));
-                if (!htab_exists(&visited, id))
+                if (!ssa_value_is_used(ssa_get_block_label(it)))
                         ssa_remove_block(it);
                 it = next;
         }
-        htab_dispose(&visited);
 }
-
 
 extern void ssa_eliminate_dead_code(ssa_context* context, ssa_function* function)
 {
-        ssa_opt_eliminate_dead_if_branches(context, function);
-        ssa_opt_eliminate_dead_blocks(context, function);
+        ssa_constant_fold_conditional_jumps(context, function);
+        ssa_remove_unused_blocks(function);
 }
 
 static void ssa_run_constant_fold_pass(ssa_pass* pass, ssa_function* function)

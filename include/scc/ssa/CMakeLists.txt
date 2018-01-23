@@ -6,7 +6,6 @@ add_scc_target_sources(ssa
 	ssa-instr.h
 	ssa-value.h
 	ssa-block.h
-	ssa-branch.h
 	ssa-printer.h
 	ssa-module.h
 	ssa-function.h

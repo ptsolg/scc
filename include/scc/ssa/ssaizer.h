@@ -48,6 +48,7 @@ extern void ssaizer_finish_block(ssaizer* self, ssa_block* block);
 extern void ssaizer_finish_current_block(ssaizer* self);
 
 extern ssa_block* ssaizer_new_block(ssaizer* self);
+extern bool ssaizer_current_block_is_terminated(const ssaizer* self);
 
 extern void ssaizer_push_scope(ssaizer* self);
 extern void ssaizer_pop_scope(ssaizer* self);

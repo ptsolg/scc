@@ -1,11 +1,12 @@
 #include "scc/ssa/ssaize-stmt.h"
 #include "scc/ssa/ssaize-expr.h"
+#include "scc/ssa/ssa-instr.h"
 #include "scc/ssa/ssaize-decl.h"
 #include "scc/tree/tree-stmt.h"
 
 extern bool ssaizer_build_jmp(ssaizer* self, ssa_block* dest)
 {
-        if (!ssa_build_jmp(&self->builder, ssa_get_block_label(dest)))
+        if (!ssa_build_inderect_jmp(&self->builder, ssa_get_block_label(dest)))
                 return false;
 
         ssaizer_finish_current_block(self);
@@ -14,8 +15,10 @@ extern bool ssaizer_build_jmp(ssaizer* self, ssa_block* dest)
 
 extern bool ssaizer_maybe_build_jmp(ssaizer* self, ssa_block* dest)
 {
-        if (!self->block || ssa_get_block_exit(self->block))
+        if (!self->block || ssaizer_current_block_is_terminated(self))
+        {
                 return true;
+        }
 
         return ssaizer_build_jmp(self, dest);
 }
@@ -23,7 +26,7 @@ extern bool ssaizer_maybe_build_jmp(ssaizer* self, ssa_block* dest)
 extern bool ssaizer_build_if(ssaizer* self,
         ssa_value* cond, ssa_block* on_true, ssa_block* on_false)
 {
-        if (!ssa_build_if(&self->builder, cond,
+        if (!ssa_build_conditional_jmp(&self->builder, cond,
                 ssa_get_block_label(on_true), ssa_get_block_label(on_false)))
         {
                 return false;
@@ -196,9 +199,11 @@ extern bool ssaize_while_stmt(ssaizer* self, const tree_stmt* stmt)
 
         bool succeeded = ssaize_loop_cond(self, tree_get_while_condition(stmt), cond, body, exit)
                 && ssaize_loop_body(self, tree_get_while_body(stmt), body, cond);
+
         ssaizer_cleanup_loop(self);
         if (succeeded)
                 ssaizer_enter_block(self, exit);
+
         return succeeded;
 }
 
@@ -213,13 +218,15 @@ extern bool ssaize_do_while_stmt(ssaizer* self, const tree_stmt* stmt)
 
         bool succeeded = ssaize_loop_body(self, tree_get_do_while_body(stmt), body, cond)
                 && ssaize_loop_cond(self, tree_get_do_while_condition(stmt), cond, body, exit);
+
         ssaizer_cleanup_loop(self);
         if (succeeded)
                 ssaizer_enter_block(self, exit);
+
         return succeeded;
 }
 
-extern bool ssaize_for_stmt(ssaizer* self, const tree_stmt* stmt)
+static bool _ssaize_for_stmt(ssaizer* self, const tree_stmt* stmt)
 {
         ssa_block* cond = ssaizer_new_block(self);
         ssa_block* body = ssaizer_new_block(self);
@@ -233,19 +240,22 @@ extern bool ssaize_for_stmt(ssaizer* self, const tree_stmt* stmt)
         if (!ssaizer_start_loop(self, cond, exit, step))
                 return false;
 
-        bool succeeded = true;
-        ssaizer_push_scope(self);
-        if (!ssaize_loop_cond(self, tree_get_for_condition(stmt), cond, body, exit)
-         || !ssaize_loop_body(self, tree_get_for_body(stmt), body, step)
-         || !ssaize_loop_step(self, tree_get_for_step(stmt), step, cond))
-        {
-                succeeded = false;
-        }
-      
-        ssaizer_pop_scope(self);
+        bool succeeded = ssaize_loop_cond(self, tree_get_for_condition(stmt), cond, body, exit)
+                && ssaize_loop_body(self, tree_get_for_body(stmt), body, step)
+                && ssaize_loop_step(self, tree_get_for_step(stmt), step, cond);
+
         ssaizer_cleanup_loop(self);
         if (succeeded)
                 ssaizer_enter_block(self, exit);
+
+        return succeeded;
+}
+
+extern bool ssaize_for_stmt(ssaizer* self, const tree_stmt* stmt)
+{
+        ssaizer_push_scope(self);
+        bool succeeded = _ssaize_for_stmt(self, stmt);
+        ssaizer_pop_scope(self);
         return succeeded;
 }
 

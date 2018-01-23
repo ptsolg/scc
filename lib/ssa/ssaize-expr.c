@@ -11,12 +11,9 @@ static ssa_value* ssaize_add(ssaizer* self, ssa_value* lhs, ssa_value* rhs)
 {
         tree_type* lt = ssa_get_value_type(lhs);
         tree_type* rt = ssa_get_value_type(rhs);
-        if (tree_type_is_pointer(lt))
-                return ssa_build_getaddr(&self->builder, lt, lhs, rhs, NULL);
-        else if (tree_type_is_pointer(rt))
-                return ssa_build_getaddr(&self->builder, rt, rhs, lhs, NULL);
-
-        return ssa_build_add(&self->builder, lhs, rhs);
+        return tree_type_is_pointer(lt) || tree_type_is_pointer(rt)
+                ? ssa_build_ptradd(&self->builder, lhs, rhs)
+                : ssa_build_add(&self->builder, lhs, rhs);
 }
 
 static ssa_value* ssaize_sub(ssaizer* self, ssa_value* lhs, ssa_value* rhs)
@@ -28,13 +25,13 @@ static ssa_value* ssaize_sub(ssaizer* self, ssa_value* lhs, ssa_value* rhs)
         {
                 if (!(neg = ssa_build_neg(&self->builder, rhs)))
                         return NULL;
-                return ssa_build_getaddr(&self->builder, lt, lhs, neg, NULL);
+                return ssa_build_ptradd(&self->builder, lhs, neg);
         }
         else if (tree_type_is_pointer(rt))
         {
                 if (!(neg = ssa_build_neg(&self->builder, lhs)))
                         return NULL;
-                return ssa_build_getaddr(&self->builder, rt, rhs, neg, NULL);
+                return ssa_build_ptradd(&self->builder, rhs, neg);
         }
 
         return ssa_build_sub(&self->builder, lhs, rhs);
@@ -80,18 +77,15 @@ static inline ssa_value* _ssaize_binary_expr(
         {
                 tree_type* lt = ssa_get_value_type(lhs);
                 tree_type* rt = ssa_get_value_type(rhs);
-                avalue constant;
                 if (tree_type_is_pointer(lt) && ssa_get_value_kind(rhs) == SVK_CONSTANT)
                 {
-                        constant = ssa_get_constant_value(rhs);
-                        if (avalue_is_zero(&constant))
+                        if (avalue_is_zero(ssa_get_constant_value(rhs)))
                                 if (!(rhs = ssa_build_zero(&self->builder, lt)))
                                         return NULL;
                 }
                 else if (tree_type_is_pointer(rt) && ssa_get_value_kind(lhs) == SVK_CONSTANT)
                 {
-                        constant = ssa_get_constant_value(lhs);
-                        if (avalue_is_zero(&constant))
+                        if (avalue_is_zero(ssa_get_constant_value(lhs)))
                                 if (!(lhs = ssa_build_zero(&self->builder, rt)))
                                         return NULL;
                 }
@@ -162,23 +156,24 @@ static ssa_block* ssa_br_expr_info_get_exit(ssa_br_expr_info* self)
         if (!self->exit)
                 self->exit = ssa_new_block(
                         ssa_get_builder_context(self->builder),
-                        ssa_builder_gen_uid(self->builder),
-                        NULL);
+                        ssa_builder_gen_uid(self->builder));
 
         return self->exit;
 }
 
-static void ssa_br_expr_info_add_phi_var(ssa_br_expr_info* self, ssa_value* var)
+static void ssa_br_expr_info_add_phi_var(
+        ssa_br_expr_info* self, ssa_value* var, ssa_block* block)
 {
+        S_ASSERT(block);
         if (!self->phi)
         {
-                ssa_block* block = ssa_builder_get_block(self->builder);
+                ssa_block* current = ssa_builder_get_block(self->builder);
                 ssa_builder_set_block(self->builder, ssa_br_expr_info_get_exit(self));
                 self->phi = ssa_get_var_instr(ssa_build_phi(self->builder, self->phi_type));
-                ssa_builder_set_block(self->builder, block);
+                ssa_builder_set_block(self->builder, current);
         }
-
-        ssa_add_phi_arg(self->phi, var);
+        ssa_add_phi_operand(self->phi,
+                self->builder->context, var, ssa_get_block_label(block));
 }
 
 static inline ssa_value* ssaize_log_expr_lhs(
@@ -191,6 +186,7 @@ static inline ssa_value* ssaize_log_expr_lhs(
         S_ASSERT(kind == TBK_LOG_AND || kind == TBK_LOG_OR);
 
         ssa_value* lhs_cond = ssaize_log_expr_lhs(self, info, tree_get_binop_lhs(expr));
+        ssa_block* lhs_cond_block = self->block;
         if (!lhs_cond)
                 return NULL;
 
@@ -203,7 +199,7 @@ static inline ssa_value* ssaize_log_expr_lhs(
         if (!ssaizer_build_if(self, lhs_cond, on_true, on_false))
                 return false;
 
-        ssa_br_expr_info_add_phi_var(info, lhs_cond);
+        ssa_br_expr_info_add_phi_var(info, lhs_cond, lhs_cond_block);
         ssaizer_enter_block(self, current);
         return ssaize_expr_as_condition(self, tree_get_binop_rhs(expr));;
 }
@@ -214,6 +210,7 @@ static ssa_value* ssaize_log_expr(ssaizer* self, const tree_expr* expr)
         ssa_init_br_expr_info(&info, &self->builder, tree_get_expr_type(expr));
 
         ssa_value* last_cond = ssaize_log_expr_lhs(self, &info, expr);
+        ssa_block* last_cond_block = self->block;
         if (!last_cond)
                 return NULL;
 
@@ -221,7 +218,7 @@ static ssa_value* ssaize_log_expr(ssaizer* self, const tree_expr* expr)
         if (!ssaizer_build_jmp(self, exit))
                 return false;
 
-        ssa_br_expr_info_add_phi_var(&info, last_cond);
+        ssa_br_expr_info_add_phi_var(&info, last_cond, last_cond_block);
         ssaizer_enter_block(self, exit);
         ssaizer_finish_block(self, exit);
         return ssa_get_instr_var(info.phi);
@@ -366,8 +363,7 @@ extern ssa_value* ssaize_subscript_expr(ssaizer* self, const tree_expr* expr)
         if (!ssa_index)
                 return NULL;
         
-        ssa_value* element_ptr = ssa_build_getaddr(&self->builder,
-                tree_get_expr_type(pointer), ssa_pointer, ssa_index, NULL);
+        ssa_value* element_ptr = ssa_build_ptradd(&self->builder, ssa_pointer, ssa_index);
         if (!element_ptr)
                 return NULL;
 
@@ -383,7 +379,7 @@ static bool ssaize_conditional_expr_branch(
         if (!val)
                 return false;
 
-        ssa_br_expr_info_add_phi_var(info, val);
+        ssa_br_expr_info_add_phi_var(info, val, self->block);
         return ssaizer_build_jmp(self, ssa_br_expr_info_get_exit(info));
 }
 
@@ -555,9 +551,9 @@ extern ssa_value* ssaize_expr_as_condition(ssaizer* self, const tree_expr* cond)
         ssa_value* v = ssaize_expr(self, cond);
         if (!v)
                 return NULL;
-
+        
         if (ssa_get_value_kind(v) != SVK_VARIABLE)
-                return v;
+                return ssa_build_neq_zero(&self->builder, v);
 
         ssa_instr* i = ssa_get_var_instr(v);
         if (ssa_get_instr_kind(i) != SIK_BINARY)

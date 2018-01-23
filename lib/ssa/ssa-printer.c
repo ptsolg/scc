@@ -100,8 +100,7 @@ static inline void ssa_print_value_ref(ssa_printer* self, const ssa_value* val)
         else if (k == SVK_CONSTANT)
         {
                 char buf[64];
-                avalue v = ssa_get_constant_value(val);
-                avalue_print(&v, buf, 64, 4);
+                avalue_print(ssa_get_constant_cvalue(val), buf, 64, 4);
                 ssa_prints(self, buf);
         }
         else if (k == SVK_DECL)
@@ -113,17 +112,16 @@ static inline void ssa_print_value_ref(ssa_printer* self, const ssa_value* val)
         }
         else if (k == SVK_STRING)
                 ssa_print_string(self, ssa_get_string_value(val));
-        else if (k == SVK_NULL)
-                ssa_prints(self, "null");
 }
 
-static const char* ssa_binary_instr_table[SBIK_SIZE] =
+static const char* ssa_binary_instr_table[] =
 {
         "",
         "mul",
         "div",
         "mod",
         "add",
+        "ptradd",
         "sub",
         "shl",
         "shr",
@@ -141,96 +139,79 @@ static const char* ssa_binary_instr_table[SBIK_SIZE] =
 S_STATIC_ASSERT(S_ARRAY_SIZE(ssa_binary_instr_table) == SBIK_SIZE,
         "ssa_binary_instr_table needs an update");
 
-static void ssa_print_binary_instr(ssa_printer* self, const ssa_instr* instr)
+static const char* ssa_terminator_instr_table[] =
 {
-        ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
-        ssa_binary_instr_kind k = ssa_get_binop_kind(instr);
-        SSA_ASSERT_BINARY_INSTR_KIND(k);
-        ssa_printf(self, " = %s ", ssa_binary_instr_table[k]);
-        ssa_print_value_ref(self, ssa_get_binop_lhs(instr));
-        ssa_prints(self, ", ");
-        ssa_print_value_ref(self, ssa_get_binop_rhs(instr));
-}
+        "",
+        "br",
+        "br",
+        "todo",
+        "ret"
+};
 
-static void ssa_print_alloca(ssa_printer* self, const ssa_instr* instr)
+S_STATIC_ASSERT(S_ARRAY_SIZE(ssa_terminator_instr_table) == STIK_SIZE,
+        "ssa_terminator_instr_table needs an update");
+
+static const char* ssa_instr_table[] =
+{
+        "",
+        "alloca",
+        "load",
+        "cast",
+        "",
+        "store",
+        "getfieldaddr",
+        "call",
+        "phi",
+        "",
+};
+
+S_STATIC_ASSERT(S_ARRAY_SIZE(ssa_instr_table) == SIK_SIZE,
+        "ssa_instr_table needs an update");
+
+static void ssa_print_alloca_operand(ssa_printer* self, const ssa_instr* instr)
 {
         const ssa_value* v = ssa_get_instr_cvar(instr);
-        const tree_target_info* ti = ssa_get_target(self->context);
         const tree_type* vt = ssa_get_value_type(v);
-        ssa_print_value_ref(self, v);
-        ssa_printf(self, " = alloca %u",
-                (uint)tree_get_sizeof(ti, tree_get_pointer_target(vt)));
+        const tree_target_info* ti = ssa_get_target(self->context);
+        ssa_printf(self, "%u", (uint)tree_get_sizeof(ti, tree_get_pointer_target(vt)));
 }
 
-static void ssa_print_load(ssa_printer* self, const ssa_instr* instr)
+static void ssa_print_call_operands(ssa_printer* self, const ssa_instr* instr)
 {
-        ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
-        ssa_prints(self, " = load ");
-        ssa_print_value_ref(self, ssa_get_load_what(instr));
-}
+        ssa_value_use* it = ssa_get_instr_operands_begin(instr);
+        ssa_value_use* end = ssa_get_instr_operands_end(instr);
 
-static void ssa_print_store(ssa_printer* self, const ssa_instr* instr)
-{
-        ssa_prints(self, "store ");
-        ssa_print_value_ref(self, ssa_get_store_what(instr));
-        ssa_prints(self, ", ");
-        ssa_print_value_ref(self, ssa_get_store_where(instr));
-}
-
-static void ssa_print_phi(ssa_printer* self, const ssa_instr* instr)
-{
-        ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
-        ssa_prints(self, " = phi ");
-        SSA_FOREACH_PHI_ARG(instr, it, end)
+        ssa_print_value_ref(self, ssa_get_value_use_value(it));
+        ssa_prints(self, " (");
+        for (it++; it != end; it++)
         {
-                ssa_print_value_ref(self, *it);
+                ssa_print_value_ref(self, ssa_get_value_use_value(it));
+                if (it + 1 != end)
+                        ssa_prints(self, ", ");
+        }
+        ssa_prints(self, ")");
+}
+
+static void ssa_print_phi_operands(ssa_printer* self, const ssa_instr* instr)
+{
+        SSA_FOREACH_INSTR_OPERAND(instr, it, end)
+        {
+                ssa_print_value_ref(self, ssa_get_value_use_value(it));
+                it++; // skip block
+
                 if (it + 1 != end)
                         ssa_prints(self, ", ");
         }
 }
 
-static void ssa_print_cast(ssa_printer* self, const ssa_instr* instr)
+static void ssa_print_instr_operands(ssa_printer* self, const ssa_instr* instr)
 {
-        ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
-        ssa_prints(self, " = cast ");
-        ssa_print_value_ref(self, ssa_get_cast_operand(instr));
-}
-
-static void ssa_print_getaddr(ssa_printer* self, const ssa_instr* instr)
-{
-        ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
-        ssa_prints(self, " = getaddr ");
-        ssa_print_value_ref(self, ssa_get_getaddr_operand(instr));
-        ssa_prints(self, ", ");
-        ssa_print_value_ref(self, ssa_get_getaddr_index(instr));
-
-        ssa_value* offset = ssa_get_getaddr_offset(instr);
-        if (offset)
+        SSA_FOREACH_INSTR_OPERAND(instr, it, end)
         {
-                ssa_prints(self, ", ");
-                ssa_print_value_ref(self, offset);
-        }
-}
-
-static void ssa_print_call(ssa_printer* self, const ssa_instr* instr)
-{
-        if (ssa_instr_has_var(instr))
-        {
-                ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
-                ssa_prints(self, " = ");
-        }
-
-        ssa_prints(self, "call ");
-        ssa_print_value_ref(self, ssa_get_called_func(instr));
-
-        ssa_prints(self, " (");
-        SSA_FOREACH_CALL_ARG(instr, arg, end)
-        {
-                ssa_print_value_ref(self, *arg);
-                if (arg + 1 != end)
+                ssa_print_value_ref(self, ssa_get_value_use_value(it));
+                if (it + 1 != end)
                         ssa_prints(self, ", ");
         }
-        ssa_prints(self, ")");
 }
 
 extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
@@ -241,52 +222,28 @@ extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
         ssa_instr_kind k = ssa_get_instr_kind(instr);
         SSA_ASSERT_INSTR_KIND(k);
 
+        if (ssa_instr_has_var(instr))
+        {
+                ssa_print_value_ref(self, ssa_get_instr_cvar(instr));
+                ssa_prints(self, " = ");
+        }
+        
+        const char* instr_name = ssa_instr_table[k];
+        if (k == SIK_BINARY)
+                instr_name = ssa_binary_instr_table[ssa_get_binop_kind(instr)];
+        else if (k == SIK_TERMINATOR)
+                instr_name = ssa_terminator_instr_table[ssa_get_terminator_instr_kind(instr)];
+
+        ssa_printf(self, "%s ", instr_name);
+
         if (k == SIK_ALLOCA)
-                ssa_print_alloca(self, instr);
-        else if (k == SIK_LOAD)
-                ssa_print_load(self, instr);
-        else if (k == SIK_STORE)
-                ssa_print_store(self, instr);
-        else if (k == SIK_BINARY)
-                ssa_print_binary_instr(self, instr);
-        else if (k == SIK_PHI)
-                ssa_print_phi(self, instr);
-        else if (k == SIK_CAST)
-                ssa_print_cast(self, instr);
-        else if (k == SIK_GETADDR)
-                ssa_print_getaddr(self, instr);
+                ssa_print_alloca_operand(self, instr);
         else if (k == SIK_CALL)
-                ssa_print_call(self, instr);
-}
-
-static void ssa_print_branch(ssa_printer* self, const ssa_branch* br)
-{
-        if (!br)
-                return;
-
-        ssa_print_endl(self);
-        ssa_print_indent(self);
-
-        ssa_branch_kind k = ssa_get_branch_kind(br);
-        if (k == SBK_JUMP)
-        {
-                ssa_prints(self, "br ");
-                ssa_print_value_ref(self, ssa_get_jump_dest(br));
-        }
-        else if (k == SBK_IF)
-        {
-                ssa_prints(self, "br ");
-                ssa_print_value_ref(self, ssa_get_if_cond(br));
-                ssa_prints(self, ", ");
-                ssa_print_value_ref(self, ssa_get_if_true_block(br));
-                ssa_prints(self, ", ");
-                ssa_print_value_ref(self, ssa_get_if_false_block(br));
-        }
-        else if (k == SBK_RETURN)
-        {
-                ssa_prints(self, "ret ");
-                ssa_print_value_ref(self, ssa_get_return_value(br));
-        }
+                ssa_print_call_operands(self, instr);
+        else if (k == SIK_PHI)
+                ssa_print_phi_operands(self, instr);
+        else
+                ssa_print_instr_operands(self, instr);
 }
 
 extern void ssa_print_block(ssa_printer* self, const ssa_block* block)
@@ -294,11 +251,8 @@ extern void ssa_print_block(ssa_printer* self, const ssa_block* block)
         ssa_print_endl(self);
         ssa_print_value_ref(self, ssa_get_block_clabel(block));
         ssa_printc(self, ':');
-
         SSA_FOREACH_BLOCK_INSTR(block, it)
                 ssa_print_instr(self, it);
-        ssa_print_branch(self, ssa_get_block_exit(block));
-
         ssa_print_endl(self);
 }
 

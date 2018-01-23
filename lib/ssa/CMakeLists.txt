@@ -5,7 +5,6 @@ add_scc_lib(ssa
 	ssa-instr.c
 	ssa-value.c
 	ssa-block.c
-	ssa-branch.c
 	ssa-module.c
 	ssa-function.c
 	ssaizer.c
