@@ -5,8 +5,13 @@
 
 typedef enum
 {
+        // -dump-tree -fsyntax-only ...
+        SRM_OTHER,
+        // -S
         SRM_ASSEMBLE,
+        // -c
         SRM_COMPILE,
+
         SRM_LINK,
 } scc_run_mode;
 

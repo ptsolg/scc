@@ -100,16 +100,19 @@ static void scc_help(scc_env* self, aparser* parser)
 static void scc_fsyntax_only(scc_env* self, aparser* parser)
 {
         self->cc.output.kind = COK_NONE;
+        self->mode = SRM_OTHER;
 }
 
 static void scc_dump_tokens(scc_env* self, aparser* parser)
 {
         self->cc.output.kind = COK_LEXEMES;
+        self->mode = SRM_OTHER;
 }
 
 static void scc_dump_tree(scc_env* self, aparser* parser)
 {
         self->cc.output.kind = COK_C;
+        self->mode = SRM_OTHER;
 }
 
 static void scc_fprint_eval_result(scc_env* self, aparser* parser)

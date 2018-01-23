@@ -100,6 +100,9 @@ extern serrcode scc_env_setup(scc_env* self, int argc, const char** argv)
         if (S_FAILED(scc_parse_opts(self, argc, argv)))
                 return S_ERROR;
 
+        if (self->mode != SRM_COMPILE && self->mode != SRM_LINK)
+                self->link_stdlib = false;
+
 #if S_WIN
         self->cc.input.entry = self->link_stdlib ? NULL : "main";
 #elif S_OSX
