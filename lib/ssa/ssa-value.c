@@ -1,99 +1,84 @@
 #include "scc/ssa/ssa-value.h"
 #include "scc/ssa/ssa-context.h"
+#include "scc/ssa/ssa-instr.h"
 
-extern void ssa_init_value_base(ssa_value* self, ssa_value_kind k, ssa_id id)
+extern void ssa_init_value(
+        ssa_value* self,
+        ssa_value_kind kind,
+        ssa_id id,
+        tree_type* type)
 {
-        ssa_set_value_kind(self, k);
+        ssa_set_value_kind(self, kind);
         ssa_set_value_id(self, id);
+        ssa_set_value_type(self, type);
+        list_init(&_ssa_value_base(self)->_use_list);
 }
 
-extern void ssa_init_label(ssa_value* self, ssa_id id)
+extern ssa_value* ssa_new_value(ssa_context* context,
+        ssa_value_kind kind, ssa_id id, tree_type* type, ssize size)
 {
-        ssa_init_value_base(self, SVK_LABEL, id);
+        ssa_value* v = ssa_allocate(context, size);
+        if (!v)
+                return NULL;
+
+        ssa_init_value(v, kind, id, type);
+        return v;
 }
 
-extern void ssa_init_typed_value(ssa_value* self, ssa_value_kind k, ssa_id id, tree_type* t)
+extern void ssa_replace_value_with(ssa_value* what, ssa_value* with)
 {
-        ssa_init_value_base(self, k, id);
-        ssa_set_value_type(self, t);
+        SSA_FOREACH_VALUE_USE(what, it, end)
+                it->_value = with;
+
+        list_head* uses = &_ssa_value_base(what)->_use_list;
+        list_push_back_list(&_ssa_value_base(with)->_use_list, uses);
+        list_init(uses);
 }
 
-extern bool ssa_value_has_type(const ssa_value* self)
+extern void ssa_init_variable(ssa_value* self, ssa_id id, tree_type* type)
 {
-        switch (ssa_get_value_kind(self))
-        {
-                case SVK_CONSTANT:
-                case SVK_VARIABLE:
-                case SVK_DECL:
-                case SVK_PARAM:
-                case SVK_STRING:
-                case SVK_NULL:
-                        return true;
-
-                default:
-                        return false;
-        }
+        ssa_init_value(self, SVK_VARIABLE, id, type);
 }
 
-extern void ssa_init_variable(ssa_value* self, ssa_id id, tree_type* t)
+extern ssa_value* ssa_new_constant(ssa_context* context, tree_type* type, const avalue* val)
 {
-        ssa_init_typed_value(self, SVK_VARIABLE, id, t);
-}
-
-extern void ssa_init_constant(ssa_value* self, tree_type* t, avalue val)
-{
-        ssa_init_typed_value(self, SVK_CONSTANT, 0, t);
-        ssa_set_constant_value(self, val);
-}
-
-extern ssa_value* ssa_new_constant(ssa_context* context, tree_type* t, avalue val)
-{
-        ssa_value* c = ssa_allocate(context, sizeof(ssa_constant));
+        ssa_value* c = ssa_new_value(context,
+                SVK_CONSTANT, 0, type, sizeof(struct _ssa_constant));
         if (!c)
                 return NULL;
 
-        ssa_init_constant(c, t, val);
+        ssa_set_constant_value(c, val);
         return c;
 }
 
-extern ssa_value* ssa_new_decl(ssa_context* context, tree_type* type, tree_decl* entity)
+extern void ssa_init_label(ssa_value* self, ssa_id id, tree_type* type)
 {
-        ssa_value* g = ssa_allocate(context, sizeof(ssa_decl));
-        if (!g)
+        ssa_init_value(self, SVK_LABEL, id, type);
+}
+
+extern ssa_value* ssa_new_decl(
+        ssa_context* context, tree_type* type, tree_decl* decl)
+{
+        ssa_value* d = ssa_new_value(context, SVK_DECL, 0, type, sizeof(struct _ssa_decl));
+        if (!d)
                 return NULL;
 
-        ssa_init_typed_value(g, SVK_DECL, 0, type);
-        ssa_set_decl_entity(g, entity);
-        return g;
+        ssa_set_decl_entity(d, decl);
+        return d;
+}
+
+extern ssa_value* ssa_new_string(
+        ssa_context* context, ssa_id id, tree_type* type, tree_id ref)
+{
+        ssa_value* s = ssa_new_value(context, SVK_STRING, id, type, sizeof(struct _ssa_string));
+        if (!s)
+                return NULL;
+
+        ssa_set_string_value(s, ref);
+        return s;
 }
 
 extern ssa_value* ssa_new_param(ssa_context* context, ssa_id id, tree_type* type)
 {
-        ssa_value* p = ssa_allocate(context, sizeof(ssa_param));
-        if (!p)
-                return NULL;
-
-        ssa_init_typed_value(p, SVK_PARAM, id, type);
-        return p;
-}
-
-extern ssa_value* ssa_new_string(ssa_context* context, ssa_id uid, tree_type* type, tree_id id)
-{
-        ssa_value* s = ssa_allocate(context, sizeof(ssa_string));
-        if (!s)
-                return NULL;
-
-        ssa_init_typed_value(s, SVK_STRING, uid, type);
-        ssa_set_string_value(s, id);
-        return s;
-}
-
-extern ssa_value* ssa_new_null_pointer(ssa_context* context, tree_type* type)
-{
-        ssa_value* n = ssa_allocate(context, sizeof(ssa_null_pointer));
-        if (!n)
-                return NULL;
-
-        ssa_init_typed_value(n, SVK_NULL, 0, type);
-        return n;
+        return ssa_new_value(context, SVK_PARAM, id, type, sizeof(struct _ssa_param));
 }
