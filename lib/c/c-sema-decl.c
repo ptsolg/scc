@@ -695,7 +695,7 @@ extern tree_decl* csema_declare_external_decl(
         tree_decl* d = csema_new_external_decl(self, decl_specs, declarator);
         if (!d)
                 return NULL;
-
+        
         tree_decl_kind dk = tree_get_decl_kind(d);
         tree_decl_storage_class sc = dk == TDK_TYPEDEF
                 ? TDSC_NONE : tree_get_decl_storage_class(d);
@@ -712,7 +712,7 @@ extern tree_decl* csema_declare_external_decl(
         tree_decl* orig = csema_lookup_for_duplicates(self, self->locals, d);
         if (!orig)
                 return csema_finish_decl(self, self->locals, d);
-
+  
         if (tree_get_decl_kind(d) != tree_get_decl_kind(orig))
         {
                 cerror_different_kind_of_symbol(self->logger, d);

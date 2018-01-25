@@ -86,6 +86,7 @@ struct _tree_builtin_type
         tree_builtin_type_kind _kind;
 };
 
+extern void tree_init_builtin_type(tree_type* self, tree_builtin_type_kind kind);
 extern tree_type* tree_new_builtin_type(tree_context* context, tree_builtin_type_kind kind);
 // uint32_t or uint64_t
 extern tree_type* tree_new_size_type(tree_context* context);

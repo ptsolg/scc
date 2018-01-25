@@ -13,7 +13,7 @@ extern tree_type* csema_get_int_type(csema* self, bool signed_, bool extended)
 
 extern tree_type* csema_get_size_t_type(csema* self)
 {
-        return csema_get_int_type(self, false, tree_target_is(self->target, TTARGET_X64));
+        return csema_get_int_type(self, false, tree_target_is(self->target, TTAK_X86_64));
 }
 
 extern tree_type* csema_get_float_type(csema* self)

@@ -11,6 +11,7 @@ extern "C" {
 
 #include "scc/scl/alloc.h"
 #include "tree-common.h"
+#include "tree-type.h"
 
 typedef struct _tree_target_info tree_target_info;
 
@@ -19,11 +20,15 @@ typedef struct _tree_context
         bump_ptr_allocator _alloc;
         strpool _strings;
         tree_target_info* _target;
+        tree_type _builtin_types[TBTK_SIZE];
 } tree_context;
 
 extern void tree_init(tree_context* self, tree_target_info* target);
 extern void tree_init_ex(tree_context* self, tree_target_info* target, allocator* alloc);
 extern void tree_dispose(tree_context* self);
+
+extern tree_type* tree_get_builtin_type(tree_context* self, tree_builtin_type_kind k);
+extern tree_type* tree_get_size_type(tree_context* self);
 
 static inline allocator* tree_get_allocator(const tree_context* self)
 {

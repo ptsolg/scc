@@ -440,7 +440,7 @@ extern bool tree_expr_is_null_pointer_constant(const tree_expr* self)
         tree_eval_info i;
         int_value v;
 
-        tree_init_target_info(&t, TTARGET_X32);
+        tree_init_target_info(&t, TTAK_X86_32);
         tree_init_eval_info(&i, &t);
 
         if (!tree_eval_as_integer(&i, self, &v))

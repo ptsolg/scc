@@ -23,6 +23,12 @@ extern tree_type* tree_new_chain_type(
         return t;
 }
 
+extern void tree_init_builtin_type(tree_type* self, tree_builtin_type_kind kind)
+{
+        tree_set_type_kind(self, TTK_BUILTIN);
+        tree_set_builtin_type_kind(self, kind);
+}
+
 extern tree_type* tree_new_builtin_type(tree_context* context, tree_builtin_type_kind kind)
 {
         tree_type* t = tree_new_type(context, TTK_BUILTIN, sizeof(struct _tree_builtin_type));
@@ -35,7 +41,7 @@ extern tree_type* tree_new_builtin_type(tree_context* context, tree_builtin_type
 
 extern tree_type* tree_new_size_type(tree_context* context)
 {
-        bool x32 = tree_target_is(tree_get_target(context), TTARGET_X32);
+        bool x32 = tree_target_is(tree_get_target(context), TTAK_X86_32);
         return tree_new_builtin_type(context, x32 ? TBTK_UINT32 : TBTK_UINT64);
 }
 

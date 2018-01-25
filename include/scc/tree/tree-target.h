@@ -14,24 +14,24 @@ extern "C" {
 
 typedef enum
 {
-        TTARGET_X32,
-        TTARGET_X64,
-} tree_target_kind;
+        TTAK_X86_32,
+        TTAK_X86_64,
+} tree_target_architecture_kind;
 
 typedef struct _tree_target_info
 {
-        tree_target_kind _kind;
+        tree_target_architecture_kind _kind;
         suint8 _pointer_size;
         suint8 _pointer_align;
         suint8 _builtin_size[TBTK_SIZE];
         suint8 _builtin_align[TBTK_SIZE];
 } tree_target_info;
 
-extern void tree_init_target_info(tree_target_info* self, tree_target_kind k);
+extern void tree_init_target_info(tree_target_info* self, tree_target_architecture_kind k);
 
-extern tree_target_kind tree_get_target_kind(const tree_target_info* self);
+extern tree_target_architecture_kind tree_get_target_kind(const tree_target_info* self);
 
-extern bool tree_target_is(const tree_target_info* self, tree_target_kind k);
+extern bool tree_target_is(const tree_target_info* self, tree_target_architecture_kind k);
 
 extern ssize tree_get_pointer_size(const tree_target_info* self);
 extern ssize tree_get_pointer_align(const tree_target_info* self);

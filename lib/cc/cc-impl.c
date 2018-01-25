@@ -29,7 +29,7 @@ typedef struct
 static void cc_context_init(cc_context* self, cc_instance* cc, jmp_buf on_fatal_error)
 {
         tree_init_target_info(&self->target,
-                cc->opts.target == CTK_X86_32 ? TTARGET_X32 : TTARGET_X64);
+                cc->opts.target == CTK_X86_32 ? TTAK_X86_32 : TTAK_X86_64);
         tree_init(&self->tree, &self->target);
         cinit(&self->c, &self->tree, on_fatal_error);
         ssa_init(&self->ssa, &self->tree, on_fatal_error);

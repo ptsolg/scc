@@ -1,7 +1,7 @@
 #include "scc/tree/tree-target.h"
 #include "scc/tree/tree-eval.h"
 
-extern void tree_init_target_info(tree_target_info* self, tree_target_kind k)
+extern void tree_init_target_info(tree_target_info* self, tree_target_architecture_kind k)
 {
         self->_kind = k;
         
@@ -28,7 +28,7 @@ extern void tree_init_target_info(tree_target_info* self, tree_target_kind k)
         self->_builtin_size[TBTK_FLOAT] = 4;
         self->_builtin_size[TBTK_DOUBLE] = 8;
 
-        if (k == TTARGET_X32)
+        if (k == TTAK_X86_32)
         {
                 self->_pointer_align = 4;
                 self->_pointer_size = 4;
@@ -37,7 +37,7 @@ extern void tree_init_target_info(tree_target_info* self, tree_target_kind k)
                 self->_builtin_align[TBTK_UINT64] = 4;
                 self->_builtin_align[TBTK_DOUBLE] = 8;
         }
-        else if (k == TTARGET_X64)
+        else if (k == TTAK_X86_64)
         {
                 self->_pointer_align = 8;
                 self->_pointer_size = 8;
@@ -51,12 +51,12 @@ extern void tree_init_target_info(tree_target_info* self, tree_target_kind k)
                 S_UNREACHABLE();
 }
 
-extern tree_target_kind tree_get_target_kind(const tree_target_info* self)
+extern tree_target_architecture_kind tree_get_target_kind(const tree_target_info* self)
 {
         return self->_kind;
 }
 
-extern bool tree_target_is(const tree_target_info* self, tree_target_kind k)
+extern bool tree_target_is(const tree_target_info* self, tree_target_architecture_kind k)
 {
         return tree_get_target_kind(self) == k;
 }
