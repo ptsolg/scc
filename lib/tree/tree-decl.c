@@ -214,38 +214,34 @@ extern const tree_decl* tree_get_record_members_cend(const tree_decl* self)
         return tree_get_decl_scope_decls_cend(tree_get_record_cscope(self));
 }
 
-extern const tree_decl* tree_get_next_cmember(const tree_decl* member, const tree_decl* record)
+extern tree_decl* tree_get_next_member(const tree_decl* member)
 {
-        const tree_decl* end = tree_get_record_members_cend(record);
+        tree_decl* end = tree_get_decl_scope_decls_end(tree_get_decl_scope(member));
         if (member == end)
                 return end;
 
-        while (1)
+        for (tree_decl* it = tree_get_next_decl(member);
+                it != end; it = tree_get_next_decl(member))
         {
-                member = tree_get_next_decl(member);
-                if (member == end)
-                        return end;
-
-                if (tree_get_decl_kind(member) == TDK_MEMBER)
-                        return member;
+                if (tree_decl_is(it, TDK_MEMBER))
+                        return it;
         }
+        return end;
 }
 
-extern tree_decl* tree_get_next_member(tree_decl* member, tree_decl* record)
+extern tree_decl* tree_get_prev_member(const tree_decl* member)
 {
-        tree_decl* end = tree_get_record_members_end(record);
+        tree_decl* end = tree_get_decl_scope_decls_end(tree_get_decl_scope(member));
         if (member == end)
                 return end;
 
-        while (1)
+        for (tree_decl* it = tree_get_next_decl(member);
+                it != end; it = tree_get_prev_decl(member))
         {
-                member = tree_get_next_decl(member);
-                if (member == end)
-                        return end;
-
-                if (tree_get_decl_kind(member) == TDK_MEMBER)
-                        return member;
+                if (tree_decl_is(it, TDK_MEMBER))
+                        return it;
         }
+        return end;
 }
 
 extern tree_decl* tree_new_enum_decl(
@@ -314,7 +310,35 @@ extern tree_decl* tree_new_member_decl(
                 return NULL;
 
         tree_set_member_bits(d, bits);
+        _tree_get_member(d)->_index = -1;
         return d;
+}
+
+extern uint tree_get_member_index(tree_decl* self)
+{
+        uint index = _tree_get_cmember(self)->_index;
+        if (index != -1)
+                return index;
+
+        tree_decl* rec = tree_get_member_parent(self);
+        tree_decl* prev = tree_get_prev_member(self);
+        tree_decl* end = tree_get_record_members_end(rec);
+
+        if (prev == tree_get_record_members_end(rec))
+                return _tree_get_member(self)->_index = 0;
+        else if (_tree_get_member(prev)->_index == -1)
+        {
+                index = 0;
+                for (tree_decl* it = tree_get_record_members_begin(rec);
+                        it != end; it = tree_get_next_member(it))
+                {
+                        _tree_get_member(it)->_index = index++;
+                }
+                
+                return _tree_get_member(self)->_index;
+        }
+        else
+                return _tree_get_member(self)->_index = _tree_get_member(prev)->_index + 1;        
 }
 
 extern tree_decl* tree_new_enumerator_decl(

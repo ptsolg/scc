@@ -227,8 +227,8 @@ extern tree_decl* tree_get_record_members_begin(tree_decl* self);
 extern const tree_decl* tree_get_record_members_cbegin(const tree_decl* self);
 extern tree_decl* tree_get_record_members_end(tree_decl* self);
 extern const tree_decl* tree_get_record_members_cend(const tree_decl* self);
-extern const tree_decl* tree_get_next_cmember(const tree_decl* member, const tree_decl* record);
-extern tree_decl* tree_get_next_member(tree_decl* member, tree_decl* record);
+extern tree_decl* tree_get_next_member(const tree_decl* member);
+extern tree_decl* tree_get_prev_member(const tree_decl* member);
 
 static inline struct _tree_record_decl* _tree_get_record(tree_decl* self);
 static inline const struct _tree_record_decl* _tree_get_crecord(const tree_decl* self);
@@ -319,6 +319,7 @@ struct _tree_member_decl
 {
         struct _tree_value_decl _base;
         tree_expr* _bits;
+        uint _index;
 };
 
 extern tree_decl* tree_new_member_decl(
@@ -329,9 +330,12 @@ extern tree_decl* tree_new_member_decl(
         tree_type* type,
         tree_expr* bits);
 
+extern uint tree_get_member_index(tree_decl* self);
+
 static inline struct _tree_member_decl* _tree_get_member(tree_decl* self);
 static inline const struct _tree_member_decl* _tree_get_cmember(const tree_decl* self);
 
+static inline tree_decl* tree_get_member_parent(const tree_decl* self);
 static inline tree_expr* tree_get_member_bits(const tree_decl* self);
 static inline void tree_set_member_bits(tree_decl* self, tree_expr* bits);
 
@@ -777,6 +781,12 @@ static inline const struct _tree_member_decl* _tree_get_cmember(const tree_decl*
 {
         TREE_ASSERT_DECL(self, TDK_MEMBER);
         return (const struct _tree_member_decl*)self;
+}
+
+static inline tree_decl* tree_get_member_parent(const tree_decl* self)
+{
+        return (tree_decl*)((uint8_t*)tree_get_decl_scope(self) 
+                - offsetof(struct _tree_record_decl, _scope));
 }
 
 static inline tree_expr* tree_get_member_bits(const tree_decl* self)

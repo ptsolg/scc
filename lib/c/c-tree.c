@@ -114,7 +114,7 @@ extern bool cinit_iterator_advance(cinit_iterator* self)
                 if (self->member_pos == tree_get_record_members_end(record))
                         return false;
 
-                self->member_pos = tree_get_next_member(self->member_pos, record);
+                self->member_pos = tree_get_next_member(self->member_pos);
                 return true;
         }
         else if (cinit_iterator_at_array(self))
