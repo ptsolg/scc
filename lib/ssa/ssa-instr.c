@@ -158,6 +158,16 @@ extern ssize ssa_get_instr_num_operands(const ssa_instr* self)
         return dseq_size(&_ssa_instr_cbase(self)->_operands);
 }
 
+extern void ssa_add_instr_after(ssa_instr* self, ssa_instr* pos)
+{
+        list_node_add_after(&_ssa_instr_base(pos)->_node, &_ssa_instr_base(self)->_node);
+}
+
+extern void ssa_add_instr_before(ssa_instr* self, ssa_instr* pos)
+{
+        list_node_add_before(&_ssa_instr_base(pos)->_node, &_ssa_instr_base(self)->_node);
+}
+
 extern void ssa_remove_instr(ssa_instr* self)
 {
         if (ssa_instr_has_var(self))

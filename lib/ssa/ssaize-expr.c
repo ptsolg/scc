@@ -167,10 +167,14 @@ static void ssa_br_expr_info_add_phi_var(
         S_ASSERT(block);
         if (!self->phi)
         {
-                ssa_block* current = ssa_builder_get_block(self->builder);
-                ssa_builder_set_block(self->builder, ssa_br_expr_info_get_exit(self));
+                ssa_instr* prev_pos = self->builder->pos;
+                bool prev_insertion_kind = self->builder->insert_after;
+
+                ssa_builder_set_pos(self->builder,
+                        ssa_get_block_instrs_end(ssa_br_expr_info_get_exit(self)), false);
                 self->phi = ssa_get_var_instr(ssa_build_phi(self->builder, self->phi_type));
-                ssa_builder_set_block(self->builder, current);
+
+                ssa_builder_set_pos(self->builder, prev_pos, prev_insertion_kind);
         }
         ssa_add_phi_operand(self->phi,
                 self->builder->context, var, ssa_get_block_label(block));
@@ -476,7 +480,22 @@ extern ssa_value* ssaize_decl_expr(ssaizer* self, const tree_expr* expr)
 
 extern ssa_value* ssaize_member_expr(ssaizer* self, const tree_expr* expr)
 {
-        return NULL;
+        ssa_value* lhs = ssaize_expr(self, tree_get_member_expr_lhs(expr));
+        if (!lhs)
+                return NULL;
+
+        if (tree_member_expr_is_arrow(expr))
+                if (!(lhs = ssa_build_load(&self->builder, lhs)))
+                        return NULL;
+     
+        ssa_value* field_addr = ssa_build_getfieldaddr(
+                &self->builder, lhs, tree_get_member_expr_decl(expr));
+        if (!field_addr)
+                return NULL;
+
+        return tree_expr_is_lvalue(expr)
+                ? field_addr
+                : ssa_build_load(&self->builder, field_addr);
 }
 
 extern ssa_value* ssaize_cast_expr(ssaizer* self, const tree_expr* expr)

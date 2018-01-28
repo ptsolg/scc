@@ -33,7 +33,7 @@ extern void ssaizer_dispose(ssaizer* self)
 extern void ssaizer_enter_block(ssaizer* self, ssa_block* block)
 {
         self->block = block;
-        ssa_builder_set_block(&self->builder, block);
+        ssa_builder_set_pos(&self->builder, ssa_get_block_instrs_end(self->block), false);
 }
 
 extern void ssaizer_finish_block(ssaizer* self, ssa_block* block)

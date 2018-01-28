@@ -22,12 +22,13 @@ typedef struct _tree_decl tree_decl;
 typedef struct _ssa_builder
 {
         ssa_context* context;
-        ssa_block* block;
+        ssa_instr* pos;
+        bool insert_after;
         ssa_id uid;
         ssa_id string_uid;
 } ssa_builder;
 
-extern void ssa_init_builder(ssa_builder* self, ssa_context* context, ssa_block* block);
+extern void ssa_init_builder(ssa_builder* self, ssa_context* context, ssa_instr* pos);
 extern void ssa_dispose_builder(ssa_builder* self);
 
 extern ssa_value* ssa_build_mul(ssa_builder* self, ssa_value* lhs, ssa_value* rhs);
@@ -53,6 +54,8 @@ extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const dseq*
 extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type);
 extern ssa_value* ssa_build_load(ssa_builder* self, ssa_value* what);
 extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value* where);
+extern ssa_value* ssa_build_getfieldaddr(
+        ssa_builder* self, ssa_value* record, tree_decl* member);
 
 extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id id);
 extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, suint64 val);
@@ -77,6 +80,12 @@ extern ssa_instr* ssa_build_return(ssa_builder* self, ssa_value* val);
 
 extern ssa_value* ssa_build_function_param(ssa_builder* self, tree_type* type);
 
+static inline void ssa_builder_set_pos(ssa_builder* self, ssa_instr* pos, bool insert_after)
+{
+        self->pos = pos;
+        self->insert_after = insert_after;
+}
+
 static inline void ssa_builder_set_uid(ssa_builder* self, ssa_id uid)
 {
         self->uid = uid;
@@ -90,16 +99,6 @@ static inline ssa_id ssa_builder_get_uid(const ssa_builder* self)
 static inline ssa_id ssa_builder_gen_uid(ssa_builder* self)
 {
         return self->uid++;
-}
-
-static inline void ssa_builder_set_block(ssa_builder* self, ssa_block* block)
-{
-        self->block = block;
-}
-
-static inline ssa_block* ssa_builder_get_block(const ssa_builder* self)
-{
-        return self->block;
 }
 
 static inline ssa_context* ssa_get_builder_context(const ssa_builder* self)

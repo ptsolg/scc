@@ -16,12 +16,6 @@ extern ssa_block* ssa_new_block(ssa_context* context, ssa_id entry_id)
         return b;
 }
 
-extern void ssa_add_block_instr(ssa_block* self, ssa_instr* i)
-{
-        S_ASSERT(i);
-        list_push_back(&self->_instr_list, (list_node*)i);
-}
-
 extern ssa_instr* ssa_block_get_first_phi(const ssa_block* self)
 {
         SSA_FOREACH_BLOCK_INSTR(self, instr)

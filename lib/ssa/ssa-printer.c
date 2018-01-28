@@ -204,6 +204,17 @@ static void ssa_print_phi_operands(ssa_printer* self, const ssa_instr* instr)
         }
 }
 
+static void ssa_print_getfieldaddr_operands(ssa_printer* self, const ssa_instr* instr)
+{
+        SSA_FOREACH_INSTR_OPERAND(instr, it, end)
+        {
+                ssa_print_value_ref(self, ssa_get_value_use_value(it));
+                ssa_prints(self, ", ");
+        }
+
+        ssa_printf(self, "%u", ssa_get_getfieldaddr_index(instr));
+}
+
 static void ssa_print_instr_operands(ssa_printer* self, const ssa_instr* instr)
 {
         SSA_FOREACH_INSTR_OPERAND(instr, it, end)
@@ -242,8 +253,11 @@ extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
                 ssa_print_call_operands(self, instr);
         else if (k == SIK_PHI)
                 ssa_print_phi_operands(self, instr);
+        else if (k == SIK_GETFIELDADDR)
+                ssa_print_getfieldaddr_operands(self, instr);
         else
                 ssa_print_instr_operands(self, instr);
+       
 }
 
 extern void ssa_print_block(ssa_printer* self, const ssa_block* block)

@@ -321,24 +321,16 @@ extern uint tree_get_member_index(tree_decl* self)
                 return index;
 
         tree_decl* rec = tree_get_member_parent(self);
-        tree_decl* prev = tree_get_prev_member(self);
         tree_decl* end = tree_get_record_members_end(rec);
 
-        if (prev == tree_get_record_members_end(rec))
-                return _tree_get_member(self)->_index = 0;
-        else if (_tree_get_member(prev)->_index == -1)
+        index = 0;
+        for (tree_decl* it = tree_get_record_members_begin(rec);
+                it != end; it = tree_get_next_member(it))
         {
-                index = 0;
-                for (tree_decl* it = tree_get_record_members_begin(rec);
-                        it != end; it = tree_get_next_member(it))
-                {
-                        _tree_get_member(it)->_index = index++;
-                }
-                
-                return _tree_get_member(self)->_index;
+                _tree_get_member(it)->_index = index++;
         }
-        else
-                return _tree_get_member(self)->_index = _tree_get_member(prev)->_index + 1;        
+
+        return _tree_get_member(self)->_index; 
 }
 
 extern tree_decl* tree_new_enumerator_decl(

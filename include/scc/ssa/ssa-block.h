@@ -23,8 +23,6 @@ typedef struct _ssa_block
 
 extern ssa_block* ssa_new_block(ssa_context* context, ssa_id entry_id);
 
-extern void ssa_add_block_instr(ssa_block* self, ssa_instr* i);
-
 extern ssa_instr* ssa_block_get_first_phi(const ssa_block* self);
 
 static inline ssa_value* ssa_get_block_label(ssa_block* self);

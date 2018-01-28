@@ -131,8 +131,8 @@ static void ssa_constant_fold_conditional_jumps(ssa_context* context, ssa_functi
                 ssa_value* live_branch = ssa_get_instr_operand_value(cond_jump, cond_val ? 2 : 1);
                 ssa_instr* inderect_jump = ssa_new_inderect_jump(context, live_branch);
 
+                ssa_add_instr_after(inderect_jump, cond_jump);
                 ssa_remove_instr(cond_jump);
-                ssa_add_block_instr(block, inderect_jump);
         }
 }
 

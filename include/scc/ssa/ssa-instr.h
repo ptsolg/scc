@@ -76,6 +76,8 @@ extern ssa_value_use* ssa_get_instr_operands_begin(const ssa_instr* self);
 extern ssa_value_use* ssa_get_instr_operands_end(const ssa_instr* self);
 extern ssize ssa_get_instr_num_operands(const ssa_instr* self);
 
+extern void ssa_add_instr_after(ssa_instr* self, ssa_instr* pos);
+extern void ssa_add_instr_before(ssa_instr* self, ssa_instr* pos);
 extern void ssa_remove_instr(ssa_instr* self);
 extern void ssa_set_instr_operand_value(ssa_instr* self, size_t i, ssa_value* val);
 

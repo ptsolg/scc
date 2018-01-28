@@ -4,12 +4,12 @@
 #include "scc/ssa/ssa-instr.h"
 #include "scc/ssa/ssa-context.h"
 
-extern void ssa_init_builder(ssa_builder* self, ssa_context* context, ssa_block* block)
+extern void ssa_init_builder(ssa_builder* self, ssa_context* context, ssa_instr* pos)
 {
         self->context = context;
-        self->block = block;
         self->uid = 0;
         self->string_uid = 0;
+        ssa_builder_set_pos(self, pos, false);
 }
 
 extern void ssa_dispose_builder(ssa_builder* self)
@@ -18,8 +18,13 @@ extern void ssa_dispose_builder(ssa_builder* self)
 
 static ssa_value* ssa_build_instr(ssa_builder* self, ssa_instr* i)
 {
-        S_ASSERT(i && self->block);
-        ssa_add_block_instr(self->block, i);
+        S_ASSERT(i && self->pos);
+
+        if (self->insert_after)
+                ssa_add_instr_after(i, self->pos);
+        else
+                ssa_add_instr_before(i, self->pos);
+
         return ssa_get_instr_var(i);
 }
 
@@ -251,6 +256,28 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
         return ssa_build_instr(self, i);
 }
 
+extern ssa_value* ssa_build_getfieldaddr(
+        ssa_builder* self, ssa_value* record, tree_decl* member)
+{
+        S_ASSERT(tree_type_is(ssa_get_value_type(record), TTK_POINTER));
+        S_ASSERT(tree_decls_are_same(tree_get_member_parent(member),
+                tree_get_decl_type_entity(tree_get_pointer_target(ssa_get_value_type(record)))));
+
+        tree_type* member_ptr = tree_new_pointer_type(
+                ssa_get_tree(self->context), tree_get_decl_type(member));
+
+        ssa_instr* i = ssa_new_getfieldaddr(
+                self->context,
+                ssa_builder_gen_uid(self),
+                member_ptr,
+                record,
+                tree_get_member_index(member));
+        if (!i)
+                return NULL;
+
+        return ssa_build_instr(self, i);
+}
+
 extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id id)
 {
         return ssa_new_string(self->context, self->string_uid++, type, id);
@@ -372,11 +399,11 @@ extern ssa_value* ssa_build_phi(ssa_builder* self, tree_type* type)
 
 static ssa_instr* ssa_build_block_terminator(ssa_builder* self, ssa_instr* terminator)
 {
-        ssa_instr* current_terminator = ssa_get_block_terminator(self->block);
-        if (current_terminator)
-                S_ASSERT(ssa_get_instr_kind(current_terminator) != SIK_TERMINATOR);
+        if (self->insert_after)
+                ssa_add_instr_after(terminator, self->pos);
+        else
+                ssa_add_instr_before(terminator, self->pos);
 
-        ssa_add_block_instr(self->block, terminator);
         return terminator;
 }
 
