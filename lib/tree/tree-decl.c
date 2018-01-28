@@ -221,7 +221,7 @@ extern tree_decl* tree_get_next_member(const tree_decl* member)
                 return end;
 
         for (tree_decl* it = tree_get_next_decl(member);
-                it != end; it = tree_get_next_decl(member))
+                it != end; it = tree_get_next_decl(it))
         {
                 if (tree_decl_is(it, TDK_MEMBER))
                         return it;
@@ -331,6 +331,24 @@ extern uint tree_get_member_index(tree_decl* self)
         }
 
         return _tree_get_member(self)->_index; 
+}
+
+extern tree_decl* tree_new_inderect_member_decl(
+        tree_context* context,
+        tree_decl_scope* scope,
+        tree_xlocation loc,
+        tree_id name,
+        tree_type* type,
+        tree_decl* anon_member)
+{
+        tree_decl* d = tree_new_value_decl(context, TDK_INDIRECT_MEMBER, scope, loc, name, 
+                TDSC_NONE, type, sizeof(struct _tree_inderect_member_decl));
+        if (!d)
+                return NULL;
+
+        tree_set_decl_implicit(d, true);
+        tree_set_inderect_member_anon_member(d, anon_member);
+        return d;
 }
 
 extern tree_decl* tree_new_enumerator_decl(

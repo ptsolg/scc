@@ -484,12 +484,20 @@ extern ssa_value* ssaize_member_expr(ssaizer* self, const tree_expr* expr)
         if (!lhs)
                 return NULL;
 
-        if (tree_member_expr_is_arrow(expr))
-                if (!(lhs = ssa_build_load(&self->builder, lhs)))
-                        return NULL;
-     
-        ssa_value* field_addr = ssa_build_getfieldaddr(
-                &self->builder, lhs, tree_get_member_expr_decl(expr));
+        ssa_value* field_addr;
+        tree_decl* member = tree_get_member_expr_decl(expr);
+        tree_type* rec = tree_get_decl_type_entity(
+                tree_get_pointer_target(ssa_get_value_type(lhs)));
+
+        if (tree_record_is_union(rec))
+        {
+                tree_type* ptr = tree_new_pointer_type(
+                        ssa_get_tree(self->context), tree_get_decl_type(member));
+                field_addr = ssa_build_cast(&self->builder, ptr, lhs);
+        }
+        else
+                field_addr = ssa_build_getfieldaddr(&self->builder, lhs, member);
+
         if (!field_addr)
                 return NULL;
 

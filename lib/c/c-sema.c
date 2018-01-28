@@ -221,8 +221,11 @@ extern tree_decl* csema_require_label_decl(
 extern tree_decl* csema_require_member_decl(
         const csema* self, tree_location name_loc, const tree_decl* record, tree_id name)
 {
-        return csema_require_decl(self,
-                tree_get_record_cscope(record), name_loc, TDK_MEMBER, name, false);
+        tree_decl* d = csema_require_decl(self, 
+                tree_get_record_cscope(record), name_loc, TDK_UNKNOWN, name, false);
+
+        return d && (tree_decl_is(d, TDK_MEMBER) || tree_decl_is(d, TDK_INDIRECT_MEMBER))
+                ? d : NULL;
 }
 
 extern bool csema_require_complete_type(

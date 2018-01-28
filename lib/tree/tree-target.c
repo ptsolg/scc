@@ -90,6 +90,9 @@ extern ssize tree_get_sizeof_record(const tree_target_info* info, const tree_dec
         // todo: padding?
         TREE_FOREACH_DECL_IN_SCOPE(scope, member)
         {
+                if (tree_decl_is(member, TDK_INDIRECT_MEMBER))
+                        continue;
+
                 ssize member_size = tree_get_sizeof(info, tree_get_decl_type(member));
                 if (is_union && member_size > total_size)
                         total_size = member_size;

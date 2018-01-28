@@ -311,6 +311,18 @@ extern tree_designator* tree_new_member_designator(tree_context* context, tree_d
         return d;
 }
 
+extern void tree_add_designator_before(tree_designator* self, tree_designator* pos)
+{
+        list_node_add_before(
+                &_tree_get_designator(pos)->_node, &_tree_get_designator(self)->_node);
+}
+
+extern void tree_add_designator_after(tree_designator* self, tree_designator* pos)
+{
+        list_node_add_after(
+                &_tree_get_designator(pos)->_node, &_tree_get_designator(self)->_node);
+}
+
 extern tree_designator* tree_new_array_designator(
         tree_context* context, tree_type* eltype, tree_expr* index)
 {
@@ -335,11 +347,6 @@ extern tree_designation* tree_new_designation(tree_context* context, tree_expr* 
         list_init(&d->_designators);
         tree_set_designation_initializer(d, initializer);
         return d;
-}
-
-extern void tree_add_designation_designator(tree_designation* self, tree_designator* d)
-{
-        list_push_back(&self->_designators, &_tree_get_designator(d)->_node);
 }
 
 extern tree_expr* tree_new_impl_init_expr(tree_context* context, tree_expr* init)

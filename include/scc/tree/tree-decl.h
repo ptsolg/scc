@@ -79,6 +79,7 @@ typedef enum _tree_decl_kind
         TDK_ENUM,
         TDK_FUNCTION,
         TDK_MEMBER,
+        TDK_INDIRECT_MEMBER,
         TDK_VAR,
         TDK_ENUMERATOR,
         TDK_LABEL,
@@ -339,6 +340,27 @@ static inline tree_decl* tree_get_member_parent(const tree_decl* self);
 static inline tree_expr* tree_get_member_bits(const tree_decl* self);
 static inline void tree_set_member_bits(tree_decl* self, tree_expr* bits);
 
+struct _tree_inderect_member_decl
+{
+        struct _tree_value_decl _base;
+        tree_decl* _anon_member;
+};
+
+extern tree_decl* tree_new_inderect_member_decl(
+        tree_context* context,
+        tree_decl_scope* scope,
+        tree_xlocation loc,
+        tree_id name,
+        tree_type* type,
+        tree_decl* anon_member);
+
+static inline struct _tree_inderect_member_decl* _tree_inderect_member_decl(tree_decl* self);
+static inline const struct _tree_inderect_member_decl* _tree_inderect_member_cdecl(const tree_decl* self);
+
+static inline tree_decl* tree_get_inderect_member_anon_member(const tree_decl* self);
+
+static inline void tree_set_inderect_member_anon_member(tree_decl* self, tree_decl* anon);
+
 struct _tree_enumerator_decl
 {
         struct _tree_typed_decl _base;
@@ -410,6 +432,7 @@ typedef struct _tree_decl
                 struct _tree_typedef_decl _typedef;
                 struct _tree_record_decl _record;
                 struct _tree_function_decl _func;
+                struct _tree_inderect_member_decl _inderect;
                 struct _tree_member_decl _member;
                 struct _tree_var_decl _var;
                 struct _tree_enum_decl _enum;
@@ -797,6 +820,28 @@ static inline tree_expr* tree_get_member_bits(const tree_decl* self)
 static inline void tree_set_member_bits(tree_decl* self, tree_expr* bits)
 {
         _tree_get_member(self)->_bits = bits;
+}
+
+static inline struct _tree_inderect_member_decl* _tree_inderect_member_decl(tree_decl* self)
+{
+        TREE_ASSERT_DECL(self, TDK_INDIRECT_MEMBER);
+        return (struct _tree_inderect_member_decl*)self;
+}
+
+static inline const struct _tree_inderect_member_decl* _tree_inderect_member_cdecl(const tree_decl* self)
+{
+        TREE_ASSERT_DECL(self, TDK_INDIRECT_MEMBER);
+        return (const struct _tree_inderect_member_decl*)self;
+}
+
+static inline tree_decl* tree_get_inderect_member_anon_member(const tree_decl* self)
+{
+        return _tree_inderect_member_cdecl(self)->_anon_member;
+}
+
+static inline void tree_set_inderect_member_anon_member(tree_decl* self, tree_decl* anon)
+{
+        _tree_inderect_member_decl(self)->_anon_member = anon;
 }
 
 static inline struct _tree_enumerator_decl* _tree_get_enumerator(tree_decl* self)

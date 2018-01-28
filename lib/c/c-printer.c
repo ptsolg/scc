@@ -418,8 +418,13 @@ static void cprint_member_expr(cprinter* self, const tree_expr* expr)
 {
         const tree_expr* lhs = tree_get_member_expr_lhs(expr);
         _cprint_expr(self, lhs, cprinter_postfix_expr_needs_wrapping(self, lhs));
+
+        const tree_decl* decl = tree_get_member_expr_decl(expr);
+        if (tree_decl_is_unnamed(decl))
+                return;
+
         cprintrw(self, (tree_member_expr_is_arrow(expr) ? CTK_ARROW : CTK_DOT));
-        cprint_decl(self, tree_get_member_expr_decl(expr), CPRINT_DECL_NAME);
+        cprint_decl(self, decl, CPRINT_DECL_NAME);
 }
 
 static void cprint_cast_expr(cprinter* self, const tree_expr* expr)
@@ -475,8 +480,12 @@ static void cprint_designation(cprinter* self, const tree_designation* d)
                 tree_designator_kind k = tree_get_designator_kind(designator);
                 if (k == TDK_DES_MEMBER)
                 {
-                        cprintrw(self, CTK_DOT);
-                        cprint_decl_name(self, tree_get_member_designator_decl(designator));
+                        tree_decl* member = tree_get_member_designator_decl(designator);
+                        if (!tree_decl_is_unnamed(member))
+                        {
+                                cprintrw(self, CTK_DOT);
+                                cprint_decl_name(self, member);
+                        }
                 }
                 else if (k == TDK_DES_ARRAY)
                 {

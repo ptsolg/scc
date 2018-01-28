@@ -496,6 +496,9 @@ struct _tree_designator_base
         tree_designator_kind _kind;
 };
 
+extern void tree_add_designator_before(tree_designator* self, tree_designator* pos);
+extern void tree_add_designator_after(tree_designator* self, tree_designator* pos);
+
 static inline struct _tree_designator_base* _tree_get_designator(tree_designator* self);
 static inline const struct _tree_designator_base* _tree_get_cdesignator(const tree_designator* self);
 
@@ -555,8 +558,6 @@ typedef struct _tree_designation
 } tree_designation;
 
 extern tree_designation* tree_new_designation(tree_context* context, tree_expr* initializer);
-
-extern void tree_add_designation_designator(tree_designation* self, tree_designator* d);
 
 static inline tree_designation* tree_get_next_designation(const tree_designation* self);
 static inline tree_designator* tree_get_designation_begin(const tree_designation* self);

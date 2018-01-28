@@ -1,0 +1,7 @@
+; Definition for test
+@0:
+    $1 = alloca 8
+    $2 = getfieldaddr $1, 0
+    $3 = getfieldaddr $2, 1
+    store 20, $3
+    ret

@@ -267,14 +267,6 @@ extern tree_decl* csema_set_decl_end_loc(const csema* self, tree_decl* decl, tre
         return decl;
 }
 
-static bool csema_export_decl_scope(csema* self, tree_decl_scope* to, tree_decl_scope* from)
-{
-        TREE_FOREACH_DECL_IN_LOOKUP(from, it)
-                if (!csema_export_decl(self, to, hiter_get_ptr(&it)))
-                        return false;
-        return true;
-}
-
 extern tree_type* csema_new_type_name(
         csema* self, cdeclarator* declarator, tree_type* typespec)
 {
@@ -515,6 +507,31 @@ extern tree_decl* csema_new_member_decl(
         return m;
 }
 
+static bool csema_inject_anonymous_record_members(
+        csema* self, tree_decl_scope* to, tree_decl* anon)
+{
+        tree_decl* rec = tree_get_decl_type_entity(tree_get_decl_type(anon));
+        tree_decl_scope* members = tree_get_record_scope(rec);
+
+        TREE_FOREACH_DECL_IN_SCOPE(members, it)
+        {
+                tree_decl_kind dk = tree_get_decl_kind(it);
+                if (dk != TDK_MEMBER && dk != TDK_INDIRECT_MEMBER)
+                        continue;
+
+                tree_decl* indirect = tree_new_inderect_member_decl(
+                        self->context, to,
+                        tree_get_decl_loc(it),
+                        tree_get_decl_name(it),
+                        tree_get_decl_type(it),
+                        anon);
+
+                if (!csema_finish_decl(self, to, indirect))
+                        return false;
+        }
+        return true;
+}
+
 extern tree_decl* csema_define_member_decl(
         csema* self, cdecl_specs* decl_specs, cdeclarator* struct_declarator, tree_expr* bits)
 {
@@ -527,10 +544,7 @@ extern tree_decl* csema_define_member_decl(
         if (!tree_decl_is_unnamed(m) || !tree_declared_type_is(mt, TDK_RECORD))
                 return m;
 
-        tree_decl* record = tree_get_decl_type_entity(mt);
-        tree_decl_scope* members = tree_get_record_scope(record);
-
-        if (!csema_export_decl_scope(self, self->locals, members))
+        if (!csema_inject_anonymous_record_members(self, self->locals, m))
                 return NULL;
 
         return m;

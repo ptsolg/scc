@@ -342,27 +342,34 @@ extern tree_expr* csema_new_member_expr(
                 return NULL;
 
         tree_location lhs_loc = tree_get_expr_loc(lhs);
-        tree_type* t = csema_array_function_to_pointer_conversion(self, &lhs);
+        tree_type* lhs_type = csema_array_function_to_pointer_conversion(self, &lhs);
 
         if (is_arrow)
         {
-                t = csema_lvalue_conversion(self, &lhs);
-                if (!csema_require_object_pointer_expr_type(self, t, lhs_loc))
+                lhs_type = csema_lvalue_conversion(self, &lhs);
+                if (!csema_require_object_pointer_expr_type(self, lhs_type, lhs_loc))
                         return NULL;
 
-                t = tree_get_pointer_target(t);
+                lhs_type = tree_get_pointer_target(lhs_type);
         }
-        t = tree_desugar_type(t);
-        if (!csema_require_record_expr_type(self, t, lhs_loc))
+        lhs_type = tree_desugar_type(lhs_type);
+        if (!csema_require_record_expr_type(self, lhs_type, lhs_loc))
                 return NULL;
         
-        tree_decl* record = tree_get_decl_type_entity(t);
+        tree_decl* record = tree_get_decl_type_entity(lhs_type);
         tree_decl* m = csema_require_member_decl(self, id_loc, record, id);
         if (!m)
                 return NULL;
+        
+        if (tree_decl_is(m, TDK_MEMBER))
+                return tree_new_member_expr(self->context,
+                        TVK_LVALUE, tree_get_decl_type(m), loc, lhs, m, is_arrow);
 
-        return tree_new_member_expr(self->context, 
-                TVK_LVALUE, tree_get_decl_type(m), loc, lhs, m, is_arrow);
+        tree_decl* anon = tree_get_inderect_member_anon_member(m);
+        lhs = tree_new_member_expr(self->context,
+                TVK_LVALUE, tree_get_decl_type(anon), loc, lhs, anon, is_arrow);
+     
+        return csema_new_member_expr(self, loc, lhs, id, id_loc, false);
 }
 
 // c99 6.5.2.4/6.5.3.1
@@ -1046,7 +1053,17 @@ extern tree_designator* csema_new_member_designator(
         if (!m)
                 return NULL;
         
-        return tree_new_member_designator(self->context, m);
+        if (tree_decl_is(m, TDK_MEMBER))
+                return tree_new_member_designator(self->context, m);
+
+        tree_decl* anon = tree_get_inderect_member_anon_member(m);
+        tree_designator* next = csema_new_member_designator(
+                self, loc, tree_get_decl_type(anon), name);
+        S_ASSERT(next);
+
+        tree_designator* current = tree_new_member_designator(self->context, anon);
+        tree_add_designator_after(next, current);
+        return current;
 }
 
 extern tree_designator* csema_new_array_designator(
@@ -1066,7 +1083,14 @@ extern tree_designator* csema_new_array_designator(
 extern tree_designator* csema_finish_designator(
         csema* self, tree_designation* designation, tree_designator* designator)
 {
-        tree_add_designation_designator(designation, designator);
+        tree_designator* end = tree_get_designation_end(designation);
+        tree_designator* it = designator;
+        while (it)
+        {
+                tree_designator* next = tree_get_next_designator(it);
+                tree_add_designator_before(it, end);
+                it = next;
+        }
         return designator;
 }
 
