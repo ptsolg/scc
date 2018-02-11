@@ -14,7 +14,7 @@ extern "C" {
 extern tree_stmt* csema_add_stmt(csema* self, tree_stmt* s);
 
 extern tree_stmt* csema_new_block_stmt(
-        csema* self, tree_location lbrace_loc, cstmt_context context);
+        csema* self, tree_location lbrace_loc, int scope_flags);
 
 extern tree_stmt* csema_new_case_stmt(
         csema* self,
@@ -99,7 +99,7 @@ extern tree_stmt* csema_new_break_stmt(
 extern tree_stmt* csema_new_return_stmt(
         csema* self, tree_location kw_loc, tree_location semicolon_loc, tree_expr* value);
 
-extern bool csema_check_stmt(const csema* self, const tree_stmt* s, cstmt_context c);
+extern bool csema_check_stmt(const csema* self, const tree_stmt* s, int scope_flags);
 
 #ifdef __cplusplus
 }

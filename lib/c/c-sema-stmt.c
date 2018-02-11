@@ -14,11 +14,10 @@ extern tree_stmt* csema_add_stmt(csema* self, tree_stmt* s)
 }
 
 extern tree_stmt* csema_new_block_stmt(
-        csema* self, tree_location lbrace_loc, cstmt_context context)
+        csema* self, tree_location lbrace_loc, int scope_flags)
 {
-        tree_scope_flags flags = cstmt_context_to_scope_flags(context);
         return tree_new_compound_stmt_ex(self->context,
-                tree_init_xloc(lbrace_loc, 0), self->scope, self->locals, flags);
+                tree_create_xloc(lbrace_loc, 0), self->scope, self->locals, scope_flags);
 }
 
 extern tree_stmt* csema_new_case_stmt(
@@ -36,21 +35,20 @@ extern tree_stmt* csema_new_case_stmt(
         if (!csema_require_integer_expr(self, expr))
                 return NULL;
 
-        int_value value;
-        tree_eval_info info;
-        tree_init_eval_info(&info, self->target);
-        if (!tree_eval_as_integer(&info, expr, &value))
+        tree_eval_result r;
+        if (!tree_eval_expr_as_integer(self->context, expr, &r))
         {
                 cerror_case_stmt_isnt_constant(self->logger, kw_loc);
                 return NULL;
         }
-
+        
+        int_value value = avalue_get_int(&r.value);
         tree_stmt* switch_ = csema_get_switch_stmt_info(self)->switch_stmt;
         expr = csema_new_impl_cast(self, expr,
                 tree_get_expr_type(tree_get_switch_expr(switch_)));
 
         tree_stmt* case_stmt = tree_new_case_stmt(self->context,
-                tree_init_xloc(kw_loc, colon_loc), expr, &value, NULL);
+                tree_create_xloc(kw_loc, colon_loc), expr, &value, NULL);
         if (!csema_switch_stmt_register_case_label(self, case_stmt))
         {
                 cerror_case_stmt_duplication(self->logger, kw_loc);
@@ -72,15 +70,15 @@ extern tree_stmt* csema_new_default_stmt(
                 cerror_default_stmt_outside_switch(self->logger, kw_loc);
                 return false;
         }
-        if (csema_switch_stmt_has_default(self))
+        if (csema_switch_stmt_has_default_label(self))
         {
                 cerror_default_stmt_duplication(self->logger, kw_loc);
                 return false;
         }
 
         tree_stmt* default_stmt = tree_new_default_stmt(self->context,
-                tree_init_xloc(kw_loc, colon_loc), NULL);
-        csema_set_switch_stmt_has_default(self);
+                tree_create_xloc(kw_loc, colon_loc), NULL);
+        csema_set_switch_stmt_has_default_label(self);
         return default_stmt;
 }
 
@@ -99,7 +97,7 @@ extern tree_stmt* csema_new_expr_stmt(
         csema* self, tree_location begin_loc, tree_location semicolon_loc, tree_expr* expr)
 {
         return tree_new_expr_stmt(self->context,
-                tree_init_xloc(begin_loc, semicolon_loc), expr);
+                tree_create_xloc(begin_loc, semicolon_loc), expr);
 }
 
 extern tree_stmt* csema_new_if_stmt(
@@ -114,14 +112,14 @@ extern tree_stmt* csema_new_if_stmt(
                 return NULL;
 
         return tree_new_if_stmt(self->context,
-                tree_init_xloc(kw_loc, rbracket_loc), condition, body, else_);
+                tree_create_xloc(kw_loc, rbracket_loc), condition, body, else_);
 }
 
 extern tree_stmt* csema_new_decl_stmt(
         csema* self, tree_location begin_loc, tree_location semicolon_loc, tree_decl* d)
 {
         return tree_new_decl_stmt(self->context,
-                tree_init_xloc(begin_loc, semicolon_loc), d);
+                tree_create_xloc(begin_loc, semicolon_loc), d);
 }
 
 extern tree_stmt* csema_new_switch_stmt(
@@ -136,7 +134,7 @@ extern tree_stmt* csema_new_switch_stmt(
                 return NULL;
 
         return tree_new_switch_stmt(self->context,
-                tree_init_xloc(kw_loc, rbracket_loc), body, value);
+                tree_create_xloc(kw_loc, rbracket_loc), body, value);
 }
 
 extern tree_stmt* csema_start_switch_stmt(
@@ -174,7 +172,7 @@ extern tree_stmt* csema_new_while_stmt(
                 return NULL;
 
         return tree_new_while_stmt(self->context,
-                tree_init_xloc(kw_loc, rbracket_loc), condition, body);
+                tree_create_xloc(kw_loc, rbracket_loc), condition, body);
 }
 
 extern tree_stmt* csema_new_do_while_stmt(
@@ -188,7 +186,7 @@ extern tree_stmt* csema_new_do_while_stmt(
                 return NULL;
 
         return tree_new_do_while_stmt(self->context,
-                tree_init_xloc(kw_loc, semicolon_loc), condition, body);
+                tree_create_xloc(kw_loc, semicolon_loc), condition, body);
 }
 
 static bool _csema_check_iteration_stmt_decl(const csema* self, const tree_decl* d)
@@ -236,7 +234,7 @@ extern tree_stmt* csema_new_for_stmt(
                 return NULL;
 
         return tree_new_for_stmt(self->context,
-                tree_init_xloc(kw_loc, rbracket_loc), init, condition, step, body);
+                tree_create_xloc(kw_loc, rbracket_loc), init, condition, step, body);
 }
 
 extern tree_stmt* csema_new_goto_stmt(
@@ -246,25 +244,25 @@ extern tree_stmt* csema_new_goto_stmt(
         tree_id id,
         tree_location semicolon_loc)
 {
-        tree_decl* l = csema_declare_label_decl(self, id, id_loc);
+        tree_decl* l = csema_declare_label_decl(self, id_loc, id);
         if (!l)
                 return NULL;
 
-        return tree_new_goto_stmt(self->context, tree_init_xloc(kw_loc, semicolon_loc), l);
+        return tree_new_goto_stmt(self->context, tree_create_xloc(kw_loc, semicolon_loc), l);
 }
 
 extern tree_stmt* csema_new_continue_stmt(
         csema* self, tree_location kw_loc, tree_location semicolon_loc)
 {
         return tree_new_continue_stmt(self->context,
-                tree_init_xloc(kw_loc, semicolon_loc));
+                tree_create_xloc(kw_loc, semicolon_loc));
 }
 
 extern tree_stmt* csema_new_break_stmt(
         csema* self, tree_location kw_loc, tree_location semicolon_loc)
 {
         return tree_new_break_stmt(self->context,
-                tree_init_xloc(kw_loc, semicolon_loc));
+                tree_create_xloc(kw_loc, semicolon_loc));
 }
 
 extern tree_stmt* csema_new_return_stmt(
@@ -280,7 +278,7 @@ extern tree_stmt* csema_new_return_stmt(
         cassign_conv_result r;
         if (!value || csema_assignment_conversion(self, restype, &value, &r))
                 return tree_new_return_stmt(self->context,
-                        tree_init_xloc(kw_loc, semicolon_loc), value);
+                        tree_create_xloc(kw_loc, semicolon_loc), value);
 
         tree_type* vt = tree_get_expr_type(value);
         tree_location vloc = tree_get_expr_loc(value);
@@ -300,41 +298,37 @@ extern tree_stmt* csema_new_return_stmt(
         return NULL;
 }
 
-extern bool csema_check_stmt(const csema* self, const tree_stmt* s, cstmt_context c)
+extern bool csema_check_stmt(const csema* self, const tree_stmt* s, int scope_flags)
 {
         if (!s)
                 return false;
 
-        tree_scope_flags flags = cstmt_context_to_scope_flags(c);
         bool is_top_level = self->scope == NULL;
         tree_stmt_kind sk = tree_get_stmt_kind(s);
 
-        if (sk == TSK_BREAK && !(flags & TSF_BREAK))
+        if (sk == TSK_BREAK && !(scope_flags & TSF_BREAK))
         {
                 cerror_break_stmt_outside_loop_or_switch(self->logger, s);
                 return false;
         }
-        else if (sk == TSK_CONTINUE && !(flags & TSF_CONTINUE))
+        else if (sk == TSK_CONTINUE && !(scope_flags & TSF_CONTINUE))
         {
                 cerror_continue_stmt_outside_loop(self->logger, s);
                 return false;
         }
-        else if (sk == TSK_DECL && !(c & CSC_DECL))
+        else if (sk == TSK_DECL && !(scope_flags & TSF_DECL))
         {
                 cerror_decl_stmt_outside_block(self->logger, s);
                 return false;
         }
         else if (sk == TSK_COMPOUND && is_top_level)
         {
-                TREE_FOREACH_DECL_IN_LOOKUP(self->labels, it)
-                {
-                        tree_decl* label = hiter_get_ptr(&it);
-                        if (!tree_get_label_decl_stmt(label))
+                TREE_FOREACH_DECL_IN_SCOPE(self->labels, it)
+                        if (!tree_get_label_decl_stmt(it))
                         {
-                                cerror_undefined_label(self->logger, label);
+                                cerror_undefined_label(self->logger, it);
                                 return false;
                         }
-                }
         }
         return true;
 }
