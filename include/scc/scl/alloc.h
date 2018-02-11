@@ -56,7 +56,6 @@ typedef struct _bump_ptr_allocator
 
         list_head _chunks;
         allocator* _alloc;
-
 } bump_ptr_allocator;
 
 extern void bump_ptr_allocator_init(bump_ptr_allocator* self);
