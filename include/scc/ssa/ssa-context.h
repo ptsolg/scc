@@ -21,8 +21,8 @@ typedef struct _ssa_context
         bump_ptr_allocator node_alloc;
         base_allocator base_alloc;
 
-        tree_context* _tree;
-        const tree_target_info* _target;
+        tree_context* tree;
+        const tree_target_info* target;
 } ssa_context;
 
 extern void ssa_init(ssa_context* self, tree_context* context, jmp_buf on_out_of_mem);
@@ -45,12 +45,12 @@ static inline allocator* ssa_get_alloc(ssa_context* self)
 
 static inline const tree_target_info* ssa_get_target(const ssa_context* self)
 {
-        return self->_target;
+        return self->target;
 }
 
 static inline tree_context* ssa_get_tree(const ssa_context* self)
 {
-        return self->_tree;
+        return self->tree;
 }
 
 #ifdef __cplusplus

@@ -107,7 +107,7 @@ static inline void ssa_print_value_ref(ssa_printer* self, const ssa_value* val)
         {
                 ssa_printc(self, '%');
                 tree_decl* entity = ssa_get_decl_entity(val);
-                ssa_prints(self, tree_get_id_cstr(ssa_get_tree(self->context),
+                ssa_prints(self, tree_get_id_string(ssa_get_tree(self->context),
                         tree_get_decl_name(entity)));
         }
         else if (k == SVK_STRING)
@@ -273,7 +273,7 @@ extern void ssa_print_block(ssa_printer* self, const ssa_block* block)
 extern void ssa_print_function(ssa_printer* self, const ssa_function* func)
 {
         tree_decl* entity = ssa_get_function_entity(func);
-        const char* name = tree_get_id_cstr(
+        const char* name = tree_get_id_string(
                 ssa_get_tree(self->context), tree_get_decl_name(entity));
         ssa_printf(self, "; Definition for %s", name);
 

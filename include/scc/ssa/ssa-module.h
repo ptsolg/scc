@@ -20,7 +20,7 @@ typedef struct _ssa_module
 {
         htab _lookup;
         list_head _defs;
-        dseq _strings;
+        dseq strings;
 } ssa_module;
 
 extern ssa_module* ssa_new_module(ssa_context* context);
@@ -46,12 +46,12 @@ static inline const ssa_function* ssa_get_module_defs_cend(const ssa_module* sel
 
 static inline ssa_value** ssa_get_module_globals_begin(const ssa_module* self)
 {
-        return (ssa_value**)dseq_begin_ptr(&self->_strings);
+        return (ssa_value**)dseq_begin_ptr(&self->strings);
 }
 
 static inline ssa_value** ssa_get_module_globals_end(const ssa_module* self)
 {
-        return (ssa_value**)dseq_end_ptr(&self->_strings);
+        return (ssa_value**)dseq_end_ptr(&self->strings);
 }
 
 #define SSA_FOREACH_MODULE_DEF(PMODULE, ITNAME) \

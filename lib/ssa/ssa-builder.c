@@ -47,7 +47,6 @@ static inline ssa_value* ssa_build_arith_binop(
         tree_type* rt = ssa_get_value_type(rhs);
         S_ASSERT(lt && rt);
         S_ASSERT(tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt));
-        S_ASSERT(tree_types_are_same(lt, rt));
 
         return ssa_build_binop(self, opcode, lt, lhs, rhs);
 }
@@ -100,7 +99,6 @@ static inline ssa_value* ssa_build_bitwise_binop(
         tree_type* rt = ssa_get_value_type(rhs);
         S_ASSERT(lt && rt);
         S_ASSERT(tree_type_is_integer(lt) && tree_type_is_integer(rt));
-        S_ASSERT(tree_types_are_same(lt, rt));
 
         return ssa_build_binop(self, opcode, lt, lhs, rhs);
 }
@@ -138,7 +136,7 @@ static inline ssa_value* ssa_build_cmp_binop(
         tree_type* rt = ssa_get_value_type(rhs);
         S_ASSERT(lt && rt);
         S_ASSERT(tree_type_is_scalar(lt) && tree_type_is_scalar(rt));
-        S_ASSERT(tree_types_are_same(lt, rt));
+
         return ssa_build_binop(self, opcode,
                 tree_new_builtin_type(ssa_get_tree(self->context), TBTK_INT32), lhs, rhs);
 }
@@ -173,20 +171,22 @@ extern ssa_value* ssa_build_neq(ssa_builder* self, ssa_value* lhs, ssa_value* rh
         return ssa_build_cmp_binop(self, SBIK_NEQ, lhs, rhs);
 }
 
-extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* type, ssa_value* operand)
+extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* to, ssa_value* operand)
 {
-        S_ASSERT(type && tree_type_is_scalar(type));
-        tree_type* from = ssa_get_value_type(operand);
-        if (tree_types_are_same(type, from))
+        S_ASSERT(to && tree_type_is_scalar(to));
+        to = tree_desugar_type(to);
+        tree_type* from = tree_desugar_type(ssa_get_value_type(operand));
+        
+        if (tree_compare_types(to, from) != TTEK_NEQ)
                 return operand;
 
-        if (tree_type_is(from, TTK_FUNCTION) && tree_type_is_function_pointer(type))
+        if (tree_type_is(from, TTK_FUNCTION) && tree_type_is_function_pointer(to))
         {
-                ssa_set_value_type(operand, type);
+                ssa_set_value_type(operand, to);
                 return operand;
         }
 
-        ssa_instr* c = ssa_new_cast(self->context, ssa_builder_gen_uid(self), type, operand);
+        ssa_instr* c = ssa_new_cast(self->context, ssa_builder_gen_uid(self), to, operand);
         if (!c)
                 return NULL;
 
@@ -246,8 +246,6 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
         tree_type* where_type = ssa_get_value_type(where);
         S_ASSERT(what_type && where_type);
         S_ASSERT(tree_type_is_object_pointer(where_type));
-        S_ASSERT(tree_types_are_same(what_type, 
-                tree_get_unqualified_type(tree_get_pointer_target(where_type))));
 
         ssa_instr* i = ssa_new_store(self->context, what, where);
         if (!i)
@@ -257,21 +255,21 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
 }
 
 extern ssa_value* ssa_build_getfieldaddr(
-        ssa_builder* self, ssa_value* record, tree_decl* member)
+        ssa_builder* self, ssa_value* record, tree_decl* field)
 {
         S_ASSERT(tree_type_is(ssa_get_value_type(record), TTK_POINTER));
-        S_ASSERT(tree_decls_are_same(tree_get_member_parent(member),
-                tree_get_decl_type_entity(tree_get_pointer_target(ssa_get_value_type(record)))));
+        S_ASSERT(tree_get_field_record(field) == 
+                tree_get_decl_type_entity(tree_get_pointer_target(ssa_get_value_type(record))));
 
-        tree_type* member_ptr = tree_new_pointer_type(
-                ssa_get_tree(self->context), tree_get_decl_type(member));
+        tree_type* field_ptr = tree_new_pointer_type(
+                ssa_get_tree(self->context), tree_get_decl_type(field));
 
         ssa_instr* i = ssa_new_getfieldaddr(
                 self->context,
                 ssa_builder_gen_uid(self),
-                member_ptr,
+                field_ptr,
                 record,
-                tree_get_member_index(member));
+                tree_get_field_index(field));
         if (!i)
                 return NULL;
 

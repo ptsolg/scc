@@ -13,8 +13,8 @@ extern void ssa_init_ex(ssa_context* self,
 {
          S_ASSERT(on_out_of_mem && context);
 
-         self->_target = tree_get_target(context);
-         self->_tree = context;
+         self->target = context->target;
+         self->tree = context;
 
          base_allocator_init_ex(&self->base_alloc, NULL, on_out_of_mem, alloc);
          bump_ptr_allocator_init_ex(&self->node_alloc, ssa_get_alloc(self));
@@ -28,5 +28,5 @@ extern void ssa_dispose(ssa_context* self)
 extern tree_type* ssa_get_type_for_label(ssa_context* self)
 {
         return tree_new_pointer_type(self->_tree,
-                tree_new_builtin_type(self->_tree, TBTK_VOID));
+                tree_new_builtin_type(self->tree, TBTK_VOID));
 }
