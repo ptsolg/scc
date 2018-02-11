@@ -182,7 +182,7 @@ extern void llvm_printer_emit_value(
         else if (k == SVK_CONSTANT)
                 llvm_printer_emit_constant(self, value);
         else if (k == SVK_DECL)
-                llvm_printf(self, "@%s", tree_get_id_cstr(self->tree,
+                llvm_printf(self, "@%s", tree_get_id_string(self->tree,
                         tree_get_decl_name(ssa_get_decl_entity(value))));
         else if (k == SVK_STRING)
                 llvm_printf(self, "@.str.%u", ssa_get_value_id(value));
@@ -544,7 +544,7 @@ static void llvm_printer_emit_function_header(
         llvm_prints(self, prefix);
         tree_type* t = tree_get_decl_type(func);
         llvm_printer_emit_type(self, tree_get_function_type_result(t));
-        llvm_printf(self, " @%s", tree_get_id_cstr(self->tree, tree_get_decl_name(func)));
+        llvm_printf(self, " @%s", tree_get_id_string(self->tree, tree_get_decl_name(func)));
         llvm_printer_emit_function_type_params(self, t);
 }
 
