@@ -4,29 +4,14 @@
 #include "scc/c/c-parse-stmt.h"
 #include "scc/c/c-parse-expr.h" // cparse_const_expr
 #include "scc/c/c-info.h"
-#include "scc/c/c-tree.h"
+#include "scc/c/c-context.h"
 #include "scc/c/c-errors.h"
-
-static bool cparse_function_definition(cparser* self, tree_decl* func)
-{
-        if (!csema_check_function_def_loc(self->sema, func))
-                return false;
-
-        csema_enter_function(self->sema, func);
-        tree_stmt* body = cparse_stmt(self);
-        csema_exit_function(self->sema);
-
-        if (!body || !csema_define_function_decl(self->sema, func, body))
-                return false;
-
-        return true;
-}
 
 static tree_decl* cparse_function_or_init_declarator(
         cparser* self, cdecl_specs* specs, bool func_def_expected, bool* func_has_def)
 {
         cdeclarator d;
-        csema_init_declarator(self->sema, &d, CDK_UNKNOWN);
+        cdeclarator_init(&d, self->sema, CDK_UNKNOWN);
         if (!cparse_declarator(self, &d))
         {
                 cdeclarator_dispose(&d);
@@ -35,27 +20,41 @@ static tree_decl* cparse_function_or_init_declarator(
 
         tree_decl* decl = csema_declare_external_decl(self->sema, specs, &d);
         cdeclarator_dispose(&d);
-        
         if (!decl)
                 return NULL;
 
+        tree_decl_kind dk = tree_get_decl_kind(decl);
         if (cparser_at(self, CTK_EQ))
         {
+                if (dk != TDK_VAR)
+                {
+                        if (dk == TDK_FUNCTION)
+                                cerror_function_initialized_like_a_variable(self->logger, decl);
+                        return NULL;
+                }
+
                 cparser_consume_token(self);
-                tree_expr* init = cparse_initializer(self, decl);
+                tree_expr* init = cparse_initializer(self, tree_get_decl_type(decl));
                 if (!init)
                         return NULL;
-                if (!csema_define_var_decl(self->sema, decl, init))
-                        return NULL;
+
+                return csema_define_var_decl(self->sema, decl, init);
         }
-        else if (func_def_expected && cparser_at(self, CTK_LBRACE))
+        else if (func_def_expected && dk == TDK_FUNCTION && cparser_at(self, CTK_LBRACE))
         {
-                if (!cparse_function_definition(self, decl))
+                if (!csema_check_func_def_loc(self->sema, decl))
+                        return NULL;
+
+                csema_enter_function(self->sema, decl);
+                tree_stmt* body = cparse_stmt(self);
+                csema_exit_function(self->sema);
+
+                if (!body)
                         return NULL;
 
                 *func_has_def = true;
+                return csema_define_func_decl(self->sema, decl, body);
         }
-
         return decl;
 }
 
@@ -101,7 +100,7 @@ static tree_decl* cparse_function_or_init_declarator_list(cparser* self, cdecl_s
                 else
                 {
                         cparser_require_ex(self, CTK_UNKNOWN,
-                                tree_decl_is_unnamed(d)
+                                tree_decl_is_anon(d)
                                         ? ctk_lbracket_or_id
                                         : ctk_comma_eq_semicolon_lbracket);
                         return NULL;
@@ -153,7 +152,7 @@ extern bool cparser_at_declaration(cparser* self)
 
 extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
 {
-        cdecl_specs_set_start_loc(result, cparser_get_loc(self));
+        cdecl_specs_set_loc_begin(result, cparser_get_loc(self));
         tree_type_quals quals = TTQ_UNQUALIFIED;
         while (1)
         {
@@ -177,13 +176,13 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
                 }
                 else if (cparser_at(self, CTK_TYPEDEF))
                 {
-                        if (!csema_set_typedef_specifier(self->sema, result))
+                        if (!csema_set_typedef_spec(self->sema, result))
                                 return false;
                         cparser_consume_token(self);
                 }
                 else if (cparser_at(self, CTK_INLINE))
                 {
-                        if (!csema_set_inline_specifier(self->sema, result))
+                        if (!csema_set_inline_spec(self->sema, result))
                                 return false;
                         cparser_consume_token(self);
                 }
@@ -194,20 +193,190 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
         if (!result->typespec)
         {
                 if (cparser_at(self, CTK_ID))
-                {
                         cerror_unknown_type_name(self->logger, cparser_get_token(self));
-                        return false;
-                }
-               
-                cerror_expected_type_specifier(self->logger,
-                        cdecl_specs_get_start_loc(result));
+                else
+                        cerror_expected_type_specifier(self->logger,
+                                cdecl_specs_get_loc_begin(result));
                 return false;
         }
 
-        result->typespec = csema_set_type_quals(self->sema, result->typespec, quals);
+        cdecl_specs_set_loc_end(result, cparser_get_loc(self));
+        tree_set_type_quals(result->typespec, quals);
+        return true;
+}
 
-        cdecl_specs_set_end_loc(result, cparser_get_loc(self));
-        return result->typespec != NULL;
+typedef struct
+{
+        // void/char/int/float or double
+        tree_builtin_type_kind base;
+
+        // counters for long/short/...
+        int nshort;
+        int nlong;
+        int nsigned;
+        int nunsigned;
+} cbuiltin_type_info;
+
+static void cbuiltin_type_info_init(cbuiltin_type_info* self)
+{
+        self->base = TBTK_INVALID;
+        self->nshort = 0;
+        self->nlong = 0;
+        self->nsigned = 0;
+        self->nunsigned = 0;
+}
+
+static bool cbuiltin_type_info_set_base(cbuiltin_type_info* self, tree_builtin_type_kind base)
+{
+        if (self->base != TBTK_INVALID)
+                return false; // base is already set
+
+        bool has_size_specs = self->nlong || self->nshort;
+        bool has_sign_specs = self->nsigned || self->nunsigned;
+        bool has_specs = has_size_specs || has_sign_specs;
+        if (base == TBTK_VOID || base == TBTK_FLOAT)
+        {
+                if (has_specs)
+                        return false;
+        }
+        else if (base == TBTK_INT32)
+                ;
+        else if (base == TBTK_INT8)
+        {
+                if (has_size_specs)
+                        return false;
+        }
+        else if (base == TBTK_DOUBLE)
+        {
+                if (self->nshort || self->nlong > 2)
+                        return false;
+        }
+        else
+                S_UNREACHABLE(); // invalid base type
+
+        self->base = base;
+        return true;
+}
+
+static tree_builtin_type_kind cbuiltin_type_info_get_type(const cbuiltin_type_info* self)
+{
+        tree_builtin_type_kind base = self->base;
+        if (base == TBTK_VOID || base == TBTK_FLOAT || base == TBTK_DOUBLE)
+                return base;
+        else if (base == TBTK_INT8)
+                return self->nunsigned ? TBTK_UINT8 : TBTK_INT8;
+        else if (base == TBTK_INT32 || base == TBTK_INVALID)
+        {
+                if (base == TBTK_INVALID
+                        && !self->nshort
+                        && !self->nlong
+                        && !self->nsigned
+                        && !self->nunsigned)
+                        return false; // type info was not set
+
+                tree_builtin_type_kind t = self->nunsigned ? TBTK_UINT32 : TBTK_INT32;
+                if (self->nlong == 2)
+                        t = self->nunsigned ? TBTK_UINT64 : TBTK_INT64;
+                else if (self->nshort)
+                        t = self->nunsigned ? TBTK_UINT16 : TBTK_INT16;
+
+                return t;
+        }
+
+        S_UNREACHABLE();
+        return TBTK_INVALID;
+}
+
+static inline bool cbuiltin_type_can_have_size_or_sign_specifiers(tree_builtin_type_kind k)
+{
+        return k == TBTK_INVALID || k == TBTK_INT8 || k == TBTK_INT32;
+}
+
+static bool cbuiltin_type_info_set_signed(cbuiltin_type_info* self)
+{
+        if (self->nunsigned || !cbuiltin_type_can_have_size_or_sign_specifiers(self->base))
+                return false;
+
+        self->nsigned++;
+        return true;
+}
+
+static bool cbuiltin_type_info_set_unsigned(cbuiltin_type_info* self)
+{
+        if (self->nsigned || !cbuiltin_type_can_have_size_or_sign_specifiers(self->base))
+                return false;
+
+        self->nunsigned++;
+        return true;
+}
+
+static bool cbuiltin_type_info_set_short(cbuiltin_type_info* self)
+{
+        if (self->nlong || self->nshort
+                || !cbuiltin_type_can_have_size_or_sign_specifiers(self->base))
+                return false;
+
+        self->nshort++;
+        return true;
+}
+
+static bool cbuiltin_type_info_set_long(cbuiltin_type_info* self)
+{
+
+        if (self->nshort || self->nlong == 2
+                || !cbuiltin_type_can_have_size_or_sign_specifiers(self->base))
+                return false;
+
+        self->nlong++;
+        return true;
+}
+
+
+static tree_type* cparse_builtin_type_specifier(cparser* self)
+{
+        tree_location begin = cparser_get_loc(self);
+        cbuiltin_type_info info;
+        cbuiltin_type_info_init(&info);
+        while (1)
+        {
+                bool correct = true;
+                ctoken_kind k = ctoken_get_kind(cparser_get_token(self));
+                if (k == CTK_VOID)
+                        correct = cbuiltin_type_info_set_base(&info, TBTK_VOID);
+                else if (k == CTK_CHAR)
+                        correct = cbuiltin_type_info_set_base(&info, TBTK_INT8);
+                else if (k == CTK_INT)
+                        correct = cbuiltin_type_info_set_base(&info, TBTK_INT32);
+                else if (k == CTK_FLOAT)
+                        correct = cbuiltin_type_info_set_base(&info, TBTK_FLOAT);
+                else if (k == CTK_DOUBLE)
+                        correct = cbuiltin_type_info_set_base(&info, TBTK_DOUBLE);
+                else if (k == CTK_SIGNED)
+                        correct = cbuiltin_type_info_set_signed(&info);
+                else if (k == CTK_UNSIGNED)
+                        correct = cbuiltin_type_info_set_unsigned(&info);
+                else if (k == CTK_SHORT)
+                        correct = cbuiltin_type_info_set_short(&info);
+                else if (k == CTK_LONG)
+                        correct = cbuiltin_type_info_set_long(&info);
+                else
+                        break;
+
+                if (!correct)
+                {
+                        cerror_invalid_type_specifier(self->logger, begin);
+                        return NULL;
+                }
+                cparser_consume_token(self);
+        }
+
+        tree_builtin_type_kind k = cbuiltin_type_info_get_type(&info);
+        if (k == TBTK_INVALID)
+        {
+                cerror_expected_type_specifier(self->logger, cparser_get_loc(self));
+                return NULL;
+        }
+        return csema_new_builtin_type(self->sema, TTQ_UNQUALIFIED, k);
 }
 
 extern tree_type* cparse_type_specifier(cparser* self)
@@ -225,52 +394,10 @@ extern tree_type* cparse_type_specifier(cparser* self)
         else if (k == CTK_ID)
                 return cparse_typedef_name(self);
 
-        tree_location begin = cparser_get_loc(self);
-        cbuiltin_type_info info;
-        cbuiltin_type_info_init(&info);
-        while (1)
-        {
-                k = ctoken_get_kind(cparser_get_token(self));
-                bool res = true;
-                if (k == CTK_VOID)
-                        res = cbuiltin_type_info_set_base(&info, TBTK_VOID);
-                else if (k == CTK_CHAR)
-                        res = cbuiltin_type_info_set_base(&info, TBTK_INT8);
-                else if (k == CTK_INT)
-                        res = cbuiltin_type_info_set_base(&info, TBTK_INT32);
-                else if (k == CTK_FLOAT)
-                        res = cbuiltin_type_info_set_base(&info, TBTK_FLOAT);
-                else if (k == CTK_DOUBLE)
-                        res = cbuiltin_type_info_set_base(&info, TBTK_DOUBLE);
-                else if (k == CTK_SIGNED)
-                        res = cbuiltin_type_info_set_signed(&info);
-                else if (k == CTK_UNSIGNED)
-                        res = cbuiltin_type_info_set_unsigned(&info);
-                else if (k == CTK_SHORT)
-                        res = cbuiltin_type_info_set_short(&info);
-                else if (k == CTK_LONG)
-                        res = cbuiltin_type_info_set_long(&info);
-                else
-                        break;
-
-                if (!res)
-                {
-                        cerror_invalid_type_specifier(self->logger, begin);
-                        return NULL;
-                }
-                cparser_consume_token(self);
-        }
-
-        tree_builtin_type_kind btk = cbuiltin_type_info_get_type(&info);
-        if (btk == TBTK_INVALID)
-        {
-                cerror_expected_type_specifier(self->logger, cparser_get_loc(self));
-                return NULL;
-        }
-        return csema_new_builtin_type(self->sema, TTQ_UNQUALIFIED, btk);
+        return cparse_builtin_type_specifier(self);
 }
 
-extern tree_type_quals cparse_type_qualifier_list_opt(cparser* self)
+extern int cparse_type_qualifier_list_opt(cparser* self)
 {
         tree_type_quals quals = TTQ_UNQUALIFIED;
         while (!cparser_at(self, CTK_EOF))
@@ -292,8 +419,8 @@ extern tree_type* cparse_specifier_qualifier_list(cparser* self)
         if (!typespec)
                 return NULL;
 
-        quals |= cparse_type_qualifier_list_opt(self);
-        return csema_set_type_quals(self->sema, typespec, quals);
+        tree_set_type_quals(typespec, quals | cparse_type_qualifier_list_opt(self));
+        return typespec;
 }
 
 static const ctoken_kind ctk_semicolon_or_comma[] =
@@ -313,7 +440,7 @@ static bool cparse_struct_declaration(cparser* self)
         while (1)
         {
                 cdeclarator sd;
-                csema_init_declarator(self->sema, &sd, CDK_MEMBER);
+                cdeclarator_init(&sd, self->sema, CDK_MEMBER);
 
                 if (!cparse_declarator(self, &sd))
                 {
@@ -328,7 +455,7 @@ static bool cparse_struct_declaration(cparser* self)
                         bits = cparse_const_expr(self);
                 }
 
-                tree_decl* m = csema_define_member_decl(self->sema, &ds, &sd, bits);
+                tree_decl* m = csema_define_field_decl(self->sema, &ds, &sd, bits);
                 cdeclarator_dispose(&sd);
                 if (!m)
                         return false;
@@ -352,7 +479,7 @@ static bool cparse_struct_declaration_list(cparser* self, tree_decl* record)
         }
 
         bool res = true;
-        csema_enter_decl_scope(self->sema, tree_get_record_scope(record));
+        csema_enter_decl_scope(self->sema, tree_get_record_fields(record));
         while (!cparser_at(self, CTK_RBRACE))
                 if (!cparse_struct_declaration(self))
                 {
@@ -383,7 +510,7 @@ extern tree_decl* cparse_struct_or_union_specifier(cparser* self, bool* referenc
         else if (!cparser_require_ex(self, CTK_STRUCT, ctk_struct_or_union))
                 return NULL;
 
-        tree_id name = tree_get_empty_id();
+        tree_id name = TREE_EMPTY_ID;
         if (cparser_at(self, CTK_ID))
         {
                 name = ctoken_get_string(cparser_get_token(self));
@@ -427,7 +554,7 @@ static tree_decl* cparse_enumerator(cparser* self, tree_decl* enum_)
                         return NULL;
         }
 
-        return csema_define_enumerator(self->sema, enum_, id, id_loc, value);
+        return csema_define_enumerator_decl(self->sema, enum_, id_loc, id, value);
 }
 
 static ctoken_kind ctk_rbrace_or_comma[] =
@@ -445,7 +572,7 @@ static bool cparse_enumerator_list(cparser* self, tree_decl* enum_)
                 return false;
         }
         bool res = false;
-        csema_enter_decl_scope(self->sema, tree_get_enum_scope(enum_));
+        csema_enter_decl_scope(self->sema, tree_get_enum_values(enum_));
         while (1)
         {
                 tree_decl* enumerator = cparse_enumerator(self, enum_);
@@ -476,7 +603,7 @@ extern tree_decl* cparse_enum_specifier(cparser* self, bool* referenced)
         if (!cparser_require(self, CTK_ENUM))
                 return NULL;
 
-        tree_id name = tree_get_empty_id();
+        tree_id name = TREE_EMPTY_ID;
         if (cparser_at(self, CTK_ID))
         {
                 name = ctoken_get_string(cparser_get_token(self));
@@ -502,7 +629,7 @@ extern tree_decl* cparse_enum_specifier(cparser* self, bool* referenced)
         if (!cparser_require(self, CTK_RBRACE))
                 return NULL;
 
-        return csema_set_decl_end_loc(self->sema, enum_, rbrace_loc);
+        return csema_complete_enum_decl(self->sema, enum_, rbrace_loc);
 }
 
 static bool cparse_pointer_opt(cparser* self, ctype_chain* result)
@@ -555,9 +682,10 @@ static bool cparse_parameter_type_list_opt(cparser* self, cdeclarator* result)
                 }
 
                 cparam* p = cparse_param_declaration(self);
-                if (!p || !csema_add_declarator_param(self->sema, result, p))
+                if (!p)
                         return false;
 
+                csema_add_declarator_param(self->sema, result, p);
                 if (cparser_at(self, CTK_RBRACKET))
                 {
                         cdeclarator_set_initialized(result);
@@ -575,7 +703,7 @@ static bool cparse_direct_declarator_suffix_opt(cparser* self, cdeclarator* resu
         if (cparser_at(self, CTK_LBRACKET))
         {
                 cparser_consume_token(self);
-                if (!csema_new_direct_declarator_function_suffix(self->sema, result))
+                if (!csema_add_direct_declarator_function_suffix(self->sema, result))
                         return false;
                 if (!cparse_parameter_type_list_opt(self, result))
                         return false;
@@ -590,7 +718,7 @@ static bool cparse_direct_declarator_suffix_opt(cparser* self, cdeclarator* resu
                         if (!(size = cparse_const_expr(self)))
                                 return false;
 
-                if (!csema_new_direct_declarator_array_suffix(
+                if (!csema_add_direct_declarator_array_suffix(
                         self->sema, result, TTQ_UNQUALIFIED, size))
                 {
                         return false;
@@ -610,9 +738,7 @@ static bool cparse_direct_declarator(cparser* self, cdeclarator* result)
         {
                 tree_id id = ctoken_get_string(cparser_get_token(self));
                 tree_location id_loc = cparser_get_loc(self);
-                if (!csema_set_declarator_name(self->sema, id_loc, result, id))
-                        return false;
-
+                cdeclarator_set_name(result, id_loc, id);
                 cparser_consume_token(self);
         }
         else if (cparser_require(self, CTK_LBRACKET))
@@ -656,7 +782,7 @@ extern tree_type* cparse_type_name(cparser* self)
         if (ctoken_starts_declarator(cparser_get_token(self)))
         {
                 cdeclarator d;
-                csema_init_declarator(self->sema, &d, CDK_TYPE_NAME);
+                cdeclarator_init(&d, self->sema, CDK_TYPE_NAME);
                 if (!cparse_declarator(self, &d))
                 {
                         cdeclarator_dispose(&d);
