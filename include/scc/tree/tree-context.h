@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "scc/scl/alloc.h"
+#include "scc/scl/allocator.h"
 #include "tree-common.h"
 #include "tree-type.h"
 

@@ -1,4 +1,4 @@
-#include "scc/scl/alloc.h"
+#include "scc/scl/allocator.h"
 #include "scc/scl/malloc.h"
 #include <setjmp.h>
 

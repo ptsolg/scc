@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "alloc.h"
+#include "allocator.h"
 #include "error.h"
 #include "misc.h"
 
