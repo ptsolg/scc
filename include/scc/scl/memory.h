@@ -51,7 +51,7 @@ static inline void* obstack_allocate_aligned(obstack* self, ssize bytes, ssize a
         ssize adjustment = pointer_adjustment(self->_chunk.pos, alignment);
         if (self->_chunk.pos + bytes + adjustment >= self->_chunk.end)
         {
-                if (!obstack_grow(self, bytes + alignment))
+                if (S_FAILED(obstack_grow(self, bytes + alignment)))
                         return NULL;
 
                 adjustment = pointer_adjustment(self->_chunk.pos, alignment);
