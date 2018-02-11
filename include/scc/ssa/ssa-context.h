@@ -18,7 +18,7 @@ typedef struct _tree_type tree_type;
 
 typedef struct _ssa_context
 {
-        bump_ptr_allocator node_alloc;
+        obstack nodes;
         base_allocator base_alloc;
 
         tree_context* tree;
@@ -35,7 +35,7 @@ extern tree_type* ssa_get_type_for_label(ssa_context* self);
 
 static inline void* ssa_allocate(ssa_context* self, ssize bytes)
 {
-        return bump_ptr_allocate(&self->node_alloc, bytes);
+        return obstack_allocate(&self->nodes, bytes);
 }
 
 static inline allocator* ssa_get_alloc(ssa_context* self)

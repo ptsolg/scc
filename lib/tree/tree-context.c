@@ -10,7 +10,7 @@ extern void tree_init_ex(tree_context* self, tree_target_info* target, allocator
 {
         self->target = target;
         self->alloc = alloc;
-        bump_ptr_allocator_init_ex(&self->node_allocator, alloc);
+        obstack_init_ex(&self->nodes, alloc);
         strpool_init_ex(&self->strings, self->alloc);
 
         for (tree_builtin_type_kind i = TBTK_INVALID; i < TBTK_SIZE; i++)
@@ -20,7 +20,7 @@ extern void tree_init_ex(tree_context* self, tree_target_info* target, allocator
 extern void tree_dispose(tree_context* self)
 {
         strpool_dispose(&self->strings);
-        bump_ptr_allocator_dispose(&self->node_allocator);
+        obstack_dispose(&self->nodes);
 }
 
 extern tree_type* tree_get_builtin_type(tree_context* self, tree_builtin_type_kind k)

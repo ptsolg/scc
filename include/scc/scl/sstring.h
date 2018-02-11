@@ -26,7 +26,7 @@ typedef struct _strentry
 typedef struct
 {
         htab _strings;
-        bump_ptr_allocator _alloc;
+        obstack _string_alloc;
 } strpool;
 
 #define STRREF_INVALID ((strref)-1)

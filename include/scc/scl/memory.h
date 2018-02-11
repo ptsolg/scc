@@ -14,14 +14,13 @@ extern "C" {
 #include "list.h"
 #include "error.h"
 
-
 #if S_X64
 #define STDALIGNMENT 8
 #else
 #define STDALIGNMENT 4
 #endif
 
-typedef struct _bump_ptr_allocator
+typedef struct _obstack
 {
         allocator _base;
 
@@ -34,26 +33,52 @@ typedef struct _bump_ptr_allocator
 
         list_head _chunks;
         allocator* _alloc;
-} bump_ptr_allocator;
+} obstack;
 
-extern void bump_ptr_allocator_init(bump_ptr_allocator* self);
-extern void bump_ptr_allocator_init_ex(bump_ptr_allocator* self, allocator* alloc);
-extern void bump_ptr_allocator_dispose(bump_ptr_allocator* self);
+extern void obstack_init(obstack* self);
+extern void obstack_init_ex(obstack* self, allocator* alloc);
+extern void obstack_dispose(obstack* self);
+extern serrcode obstack_grow(obstack* self, ssize at_least);
 
-extern bool _bump_ptr_allocator_grow(bump_ptr_allocator* self, ssize cst);
+static inline void* obstack_allocate_aligned(obstack* self, ssize bytes, ssize alignment)
+{
+        ssize adjustment = pointer_adjustment(self->_chunk.pos, alignment);
+        if (self->_chunk.pos + bytes + adjustment >= self->_chunk.end)
+        {
+                if (!obstack_grow(self, bytes + alignment))
+                        return NULL;
 
-static inline void* bump_ptr_allocate(bump_ptr_allocator* self, ssize bytes);
-static inline void* bump_ptr_allocate_aligned(
-        bump_ptr_allocator* self, ssize bytes, ssize alignment);
+                adjustment = pointer_adjustment(self->_chunk.pos, alignment);
+        }
 
-static inline void bump_ptr_deallocate(bump_ptr_allocator* self, void* block);
+        void* block = self->_chunk.pos + adjustment;
+        self->_chunk.pos += bytes + adjustment;
+        return block;
+}
 
-static inline allocator* bump_ptr_allocator_base(bump_ptr_allocator* self);
-static inline allocator* bump_ptr_allocator_parent(const bump_ptr_allocator* self);
+static inline void* obstack_allocate(obstack* self, ssize bytes)
+{
+        return obstack_allocate_aligned(self, bytes, STDALIGNMENT);
+}
+
+static inline void obstack_deallocate(obstack* self, void* object)
+{
+        ;
+}
+
+static inline allocator* obstack_to_allocator(obstack* self)
+{
+        return &self->_base;
+}
+
+static inline allocator* obstack_allocator(const obstack* self)
+{
+        return self->_alloc;
+}
 
 typedef struct _object_allocator
 {
-        bump_ptr_allocator _base;
+        obstack _base;
         suint8* _top;
         ssize _obsize;
 } object_allocator;
@@ -106,46 +131,10 @@ extern allocator* _get_stdalloc();
 
 #define STDALLOC (_get_stdalloc())
 
-static inline void* bump_ptr_allocate(bump_ptr_allocator* self, ssize bytes)
-{
-        return bump_ptr_allocate_aligned(self, bytes, STDALIGNMENT);
-}
-static inline void* bump_ptr_allocate_aligned(
-        bump_ptr_allocator* self, ssize bytes, ssize alignment)
-{
-        ssize adjustment = pointer_adjustment(self->_chunk.pos, alignment);
-        if (self->_chunk.pos + bytes + adjustment >= self->_chunk.end)
-        {
-                if (!_bump_ptr_allocator_grow(self, bytes + alignment))
-                        return NULL;
-
-                adjustment = pointer_adjustment(self->_chunk.pos, alignment);
-        }
-
-        void* block = self->_chunk.pos + adjustment;
-        self->_chunk.pos += bytes + adjustment;
-        return block;
-}
-
-static inline void bump_ptr_deallocate(bump_ptr_allocator* self, void* block)
-{
-        ;
-}
-
-static inline allocator* bump_ptr_allocator_base(bump_ptr_allocator* self)
-{
-        return &self->_base;
-}
-
-static inline allocator* bump_ptr_allocator_parent(const bump_ptr_allocator* self)
-{
-        return self->_alloc;
-}
-
 static inline void* object_allocate(object_allocator* self)
 {
         if (!self->_top)
-                if (!(self->_top = bump_ptr_allocate(&self->_base, sizeof(void*) + self->_obsize)))
+                if (!(self->_top = obstack_allocate(&self->_base, sizeof(void*) + self->_obsize)))
                         return NULL;
 
         void* object = self->_top + sizeof(void*);

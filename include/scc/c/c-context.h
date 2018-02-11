@@ -19,7 +19,7 @@ typedef struct _file_entry file_entry;
 typedef struct _ccontext
 {
         base_allocator base_alloc;
-        bump_ptr_allocator node_alloc;
+        obstack nodes;
         list_head sources;
         bool use_tags;
         tree_context* tree;
@@ -49,7 +49,7 @@ static inline allocator* cget_alloc(ccontext* self)
 
 static inline void* callocate(ccontext* self, ssize bytes)
 {
-        return bump_ptr_allocate(&self->node_alloc, bytes);
+        return obstack_allocate(&self->nodes, bytes);
 }
 
 #ifdef __cplusplus

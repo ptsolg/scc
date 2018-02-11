@@ -17,7 +17,7 @@ typedef struct _tree_target_info tree_target_info;
 
 typedef struct _tree_context
 {
-        bump_ptr_allocator node_allocator;
+        obstack nodes;
         allocator* alloc;
         strpool strings;
         tree_target_info* target;
@@ -43,7 +43,7 @@ static TREE_INLINE void tree_deallocate(tree_context* self, void* block)
 
 static TREE_INLINE void* tree_allocate_node(tree_context* self, ssize bytes)
 {
-        return bump_ptr_allocate(&self->node_allocator, bytes);
+        return obstack_allocate(&self->nodes, bytes);
 }
 
 static TREE_INLINE bool tree_get_id_strentry(

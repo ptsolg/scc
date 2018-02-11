@@ -16,7 +16,7 @@ extern void cinit_ex(ccontext* self,
         self->tree = tree;
 
         base_allocator_init_ex(&self->base_alloc, NULL, on_bad_alloc, alloc);
-        bump_ptr_allocator_init_ex(&self->node_alloc, cget_alloc(self));
+        obstack_init_ex(&self->nodes, cget_alloc(self));
         list_init(&self->sources);
 }
 
@@ -25,7 +25,7 @@ extern void cdispose(ccontext* self)
         while (!list_empty(&self->sources))
                 csource_delete(self, (csource*)list_pop_back(&self->sources));
 
-        bump_ptr_allocator_dispose(&self->node_alloc);
+        obstack_dispose(&self->nodes);
         base_allocator_dispose(&self->base_alloc);
 }
 

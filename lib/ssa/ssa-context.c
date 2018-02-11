@@ -17,7 +17,7 @@ extern void ssa_init_ex(ssa_context* self,
          self->tree = context;
 
          base_allocator_init_ex(&self->base_alloc, NULL, on_out_of_mem, alloc);
-         bump_ptr_allocator_init_ex(&self->node_alloc, ssa_get_alloc(self));
+         obstack_init_ex(&self->nodes, ssa_get_alloc(self));
 }
 
 extern void ssa_dispose(ssa_context* self)

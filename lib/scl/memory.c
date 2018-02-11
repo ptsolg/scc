@@ -2,31 +2,31 @@
 #include "scc/scl/malloc.h"
 #include <setjmp.h>
 
-extern void bump_ptr_allocator_init(bump_ptr_allocator* self)
+extern void obstack_init(obstack* self)
 {
-        bump_ptr_allocator_init_ex(self, STDALLOC);
+        obstack_init_ex(self, STDALLOC);
 }
 
-extern void bump_ptr_allocator_init_ex(bump_ptr_allocator* self, allocator* alloc)
+extern void obstack_init_ex(obstack* self, allocator* alloc)
 {
         self->_alloc = alloc;
         self->_chunk.pos = NULL;
         self->_chunk.end = NULL;
         self->_chunk.size = 0;
         allocator_init_ex(&self->_base,
-                &bump_ptr_allocate,
-                &bump_ptr_allocate_aligned,
-                &bump_ptr_deallocate);
+                &obstack_allocate,
+                &obstack_allocate_aligned,
+                &obstack_deallocate);
         list_init(&self->_chunks);
 }
 
-extern void bump_ptr_allocator_dispose(bump_ptr_allocator* self)
+extern void obstack_dispose(obstack* self)
 {
         while (!list_empty(&self->_chunks))
                 deallocate(self->_alloc, list_pop_front(&self->_chunks));
 }
 
-extern bool _bump_ptr_allocator_grow(bump_ptr_allocator* self, ssize cst)
+extern serrcode obstack_grow(obstack* self, ssize at_least)
 {
         struct
         {
@@ -34,15 +34,15 @@ extern bool _bump_ptr_allocator_grow(bump_ptr_allocator* self, ssize cst)
                 suint8 data[0];
         } *chunk;
 
-        ssize data_size = cst + self->_chunk.size;
+        ssize data_size = at_least + self->_chunk.size;
         if (!(chunk = allocate(self->_alloc, sizeof(*chunk) + data_size)))
-                return false;
+                return S_ERROR;
 
         self->_chunk.pos = chunk->data;
         self->_chunk.end = self->_chunk.pos + data_size;
         self->_chunk.size = data_size;
         list_push_back(&self->_chunks, &chunk->node);
-        return true;
+        return S_NO_ERROR;
 }
 
 extern void object_allocator_init(object_allocator* self, ssize obsize)
@@ -52,14 +52,14 @@ extern void object_allocator_init(object_allocator* self, ssize obsize)
 
 extern void object_allocator_init_ex(object_allocator* self, ssize obsize, allocator* alloc)
 {
-        bump_ptr_allocator_init_ex(&self->_base, alloc);
+        obstack_init_ex(&self->_base, alloc);
         self->_obsize = obsize;
         self->_top = NULL;
 }
 
 extern void object_allocator_dispose(object_allocator* self)
 {
-        bump_ptr_allocator_dispose(&self->_base);
+        obstack_dispose(&self->_base);
 }
 
 extern void base_allocator_init(
