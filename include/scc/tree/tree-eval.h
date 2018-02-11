@@ -9,21 +9,34 @@
 extern "C" {
 #endif
 
-#include "tree-target.h"
-#include "tree-expr.h"
 #include "scc/scl/value.h"
 
-typedef struct _tree_eval_info
+typedef struct _tree_context tree_context;
+typedef struct _tree_expr tree_expr;
+
+typedef enum
 {
-        const tree_target_info* _target;
-        const tree_expr* _error;
-} tree_eval_info;
+        TERK_INVALID,
+        TERK_INTEGER,
+        TERK_FLOATING,
+        TERK_ADDRESS_CONSTANT,
+} tree_eval_result_kind;
 
-extern void tree_init_eval_info(tree_eval_info* self, const tree_target_info* target);
-extern const tree_expr* tree_get_eval_eror(const tree_eval_info* self);
+typedef struct _tree_eval_result
+{
+        tree_eval_result_kind kind;
+        avalue value;
+        const tree_expr* error;
+} tree_eval_result;
 
-extern bool tree_eval_as_integer(tree_eval_info* info, const tree_expr* expr, int_value* result);
-extern bool tree_eval_as_arithmetic(tree_eval_info* info, const tree_expr* expr, avalue* result);
+extern bool tree_eval_expr(
+        tree_context* context, const tree_expr* expr, tree_eval_result* result);
+
+extern bool tree_eval_expr_as_integer(
+        tree_context* context, const tree_expr* expr, tree_eval_result* result);
+
+extern bool tree_eval_expr_as_arithmetic(
+        tree_context* context, const tree_expr* expr, tree_eval_result* result);
 
 #ifdef __cplusplus
 }

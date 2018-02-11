@@ -1,401 +1,349 @@
 #include "scc/tree/tree-eval.h"
+#include "scc/tree/tree-expr.h"
+#include "scc/tree/tree-target.h"
+#include "scc/tree/tree-context.h"
 
-extern void tree_init_eval_info(tree_eval_info* self, const tree_target_info* target)
+static bool tree_eval_binop(tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
-        self->_target = target;
-        self->_error = NULL;
-}
-
-extern const tree_expr* tree_get_eval_eror(const tree_eval_info* self)
-{
-        return self->_error;
-}
-
-extern bool tree_eval_as_integer(tree_eval_info* info, const tree_expr* expr, int_value* result)
-{
-        avalue r;
-        if (!tree_eval_as_arithmetic(info, expr, &r))
+        tree_eval_result rr;
+        if (!tree_eval_expr(context, tree_get_binop_rhs(expr), &rr))
+                return false;
+        if (!tree_eval_expr(context, tree_get_binop_lhs(expr), result))
                 return false;
 
-        if (!avalue_is_int(&r))
-                return false;
-
-        *result = avalue_get_int(&r);
-        return true;
-}
-
-static bool tree_eval_mul(avalue* lhs, const avalue* rhs)
-{
-        avalue_mul(lhs, rhs);
-        return true;
-}
-
-static bool tree_eval_div(avalue* lhs, const avalue* rhs)
-{
-        return avalue_div(lhs, rhs) != OR_DIV_BY_ZERO;
-}
-
-static bool tree_eval_mod(avalue* lhs, const avalue* rhs)
-{
-        return avalue_mod(lhs, rhs) == OR_OK;
-}
-
-static bool tree_eval_add(avalue* lhs, const avalue* rhs)
-{
-        avalue_add(lhs, rhs);
-        return true;
-}
-
-static bool tree_eval_sub(avalue* lhs, const avalue* rhs)
-{
-        avalue_sub(lhs, rhs);
-        return true;
-}
-
-static bool tree_eval_shl(avalue* lhs, const avalue* rhs)
-{
-        return avalue_shl(lhs, rhs) != OR_INVALID;
-}
-
-static bool tree_eval_shr(avalue* lhs, const avalue* rhs)
-{
-        return avalue_shr(lhs, rhs) != OR_INVALID;
-}
-
-static bool tree_eval_le(avalue* lhs, const avalue* rhs)
-{
-        int v = avalue_cmp(lhs, rhs) == CR_LE;
-        avalue_init_int(lhs, 32, true, v);
-        return true;
-}
-
-static bool tree_eval_gr(avalue* lhs, const avalue* rhs)
-{
-        int v = avalue_cmp(lhs, rhs) == CR_GR;
-        avalue_init_int(lhs, 32, true, v);
-        return true;
-}
-
-static bool tree_eval_leq(avalue* lhs, const avalue* rhs)
-{
-        int v = avalue_cmp(lhs, rhs) == CR_LE || avalue_cmp(lhs, rhs) == CR_EQ;
-        avalue_init_int(lhs, 32, true, v);
-        return true;
-}
-
-static bool tree_eval_geq(avalue* lhs, const avalue* rhs)
-{
-        int v = avalue_cmp(lhs, rhs) == CR_GR || avalue_cmp(lhs, rhs) == CR_EQ;
-        avalue_init_int(lhs, 32, true, v);
-        return true;
-}
-
-static bool tree_eval_eq(avalue* lhs, const avalue* rhs)
-{
-        int v = avalue_cmp(lhs, rhs) == CR_EQ;
-        avalue_init_int(lhs, 32, true, v);
-        return true;
-}
-
-static bool tree_eval_neq(avalue* lhs, const avalue* rhs)
-{
-        int v = avalue_cmp(lhs, rhs) != CR_EQ;
-        avalue_init_int(lhs, 32, true, v);
-        return true;
-}
-
-static bool tree_eval_and(avalue* lhs, const avalue* rhs)
-{
-        return avalue_and(lhs, rhs) != OR_INVALID;
-}
-
-static bool tree_eval_xor(avalue* lhs, const avalue* rhs)
-{
-        return avalue_xor(lhs, rhs) != OR_INVALID;
-}
-
-static bool tree_eval_or(avalue* lhs, const avalue* rhs)
-{
-        return avalue_or(lhs, rhs) != OR_INVALID;
-}
-
-static bool tree_eval_log_and(avalue* lhs, const avalue* rhs)
-{
-        int v = !avalue_is_zero(lhs) && !avalue_is_zero(rhs);
-        avalue_init_int(lhs, 32, true, v);
-        return true;
-}
-
-static bool tree_eval_log_or(avalue* lhs, const avalue* rhs)
-{
-        int v = !avalue_is_zero(lhs) || !avalue_is_zero(rhs);
-        avalue_init_int(lhs, 32, true, v);
-        return true;
-}
-
-static bool(*const tree_binop_eval_table[TBK_SIZE])(avalue*, const avalue*) =
-{
-        NULL, // TBK_UNKNOWN
-        &tree_eval_mul, // TBK_MUL
-        &tree_eval_div, // TBK_DIV
-        &tree_eval_mod, // TBK_MOD
-        &tree_eval_add, // TBK_ADD
-        &tree_eval_sub, // TBK_SUB
-        &tree_eval_shl, // TBK_SHL
-        &tree_eval_shr, // TBK_SHR
-        &tree_eval_le, // TBK_LE
-        &tree_eval_gr, // TBK_GR
-        &tree_eval_leq, // TBK_LEQ
-        &tree_eval_geq, // TBK_GEQ
-        &tree_eval_eq, // TBK_EQ
-        &tree_eval_neq, // TBK_NEQ
-        &tree_eval_and, // TBK_AND
-        &tree_eval_xor, // TBK_XOR
-        &tree_eval_or, // TBK_OR
-        &tree_eval_log_and, // TBK_LOG_AND
-        &tree_eval_log_or, // TBK_LOG_OR
-        NULL, // TBK_ASSIGN
-        NULL, // TBK_ADD_ASSIGN
-        NULL, // TBK_SUB_ASSIGN
-        NULL, // TBK_MUL_ASSIGN
-        NULL, // TBK_DIV_ASSIGN
-        NULL, // TBK_MOD_ASSIGN
-        NULL, // TBK_SHL_ASSIGN
-        NULL, // TBK_SHR_ASSIGN
-        NULL, // TBK_AND_ASSIGN
-        NULL, // TBK_XOR_ASSIGN
-        NULL, // TBK_OR_ASSIGN
-        NULL, // TBK_COMMA
-};
-
-static bool tree_eval_binop(tree_eval_info* info, const tree_expr* expr, avalue* result)
-{
-        const tree_expr* lhs = tree_get_binop_lhs(expr);
-        const tree_expr* rhs = tree_get_binop_rhs(expr);
-        const tree_type* lt = tree_get_expr_type(lhs);
-        const tree_type* rt = tree_get_expr_type(rhs);
-
-        if (!tree_type_is_arithmetic(lt) || !tree_type_is_arithmetic(rt))
-                return false;
-
-        if (!tree_eval_as_arithmetic(info, lhs, result))
-                return false;
-
-        avalue rr;
-        if (!tree_eval_as_arithmetic(info, rhs, &rr))
-                return false;
-
-        tree_binop_kind k = tree_get_binop_kind(expr);
-        TREE_ASSERT_BINOP_KIND(k);
-
-        if (!tree_binop_eval_table[k] || !tree_binop_eval_table[k](result, &rr))
+        if (result->kind == TERK_ADDRESS_CONSTANT)
+                return true;
+        if (rr.kind == TERK_ADDRESS_CONSTANT)
         {
-                info->_error = expr;
-                return false;
+                result->kind = TERK_ADDRESS_CONSTANT;
+                return true;
         }
 
-        return true;
+        avalue* lv = &result->value;
+        avalue* rv = &rr.value;
+        cmp_result cr;
+
+        switch (tree_get_binop_kind(expr))
+        {
+                case TBK_MUL:
+                        avalue_mul(lv, rv);
+                        return true;
+                case TBK_DIV:
+                        return avalue_div(lv, rv) != OR_DIV_BY_ZERO;
+                case TBK_MOD:
+                        return avalue_mod(lv, rv) == OR_OK;
+                case TBK_ADD:
+                        avalue_add(lv, rv);
+                        return true;
+                case TBK_SUB:
+                        avalue_sub(lv, rv);
+                        return true;
+                case TBK_SHL:
+                        avalue_shl(lv, rv);
+                        return true;
+                case TBK_SHR:
+                        avalue_shr(lv, rv);
+                        return true;
+                case TBK_LE:
+                        avalue_init_int(lv, 32, true, avalue_cmp(lv, rv) == CR_LE);
+                        return true;
+                case TBK_GR:
+                        avalue_init_int(lv, 32, true, avalue_cmp(lv, rv) == CR_GR);
+                        return true;
+                case TBK_LEQ:
+                        cr = avalue_cmp(lv, rv);
+                        avalue_init_int(lv, 32, true, cr == CR_LE || cr == CR_EQ);
+                        return true;
+                case TBK_GEQ:
+                        cr = avalue_cmp(lv, rv);
+                        avalue_init_int(lv, 32, true, cr == CR_GR || cr == CR_EQ);
+                        return true;
+                case TBK_EQ:
+                        avalue_init_int(lv, 32, true, avalue_cmp(lv, rv) == CR_EQ);
+                        return true;
+                case TBK_NEQ:
+                        avalue_init_int(lv, 32, true, avalue_cmp(lv, rv) != CR_EQ);
+                        return true;
+                case TBK_AND:
+                        avalue_and(lv, rv);
+                        return true;
+                case TBK_XOR:
+                        avalue_xor(lv, rv);
+                        return true;
+                case TBK_OR:
+                        avalue_or(lv, rv);
+                        return true;
+                case TBK_LOG_AND:
+                        avalue_init_int(lv, 32, true, !avalue_is_zero(lv) && !avalue_is_zero(rv));
+                        return true;
+                case TBK_LOG_OR:        
+                        avalue_init_int(lv, 32, true, !avalue_is_zero(lv) || !avalue_is_zero(rv));
+                        return true;
+
+                default:
+                        S_ASSERT(0 && "Invalid expression");
+                case TBK_COMMA:
+                case TBK_UNKNOWN:
+                case TBK_ASSIGN:
+                case TBK_ADD_ASSIGN:
+                case TBK_SUB_ASSIGN:
+                case TBK_MUL_ASSIGN:
+                case TBK_DIV_ASSIGN:
+                case TBK_MOD_ASSIGN:
+                case TBK_SHL_ASSIGN:
+                case TBK_SHR_ASSIGN:
+                case TBK_AND_ASSIGN:
+                case TBK_XOR_ASSIGN:
+                case TBK_OR_ASSIGN:
+                        return false;
+        }
 }
 
-static bool tree_eval_plus(avalue* result)
+static bool tree_eval_address(tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
-        return true;
+        return false;
 }
 
-static bool tree_eval_minus(avalue* result)
+static bool tree_eval_dereference(tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
-        avalue_neg(result);
-        return true;
+        return false;
 }
 
-static bool tree_eval_not(avalue* result)
+static bool tree_eval_unop(tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
-        return avalue_not(result) != OR_INVALID;
-}
-
-static bool tree_eval_log_not(avalue* result)
-{
-        avalue_init_int(result, 32, true, avalue_is_zero(result) ? 1 : 0);
-        return true;
-}
-
-static bool(*const tree_unop_eval_table[TUK_SIZE])(avalue*) =
-{
-        NULL, // TUK_UNKNOWN
-        NULL, // TUK_POST_INC
-        NULL, // TUK_POST_DEC
-        NULL, // TUK_PRE_INC
-        NULL, // TUK_PRE_DEC
-        &tree_eval_plus, // TUK_PLUS
-        &tree_eval_minus, // TUK_MINUS
-        &tree_eval_not, // TUK_NOT
-        &tree_eval_log_not, // TUK_LOG_NOT
-        NULL, // TUK_DEREFERENCE
-        NULL, // TUK_ADDRESS
-};
-
-static bool tree_eval_unop(tree_eval_info* info, const tree_expr* expr, avalue* result)
-{
-        if (!expr)
-                return false;
-
         tree_unop_kind k = tree_get_unop_kind(expr);
-        TREE_ASSERT_UNOP_KIND(k);
+        if (k == TUK_ADDRESS)
+                return tree_eval_address(context, expr, result);
+        if (k == TUK_DEREFERENCE)
+                return tree_eval_dereference(context, expr, result);
 
-        if (!tree_eval_as_arithmetic(info, tree_get_unop_expr(expr), result))
+        if (!tree_eval_expr_as_arithmetic(context, tree_get_unop_operand(expr), result))
                 return false;
-        if (!tree_unop_eval_table[k])
+        
+        switch (tree_get_unop_kind(expr))
         {
-                info->_error = expr;
-                return false;
+                case TUK_PLUS:
+                        return true;
+                case TUK_MINUS:
+                        avalue_neg(&result->value);
+                        return true;
+                case TUK_NOT:
+                        avalue_not(&result->value);
+                        return true;
+                case TUK_LOG_NOT:
+                        result->kind = TERK_INTEGER;
+                        avalue_init_int(&result->value, 32, true,
+                                avalue_is_zero(&result->value) ? 1 : 0);
+                        return true;
+   
+                default:
+                        S_ASSERT(0 && "Invalid expression");
+                case TUK_UNKNOWN:
+                case TUK_POST_INC:
+                case TUK_POST_DEC:
+                case TUK_PRE_INC:
+                case TUK_PRE_DEC:
+                        return false;
         }
-
-        return tree_unop_eval_table[k](result);
 }
 
-static bool tree_eval_conditional(tree_eval_info* info, const tree_expr* expr, avalue* result)
+static bool tree_eval_conditional(
+        tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
-        avalue cond;
-        if (!tree_eval_as_arithmetic(info, tree_get_conditional_condition(expr), &cond))
+        tree_eval_result cond;
+        if (!tree_eval_expr_as_arithmetic(context, tree_get_conditional_condition(expr), &cond))
                 return false;
-
-        return avalue_is_zero(&cond)
-                ? tree_eval_as_arithmetic(info, tree_get_conditional_rhs(expr), result)
-                : tree_eval_as_arithmetic(info, tree_get_conditional_lhs(expr), result);
+        
+        return avalue_is_zero(&cond.value)
+                ? tree_eval_expr(context, tree_get_conditional_rhs(expr), result)
+                : tree_eval_expr(context, tree_get_conditional_lhs(expr), result);
 }
 
-static bool tree_eval_int_literal(tree_eval_info* info, const tree_expr* expr, avalue* result)
+static bool tree_eval_integer_literal(
+        tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
         tree_type* t = tree_get_expr_type(expr);
         bool ext = tree_builtin_type_is(t, TBTK_INT64)
                 || tree_builtin_type_is(t, TBTK_UINT64);
 
+        result->kind = TERK_INTEGER;
         avalue_init_int(
-                result,
+                &result->value,
                 ext ? 64 : 32,
                 tree_type_is_signed_integer(t),
                 tree_get_integer_literal(expr));
+
         return true;
 }
 
-static bool tree_eval_char_literal(tree_eval_info* info, const tree_expr* expr, avalue* result)
+static bool tree_eval_character_literal(
+        tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
-        avalue_init_int(result, 8, true, tree_get_character_literal(expr));
+        result->kind = TERK_INTEGER;
+        avalue_init_int(&result->value, 8, true, tree_get_character_literal(expr));
         return true;
 }
 
-static bool tree_eval_flt_literal(tree_eval_info* info, const tree_expr* expr, avalue* result)
+static bool tree_eval_floating_literal(
+        tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
+        result->kind = TERK_FLOATING;
+
         const float_value* value = tree_get_floating_literal_cvalue(expr);
         if (tree_builtin_type_is(tree_get_expr_type(expr), TBTK_FLOAT))
-                avalue_init_sp(result, float_get_sp(value));
+                avalue_init_sp(&result->value, float_get_sp(value));
         else
-                avalue_init_dp(result, float_get_dp(value));
+                avalue_init_dp(&result->value, float_get_dp(value));
+
         return true;
 }
 
-static bool tree_eval_cast(tree_eval_info* info, const tree_expr* expr, avalue* result)
+static bool tree_eval_cast(tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
         tree_type* cast_type = tree_get_expr_type(expr);
         if (!tree_type_is_arithmetic(cast_type))
-        {
-                info->_error = expr;
                 return false;
+
+        tree_expr* e = tree_get_cast_operand(expr);
+        tree_type* et = tree_get_expr_type(e);
+        if (!tree_eval_expr(context, e, result))
+                return false;
+
+        if (result->kind == TERK_ADDRESS_CONSTANT)
+        {
+                if (tree_type_is_pointer(cast_type))
+                        return true;
+
+                result->kind = TERK_INVALID;
+                result->error = expr;
+                return false;
+
         }
 
-        tree_expr* e = tree_get_cast_expr(expr);
-        tree_type* et = tree_get_expr_type(e);
-        if (!tree_eval_as_arithmetic(info, e, result))
-                return false;
-
-        tree_builtin_type_kind cast = tree_get_builtin_type_kind(cast_type);
-        if (cast == TBTK_FLOAT)
-                avalue_to_sp(result);
-        else if (cast == TBTK_DOUBLE)
-                avalue_to_dp(result);
+        tree_builtin_type_kind builtin = tree_get_builtin_type_kind(cast_type);
+        if (builtin == TBTK_FLOAT)
+        {
+                result->kind = TERK_FLOATING;
+                avalue_to_sp(&result->value);
+        }
+        else if (builtin == TBTK_DOUBLE)
+        {
+                result->kind = TERK_FLOATING;
+                avalue_to_dp(&result->value);
+        }
         else
         {
                 S_ASSERT(tree_type_is_integer(cast_type));
-                uint bits = 8 * tree_get_builtin_type_size(info->_target, cast);
-                avalue_to_int(result, bits, tree_type_is_signed_integer(cast_type));
+
+                result->kind = TERK_INTEGER;
+                uint bits = 8 * tree_get_builtin_type_size(context->target, builtin);
+                avalue_to_int(&result->value, bits, tree_type_is_signed_integer(cast_type));
         }
 
         return true;
 }
 
-static bool tree_eval_sizeof(tree_eval_info* info, const tree_expr* expr, avalue* result)
+static bool tree_eval_sizeof(tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
-        tree_type* t = tree_sizeof_is_unary(expr)
-                ? tree_get_expr_type(tree_get_sizeof_expr(expr))
-                : tree_get_sizeof_type(expr);
+        tree_type* t = tree_sizeof_contains_type(expr)
+                ? tree_get_sizeof_type(expr)
+                : tree_get_expr_type(tree_get_sizeof_expr(expr));
 
+        result->kind = TERK_INTEGER;
         avalue_init_int(
-                result,
-                tree_get_pointer_size(info->_target) * 8,
+                &result->value,
+                tree_get_pointer_size(context->target) * 8,
                 false,
-                tree_get_sizeof(info->_target, t));
+                tree_get_sizeof(context->target, t));
+
         return true;
 }
 
-static bool tree_eval_paren(tree_eval_info* info, const tree_expr* expr, avalue* result)
+static bool tree_eval_member(tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
-        return tree_eval_as_arithmetic(info, tree_get_paren_expr(expr), result);
+        return false;
 }
 
-static bool tree_eval_decl(tree_eval_info* info, const tree_expr* expr, avalue* result)
+static bool tree_eval_decl(tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
         tree_decl* d = tree_get_decl_expr_entity(expr);
         if (!tree_decl_is(d, TDK_ENUMERATOR))
                 return false;
 
-        avalue_init_int(result,
-                8 * tree_get_builtin_type_size(info->_target, TBTK_INT32),
+        result->kind = TERK_INTEGER;
+        avalue_init_int(&result->value,
+                8 * tree_get_builtin_type_size(context->target, TBTK_INT32),
                 true,
                 int_get_i32(tree_get_enumerator_cvalue(d)));
+
         return true;
 }
 
-static bool tree_eval_impl_init(tree_eval_info* info, const tree_expr* expr, avalue* result)
+extern bool tree_eval_expr(
+        tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
-        return tree_eval_as_arithmetic(info, tree_get_impl_init_expr(expr), result);
+        S_ASSERT(result);
+
+        result->kind = TERK_INVALID;
+        result->error = expr;
+        avalue_init_int(&result->value, 32, false, 0);
+
+        if (!expr)
+                return TERK_INVALID;
+
+        switch (tree_get_expr_kind(expr))
+        {
+                case TEK_BINARY:
+                        return tree_eval_binop(context, expr, result);
+                case TEK_UNARY:
+                        return tree_eval_unop(context, expr, result);
+                case TEK_CONDITIONAL:
+                        return tree_eval_conditional(context, expr, result);
+                case TEK_INTEGER_LITERAL:
+                        return tree_eval_integer_literal(context, expr, result);
+                case TEK_CHARACTER_LITERAL:
+                        return tree_eval_character_literal(context, expr, result);
+                case TEK_FLOATING_LITERAL:
+                        return tree_eval_floating_literal(context, expr, result);
+                case TEK_DECL:
+                        return tree_eval_decl(context, expr, result);
+                case TEK_MEMBER:
+                        return tree_eval_member(context, expr, result);
+                case TEK_CAST:
+                        return tree_eval_cast(context, expr, result);
+                case TEK_SIZEOF:
+                        return tree_eval_sizeof(context, expr, result);
+                case TEK_PAREN:
+                        return tree_eval_expr(context, tree_get_paren_expr(expr), result);
+                case TEK_IMPL_INIT:
+                        return tree_eval_expr(context, tree_get_impl_init_expr(expr), result);
+
+                default:
+                        S_ASSERT(0 && "Invalid expression");
+                case TEK_UNKNOWN:
+                case TEK_CALL:
+                case TEK_SUBSCRIPT:
+                case TEK_STRING_LITERAL:
+                case TEK_DESIGNATION:
+                case TEK_INIT_LIST:
+                        return false;
+        }
 }
 
-static bool(*const tree_eval_table[TEK_SIZE])(
-        tree_eval_info*, const tree_expr*, avalue*) =
+extern bool tree_eval_expr_as_integer(
+        tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
-        NULL, // TEK_UNKNOWN
-        &tree_eval_binop, // TEK_BINARY
-        &tree_eval_unop, // TEK_UNARY
-        NULL, // TEK_CALL
-        NULL, // TEK_SUBSCRIPT
-        &tree_eval_conditional, // TEK_CONDITIONAL
-        &tree_eval_int_literal, // TEK_INTEGER_LITERAL
-        &tree_eval_char_literal, // TEK_CHARACTER_LITERAL
-        &tree_eval_flt_literal, // TEK_FLOATING_LITERAL
-        NULL, // TEK_STRING_LITERAL
-        &tree_eval_decl, // TEK_DECL
-        NULL, // TEK_MEMBER
-        &tree_eval_cast, // TEK_EXPLICIT_CAST
-        &tree_eval_cast, // TEK_IMPLICIT_CAST
-        &tree_eval_sizeof, // TEK_SIZEOF
-        &tree_eval_paren, // TEK_PAREN
-        NULL, // TEK_INIT
-        &tree_eval_impl_init, // TEK_IMPL_INIT
-};
-
-extern bool tree_eval_as_arithmetic(tree_eval_info* info, const tree_expr* expr, avalue* result)
-{
-        if (!expr)
+        if (!tree_eval_expr(context, expr, result))
                 return false;
 
-        tree_expr_kind k = tree_get_expr_kind(expr);
-        TREE_ASSERT_EXPR_KIND(k);
+        return result->kind == TERK_INTEGER;
+}
 
-        if (!tree_eval_table[k])
-        {
-                info->_error = expr;
+extern bool tree_eval_expr_as_arithmetic(
+        tree_context* context, const tree_expr* expr, tree_eval_result* result)
+{
+        if (!tree_eval_expr(context, expr, result))
                 return false;
-        }
 
-        return tree_eval_table[k](info, expr, result);
+        return result->kind == TERK_INTEGER || result->kind == TERK_FLOATING;
 }
