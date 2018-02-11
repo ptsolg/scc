@@ -1,5 +1,6 @@
 #include "scc/scl/dseq.h"
 #include "scc/scl/misc.h"
+#include "scc/scl/memory.h"
 
 extern void dseq_init(dseq* self, ssize obsize)
 {

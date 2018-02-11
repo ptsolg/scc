@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include "dseq.h"
+#include "memory.h"
 
 #define DSEQ_CHECK_TYPE(SEQ, TYPE)\
         S_ASSERT(dseq_obsize(self) == sizeof(TYPE) && "dynamic sequence type mismatch")

@@ -1,5 +1,6 @@
 #include "scc/scl/htab.h"
 #include "scc/scl/misc.h"
+#include "scc/scl/memory.h"
 #include <memory.h>
 
 #define HVAL_EMPTY ((hval)-1)

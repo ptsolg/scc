@@ -11,6 +11,7 @@ extern "C" {
 
 #include "hash.h"
 #include "htab-ext.h"
+#include "memory.h"
 #include <string.h>
 
 typedef hval strref;

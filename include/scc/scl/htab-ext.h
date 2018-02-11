@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include "htab.h"
+#include "memory.h"
 
 #define HTAB_CHECK_TYPE(TAB, TYPE)\
         S_ASSERT(htab_obsize(TAB) == sizeof(TYPE) && "hash table type mismatch")
