@@ -19,7 +19,7 @@ typedef struct _tree_type tree_type;
 typedef struct _ssa_context
 {
         obstack nodes;
-        base_allocator base_alloc;
+        mempool memory;
 
         tree_context* tree;
         const tree_target_info* target;
@@ -40,7 +40,7 @@ static inline void* ssa_allocate(ssa_context* self, ssize bytes)
 
 static inline allocator* ssa_get_alloc(ssa_context* self)
 {
-        return base_allocator_base(&self->base_alloc);
+        return mempool_to_allocator(&self->memory);
 }
 
 static inline const tree_target_info* ssa_get_target(const ssa_context* self)

@@ -18,7 +18,7 @@ typedef struct _file_entry file_entry;
 
 typedef struct _ccontext
 {
-        base_allocator base_alloc;
+        mempool memory;
         obstack nodes;
         list_head sources;
         bool use_tags;
@@ -44,7 +44,7 @@ static inline tree_context* cget_tree(const ccontext* self)
 
 static inline allocator* cget_alloc(ccontext* self)
 {
-        return base_allocator_base(&self->base_alloc);
+        return mempool_to_allocator(&self->memory);
 }
 
 static inline void* callocate(ccontext* self, ssize bytes)

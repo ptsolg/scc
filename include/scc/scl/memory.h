@@ -14,6 +14,12 @@ extern "C" {
 #include "list.h"
 #include "error.h"
 
+extern allocator* _get_stdalloc();
+
+#define STDALLOC (_get_stdalloc())
+
+extern void mallocator_init(allocator* self);
+
 #if S_X64
 #define STDALIGNMENT 8
 #else
@@ -108,48 +114,26 @@ static inline void objpool_deallocate(objpool* self, void* object)
         self->_top = object;
 }
 
-typedef void*(*bad_alloc_handler)(void*, ssize);
+typedef void*(*mempool_bad_alloc_handler)(void*, ssize);
 
-typedef struct _base_allocator
+typedef struct _mempool
 {
         allocator _base;
         allocator* _alloc;
         list_head _used;
         void* _on_bad_alloc;
-        bad_alloc_handler _handler;
-} base_allocator;
+        mempool_bad_alloc_handler _handler;
+} mempool;
 
-extern void base_allocator_init(
-        base_allocator* self, bad_alloc_handler handler, void* on_bad_alloc);
+extern void mempool_init(
+        mempool* self, mempool_bad_alloc_handler handler, jmp_buf on_bad_alloc);
 
-extern void base_allocator_init_ex(
-        base_allocator* self, bad_alloc_handler handler, void* on_bad_alloc, allocator* alloc);
+extern void mempool_init_ex(
+        mempool* self, mempool_bad_alloc_handler handler, jmp_buf on_bad_alloc, allocator* alloc);
 
-extern void base_allocator_dispose(base_allocator* self);
+extern void mempool_dispose(mempool* self);
 
-static inline void* base_allocate(base_allocator* self, ssize bytes);
-static inline void base_deallocate(base_allocator* self, void* block);
-
-static inline allocator* base_allocator_base(base_allocator* self);
-
-typedef struct _malloc_allocator
-{
-        allocator _base;
-} malloc_allocator;
-
-extern void malloc_allocator_init(malloc_allocator* self);
-extern void malloc_allocator_dispose(malloc_allocator* self);
-
-extern void* mallocate(malloc_allocator* self, ssize bytes);
-extern void mdeallocate(malloc_allocator* self, void* block);
-
-static inline allocator* malloc_allocator_base(malloc_allocator* self);
-
-extern allocator* _get_stdalloc();
-
-#define STDALLOC (_get_stdalloc())
-
-static inline void* base_allocate(base_allocator* self, ssize bytes)
+static inline void* mempool_allocate(mempool* self, ssize bytes)
 {
         void* block = allocate(self->_alloc, sizeof(list_node) + bytes);
         if (!block)
@@ -165,7 +149,7 @@ static inline void* base_allocate(base_allocator* self, ssize bytes)
         return (suint8*)block + sizeof(list_node);
 }
 
-static inline void base_deallocate(base_allocator* self, void* block)
+static inline void mempool_deallocate(mempool* self, void* block)
 {
         if (!block)
                 return;
@@ -175,12 +159,7 @@ static inline void base_deallocate(base_allocator* self, void* block)
         deallocate(self->_alloc, block);
 }
 
-static inline allocator* base_allocator_base(base_allocator* self)
-{
-        return &self->_base;
-}
-
-static inline allocator* malloc_allocator_base(malloc_allocator* self)
+static inline allocator* mempool_to_allocator(mempool* self)
 {
         return &self->_base;
 }

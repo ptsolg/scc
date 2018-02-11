@@ -15,7 +15,7 @@ extern void cinit_ex(ccontext* self,
         self->use_tags = true;
         self->tree = tree;
 
-        base_allocator_init_ex(&self->base_alloc, NULL, on_bad_alloc, alloc);
+        mempool_init_ex(&self->memory, NULL, on_bad_alloc, alloc);
         obstack_init_ex(&self->nodes, cget_alloc(self));
         list_init(&self->sources);
 }
@@ -26,7 +26,7 @@ extern void cdispose(ccontext* self)
                 csource_delete(self, (csource*)list_pop_back(&self->sources));
 
         obstack_dispose(&self->nodes);
-        base_allocator_dispose(&self->base_alloc);
+        mempool_dispose(&self->memory);
 }
 
 extern csource* csource_new(ccontext* context, file_entry* entry)

@@ -2,6 +2,27 @@
 #include "scc/scl/malloc.h"
 #include <setjmp.h>
 
+static void* mallocate(allocator* self, ssize bytes)
+{
+        return smalloc(bytes);
+}
+
+static void mdeallocate(void* self, void* block)
+{
+        sfree(block);
+}
+
+extern allocator* _get_stdalloc()
+{
+        static allocator stdalloc = { &mallocate, &_allocate_aligned, &mdeallocate };
+        return &stdalloc;
+}
+
+extern void mallocator_init(allocator* self)
+{
+        allocator_init(self, &mallocate, &mdeallocate);
+}
+
 extern void obstack_init(obstack* self)
 {
         obstack_init_ex(self, STDALLOC);
@@ -62,58 +83,25 @@ extern void objpool_dispose(objpool* self)
         obstack_dispose(&self->_base);
 }
 
-extern void base_allocator_init(
-        base_allocator* self, bad_alloc_handler handler, void* on_bad_alloc)
+extern void mempool_init(
+        mempool* self, mempool_bad_alloc_handler handler, jmp_buf on_bad_alloc)
 {
-        base_allocator_init_ex(self, handler, on_bad_alloc, STDALLOC);
+        mempool_init_ex(self, handler, on_bad_alloc, STDALLOC);
 }
 
-extern void base_allocator_init_ex(
-        base_allocator* self, bad_alloc_handler handler, void* on_bad_alloc, allocator* alloc)
+extern void mempool_init_ex(
+        mempool* self, mempool_bad_alloc_handler handler, jmp_buf on_bad_alloc, allocator* alloc)
 {
         S_ASSERT(on_bad_alloc);
         self->_alloc = alloc;
         self->_handler = handler;
         self->_on_bad_alloc = on_bad_alloc;
-        allocator_init(&self->_base, &base_allocate, &base_deallocate);
+        allocator_init(&self->_base, &mempool_allocate, &mempool_deallocate);
         list_init(&self->_used);
 }
 
-extern void base_allocator_dispose(base_allocator* self)
+extern void mempool_dispose(mempool* self)
 {
         while (!list_empty(&self->_used))
                 deallocate(self->_alloc, list_pop_front(&self->_used));
-}
-
-extern void malloc_allocator_init(malloc_allocator* self)
-{
-        allocator_init(&self->_base, &mallocate, &mdeallocate);
-}
-
-extern void malloc_allocator_dispose(malloc_allocator* self)
-{
-        ;
-}
-
-extern void* mallocate(malloc_allocator* self, ssize bytes)
-{
-        return smalloc(bytes);
-}
-extern void mdeallocate(malloc_allocator* self, void* block)
-{
-        sfree(block);
-}
-
-static malloc_allocator _stdalloc;
-static bool _stdalloc_initialized = false;
-
-extern allocator* _get_stdalloc()
-{
-        if (!_stdalloc_initialized)
-        {
-                malloc_allocator_init(&_stdalloc);
-                _stdalloc_initialized = true;
-        }
-
-        return malloc_allocator_base(&_stdalloc);
 }

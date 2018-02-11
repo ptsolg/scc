@@ -16,13 +16,14 @@ extern void ssa_init_ex(ssa_context* self,
          self->target = context->target;
          self->tree = context;
 
-         base_allocator_init_ex(&self->base_alloc, NULL, on_out_of_mem, alloc);
+         mempool_init_ex(&self->memory, NULL, on_out_of_mem, alloc);
          obstack_init_ex(&self->nodes, ssa_get_alloc(self));
 }
 
 extern void ssa_dispose(ssa_context* self)
 {
-        base_allocator_dispose(&self->base_alloc);
+        obstack_dispose(&self->nodes);
+        mempool_dispose(&self->memory);
 }
 
 extern tree_type* ssa_get_type_for_label(ssa_context* self)
