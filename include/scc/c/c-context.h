@@ -21,7 +21,6 @@ typedef struct _ccontext
         mempool memory;
         obstack nodes;
         list_head sources;
-        bool use_tags;
         tree_context* tree;
 } ccontext;
 
@@ -33,9 +32,6 @@ extern void cdispose(ccontext* self);
 
 extern csource* csource_new(ccontext* context, file_entry* entry);
 extern void csource_delete(ccontext* context, csource* source);
-
-extern hval ctree_id_to_key(const ccontext* self, tree_id id, bool is_tag);
-extern hval cget_decl_key(const ccontext* self, const tree_decl* decl);
 
 static inline tree_context* cget_tree(const ccontext* self)
 {

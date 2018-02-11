@@ -12,7 +12,6 @@ extern void cinit(ccontext* self, tree_context* tree, jmp_buf on_bad_alloc)
 extern void cinit_ex(ccontext* self,
         tree_context* tree, jmp_buf on_bad_alloc, allocator* alloc)
 {
-        self->use_tags = true;
         self->tree = tree;
 
         mempool_init_ex(&self->memory, NULL, on_bad_alloc, alloc);
@@ -49,21 +48,4 @@ extern void csource_delete(ccontext* context, csource* source)
         file_close(source->_file);
         list_node_remove(&source->_node);
         deallocate(cget_alloc(context), source);
-}
-
-extern hval ctree_id_to_key(const ccontext* self, tree_id id, bool is_tag)
-{
-        if (!self->use_tags)
-                return (hval)id;
-
-        hval key = id >> 1;
-        return is_tag
-                ? key | (1U << 31)
-                : key;
-}
-
-extern hval cget_decl_key(const ccontext* self, const tree_decl* decl)
-{
-        return ctree_id_to_key(self, tree_get_decl_name(decl),
-                tree_decl_is(decl, TDK_ENUM) || tree_decl_is(decl, TDK_RECORD));
 }
