@@ -27,6 +27,6 @@ extern void ssa_dispose(ssa_context* self)
 
 extern tree_type* ssa_get_type_for_label(ssa_context* self)
 {
-        return tree_new_pointer_type(self->_tree,
+        return tree_new_pointer_type(self->tree,
                 tree_new_builtin_type(self->tree, TBTK_VOID));
 }
