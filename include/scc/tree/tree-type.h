@@ -309,7 +309,6 @@ extern bool tree_type_is_void_pointer(const tree_type* self);
 // returns false if type size cannot be computed
 extern bool tree_type_is_incomplete(const tree_type* self);
 
-extern bool tree_types_are_same(const tree_type* a, const tree_type* b);
 // if type is pointer returns pointer target
 // if type is array returns array element type
 // if type is function returns function result type
@@ -317,6 +316,18 @@ extern bool tree_types_are_same(const tree_type* a, const tree_type* b);
 extern tree_type* tree_get_type_next(const tree_type* self);
 
 extern tree_builtin_type_kind tree_get_integer_counterpart(const tree_type* self);
+
+typedef enum
+{
+        // types are not equal
+        TTEK_NEQ,
+        // types are equal
+        TTEK_EQ,
+        // types are equal, but have different qualifiers
+        TTEK_DIFFERENT_QUALS,
+} tree_type_equal_kind;
+
+extern tree_type_equal_kind tree_compare_types(const tree_type* a, const tree_type* b);
 
 #define TREE_ASSERT_TYPE(T) S_ASSERT(T)
 

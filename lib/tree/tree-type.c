@@ -4,7 +4,7 @@
 
 extern tree_type* tree_new_type(tree_context* context, tree_type_kind kind, ssize size)
 {
-        tree_type* t = tree_allocate(context, size);
+        tree_type* t = tree_allocate_node(context, size);
         if (!t)
                 return NULL;
 
@@ -41,7 +41,7 @@ extern tree_type* tree_new_builtin_type(tree_context* context, tree_builtin_type
 
 extern tree_type* tree_new_size_type(tree_context* context)
 {
-        bool x32 = tree_target_is(tree_get_target(context), TTAK_X86_32);
+        bool x32 = tree_target_is(context->target, TTAK_X86_32);
         return tree_new_builtin_type(context, x32 ? TBTK_UINT32 : TBTK_UINT64);
 }
 
@@ -53,8 +53,7 @@ extern tree_type* tree_new_function_type(tree_context* context, tree_type* resty
                 return NULL;
 
         tree_set_function_type_vararg(t, false);
-        dseq_init_ex_ptr(&_tree_get_function_type(t)->_args,
-                tree_get_allocator(context));
+        dseq_init_ex_ptr(&_tree_get_function_type(t)->_args, context->alloc);
         return t;
 }
 
@@ -350,71 +349,13 @@ extern bool tree_type_is_incomplete(const tree_type* self)
                 return true;
         else if (tree_type_is_array(self))
                 return tree_array_is(self, TAK_INCOMPLETE);
-        else if (tree_type_is_record(self))
+        else if (tree_type_is_record(self) || tree_type_is_enumerated(self))
         {
                 const tree_decl* entity = tree_get_decl_type_entity(self);
-                return !tree_record_is_complete(entity);
+                return !tree_tag_decl_is_complete(entity);
         }
         
         return false;
-}
-
-extern bool tree_types_are_same(const tree_type* a, const tree_type* b)
-{
-        while(1)
-        {
-                if (a == b)
-                        return true;
-
-                if (tree_get_type_quals(a) != tree_get_type_quals(b))
-                        return false;
-
-                a = tree_desugar_ctype(a);
-                b = tree_desugar_ctype(b);
-                tree_type_kind ak = tree_get_type_kind(a);
-                tree_type_kind bk = tree_get_type_kind(b);
-                if (ak != bk)
-                        return false;
-
-                if (ak == TTK_BUILTIN)
-                        return tree_get_builtin_type_kind(a) == tree_get_builtin_type_kind(b);
-                else if (ak == TTK_POINTER)
-                {
-                        a = tree_get_pointer_target(a);
-                        b = tree_get_pointer_target(b);
-                }
-                else if (ak == TTK_ARRAY)
-                {
-                        // todo: compare size
-                        a = tree_get_array_eltype(a);
-                        b = tree_get_array_eltype(b);
-                }
-                else if (ak == TTK_FUNCTION)
-                {
-                        if (tree_function_type_is_vararg(a) != tree_function_type_is_vararg(b))
-                                return false;
-
-                        ssize n = tree_get_function_type_nparams(a);
-                        if (n != tree_get_function_type_nparams(b))
-                                return false;
-
-                        for (ssize i = 0; i < n; i++)
-                        {
-                                tree_type* ap = tree_get_function_type_param(a, i);
-                                tree_type* bp = tree_get_function_type_param(b, i);
-                                if (!tree_types_are_same(ap, bp))
-                                        return false;
-                        }
-
-                        a = tree_get_function_type_result(a);
-                        b = tree_get_function_type_result(b);
-                }
-                else if (ak == TTK_DECL)
-                        return tree_decls_are_same(
-                                tree_get_decl_type_entity(a), tree_get_decl_type_entity(b));
-                else
-                        S_UNREACHABLE();
-        }
 }
 
 extern tree_type* tree_get_type_next(const tree_type* self)
@@ -440,7 +381,7 @@ extern tree_type* tree_new_qual_type(
         if (tree_type_is_qualified(type))
                 type = tree_get_unqualified_type(type);
         
-        tree_type* qt = tree_allocate(context, sizeof(struct _tree_qualified_type));
+        tree_type* qt = tree_allocate_node(context, sizeof(struct _tree_qualified_type));
         if (!qt)
                 return NULL;
 
@@ -506,5 +447,126 @@ extern tree_builtin_type_kind tree_get_integer_counterpart(const tree_type* t)
                 default:
                         S_UNREACHABLE();
                         return TBTK_INVALID;
+        }
+}
+
+static bool tree_records_are_same(const tree_decl* a, const tree_decl* b)
+{
+        // todo
+        return a == b;
+}
+
+static bool tree_enums_are_same(const tree_decl* a, const tree_decl* b)
+{
+        // todo
+        return a == b;
+}
+
+static bool tree_decl_types_are_same(const tree_type* a, const tree_type* b)
+{
+        tree_decl* da = tree_get_decl_type_entity(a);
+        tree_decl* db = tree_get_decl_type_entity(b);
+        tree_decl_kind dk = tree_get_decl_kind(da);
+
+        if (dk != tree_get_decl_kind(db))
+                return false;
+
+        S_ASSERT(dk == TDK_RECORD || dk == TDK_ENUM);
+        return dk == TDK_RECORD
+                ? tree_records_are_same(da, db)
+                : tree_enums_are_same(da, db);
+}
+
+static bool tree_array_types_are_same(const tree_type* a, const tree_type* b)
+{
+        if (tree_get_array_kind(a) != tree_get_array_kind(b))
+                return false;
+        if (tree_get_array_kind(a) == TAK_CONSTANT
+                && int_cmp(tree_get_constant_array_size_cvalue(a),
+                        tree_get_constant_array_size_cvalue(b)) != CR_EQ)
+        {
+                return false;
+        }
+        return true;
+}
+
+static tree_type_equal_kind tree_compare_function_type_params(const tree_type* a, const tree_type* b)
+{
+        if (tree_function_type_is_vararg(a) != tree_function_type_is_vararg(b))
+                return TTEK_NEQ;
+
+        ssize n = tree_get_function_type_nparams(a);
+        if (n != tree_get_function_type_nparams(b))
+                return TTEK_NEQ;
+
+        tree_type_equal_kind k = TTEK_EQ;
+        for (ssize i = 0; i < n; i++)
+        {
+                tree_type_equal_kind pk = tree_compare_types(
+                        tree_get_function_type_param(a, i),
+                        tree_get_function_type_param(b, i));
+                if (pk == TTEK_NEQ)
+                        return TTEK_NEQ;
+                if (pk > k)
+                        k = pk;
+        }
+
+        return k;
+}
+
+extern tree_type_equal_kind tree_compare_types(const tree_type* a, const tree_type* b)
+{
+        bool same_quals = true;
+        while (1)
+        {
+                if (a == b)
+                        return TTEK_EQ;
+
+                same_quals &= tree_get_type_quals(a) == tree_get_type_quals(b);
+                a = tree_desugar_ctype(tree_get_unqualified_ctype(a));
+                b = tree_desugar_ctype(tree_get_unqualified_ctype(b));
+                if (a == b)
+                        return same_quals ? TTEK_EQ : TTEK_DIFFERENT_QUALS;
+
+                tree_type_kind k = tree_get_type_kind(a);
+                if (k != tree_get_type_kind(b))
+                        return TTEK_NEQ;
+
+                switch (k)
+                {
+                        case TTK_BUILTIN:
+                                if (tree_get_builtin_type_kind(a) != tree_get_builtin_type_kind(b))
+                                        return TTEK_NEQ;
+                                return same_quals ? TTEK_EQ : TTEK_DIFFERENT_QUALS;
+                        case TTK_POINTER:
+                                a = tree_get_pointer_target(a);
+                                b = tree_get_pointer_target(b);
+                                break;
+                        case TTK_ARRAY:
+                                if (!tree_array_types_are_same(a, b))
+                                        return TTEK_NEQ;
+                                a = tree_get_array_eltype(a);
+                                b = tree_get_array_eltype(b);
+                                break;
+                        case TTK_FUNCTION:
+                        {
+                                tree_type_equal_kind ek = tree_compare_function_type_params(a, b);
+                                if (ek == TTEK_NEQ)
+                                        return TTEK_NEQ;
+                                if (ek == TTEK_DIFFERENT_QUALS)
+                                        same_quals = false;
+                                a = tree_get_function_type_result(a);
+                                b = tree_get_function_type_result(b);
+                                break;
+                        }
+                        case TTK_DECL:
+                                if (!tree_decl_types_are_same(a, b))
+                                        return TTEK_NEQ;
+                                return same_quals ? TTEK_EQ : TTEK_DIFFERENT_QUALS;
+
+                        default:
+                                S_ASSERT(0 && "Invalid type");
+                                return TTEK_NEQ;
+                }
         }
 }
