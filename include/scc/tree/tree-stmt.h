@@ -23,6 +23,7 @@ typedef enum
         TSF_CONTINUE = 2,
         TSF_ITERATION = TSF_BREAK | TSF_CONTINUE,
         TSF_SWITCH = 4 | TSF_BREAK,
+        TSF_DECL = 8,
 } tree_scope_flags;
 
 typedef struct _tree_scope
