@@ -10,11 +10,10 @@ extern "C" {
 #endif
 
 #include "c-parser.h"
-#include "c-tree.h"
+#include "c-context.h"
 
 typedef struct _tree_stmt tree_stmt;
-typedef enum _tree_stmt_kind tree_stmt_kind;
-typedef enum _cstmt_context cstmt_context;
+
 // c99 6.8 statement:
 //      labeled-statement
 //      compound-statement
@@ -28,9 +27,9 @@ extern tree_stmt* cparse_stmt(cparser* self);
 //      identifier : statement
 //      case constant-expression : statement
 //      default : statement
-extern tree_stmt* cparse_case_stmt(cparser* self, cstmt_context context);
-extern tree_stmt* cparse_default_stmt(cparser* self, cstmt_context context);
-extern tree_stmt* cparse_labeled_stmt(cparser* self, cstmt_context context);
+extern tree_stmt* cparse_case_stmt(cparser* self, int scope_flags);
+extern tree_stmt* cparse_default_stmt(cparser* self, int scope_flags);
+extern tree_stmt* cparse_labeled_stmt(cparser* self, int scope_flags);
 
 // c99 6.8.2 compound-statement:
 //      { block-item-list-opt }
@@ -42,7 +41,7 @@ extern tree_stmt* cparse_labeled_stmt(cparser* self, cstmt_context context);
 // block-item:
 //      declaration
 //      statement
-extern tree_stmt* cparse_block_stmt(cparser* self, cstmt_context context);
+extern tree_stmt* cparse_block_stmt(cparser* self, int scope_flags);
 extern tree_stmt* cparse_decl_stmt(cparser* self);
 
 // c99 6.8.3 expression-statement:
@@ -53,17 +52,17 @@ extern tree_stmt* cparse_expr_stmt(cparser* self);
 //      if ( expression ) statement
 //      if ( expression ) statement else statement
 //      switch ( expression ) statement
-extern tree_stmt* cparse_if_stmt(cparser* self, cstmt_context context);
-extern tree_stmt* cparse_switch_stmt(cparser* self, cstmt_context context);
+extern tree_stmt* cparse_if_stmt(cparser* self, int scope_flags);
+extern tree_stmt* cparse_switch_stmt(cparser* self, int scope_flags);
 
 // c99 6.8.5 iteration-statement:
 //      while ( expression ) statement
 //      do statement while ( expression ) ;
 //      for ( expression-opt ; expression-opt ; expression-opt ) statement
 //      for ( declaration expression-opt ; expression-opt ) statement
-extern tree_stmt* cparse_while_stmt(cparser* self, cstmt_context context);
-extern tree_stmt* cparse_do_while_stmt(cparser* self, cstmt_context context);
-extern tree_stmt* cparse_for_stmt(cparser* self, cstmt_context context);
+extern tree_stmt* cparse_while_stmt(cparser* self, int scope_flags);
+extern tree_stmt* cparse_do_while_stmt(cparser* self, int scope_flags);
+extern tree_stmt* cparse_for_stmt(cparser* self, int scope_flags);
 
 // c99 6.8.6 jump-statement:
 //      goto identifier ;
