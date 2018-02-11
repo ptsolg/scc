@@ -1,6 +1,7 @@
 #include "scc/tree/tree-expr.h"
 #include "scc/tree/tree-context.h"
 #include "scc/tree/tree-eval.h"
+#include "scc/tree/tree-target.h"
 
 extern tree_expr* tree_new_expr(
         tree_context* context,
@@ -11,7 +12,7 @@ extern tree_expr* tree_new_expr(
         ssize size)
 {
         S_ASSERT(size >= sizeof(struct _tree_expr_base));
-        tree_expr* e = tree_allocate(context, size);
+        tree_expr* e = tree_allocate_node(context, size);
         if (!e)
                 return NULL;
 
@@ -48,7 +49,7 @@ extern tree_expr* tree_new_unop(
         tree_type* type,
         tree_location loc,
         tree_unop_kind kind,
-        tree_expr* expr)
+        tree_expr* operand)
 {
         tree_expr* e = tree_new_expr(context, TEK_UNARY, value_kind, type, loc,
                 sizeof(struct _tree_unop));
@@ -56,39 +57,25 @@ extern tree_expr* tree_new_unop(
                 return NULL;
 
         tree_set_unop_kind(e, kind);
-        tree_set_unop_expr(e, expr);
+        tree_set_unop_operand(e, operand);
         return e;
 }
 
-extern tree_expr* tree_new_explicit_cast_expr(
+extern tree_expr* tree_new_cast_expr(
         tree_context* context,
         tree_value_kind value_kind,
         tree_location loc,
         tree_type* type,
-        tree_expr* expr)
+        tree_expr* expr,
+        bool is_implicit)
 {
-        tree_expr* e = tree_new_expr(context, TEK_EXPLICIT_CAST, value_kind, type, loc,
+        tree_expr* e = tree_new_expr(context, TEK_CAST, value_kind, type, loc,
                 sizeof(struct _tree_cast_expr));
         if (!e)
                 return NULL;
 
-        tree_set_cast_expr(e, expr);
-        return e;
-}
-
-extern tree_expr* tree_new_implicit_cast_expr(
-        tree_context* context,
-        tree_value_kind value_kind,
-        tree_location loc,
-        tree_type* type,
-        tree_expr* expr)
-{
-        tree_expr* e = tree_new_expr(context, TEK_IMPLICIT_CAST, value_kind, type, loc,
-                sizeof(struct _tree_cast_expr));
-        if (!e)
-                return NULL;
-
-        tree_set_cast_expr(e, expr);
+        tree_set_cast_operand(e, expr);
+        tree_set_cast_implicit(e, is_implicit);
         return e;
 }
 
@@ -105,20 +92,14 @@ extern tree_expr* tree_new_call_expr(
                 return NULL;
 
         tree_set_call_lhs(e, lhs);
-        dseq_init_ex_ptr(&_tree_get_call(e)->_args, tree_get_allocator(context));
+        tree_init_array(&e->call.args);
         return e;
 }
 
-extern void tree_set_call_args(tree_expr* self, dseq* args)
+extern serrcode tree_add_call_arg(tree_expr* self, tree_context* context, tree_expr* arg)
 {
-        dseq* this_args = &_tree_get_call(self)->_args;
-        dseq_dispose(this_args);
-        dseq_move(this_args, args);
-}
-
-extern void tree_add_call_arg(tree_expr* self, tree_expr* arg)
-{
-        dseq_append_ptr(&_tree_get_call(self)->_args, arg);
+        S_ASSERT(arg);
+        return tree_array_append_ptr(context, &self->call.args, arg);
 }
 
 extern tree_expr* tree_new_subscript_expr(
@@ -203,14 +184,14 @@ extern tree_expr* tree_new_string_literal(
         tree_value_kind value,
         tree_type* type,
         tree_location loc,
-        tree_id ref)
+        tree_id id)
 {
         tree_expr* e = tree_new_expr(context, TEK_STRING_LITERAL, value, type, loc,
                 sizeof(struct _tree_string_literal_expr));
         if (!e)
                 return NULL;
 
-        tree_set_string_literal(e, ref);
+        tree_set_string_literal(e, id);
         return e;
 }
 
@@ -251,19 +232,19 @@ extern tree_expr* tree_new_member_expr(
 }
 
 extern tree_expr* tree_new_sizeof_expr(
-        tree_context* context, tree_type* type, tree_location loc, void* rhs, bool is_unary)
+        tree_context* context,
+        tree_type* type,
+        tree_location loc,
+        void* operand,
+        bool contains_type)
 {
         tree_expr* e = tree_new_expr(context, TEK_SIZEOF, TVK_RVALUE, type, loc,
                 sizeof(struct _tree_sizeof_expr));
         if (!e)
                 return NULL;
 
-        if (is_unary)
-                tree_set_sizeof_expr(e, rhs);
-        else
-                tree_set_sizeof_type(e, rhs);
-
-        tree_set_sizeof_unary(e, is_unary);
+        e->sizeof_expr.operand = operand;
+        tree_set_sizeof_contains_type(e, contains_type);
         return e;
 }
 
@@ -283,80 +264,77 @@ extern tree_expr* tree_new_paren_expr(
         return e;
 }
 
-extern tree_expr* tree_new_init_expr(tree_context* context, tree_location loc)
+extern tree_designator* tree_new_field_designator(
+        tree_context* context, tree_location loc, tree_id field)
 {
-        tree_expr* e = tree_new_expr(context, TEK_INIT, TVK_RVALUE, NULL, loc,
-                sizeof(struct _tree_init_expr));
-        if (!e)
-                return NULL;
-
-        list_init(&_tree_get_init_expr(e)->_designations);
-        return e;
-}
-
-extern void tree_add_init_designation(tree_expr* self, tree_designation* d)
-{
-        list_push_back(&_tree_get_init_expr(self)->_designations, &d->_node);
-}
-
-extern tree_designator* tree_new_member_designator(tree_context* context, tree_decl* member)
-{
-        tree_designator* d = tree_allocate(context, sizeof(tree_designator));
+        tree_designator* d = tree_allocate_node(context, sizeof(tree_designator));
         if (!d)
                 return NULL;
 
-        list_node_init(&_tree_get_designator(d)->_node);
-        tree_set_designator_kind(d, TDK_DES_MEMBER);
-        tree_set_member_designator_decl(d, member);
+        d->is_field = true;
+        d->field = field;
+        tree_set_designator_loc(d, loc);
         return d;
-}
-
-extern void tree_add_designator_before(tree_designator* self, tree_designator* pos)
-{
-        list_node_add_before(
-                &_tree_get_designator(pos)->_node, &_tree_get_designator(self)->_node);
-}
-
-extern void tree_add_designator_after(tree_designator* self, tree_designator* pos)
-{
-        list_node_add_after(
-                &_tree_get_designator(pos)->_node, &_tree_get_designator(self)->_node);
 }
 
 extern tree_designator* tree_new_array_designator(
-        tree_context* context, tree_type* eltype, tree_expr* index)
+        tree_context* context, tree_location loc, tree_expr* index)
 {
-        tree_designator* d = tree_allocate(context, sizeof(tree_designator));
+        tree_designator* d = tree_allocate_node(context, sizeof(tree_designator));
         if (!d)
                 return NULL;
 
-        list_node_init(&_tree_get_designator(d)->_node);
-        tree_set_designator_kind(d, TDK_DES_ARRAY);
-        tree_set_array_designator_index(d, index);
-        tree_set_array_designator_type(d, eltype);
+        d->is_field = false;
+        d->index = index;
+        tree_set_designator_loc(d, loc);
         return d;
 }
 
-extern tree_designation* tree_new_designation(tree_context* context, tree_expr* initializer)
+extern tree_expr* tree_new_designation(tree_context* context, tree_expr* init)
 {
-        tree_designation* d = tree_allocate(context, sizeof(tree_designation));
-        if (!d)
+        tree_expr* e = tree_new_expr(context, TEK_DESIGNATION,
+                TVK_LVALUE, NULL, TREE_INVALID_LOC, sizeof(struct _tree_designation));
+        if (!e)
                 return NULL;
 
-        list_node_init(&d->_node);
-        list_init(&d->_designators);
-        tree_set_designation_initializer(d, initializer);
-        return d;
+        tree_set_designation_init(e, init);
+        tree_init_array(&e->designation.designators);
+        return e;
 }
 
-extern tree_expr* tree_new_impl_init_expr(tree_context* context, tree_expr* init)
+extern serrcode tree_add_designation_designator(
+        tree_expr* self, tree_context* context, tree_designator* d)
+{
+        S_ASSERT(d);
+        return tree_array_append_ptr(context, &self->designation.designators, d);
+}
+
+extern tree_expr* tree_new_init_list_expr(tree_context* context, tree_location loc)
+{
+        tree_expr* e = tree_new_expr(context, 
+                TEK_INIT_LIST, TVK_RVALUE, NULL, loc, sizeof(struct _tree_init_list_expr));
+        if (!e)
+                return NULL;
+
+        tree_init_array(&e->init_list.exprs);
+        tree_set_init_list_has_trailing_comma(e, false);
+        return e;
+}
+
+extern serrcode tree_add_init_list_expr(tree_expr* self, tree_context* context, tree_expr* expr)
+{
+        S_ASSERT(expr);
+        return tree_array_append_ptr(context, &self->init_list.exprs, expr);
+}
+
+extern tree_expr* tree_new_impl_init_expr(tree_context* context, tree_expr* expr)
 {
         tree_expr* e = tree_new_expr(context, TEK_IMPL_INIT, TVK_RVALUE, NULL, TREE_INVALID_LOC,
                 sizeof(struct _tree_impl_init_expr));
         if (!e)
                 return NULL;
 
-        tree_set_impl_init_expr(e, init);
+        tree_set_impl_init_expr(e, expr);
         return e;
 }
 
@@ -377,23 +355,22 @@ extern bool tree_expr_is_literal(const tree_expr* self)
 
 extern const tree_expr* tree_ignore_ccasts(const tree_expr* self)
 {
-        while (tree_expr_is(self, TEK_EXPLICIT_CAST)
-            || tree_expr_is(self, TEK_IMPLICIT_CAST))
-                self = tree_get_cast_expr(self);
+        while (tree_expr_is(self, TEK_CAST))
+                self = tree_get_cast_operand(self);
         return self;
 }
 
 extern tree_expr* tree_ignore_impl_casts(tree_expr* self)
 {
-        while(tree_expr_is(self, TEK_IMPLICIT_CAST))
-                self = tree_get_cast_expr(self);
+        while(tree_expr_is(self, TEK_CAST) && tree_cast_is_implicit(self))
+                self = tree_get_cast_operand(self);
         return self;
 }
 
 extern const tree_expr* tree_ignore_impl_ccasts(const tree_expr* self)
 {
-        while (tree_expr_is(self, TEK_IMPLICIT_CAST))
-                self = tree_get_cast_expr(self);
+        while (tree_expr_is(self, TEK_CAST) && tree_cast_is_implicit(self))
+                self = tree_get_cast_operand(self);
         return self;
 }
 
@@ -419,7 +396,7 @@ extern tree_expr* tree_desugar_expr(tree_expr* self)
         return ignored;
 }
 
-extern const tree_expr* tree_desugar_cexp(const tree_expr* self)
+extern const tree_expr* tree_desugar_cexpr(const tree_expr* self)
 {
         const tree_expr* ignored = self;
         while ((ignored = tree_ignore_paren_cexps(tree_ignore_impl_ccasts(ignored))) != self)
@@ -427,33 +404,24 @@ extern const tree_expr* tree_desugar_cexp(const tree_expr* self)
         return ignored;
 }
 
-extern bool tree_expr_is_null_pointer_constant(const tree_expr* self)
+extern bool tree_expr_is_null_pointer_constant(tree_context* context, const tree_expr* expr)
 {
-        while (tree_type_is_void_pointer(tree_get_expr_type(self)))
+        while (tree_type_is_void_pointer(tree_get_expr_type(expr)))
         {
-                if (tree_expr_is(self, TEK_IMPLICIT_CAST)
-                 || tree_expr_is(self, TEK_EXPLICIT_CAST))
-                {
-                        self = tree_get_cast_expr(self);
-                }
+                if (tree_expr_is(expr, TEK_CAST))
+                        expr = tree_get_cast_operand(expr);
                 else
                         return false;
         }
 
-        if (!tree_type_is_integer(tree_get_expr_type(self)))
+        if (!tree_type_is_integer(tree_get_expr_type(expr)))
                 return false;
 
-        tree_target_info t;
-        tree_eval_info i;
-        int_value v;
-
-        tree_init_target_info(&t, TTAK_X86_32);
-        tree_init_eval_info(&i, &t);
-
-        if (!tree_eval_as_integer(&i, self, &v))
+        tree_eval_result result;
+        if (!tree_eval_expr_as_integer(context, expr, &result))
                 return false;
 
-        return int_is_zero(&v);
+        return avalue_is_zero(&result.value);
 }
 
 extern bool tree_expr_designates_bitfield(const tree_expr* self)

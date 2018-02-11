@@ -15,7 +15,6 @@ extern "C" {
 typedef struct _tree_expr tree_expr;
 typedef struct _tree_type tree_type;
 typedef struct _tree_decl tree_decl;
-typedef struct _tree_designation tree_designation;
 typedef struct _tree_designator tree_designator;
 
 typedef enum
@@ -30,15 +29,13 @@ typedef enum
         TEK_CHARACTER_LITERAL,
         TEK_FLOATING_LITERAL,
         TEK_STRING_LITERAL,
-        
-        // var-decl, enumerator, unresolved
         TEK_DECL, 
         TEK_MEMBER,
-        TEK_EXPLICIT_CAST,
-        TEK_IMPLICIT_CAST,
+        TEK_CAST,
         TEK_SIZEOF,
         TEK_PAREN,
-        TEK_INIT,
+        TEK_DESIGNATION,
+        TEK_INIT_LIST,
         TEK_IMPL_INIT,
         TEK_SIZE,
 } tree_expr_kind;
@@ -53,35 +50,11 @@ typedef enum
 
 struct _tree_expr_base
 {
-        tree_expr_kind _kind;
-        tree_value_kind _value_kind;
-        tree_type* _type;
-        tree_location _loc;
+        tree_expr_kind kind;
+        tree_value_kind value_kind;
+        tree_type* type;
+        tree_location loc;
 };
-
-extern tree_expr* tree_new_expr(
-        tree_context* context,
-        tree_expr_kind kind,
-        tree_value_kind value_kind,
-        tree_type* type,
-        tree_location loc,
-        ssize size);
-
-static inline struct _tree_expr_base* _tree_get_expr(tree_expr* self);
-static inline const struct _tree_expr_base* _tree_get_cexp(const tree_expr* self);
-
-static inline bool tree_expr_is(const tree_expr* self, tree_expr_kind k);
-static inline tree_expr_kind tree_get_expr_kind(const tree_expr* self);
-static inline tree_value_kind tree_get_expr_value_kind(const tree_expr* self);
-static inline bool tree_expr_is_lvalue(const tree_expr* self);
-static inline bool tree_expr_is_modifiable_lvalue(const tree_expr* self);
-static inline tree_type* tree_get_expr_type(const tree_expr* self);
-static inline tree_location tree_get_expr_loc(const tree_expr* self);
-
-static inline void tree_set_expr_kind(tree_expr* self, tree_expr_kind k);
-static inline void tree_set_expr_value_kind(tree_expr* self, tree_value_kind vk);
-static inline void tree_set_expr_type(tree_expr* self, tree_type* t);
-static inline void tree_set_expr_loc(tree_expr* self, tree_location loc);
 
 typedef enum
 {
@@ -123,32 +96,11 @@ typedef enum
 
 struct _tree_binop
 {
-        struct _tree_expr_base _base;
-        tree_binop_kind _kind;
-        tree_expr* _lhs;
-        tree_expr* _rhs;
+        struct _tree_expr_base base;
+        tree_binop_kind kind;
+        tree_expr* lhs;
+        tree_expr* rhs;
 };
-
-extern tree_expr* tree_new_binop(
-        tree_context* context,
-        tree_value_kind value_kind,
-        tree_type* type,
-        tree_location loc,
-        tree_binop_kind kind,
-        tree_expr* lhs,
-        tree_expr* rhs);
-
-static inline struct _tree_binop* _tree_get_binop(tree_expr* self);
-static inline const struct _tree_binop* _tree_get_cbinop(const tree_expr* self);
-
-static inline bool tree_binop_is(const tree_expr* self, tree_binop_kind k);
-static inline tree_binop_kind tree_get_binop_kind(const tree_expr* self);
-static inline tree_expr* tree_get_binop_lhs(const tree_expr* self);
-static inline tree_expr* tree_get_binop_rhs(const tree_expr* self);
-
-static inline void tree_set_binop_kind(tree_expr* self, tree_binop_kind k);
-static inline void tree_set_binop_lhs(tree_expr* self, tree_expr* lhs);
-static inline void tree_set_binop_rhs(tree_expr* self, tree_expr* rhs);
 
 typedef enum
 {
@@ -170,441 +122,150 @@ typedef enum
 
 struct _tree_unop
 {
-        struct _tree_expr_base _base;
-        tree_unop_kind _kind;
-        tree_expr* _expr;
+        struct _tree_expr_base base;
+        tree_unop_kind kind;
+        tree_expr* operand;
 };
-
-extern tree_expr* tree_new_unop(
-        tree_context* context,
-        tree_value_kind value_kind,
-        tree_type* type,
-        tree_location loc,
-        tree_unop_kind kind,
-        tree_expr* expr);
-
-static inline struct _tree_unop* _tree_get_unop(tree_expr* self);
-static inline const struct _tree_unop* _tree_get_cunop(const tree_expr* self);
-
-static inline bool tree_unop_is(const tree_expr* self, tree_unop_kind k);
-static inline tree_unop_kind tree_get_unop_kind(const tree_expr* self);
-static inline tree_expr* tree_get_unop_expr(const tree_expr* self);
-
-static inline void tree_set_unop_kind(tree_expr* self, tree_unop_kind k);
-static inline void tree_set_unop_expr(tree_expr* self, tree_expr* expr);
 
 struct _tree_cast_expr
 {
-        struct _tree_expr_base _base;
-        tree_expr* _expr;
+        struct _tree_expr_base base;
+        tree_expr* operand;
+        bool is_implicit;
 };
-
-extern tree_expr* tree_new_explicit_cast_expr(
-        tree_context* context,
-        tree_value_kind value_kind,
-        tree_location loc,
-        tree_type* type,
-        tree_expr* expr);
-
-extern tree_expr* tree_new_implicit_cast_expr(
-        tree_context* context,
-        tree_value_kind value_kind,
-        tree_location loc,
-        tree_type* type,
-        tree_expr* expr);
-
-static inline struct _tree_cast_expr* _tree_get_cast(tree_expr* self);
-static inline const struct _tree_cast_expr* _tree_get_ccast(const tree_expr* self);
-
-static inline tree_expr* tree_get_cast_expr(const tree_expr* self);
-static inline void tree_set_cast_expr(tree_expr* self, tree_expr* expr);
 
 struct _tree_call_expr
 {
-        struct _tree_expr_base _base;
-        tree_expr* _lhs;
-        dseq _args;
+        struct _tree_expr_base base;
+        tree_expr* lhs;
+        tree_array args;
 };
-
-extern tree_expr* tree_new_call_expr(
-        tree_context* context,
-        tree_value_kind value_kind,
-        tree_type* type,
-        tree_location loc,
-        tree_expr* lhs);
-
-extern void tree_set_call_args(tree_expr* self, dseq* args);
-extern void tree_add_call_arg(tree_expr* self, tree_expr* arg);
-
-static inline struct _tree_call_expr* _tree_get_call(tree_expr* self);
-static inline const struct _tree_call_expr* _tree_get_ccall(const tree_expr* self);
-
-static inline ssize tree_get_call_nargs(const tree_expr* self);
-static inline tree_expr* tree_get_call_lhs(const tree_expr* self);
-static inline tree_expr** tree_get_call_args_begin(const tree_expr* self);
-static inline tree_expr** tree_get_call_args_end(const tree_expr* self);
-
-static inline void tree_set_call_lhs(tree_expr* self, tree_expr* lhs);
-
-#define TREE_FOREACH_CALL_ARG(PEXP, ITNAME) \
-        for (tree_expr** ITNAME = tree_get_call_args_begin(PEXP); \
-                ITNAME != tree_get_call_args_end(PEXP); ITNAME++)
 
 struct _tree_subscript_expr
 {
-        struct _tree_expr_base _base;
-        tree_expr* _lhs;
-        tree_expr* _rhs;
+        struct _tree_expr_base base;
+        tree_expr* lhs;
+        tree_expr* rhs;
 };
-
-extern tree_expr* tree_new_subscript_expr(
-        tree_context* context,
-        tree_value_kind value_kind,
-        tree_type* type,
-        tree_location loc,
-        tree_expr* lhs,
-        tree_expr* rhs);
-
-static inline struct _tree_subscript_expr* _tree_get_subscript(tree_expr* self);
-static inline const struct _tree_subscript_expr* _tree_get_csubscript(const tree_expr* self);
-
-static inline tree_expr* tree_get_subscript_lhs(const tree_expr* self);
-static inline tree_expr* tree_get_subscript_rhs(const tree_expr* self);
-
-static inline void tree_set_subscript_lhs(tree_expr* self, tree_expr* lhs);
-static inline void tree_set_subscript_rhs(tree_expr* self, tree_expr* rhs);
 
 struct _tree_conditional_expr
 {
-        struct _tree_expr_base _base;
-        tree_expr* _condition;
-        tree_expr* _lhs;
-        tree_expr* _rhs;
+        struct _tree_expr_base base;
+        tree_expr* condition;
+        tree_expr* lhs;
+        tree_expr* rhs;
 };
-
-extern tree_expr* tree_new_conditional_expr(
-        tree_context* context,
-        tree_value_kind value_kind,
-        tree_type* type,
-        tree_location loc,
-        tree_expr* condition,
-        tree_expr* lhs,
-        tree_expr* rhs);
-
-static inline struct _tree_conditional_expr* _tree_get_conditional(tree_expr* self);
-static inline const struct _tree_conditional_expr* _tree_get_cconditional(const tree_expr* self);
-
-static inline tree_expr* tree_get_conditional_lhs(const tree_expr* self);
-static inline tree_expr* tree_get_conditional_rhs(const tree_expr* self);
-static inline tree_expr* tree_get_conditional_condition(const tree_expr* self);
-
-static inline void tree_set_conditional_lhs(tree_expr* self, tree_expr* lhs);
-static inline void tree_set_conditional_rhs(tree_expr* self, tree_expr* rhs);
-static inline void tree_set_conditional_condition(tree_expr* self, tree_expr* condition);
-
 struct _tree_integer_literal_expr
 {
-        struct _tree_expr_base _base;
-        suint64 _value;
+        struct _tree_expr_base base;
+        suint64 value;
 };
-
-extern tree_expr* tree_new_integer_literal(
-        tree_context* context, tree_type* type, tree_location loc, suint64 value);
-
-static inline struct _tree_integer_literal_expr* _tree_get_integer_literal(tree_expr* self);
-static inline const struct _tree_integer_literal_expr* _tree_get_cinteger_literal(const tree_expr* self);
-
-static inline suint64 tree_get_integer_literal(const tree_expr* self);
-static inline void tree_set_integer_literal(tree_expr* self, suint64 value);
-
-struct _tree_character_literal_expr
-{
-        struct _tree_expr_base _base;
-        int _value;
-};
-
-extern tree_expr* tree_new_character_literal(
-        tree_context* context, tree_type* type, tree_location loc, int value);
-
-static inline struct _tree_character_literal_expr* _tree_get_character_literal(tree_expr* self);
-static inline const struct _tree_character_literal_expr* _tree_get_ccharacter_literal(const tree_expr* self);
-
-static inline int tree_get_character_literal(const tree_expr* self);
-static inline void tree_set_character_literal(tree_expr* self, int value);
-
-struct _tree_floating_literal_expr
-{
-        struct _tree_expr_base _base;
-        float_value _value;
-};
-
-extern tree_expr* tree_new_floating_literal(
-        tree_context* context,
-        tree_type* type,
-        tree_location loc,
-        const float_value* value);
-
-static inline struct _tree_floating_literal_expr*
-_tree_get_floating_literal(tree_expr* self);
-
-static inline const struct _tree_floating_literal_expr*
-_tree_get_cfloating_literal(const tree_expr* self);
-
-static inline const float_value* tree_get_floating_literal_cvalue(const tree_expr* self);
-static inline void tree_set_floating_literal_value(tree_expr* self, const float_value* value);
-
-struct _tree_string_literal_expr
-{
-        struct _tree_expr_base _base;
-        tree_id _ref;
-};
-
-extern tree_expr* tree_new_string_literal(
-        tree_context* context,
-        tree_value_kind value,
-        tree_type* type,
-        tree_location loc,
-        tree_id ref);
-
-static inline struct _tree_string_literal_expr* _tree_get_string_literal(tree_expr* self);
-static inline const struct _tree_string_literal_expr* _tree_get_cstring_literal(const tree_expr* self);
-
-static inline tree_id tree_get_string_literal(const tree_expr* self);
-static inline void tree_set_string_literal(tree_expr* self, tree_id ref);
-
-struct _tree_decl_expr
-{
-        struct _tree_expr_base _base;
-        tree_decl* _entity;
-};
-
-extern tree_expr* tree_new_decl_expr(
-        tree_context* context,
-        tree_value_kind value_kind,
-        tree_type* type,
-        tree_location loc,
-        tree_decl* decl);
-
-static inline struct _tree_decl_expr* _tree_get_decl_expr(tree_expr* self);
-static inline const struct _tree_decl_expr* _tree_get_decl_cexp(const tree_expr* self);
-
-static inline tree_decl* tree_get_decl_expr_entity(const tree_expr* self);
-static inline void tree_set_decl_expr_entity(tree_expr* self, tree_decl* decl);
-
-struct _tree_member_expr
-{
-        struct _tree_expr_base _base;
-        tree_expr* _lhs;
-        tree_decl* _decl;
-        bool _is_arrow;
-};
-
-extern tree_expr* tree_new_member_expr(
-        tree_context* context,
-        tree_value_kind value_kind,
-        tree_type* type,
-        tree_location loc,
-        tree_expr* lhs,
-        tree_decl* decl,
-        bool is_arrow);
-
-static inline struct _tree_member_expr* _tree_get_member_expr(tree_expr* self);
-static inline const struct _tree_member_expr* _tree_get_member_cexp(const tree_expr* self);
-
-static inline tree_expr* tree_get_member_expr_lhs(const tree_expr* self);
-static inline tree_decl* tree_get_member_expr_decl(const tree_expr* self);
-static inline bool tree_member_expr_is_arrow(const tree_expr* self);
-
-static inline void tree_set_member_expr_lhs(tree_expr* self, tree_expr* lhs);
-static inline void tree_set_member_expr_decl(tree_expr* self, tree_decl* decl);
-static inline void tree_set_member_expr_arrow(tree_expr* self, bool val);
-
-struct _tree_sizeof_expr
-{
-        struct _tree_expr_base _base;
-        bool _is_unary;
-
-        union
-        {
-                tree_expr* _expr;
-                tree_type* _type;
-        };
-};
-
-extern tree_expr* tree_new_sizeof_expr(
-        tree_context* context, tree_type* type, tree_location loc, void* rhs, bool is_unary);
-
-static inline struct _tree_sizeof_expr* _tree_get_sizeof(tree_expr* self);
-static inline const struct _tree_sizeof_expr* _tree_get_csizeof(const tree_expr* self);
-
-static inline bool tree_sizeof_is_unary(const tree_expr* self);
-static inline tree_expr* tree_get_sizeof_expr(const tree_expr* self);
-static inline tree_type* tree_get_sizeof_type(const tree_expr* self);
-
-static inline void tree_set_sizeof_expr(tree_expr* self, tree_expr* expr);
-static inline void tree_set_sizeof_type(tree_expr* self, tree_type* type);
-static inline void tree_set_sizeof_unary(tree_expr* self, bool val);
 
 struct _tree_paren_expr
 {
-        struct _tree_expr_base _base;
-        tree_expr* _expr;
-}; 
-
-extern tree_expr* tree_new_paren_expr(
-        tree_context* context,
-        tree_value_kind value_kind,
-        tree_type* type,
-        tree_location loc,
-        tree_expr* expr);
-
-static inline struct _tree_paren_expr* _tree_get_paren_expr(tree_expr* self);
-static inline const struct _tree_paren_expr* _tree_get_paren_cexp(const tree_expr* self);
-
-static inline tree_expr* tree_get_paren_expr(const tree_expr* self);
-static inline void tree_set_paren_expr(tree_expr* self, tree_expr* expr);
-
-struct _tree_init_expr
-{
-        struct _tree_expr_base _base;
-        list_head _designations;
-}; 
-
-extern tree_expr* tree_new_init_expr(tree_context* context, tree_location loc);
-extern void tree_add_init_designation(tree_expr* self, tree_designation* d);
-
-static inline struct _tree_init_expr* _tree_get_init_expr(tree_expr* self);
-static inline const struct _tree_init_expr* _tree_get_init_cexp(const tree_expr* self); 
-
-static inline tree_designation* tree_get_init_begin(const tree_expr* self);
-static inline const tree_designation* tree_get_init_end(const tree_expr* self);
-
-#define TREE_FOREACH_DESIGNATION(PEXP, ITNAME) \
-        for (tree_designation* ITNAME = tree_get_init_begin(PEXP); \
-                ITNAME != tree_get_init_end(PEXP); \
-                ITNAME = tree_get_next_designation(ITNAME))
-
-typedef enum
-{
-        TDK_DES_MEMBER,
-        TDK_DES_ARRAY,
-} tree_designator_kind;
-
-struct _tree_designator_base
-{
-        list_node _node;
-        tree_designator_kind _kind;
+        struct _tree_expr_base base;
+        tree_expr* expr;
 };
-
-extern void tree_add_designator_before(tree_designator* self, tree_designator* pos);
-extern void tree_add_designator_after(tree_designator* self, tree_designator* pos);
-
-static inline struct _tree_designator_base* _tree_get_designator(tree_designator* self);
-static inline const struct _tree_designator_base* _tree_get_cdesignator(const tree_designator* self);
-
-static inline tree_designator* tree_get_next_designator(const tree_designator* self);
-static inline tree_designator_kind tree_get_designator_kind(const tree_designator* self);
-static inline bool tree_designator_is(const tree_designator* self, tree_designator_kind k);
-
-static inline void tree_set_designator_kind(tree_designator* self, tree_designator_kind k);
-
-struct _tree_array_designator
-{
-        struct _tree_designator_base _base;
-        tree_type* _eltype;
-        tree_expr* _index;
-};
-
-extern tree_designator* tree_new_array_designator(
-        tree_context* context, tree_type* eltype, tree_expr* index);
-
-static inline struct _tree_array_designator* _tree_get_array_designator(tree_designator* self);
-static inline const struct _tree_array_designator* _tree_get_array_cdesignator(const tree_designator* self);
-
-static inline tree_type* tree_get_array_designator_type(const tree_designator* self);
-static inline tree_expr* tree_get_array_designator_index(const tree_designator* self);
-
-static inline void tree_set_array_designator_type(tree_designator* self, tree_type* t);
-static inline void tree_set_array_designator_index(tree_designator* self, tree_expr* i);
-
-struct _tree_member_designator
-{
-        struct _tree_designator_base _base;
-        tree_decl* _member;
-};
-
-extern tree_designator* tree_new_member_designator(tree_context* context, tree_decl* member);
-
-static inline struct _tree_member_designator* _tree_get_member_designator(tree_designator* self);
-static inline const struct _tree_member_designator* _tree_get_member_cdesignator(const tree_designator* self);
-
-static inline tree_decl* tree_get_member_designator_decl(const tree_designator* self);
-static inline void tree_set_member_designator_decl(tree_designator* self, tree_decl* d);
 
 typedef struct _tree_designator
 {
+        bool is_field;
+        tree_location loc;
+
         union
         {
-                struct _tree_array_designator _array;
-                struct _tree_member_designator _member;
+                tree_id field;
+                tree_expr* index;
         };
 } tree_designator;
 
-typedef struct _tree_designation
+struct _tree_designation
 {
-        list_node _node;
-        list_head _designators;
-        tree_expr* _initializer;
-} tree_designation;
+        struct _tree_expr_base base;
+        tree_expr* init;
+        tree_array designators;
+};
 
-extern tree_designation* tree_new_designation(tree_context* context, tree_expr* initializer);
-
-static inline tree_designation* tree_get_next_designation(const tree_designation* self);
-static inline tree_designator* tree_get_designation_begin(const tree_designation* self);
-static inline tree_designator* tree_get_designation_last(const tree_designation* self);
-static inline const tree_designator* tree_get_designation_end(const tree_designation* self);
-static inline tree_expr* tree_get_designation_initializer(const tree_designation* self);
-
-static inline void tree_set_designation_initializer(tree_designation* self, tree_expr* initializer);
-
-#define TREE_FOREACH_DESIGNATOR(PEXP, ITNAME) \
-        for (tree_designator* ITNAME = tree_get_designation_begin(PEXP); \
-                ITNAME != tree_get_designation_end(PEXP); \
-                ITNAME = tree_get_next_designator(ITNAME))
+struct _tree_init_list_expr
+{
+        struct _tree_expr_base base;
+        tree_array exprs;
+        bool has_trailing_comma;
+};
 
 struct _tree_impl_init_expr
 {
-        struct _tree_expr_base _base;
-        tree_expr* _init;
+        struct _tree_expr_base base;
+        tree_expr* expr;
 };
 
-extern tree_expr* tree_new_impl_init_expr(tree_context* context, tree_expr* init);
+struct _tree_character_literal_expr
+{
+        struct _tree_expr_base base;
+        int value;
+};
 
-static inline struct _tree_impl_init_expr* _tree_get_impl_init_expr(tree_expr* self);
-static inline const struct _tree_impl_init_expr* _tree_get_impl_init_cexp(const tree_expr* self);
+struct _tree_floating_literal_expr
+{
+        struct _tree_expr_base base;
+        float_value value;
+};
 
-static inline tree_expr* tree_get_impl_init_expr(const tree_expr* self);
-static inline void tree_set_impl_init_expr(tree_expr* self, tree_expr* init);
+struct _tree_string_literal_expr
+{
+        struct _tree_expr_base base;
+        tree_id id;
+};
+
+struct _tree_decl_expr
+{
+        struct _tree_expr_base base;
+        tree_decl* entity;
+};
+
+struct _tree_member_expr
+{
+        struct _tree_expr_base base;
+        tree_expr* lhs;
+        tree_decl* decl;
+        bool is_arrow;
+};
+
+struct _tree_sizeof_expr
+{
+        struct _tree_expr_base base;
+        bool contains_type;
+
+        union
+        {
+                void* operand;
+                tree_expr* expr;
+                tree_type* type;
+        };
+};
 
 typedef struct _tree_expr
 {
         union
         {
-                struct _tree_binop _binary;
-                struct _tree_unop _unary;
-                struct _tree_cast_expr _cast;
-                struct _tree_call_expr _call;
-                struct _tree_subscript_expr _subscript;
-                struct _tree_conditional_expr _conditional;
-                struct _tree_string_literal_expr _string;
-                struct _tree_integer_literal_expr _int;
-                struct _tree_floating_literal_expr _float;
-                struct _tree_character_literal_expr _char;
-                struct _tree_decl_expr _decl;
-                struct _tree_member_expr _member;
-                struct _tree_sizeof_expr _sizeof;
-                struct _tree_paren_expr _paren;
-                struct _tree_init_expr _init;
+                struct _tree_expr_base base;
+                struct _tree_binop binop;
+                struct _tree_unop unop;
+                struct _tree_cast_expr cast;
+                struct _tree_call_expr call;
+                struct _tree_subscript_expr subscript;
+                struct _tree_conditional_expr conditional;
+                struct _tree_integer_literal_expr int_literal;
+                struct _tree_character_literal_expr char_literal;
+                struct _tree_floating_literal_expr floating_literal;
+                struct _tree_string_literal_expr string_literal;
+                struct _tree_decl_expr decl;
+                struct _tree_member_expr member;
+                struct _tree_sizeof_expr sizeof_expr;
+                struct _tree_paren_expr paren;
+                struct _tree_designation designation;
+                struct _tree_init_list_expr init_list;
+                struct _tree_impl_init_expr impl_init;
         };
 } tree_expr;
 
@@ -616,686 +277,578 @@ extern tree_expr* tree_ignore_paren_exprs(tree_expr* self);
 extern const tree_expr* tree_ignore_paren_cexps(const tree_expr* self);
 // ignores implicit casts and parenthesises, if any
 extern tree_expr* tree_desugar_expr(tree_expr* self);
-extern const tree_expr* tree_desugar_cexp(const tree_expr* self);
+extern const tree_expr* tree_desugar_cexpr(const tree_expr* self);
 
-extern bool tree_expr_is_null_pointer_constant(const tree_expr* self);
+extern bool tree_expr_is_null_pointer_constant(tree_context* context, const tree_expr* expr);
 extern bool tree_expr_designates_bitfield(const tree_expr* self);
 
-#define TREE_ASSERT_EXPR(E) S_ASSERT(E)
+extern tree_expr* tree_new_expr(
+        tree_context* context,
+        tree_expr_kind kind,
+        tree_value_kind value_kind,
+        tree_type* type,
+        tree_location loc,
+        ssize size);
 
-static inline struct _tree_expr_base* _tree_get_expr(tree_expr* self)
+static TREE_INLINE tree_expr_kind tree_get_expr_kind(const tree_expr* self)
 {
-        TREE_ASSERT_EXPR(self);
-        return (struct _tree_expr_base*)self;
+        return self->base.kind;
 }
 
-static inline const struct _tree_expr_base* _tree_get_cexp(const tree_expr* self)
+static TREE_INLINE bool tree_expr_is(const tree_expr* self, tree_expr_kind kind)
 {
-        TREE_ASSERT_EXPR(self);
-        return (const struct _tree_expr_base*)self;
+        return tree_get_expr_kind(self) == kind;
 }
 
-static inline tree_expr_kind tree_get_expr_kind(const tree_expr* self)
+static TREE_INLINE tree_value_kind tree_get_expr_value_kind(const tree_expr* self)
 {
-        return _tree_get_cexp(self)->_kind;
+        return self->base.value_kind;
 }
 
-static inline tree_value_kind tree_get_expr_value_kind(const tree_expr* self)
-{
-        return _tree_get_cexp(self)->_value_kind;
-}
-
-static inline bool tree_expr_is_lvalue(const tree_expr* self)
+static TREE_INLINE bool tree_expr_is_lvalue(const tree_expr* self)
 {
         return tree_get_expr_value_kind(self) == TVK_LVALUE;
 }
 
-static inline bool tree_expr_is_modifiable_lvalue(const tree_expr* self)
+static TREE_INLINE bool tree_expr_is_rvalue(const tree_expr* self)
 {
-        return tree_expr_is_lvalue(self)
-                && !(tree_get_type_quals(tree_get_expr_type(self)) & TTQ_CONST);
+        return tree_get_expr_value_kind(self) == TVK_RVALUE;
 }
 
-static inline tree_type* tree_get_expr_type(const tree_expr* self)
+static TREE_INLINE tree_type* tree_get_expr_type(const tree_expr* self)
 {
-        return _tree_get_cexp(self)->_type;
+        return self->base.type;
 }
 
-static inline tree_location tree_get_expr_loc(const tree_expr* self)
+static TREE_INLINE bool tree_expr_is_modifiable_lvalue(const tree_expr* self)
 {
-        return _tree_get_cexp(self)->_loc;
+        return tree_expr_is_lvalue(self) 
+                && !(tree_get_type_quals(self->base.type) & TTQ_CONST);
 }
 
-static inline void tree_set_expr_kind(tree_expr* self, tree_expr_kind k)
+static TREE_INLINE tree_location tree_get_expr_loc(const tree_expr* self)
 {
-        _tree_get_expr(self)->_kind = k;
+        return self->base.loc;
 }
 
-static inline void tree_set_expr_value_kind(tree_expr* self, tree_value_kind vk)
+static TREE_INLINE void tree_set_expr_kind(tree_expr* self, tree_expr_kind kind)
 {
-        _tree_get_expr(self)->_value_kind = vk;
+        self->base.kind = kind;
 }
 
-static inline void tree_set_expr_type(tree_expr* self, tree_type* t)
+static TREE_INLINE void tree_set_expr_value_kind(tree_expr* self, tree_value_kind value_kind)
 {
-        _tree_get_expr(self)->_type = t;
+        self->base.value_kind = value_kind;
 }
 
-static inline void tree_set_expr_loc(tree_expr* self, tree_location loc)
+static TREE_INLINE void tree_set_expr_type(tree_expr* self, tree_type* type)
 {
-        _tree_get_expr(self)->_loc = loc;
+        self->base.type = type;
 }
 
-#undef TREE_ASSERT_EXPR
-#define TREE_ASSERT_EXPR(E, K) S_ASSERT((E) && tree_get_expr_kind(E) == (K))
-
-static inline struct _tree_binop* _tree_get_binop(tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_BINARY);
-        return (struct _tree_binop*)self;
-}
-
-static inline const struct _tree_binop* _tree_get_cbinop(const tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_BINARY);
-        return (const struct _tree_binop*)self;
-}
-
-static inline bool tree_binop_is(const tree_expr* self, tree_binop_kind k)
-{
-        return tree_get_binop_kind(self) == k;
-}
-
-static inline tree_binop_kind tree_get_binop_kind(const tree_expr* self)
-{
-        return _tree_get_cbinop(self)->_kind;
-}
-
-static inline tree_expr* tree_get_binop_lhs(const tree_expr* self)
-{
-        return _tree_get_cbinop(self)->_lhs;
-}
-
-static inline tree_expr* tree_get_binop_rhs(const tree_expr* self)
-{
-        return _tree_get_cbinop(self)->_rhs;
-}
-
-static inline void tree_set_binop_kind(tree_expr* self, tree_binop_kind k)
-{
-        _tree_get_binop(self)->_kind = k;
-}
-
-static inline void tree_set_binop_lhs(tree_expr* self, tree_expr* lhs)
+static TREE_INLINE void tree_set_expr_loc(tree_expr* self, tree_location loc)
 {
-        _tree_get_binop(self)->_lhs = lhs;
+        self->base.loc = loc;
 }
 
-static inline void tree_set_binop_rhs(tree_expr* self, tree_expr* rhs)
-{
-        _tree_get_binop(self)->_rhs = rhs;
-}
-
-static inline struct _tree_unop* _tree_get_unop(tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_UNARY);
-        return (struct _tree_unop*)self;
-}
-
-static inline const struct _tree_unop* _tree_get_cunop(const tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_UNARY);
-        return (const struct _tree_unop*)self;
-}
-
-static inline bool tree_unop_is(const tree_expr* self, tree_unop_kind k)
-{
-        return tree_get_unop_kind(self) == k;
-}
+extern tree_expr* tree_new_binop(
+        tree_context* context,
+        tree_value_kind value_kind,
+        tree_type* type,
+        tree_location loc,
+        tree_binop_kind kind,
+        tree_expr* lhs,
+        tree_expr* rhs);
 
-static inline tree_unop_kind tree_get_unop_kind(const tree_expr* self)
+static TREE_INLINE tree_binop_kind tree_get_binop_kind(const tree_expr* self)
 {
-        return _tree_get_cunop(self)->_kind;
+        return self->binop.kind;
 }
 
-static inline tree_expr* tree_get_unop_expr(const tree_expr* self)
+static TREE_INLINE bool tree_binop_is(const tree_expr* self, tree_binop_kind kind)
 {
-        return _tree_get_cunop(self)->_expr;
+        return tree_get_binop_kind(self) == kind;
 }
 
-static inline void tree_set_unop_kind(tree_expr* self, tree_unop_kind k)
+static TREE_INLINE tree_expr* tree_get_binop_lhs(const tree_expr* self)
 {
-        _tree_get_unop(self)->_kind = k;
+        return self->binop.lhs;
 }
 
-static inline void tree_set_unop_expr(tree_expr* self, tree_expr* expr)
+static TREE_INLINE tree_expr* tree_get_binop_rhs(const tree_expr* self)
 {
-        _tree_get_unop(self)->_expr = expr;
+        return self->binop.rhs;
 }
 
-#define TREE_ASSERT_CAST(P) \
-        S_ASSERT((P) && tree_get_expr_kind(P) == TEK_EXPLICIT_CAST \
-                     || tree_get_expr_kind(P) == TEK_IMPLICIT_CAST)
-
-static inline struct _tree_cast_expr* _tree_get_cast(tree_expr* self)
-{
-        TREE_ASSERT_CAST(self);
-        return (struct _tree_cast_expr*)self;
-}
-
-static inline const struct _tree_cast_expr* _tree_get_ccast(const tree_expr* self)
-{
-        TREE_ASSERT_CAST(self);
-        return (const struct _tree_cast_expr*)self;
-}
-
-static inline tree_expr* tree_get_cast_expr(const tree_expr* self)
-{
-        return _tree_get_ccast(self)->_expr;
-}
-
-static inline void tree_set_cast_expr(tree_expr* self, tree_expr* expr)
+static TREE_INLINE void tree_set_binop_kind(tree_expr* self, tree_binop_kind kind)
 {
-        _tree_get_cast(self)->_expr = expr;
+        self->binop.kind = kind;
 }
 
-static inline struct _tree_call_expr* _tree_get_call(tree_expr* self)
+static TREE_INLINE void tree_set_binop_lhs(tree_expr* self, tree_expr* lhs)
 {
-        TREE_ASSERT_EXPR(self, TEK_CALL);
-        return (struct _tree_call_expr*)self;
+        self->binop.lhs = lhs;
 }
 
-static inline const struct _tree_call_expr* _tree_get_ccall(const tree_expr* self)
+static TREE_INLINE void tree_set_binop_rhs(tree_expr* self, tree_expr* rhs)
 {
-        TREE_ASSERT_EXPR(self, TEK_CALL);
-        return (const struct _tree_call_expr*)self;
+        self->binop.rhs = rhs;
 }
 
-static inline ssize tree_get_call_nargs(const tree_expr* self)
-{
-        return dseq_size(&_tree_get_ccall(self)->_args);
-}
+extern tree_expr* tree_new_unop(
+        tree_context* context,
+        tree_value_kind value_kind,
+        tree_type* type,
+        tree_location loc,
+        tree_unop_kind kind,
+        tree_expr* operand);
 
-static inline tree_expr* tree_get_call_lhs(const tree_expr* self)
+static TREE_INLINE tree_unop_kind tree_get_unop_kind(const tree_expr* self)
 {
-        return _tree_get_ccall(self)->_lhs;
+        return self->unop.kind;
 }
 
-static inline tree_expr** tree_get_call_args_begin(const tree_expr* self)
+static TREE_INLINE bool tree_unop_is(const tree_expr* self, tree_unop_kind kind)
 {
-        return (tree_expr**)dseq_begin_ptr(&_tree_get_ccall(self)->_args);
+        return tree_get_unop_kind(self) == kind;
 }
 
-static inline tree_expr** tree_get_call_args_end(const tree_expr* self)
+static TREE_INLINE tree_expr* tree_get_unop_operand(const tree_expr* self)
 {
-        return (tree_expr**)dseq_end_ptr(&_tree_get_ccall(self)->_args);
+        return self->unop.operand;
 }
 
-static inline void tree_set_call_lhs(tree_expr* self, tree_expr* lhs)
+static TREE_INLINE void tree_set_unop_kind(tree_expr* self, tree_unop_kind kind)
 {
-        _tree_get_call(self)->_lhs = lhs;
+        self->unop.kind = kind;
 }
 
-static inline struct _tree_subscript_expr* _tree_get_subscript(tree_expr* self)
+static TREE_INLINE void tree_set_unop_operand(tree_expr* self, tree_expr* operand)
 {
-        TREE_ASSERT_EXPR(self, TEK_SUBSCRIPT);
-        return (struct _tree_subscript_expr*)self;
+        self->unop.operand = operand;
 }
 
-static inline const struct _tree_subscript_expr* _tree_get_csubscript(const tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_SUBSCRIPT);
-        return (const struct _tree_subscript_expr*)self;
-}
+extern tree_expr* tree_new_cast_expr(
+        tree_context* context,
+        tree_value_kind value_kind,
+        tree_location loc,
+        tree_type* type,
+        tree_expr* expr,
+        bool is_implicit);
 
-static inline tree_expr* tree_get_subscript_lhs(const tree_expr* self)
+static TREE_INLINE tree_expr* tree_get_cast_operand(const tree_expr* self)
 {
-        return _tree_get_csubscript(self)->_lhs;
+        return self->cast.operand;
 }
 
-static inline tree_expr* tree_get_subscript_rhs(const tree_expr* self)
+static TREE_INLINE bool tree_cast_is_implicit(const tree_expr* self)
 {
-        return _tree_get_csubscript(self)->_rhs;
+        return self->cast.is_implicit;
 }
 
-static inline void tree_set_subscript_lhs(tree_expr* self, tree_expr* lhs)
+static TREE_INLINE void tree_set_cast_operand(tree_expr* self, tree_expr* operand)
 {
-        _tree_get_subscript(self)->_lhs = lhs;
+        self->cast.operand = operand;
 }
 
-static inline void tree_set_subscript_rhs(tree_expr* self, tree_expr* rhs)
+static TREE_INLINE void tree_set_cast_implicit(tree_expr* self, bool is_implicit)
 {
-        _tree_get_subscript(self)->_rhs = rhs;
+        self->cast.is_implicit = is_implicit;
 }
 
-static inline struct _tree_conditional_expr* _tree_get_conditional(tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_CONDITIONAL);
-        return (struct _tree_conditional_expr*)self;
-}
+extern tree_expr* tree_new_call_expr(
+        tree_context* context,
+        tree_value_kind value_kind,
+        tree_type* type,
+        tree_location loc,
+        tree_expr* lhs);
 
-static inline const struct _tree_conditional_expr* _tree_get_cconditional(const tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_CONDITIONAL);
-        return (const struct _tree_conditional_expr*)self;
-}
+extern serrcode tree_add_call_arg(tree_expr* self, tree_context* context, tree_expr* arg);
 
-static inline tree_expr* tree_get_conditional_lhs(const tree_expr* self)
+static TREE_INLINE void tree_set_call_args(tree_expr* self, tree_array* args)
 {
-        return _tree_get_cconditional(self)->_lhs;
+        self->call.args = *args;
 }
 
-static inline tree_expr* tree_get_conditional_rhs(const tree_expr* self)
+static TREE_INLINE ssize tree_get_call_args_size(const tree_expr* self)
 {
-        return _tree_get_cconditional(self)->_rhs;
+        return self->call.args.size;
 }
 
-static inline tree_expr* tree_get_conditional_condition(const tree_expr* self)
+static TREE_INLINE tree_expr* tree_get_call_lhs(const tree_expr* self)
 {
-        return _tree_get_cconditional(self)->_condition;
+        return self->call.lhs;
 }
 
-static inline void tree_set_conditional_lhs(tree_expr* self, tree_expr* lhs)
+static TREE_INLINE tree_expr** tree_get_call_args_begin(const tree_expr* self)
 {
-        _tree_get_conditional(self)->_lhs = lhs;
+        return (tree_expr**)self->call.args.data;
 }
 
-static inline void tree_set_conditional_rhs(tree_expr* self, tree_expr* rhs)
+static TREE_INLINE tree_expr** tree_get_call_args_end(const tree_expr* self)
 {
-        _tree_get_conditional(self)->_rhs = rhs;
+        return tree_get_call_args_begin(self) + tree_get_call_args_size(self);
 }
 
-static inline void tree_set_conditional_condition(tree_expr* self, tree_expr* condition)
+static TREE_INLINE tree_expr* tree_get_call_arg(const tree_expr* self, ssize i)
 {
-        _tree_get_conditional(self)->_condition = condition;
+        return tree_get_call_args_begin(self)[i];
 }
 
-static inline struct _tree_integer_literal_expr* _tree_get_integer_literal(tree_expr* self)
+static TREE_INLINE void tree_set_call_lhs(tree_expr* self, tree_expr* lhs)
 {
-        TREE_ASSERT_EXPR(self, TEK_INTEGER_LITERAL);
-        return (struct _tree_integer_literal_expr*)self;
+        self->call.lhs = lhs;
 }
 
-static inline const struct _tree_integer_literal_expr* _tree_get_cinteger_literal(const tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_INTEGER_LITERAL);
-        return (const struct _tree_integer_literal_expr*)self;
-}
+#define TREE_FOREACH_CALL_ARG(PEXP, ITNAME) \
+        for (tree_expr** ITNAME = tree_get_call_args_begin(PEXP); \
+                ITNAME != tree_get_call_args_end(PEXP); ITNAME++)
 
-static inline suint64 tree_get_integer_literal(const tree_expr* self)
-{
-        return _tree_get_cinteger_literal(self)->_value;
-}
+extern tree_expr* tree_new_subscript_expr(
+        tree_context* context,
+        tree_value_kind value_kind,
+        tree_type* type,
+        tree_location loc,
+        tree_expr* lhs,
+        tree_expr* rhs);
 
-static inline void tree_set_integer_literal(tree_expr* self, suint64 value)
+static TREE_INLINE tree_expr* tree_get_subscript_lhs(const tree_expr* self)
 {
-        _tree_get_integer_literal(self)->_value = value;
+        return self->subscript.lhs;
 }
 
-static inline struct _tree_character_literal_expr* _tree_get_character_literal(tree_expr* self)
+static TREE_INLINE tree_expr* tree_get_subscript_rhs(const tree_expr* self)
 {
-        TREE_ASSERT_EXPR(self, TEK_CHARACTER_LITERAL);
-        return (struct _tree_character_literal_expr*)self;
+        return self->subscript.rhs;
 }
 
-static inline const struct _tree_character_literal_expr* _tree_get_ccharacter_literal(const tree_expr* self)
+static TREE_INLINE void tree_set_subscript_lhs(tree_expr* self, tree_expr* lhs)
 {
-        TREE_ASSERT_EXPR(self, TEK_CHARACTER_LITERAL);
-        return (const struct _tree_character_literal_expr*)self;
+        self->subscript.lhs = lhs;
 }
 
-static inline int tree_get_character_literal(const tree_expr* self)
+static TREE_INLINE void tree_set_subscript_rhs(tree_expr* self, tree_expr* rhs)
 {
-        return _tree_get_ccharacter_literal(self)->_value;
+        self->subscript.rhs = rhs;
 }
 
-static inline void tree_set_character_literal(tree_expr* self, int value)
-{
-        _tree_get_character_literal(self)->_value = value;
-}
+extern tree_expr* tree_new_conditional_expr(
+        tree_context* context,
+        tree_value_kind value_kind,
+        tree_type* type,
+        tree_location loc,
+        tree_expr* condition,
+        tree_expr* lhs,
+        tree_expr* rhs);
 
-static inline struct _tree_floating_literal_expr*
-_tree_get_floating_literal(tree_expr* self)
+static TREE_INLINE tree_expr* tree_get_conditional_lhs(const tree_expr* self)
 {
-        TREE_ASSERT_EXPR(self, TEK_FLOATING_LITERAL);
-        return (struct _tree_floating_literal_expr*)self;
+        return self->conditional.lhs;
 }
 
-static inline const struct _tree_floating_literal_expr*
-_tree_get_cfloating_literal(const tree_expr* self)
+static TREE_INLINE tree_expr* tree_get_conditional_rhs(const tree_expr* self)
 {
-        TREE_ASSERT_EXPR(self, TEK_FLOATING_LITERAL);
-        return (const struct _tree_floating_literal_expr*)self;
+        return self->conditional.rhs;
 }
 
-static inline const float_value* tree_get_floating_literal_cvalue(const tree_expr* self)
+static TREE_INLINE tree_expr* tree_get_conditional_condition(const tree_expr* self)
 {
-        return &_tree_get_cfloating_literal(self)->_value;
+        return self->conditional.condition;
 }
 
-static inline void tree_set_floating_literal_value(tree_expr* self, const float_value* value)
+static TREE_INLINE void tree_set_conditional_lhs(tree_expr* self, tree_expr* lhs)
 {
-        _tree_get_floating_literal(self)->_value = *value;
+        self->conditional.lhs = lhs;
 }
 
-static inline struct _tree_string_literal_expr* _tree_get_string_literal(tree_expr* self)
+static TREE_INLINE void tree_set_conditional_rhs(tree_expr* self, tree_expr* rhs)
 {
-        TREE_ASSERT_EXPR(self, TEK_STRING_LITERAL);
-        return (struct _tree_string_literal_expr*)self;
+        self->conditional.rhs = rhs;
 }
 
-static inline const struct _tree_string_literal_expr* _tree_get_cstring_literal(const tree_expr* self)
+static TREE_INLINE void tree_set_conditional_condition(tree_expr* self, tree_expr* condition)
 {
-        TREE_ASSERT_EXPR(self, TEK_STRING_LITERAL);
-        return (const struct _tree_string_literal_expr*)self;
+        self->conditional.condition = condition;
 }
 
-static inline tree_id tree_get_string_literal(const tree_expr* self)
-{
-        return _tree_get_cstring_literal(self)->_ref;
-}
+extern tree_expr* tree_new_integer_literal(
+        tree_context* context, tree_type* type, tree_location loc, suint64 value);
 
-static inline void tree_set_string_literal(tree_expr* self, tree_id ref)
+static TREE_INLINE suint64 tree_get_integer_literal(const tree_expr* self)
 {
-        _tree_get_string_literal(self)->_ref = ref;
+        return self->int_literal.value;
 }
 
-static inline struct _tree_decl_expr* _tree_get_decl_expr(tree_expr* self)
+static TREE_INLINE void tree_set_integer_literal(tree_expr* self, suint64 value)
 {
-        TREE_ASSERT_EXPR(self, TEK_DECL);
-        return (struct _tree_decl_expr*)self;
+        self->int_literal.value = value;
 }
 
-static inline const struct _tree_decl_expr* _tree_get_decl_cexp(const tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_DECL);
-        return (const struct _tree_decl_expr*)self;
-}
+extern tree_expr* tree_new_character_literal(
+        tree_context* context, tree_type* type, tree_location loc, int value);
 
-static inline tree_decl* tree_get_decl_expr_entity(const tree_expr* self)
+static TREE_INLINE int tree_get_character_literal(const tree_expr* self)
 {
-        return _tree_get_decl_cexp(self)->_entity;
+        return self->char_literal.value;
 }
 
-static inline void tree_set_decl_expr_entity(tree_expr* self, tree_decl* decl)
+static TREE_INLINE void tree_set_character_literal(tree_expr* self, int value)
 {
-        _tree_get_decl_expr(self)->_entity = decl;
+        self->char_literal.value = value;
 }
 
-static inline struct _tree_member_expr* _tree_get_member_expr(tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_MEMBER);
-        return (struct _tree_member_expr*)self;
-}
+extern tree_expr* tree_new_floating_literal(
+        tree_context* context,
+        tree_type* type,
+        tree_location loc,
+        const float_value* value);
 
-static inline const struct _tree_member_expr* _tree_get_member_cexp(const tree_expr* self)
+static TREE_INLINE const float_value* tree_get_floating_literal_cvalue(const tree_expr* self)
 {
-        TREE_ASSERT_EXPR(self, TEK_MEMBER);
-        return (const struct _tree_member_expr*)self;
+        return &self->floating_literal.value;
 }
 
-static inline tree_expr* tree_get_member_expr_lhs(const tree_expr* self)
+static TREE_INLINE void tree_set_floating_literal_value(tree_expr* self, const float_value* value)
 {
-        return _tree_get_member_cexp(self)->_lhs;
+        self->floating_literal.value = *value;
 }
 
-static inline tree_decl* tree_get_member_expr_decl(const tree_expr* self)
-{
-        return _tree_get_member_cexp(self)->_decl;
-}
+extern tree_expr* tree_new_string_literal(
+        tree_context* context,
+        tree_value_kind value,
+        tree_type* type,
+        tree_location loc,
+        tree_id id);
 
-static inline bool tree_member_expr_is_arrow(const tree_expr* self)
+static TREE_INLINE tree_id tree_get_string_literal(const tree_expr* self)
 {
-        return _tree_get_member_cexp(self)->_is_arrow;
+        return self->string_literal.id;
 }
 
-static inline void tree_set_member_expr_lhs(tree_expr* self, tree_expr* lhs)
+static TREE_INLINE void tree_set_string_literal(tree_expr* self, tree_id id)
 {
-        _tree_get_member_expr(self)->_lhs = lhs;
+        self->string_literal.id = id;
 }
 
-static inline void tree_set_member_expr_decl(tree_expr* self, tree_decl* decl)
-{
-        _tree_get_member_expr(self)->_decl = decl;
-}
+extern tree_expr* tree_new_decl_expr(
+        tree_context* context,
+        tree_value_kind value_kind,
+        tree_type* type,
+        tree_location loc,
+        tree_decl* decl);
 
-static inline void tree_set_member_expr_arrow(tree_expr* self, bool val)
+static TREE_INLINE tree_decl* tree_get_decl_expr_entity(const tree_expr* self)
 {
-        _tree_get_member_expr(self)->_is_arrow = val;
+        return self->decl.entity;
 }
 
-static inline struct _tree_sizeof_expr* _tree_get_sizeof(tree_expr* self)
+static TREE_INLINE void tree_set_decl_expr_entity(tree_expr* self, tree_decl* decl)
 {
-        TREE_ASSERT_EXPR(self, TEK_SIZEOF);
-        return (struct _tree_sizeof_expr*)self;
+        self->decl.entity = decl;
 }
 
-static inline const struct _tree_sizeof_expr* _tree_get_csizeof(const tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_SIZEOF);
-        return (const struct _tree_sizeof_expr*)self;
-}
+extern tree_expr* tree_new_member_expr(
+        tree_context* context,
+        tree_value_kind value_kind,
+        tree_type* type,
+        tree_location loc,
+        tree_expr* lhs,
+        tree_decl* decl,
+        bool is_arrow);
 
-static inline bool tree_sizeof_is_unary(const tree_expr* self)
+static TREE_INLINE tree_expr* tree_get_member_expr_lhs(const tree_expr* self)
 {
-        return _tree_get_csizeof(self)->_is_unary;
+        return self->member.lhs;
 }
 
-static inline tree_expr* tree_get_sizeof_expr(const tree_expr* self)
+static TREE_INLINE tree_decl* tree_get_member_expr_decl(const tree_expr* self)
 {
-        return _tree_get_csizeof(self)->_expr;
+        return self->member.decl;
 }
 
-static inline tree_type* tree_get_sizeof_type(const tree_expr* self)
+static TREE_INLINE bool tree_member_expr_is_arrow(const tree_expr* self)
 {
-        return _tree_get_csizeof(self)->_type;
+        return self->member.is_arrow;
 }
 
-static inline void tree_set_sizeof_expr(tree_expr* self, tree_expr* expr)
+static TREE_INLINE void tree_set_member_expr_lhs(tree_expr* self, tree_expr* lhs)
 {
-        _tree_get_sizeof(self)->_expr = expr;
+        self->member.lhs = lhs;
 }
 
-static inline void tree_set_sizeof_type(tree_expr* self, tree_type* type)
+static TREE_INLINE void tree_set_member_expr_decl(tree_expr* self, tree_decl* decl)
 {
-        _tree_get_sizeof(self)->_type = type;
+        self->member.decl = decl;
 }
 
-static inline void tree_set_sizeof_unary(tree_expr* self, bool val)
+static TREE_INLINE void tree_set_member_expr_arrow(tree_expr* self, bool val)
 {
-        _tree_get_sizeof(self)->_is_unary = val;
+        self->member.is_arrow = val;
 }
 
-static inline struct _tree_paren_expr* _tree_get_paren_expr(tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_PAREN);
-        return (struct _tree_paren_expr*)self;
-}
+extern tree_expr* tree_new_sizeof_expr(
+        tree_context* context,
+        tree_type* type,
+        tree_location loc,
+        void* operand,
+        bool contains_type);
 
-static inline const struct _tree_paren_expr* _tree_get_paren_cexp(const tree_expr* self)
+static TREE_INLINE bool tree_sizeof_contains_type(const tree_expr* self)
 {
-        TREE_ASSERT_EXPR(self, TEK_PAREN);
-        return (const struct _tree_paren_expr*)self;
+        return self->sizeof_expr.contains_type;
 }
 
-static inline tree_expr* tree_get_paren_expr(const tree_expr* self)
+static TREE_INLINE tree_expr* tree_get_sizeof_expr(const tree_expr* self)
 {
-        return _tree_get_paren_cexp(self)->_expr;
+        return self->sizeof_expr.expr;
 }
 
-static inline void tree_set_paren_expr(tree_expr* self, tree_expr* expr)
+static TREE_INLINE tree_type* tree_get_sizeof_type(const tree_expr* self)
 {
-        _tree_get_paren_expr(self)->_expr = expr;
+        return self->sizeof_expr.type;
 }
 
-static inline struct _tree_init_expr* _tree_get_init_expr(tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_INIT);
-        return (struct _tree_init_expr*)self;
-}
-static inline const struct _tree_init_expr* _tree_get_init_cexp(const tree_expr* self)
+static TREE_INLINE void tree_set_sizeof_expr(tree_expr* self, tree_expr* expr)
 {
-        TREE_ASSERT_EXPR(self, TEK_INIT);
-        return (const struct _tree_init_expr*)self;
+        self->sizeof_expr.expr = expr;
 }
 
-static inline tree_designation* tree_get_init_begin(const tree_expr* self)
+static TREE_INLINE void tree_set_sizeof_type(tree_expr* self, tree_type* type)
 {
-        return (tree_designation*)list_begin(&_tree_get_init_cexp(self)->_designations);
+        self->sizeof_expr.type = type;
 }
 
-static inline const tree_designation* tree_get_init_end(const tree_expr* self)
+static TREE_INLINE void tree_set_sizeof_contains_type(tree_expr* self, bool val)
 {
-        return (const tree_designation*)list_cend(&_tree_get_init_cexp(self)->_designations);
+        self->sizeof_expr.contains_type = val;
 }
 
-#define TREE_ASSERT_DESIGNATOR(P) S_ASSERT(P)
+extern tree_expr* tree_new_paren_expr(
+        tree_context* context,
+        tree_value_kind value_kind,
+        tree_type* type,
+        tree_location loc,
+        tree_expr* expr);
 
-static inline struct _tree_designator_base* _tree_get_designator(tree_designator* self)
+static TREE_INLINE tree_expr* tree_get_paren_expr(const tree_expr* self)
 {
-        TREE_ASSERT_DESIGNATOR(self);
-        return (struct _tree_designator_base*)self;
+        return self->paren.expr;
 }
 
-static inline const struct _tree_designator_base* _tree_get_cdesignator(const tree_designator* self)
+static TREE_INLINE void tree_set_paren_expr(tree_expr* self, tree_expr* expr)
 {
-        TREE_ASSERT_DESIGNATOR(self);
-        return (const struct _tree_designator_base*)self;
+        self->paren.expr = expr;
 }
 
-static inline tree_designator* tree_get_next_designator(const tree_designator* self)
-{
-        return (tree_designator*)list_node_next(&_tree_get_cdesignator(self)->_node);
-}
+extern tree_designator* tree_new_field_designator(
+        tree_context* context, tree_location loc, tree_id field);
 
-static inline tree_designator_kind tree_get_designator_kind(const tree_designator* self)
-{
-        return _tree_get_cdesignator(self)->_kind;
-}
+extern tree_designator* tree_new_array_designator(
+        tree_context* context, tree_location loc, tree_expr* index);
 
-static inline bool tree_designator_is(const tree_designator* self, tree_designator_kind k)
+static TREE_INLINE tree_location tree_get_designator_loc(const tree_designator* self)
 {
-        return tree_get_designator_kind(self) == k;
+        return self->loc;
 }
 
-static inline void tree_set_designator_kind(tree_designator* self, tree_designator_kind k)
+static TREE_INLINE bool tree_designator_is_field(const tree_designator* self)
 {
-        _tree_get_designator(self)->_kind = k;
+        return self->is_field;
 }
-
-#undef TREE_ASSERT_DESIGNATOR
-#define TREE_ASSERT_DESIGNATOR(P, K) S_ASSERT((P) && tree_get_designator_kind(P) == (K))
 
-static inline struct _tree_array_designator* _tree_get_array_designator(tree_designator* self)
+static TREE_INLINE tree_id tree_get_designator_field(const tree_designator* self)
 {
-        TREE_ASSERT_DESIGNATOR(self, TDK_DES_ARRAY);
-        return (struct _tree_array_designator*)self;
+        return self->field;
 }
 
-static inline const struct _tree_array_designator* _tree_get_array_cdesignator(const tree_designator* self)
+static TREE_INLINE tree_expr* tree_get_designator_index(const tree_designator* self)
 {
-        TREE_ASSERT_DESIGNATOR(self, TDK_DES_ARRAY);
-        return (const struct _tree_array_designator*)self;
+        return self->index;
 }
 
-static inline tree_type* tree_get_array_designator_type(const tree_designator* self)
+static TREE_INLINE void tree_set_designator_loc(tree_designator* self, tree_location loc)
 {
-        return _tree_get_array_cdesignator(self)->_eltype;
+        self->loc = loc;
 }
 
-static inline tree_expr* tree_get_array_designator_index(const tree_designator* self)
+static TREE_INLINE void tree_set_designator_member(tree_designator* self, tree_id field)
 {
-        return _tree_get_array_cdesignator(self)->_index;
+        self->field = field;
 }
 
-static inline void tree_set_array_designator_type(tree_designator* self, tree_type* t)
+static TREE_INLINE void tree_set_designator_index(tree_designator* self, tree_expr* index)
 {
-        _tree_get_array_designator(self)->_eltype = t;
+        self->index = index;
 }
 
-static inline void tree_set_array_designator_index(tree_designator* self, tree_expr* i)
-{
-        _tree_get_array_designator(self)->_index = i;
-}
+extern tree_expr* tree_new_designation(tree_context* context, tree_expr* init);
 
-static inline struct _tree_member_designator* _tree_get_member_designator(tree_designator* self)
-{
-        TREE_ASSERT_DESIGNATOR(self, TDK_DES_MEMBER);
-        return (struct _tree_member_designator*)self;
-}
+extern serrcode tree_add_designation_designator(
+        tree_expr* self, tree_context* context, tree_designator* d);
 
-static inline const struct _tree_member_designator* _tree_get_member_cdesignator(const tree_designator* self)
+static TREE_INLINE tree_designator** tree_get_designation_designators_begin(const tree_expr* self)
 {
-        TREE_ASSERT_DESIGNATOR(self, TDK_DES_MEMBER);
-        return (const struct _tree_member_designator*)self;
+        return (tree_designator**)self->designation.designators.data;
 }
 
-static inline tree_decl* tree_get_member_designator_decl(const tree_designator* self)
+static TREE_INLINE tree_designator** tree_get_designation_designators_end(const tree_expr* self)
 {
-        return _tree_get_member_cdesignator(self)->_member;
+        return tree_get_designation_designators_begin(self) + self->designation.designators.size;
 }
 
-static inline void tree_set_member_designator_decl(tree_designator* self, tree_decl* d)
+static TREE_INLINE tree_expr* tree_get_designation_init(const tree_expr* self)
 {
-        _tree_get_member_designator(self)->_member = d;
+        return self->designation.init;
 }
 
-static inline tree_designation* tree_get_next_designation(const tree_designation* self)
+static TREE_INLINE void tree_set_designation_init(tree_expr* self, tree_expr* init)
 {
-        return (tree_designation*)list_node_next(&self->_node);
+        self->designation.init = init;
 }
 
-static inline tree_designator* tree_get_designation_begin(const tree_designation* self)
-{
-        return (tree_designator*)list_begin(&self->_designators);
-}
+#define TREE_FOREACH_DESIGNATION_DESIGNATOR(P, ITNAME, ENDNAME)\
+        for (tree_designator** ITNAME = tree_get_designation_designators_begin(P),\
+                **ENDNAME = tree_get_designation_designators_end(P);\
+                ITNAME != ENDNAME; ITNAME++)
 
-static inline tree_designator* tree_get_designation_last(const tree_designation* self)
-{
-        const tree_designator* end = tree_get_designation_end(self);
-        return (tree_designator*)list_node_prev(&_tree_get_cdesignator(end)->_node);
-}
+extern tree_expr* tree_new_init_list_expr(tree_context* context, tree_location loc);
+extern serrcode tree_add_init_list_expr(tree_expr* self, tree_context* context, tree_expr* expr);
 
-static inline const tree_designator* tree_get_designation_end(const tree_designation* self)
+static TREE_INLINE tree_expr** tree_get_init_list_exprs_begin(const tree_expr* self)
 {
-        return (const tree_designator*)list_cend(&self->_designators);
+        return (tree_expr**)self->init_list.exprs.data;
 }
 
-static inline tree_expr* tree_get_designation_initializer(const tree_designation* self)
+static TREE_INLINE tree_expr** tree_get_init_list_exprs_end(const tree_expr* self)
 {
-        return self->_initializer;
+        return tree_get_init_list_exprs_begin(self) + self->init_list.exprs.size;
 }
 
-static inline void tree_set_designation_initializer(tree_designation* self, tree_expr* initializer)
+static TREE_INLINE bool tree_init_list_has_trailing_comma(const tree_expr* self)
 {
-        self->_initializer = initializer;
+        return self->init_list.has_trailing_comma;
 }
 
-static inline struct _tree_impl_init_expr* _tree_get_impl_init_expr(tree_expr* self)
+static TREE_INLINE void tree_set_init_list_has_trailing_comma(tree_expr* self, bool val)
 {
-        TREE_ASSERT_EXPR(self, TEK_IMPL_INIT);
-        return (struct _tree_impl_init_expr*)self;
+        self->init_list.has_trailing_comma = val;
 }
 
-static inline const struct _tree_impl_init_expr* _tree_get_impl_init_cexp(const tree_expr* self)
-{
-        TREE_ASSERT_EXPR(self, TEK_IMPL_INIT);
-        return (const struct _tree_impl_init_expr*)self;
-}
+#define TREE_FOREACH_INIT_LIST_EXPR(PLIST, ITNAME, ENDNAME)\
+        for (tree_expr** ITNAME = tree_get_init_list_exprs_begin(PLIST),\
+                **ENDNAME = tree_get_init_list_exprs_end(PLIST);\
+                ITNAME != ENDNAME; ITNAME++)
 
-static inline tree_expr* tree_get_impl_init_expr(const tree_expr* self)
-{
-        return _tree_get_impl_init_cexp(self)->_init;
-}
+extern tree_expr* tree_new_impl_init_expr(tree_context* context, tree_expr* expr);
 
-static inline void tree_set_impl_init_expr(tree_expr* self, tree_expr* init)
+static TREE_INLINE tree_expr* tree_get_impl_init_expr(const tree_expr* self)
 {
-        _tree_get_impl_init_expr(self)->_init = init;
+        return self->impl_init.expr;
 }
 
-static inline bool tree_expr_is(const tree_expr* self, tree_expr_kind k)
+static TREE_INLINE void tree_set_impl_init_expr(tree_expr* self, tree_expr* expr)
 {
-        return tree_get_expr_kind(self) == k;
+        self->impl_init.expr = expr;
 }
 
 #ifdef __cplusplus
