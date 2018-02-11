@@ -1,6 +1,6 @@
 #include "cc-impl.h"
 #include "scc/c/c-env.h"
-#include "scc/c/c-tree.h"
+#include "scc/c/c-context.h"
 #include "scc/c/c-printer.h"
 #include "scc/ssa/ssa-context.h"
 #include "scc/codegen/codegen.h"
