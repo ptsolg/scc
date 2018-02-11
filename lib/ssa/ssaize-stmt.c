@@ -296,35 +296,32 @@ extern bool ssaize_return_stmt(ssaizer* self, const tree_stmt* stmt)
         return true;
 }
 
-static bool(*ssaize_stmt_table[TSK_SIZE])(ssaizer*, const tree_stmt*) =
-{
-        NULL,
-        &ssaize_labeled_stmt,
-        &ssaize_case_stmt,
-        &ssaize_default_stmt,
-        &ssaize_compound_stmt,
-        &ssaize_expr_stmt,
-        &ssaize_if_stmt,
-        &ssaize_switch_stmt,
-        &ssaize_while_stmt,
-        &ssaize_do_while_stmt,
-        &ssaize_for_stmt,
-        &ssaize_goto_stmt,
-        &ssaize_continue_stmt,
-        &ssaize_break_stmt,
-        &ssaize_decl_stmt,
-        &ssaize_return_stmt,
-};
-
-S_STATIC_ASSERT(S_ARRAY_SIZE(ssaize_stmt_table) == TSK_SIZE,
-        "ssaize_stmt_table needs an update");
-
 extern bool ssaize_stmt(ssaizer* self, const tree_stmt* stmt)
 {
         if (!self->block)
                 ssaizer_enter_block(self, ssaizer_new_block(self));
 
-        tree_stmt_kind k = tree_get_stmt_kind(stmt);
-        TREE_ASSERT_STMT_KIND(k);
-        return ssaize_stmt_table[k](self, stmt);
+        switch (tree_get_stmt_kind(stmt))
+        {
+                case TSK_LABELED:  return ssaize_labeled_stmt(self, stmt);
+                case TSK_CASE:     return ssaize_case_stmt(self, stmt);
+                case TSK_DEFAULT:  return ssaize_default_stmt(self, stmt);
+                case TSK_COMPOUND: return ssaize_compound_stmt(self, stmt);
+                case TSK_EXPR:     return ssaize_expr_stmt(self, stmt);
+                case TSK_IF:       return ssaize_if_stmt(self, stmt);
+                case TSK_SWITCH:   return ssaize_switch_stmt(self, stmt);
+                case TSK_WHILE:    return ssaize_while_stmt(self, stmt);
+                case TSK_DO_WHILE: return ssaize_do_while_stmt(self, stmt);
+                case TSK_FOR:      return ssaize_for_stmt(self, stmt);
+                case TSK_GOTO:     return ssaize_goto_stmt(self, stmt);
+                case TSK_CONTINUE: return ssaize_continue_stmt(self, stmt);
+                case TSK_BREAK:    return ssaize_break_stmt(self, stmt);
+                case TSK_DECL:     return ssaize_decl_stmt(self, stmt);
+                case TSK_RETURN:   return ssaize_return_stmt(self, stmt);
+
+                case TSK_UNKNOWN:
+                default:
+                        S_ASSERT(0 && "Invalid stmt");
+                        return false;
+        }
 }
