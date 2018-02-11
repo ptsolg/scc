@@ -16,7 +16,6 @@ extern "C" {
 typedef struct _ctoken ctoken;
 typedef struct _ccontext ccontext;
 typedef struct _csource_manager csource_manager;
-typedef struct _cident_policy cident_policy;
 typedef struct _tree_expr tree_expr;
 typedef struct _tree_type tree_type;
 typedef struct _tree_decl tree_decl;
@@ -43,12 +42,11 @@ extern void cprinter_opts_init(cprinter_opts* self);
 typedef struct _cprinter
 {
         writebuf buf;
-        const tree_context* context;
+        tree_context* context;
         const ccontext* ccontext;
         // used when we need to print constant expression result
         const tree_target_info* target;
         const csource_manager* source_manager;
-        const cident_policy* id_policy;
         cprinter_opts opts;
         int indent_level;
 } cprinter;
