@@ -4,7 +4,7 @@ add_scc_lib(c
 	c-token.c
 	c-source.c
 	c-lexer.c
-	c-tree.c
+	c-context.c
 	c-parser.c
 	c-parse-module.c
 	c-parse-expr.c

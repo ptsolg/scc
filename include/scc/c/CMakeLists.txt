@@ -7,7 +7,7 @@ add_scc_target_sources(c
 	c-token.h
 	c-source.h
 	c-lexer.h
-	c-tree.h
+	c-context.h
 	c-parser.h
 	c-parse-module.h
 	c-parse-expr.h

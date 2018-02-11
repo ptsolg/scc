@@ -3,7 +3,6 @@ add_scc_lib(tree
 	tree-decl.c
 	tree-context.c
 	tree-stmt.c
-	tree-common.c
 	tree-expr.c
 	tree-module.c
 	tree-target.c
