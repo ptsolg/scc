@@ -1,7 +1,7 @@
 #include "scc/c/c-preprocessor.h"
 #include "scc/c/c-token.h"
 #include "scc/c/c-errors.h"
-#include "scc/c/c-tree.h"
+#include "scc/c/c-context.h"
 #include "scc/c/c-info.h"
 #include "scc/scl/char-info.h"
 
@@ -187,7 +187,7 @@ static inline bool csequence_append(csequence* self, const cpplexer* lexer, int 
 
 static tree_id cpplexer_pool_seq(cpplexer* self, csequence* seq)
 {
-        tree_id id = tree_get_id(cget_tree(self->context), seq->val, seq->size);
+        tree_id id = tree_get_id_for_string(cget_tree(self->context), seq->val, seq->size);
         S_ASSERT(id != TREE_INVALID_ID);
         return id;
 }
@@ -697,7 +697,7 @@ static ctoken* cpproc_lex_include(cpproc* self)
         }
 
         tree_id ref = ctoken_get_string(t);
-        const char* filename = tree_get_id_cstr(cget_tree(self->context), ref);
+        const char* filename = tree_get_id_string(cget_tree(self->context), ref);
         S_ASSERT(filename);
 
         if (!*filename)
@@ -809,7 +809,7 @@ static ctoken* cpproc_concat_and_escape_strings(cpproc* self, dseq* strings)
         for (ssize i = 0; i < dseq_size(strings); i++)
         {
                 ctoken* t = dseq_get_ptr(strings, i);
-                const char* string = tree_get_id_cstr(
+                const char* string = tree_get_id_string(
                         cget_tree(self->context), ctoken_get_string(t));
 
                 char escaped[CMAX_LINE_LENGTH + 1];
@@ -819,7 +819,7 @@ static ctoken* cpproc_concat_and_escape_strings(cpproc* self, dseq* strings)
         }
         dseq_append_i8(&concat, '\0');
 
-        tree_id concat_ref = tree_get_id(
+        tree_id concat_ref = tree_get_id_for_string(
                 cget_tree(self->context), (char*)dseq_begin_u8(&concat), dseq_size(&concat));
         tree_location loc = ctoken_get_loc(dseq_get_ptr(strings, 0));
         dseq_dispose(&concat);

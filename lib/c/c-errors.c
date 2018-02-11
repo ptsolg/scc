@@ -4,7 +4,7 @@
 #include "scc/c/c-token.h"
 #include "scc/c/c-info.h"
 #include "scc/c/c-reswords.h"
-#include "scc/c/c-tree.h"
+#include "scc/c/c-sema-decl.h"
 #include "scc/tree/tree-context.h"
 #include "scc/tree/tree-decl.h"
 #include "scc/tree/tree-stmt.h"
@@ -128,7 +128,7 @@ extern void cerror_expected_one_of(
 extern void cerror_unknown_type_name(clogger* self, const ctoken* id)
 {
         cerror(self, CES_ERROR, ctoken_get_loc(id), "unknown type name '%s'",
-                tree_get_id_cstr(self->tree, ctoken_get_string(id)));
+                tree_get_id_string(self->tree, ctoken_get_string(id)));
 }
 
 extern void cerror_expected_type_specifier(clogger* self, tree_location loc)
@@ -161,15 +161,20 @@ extern void cerror_empty_initializer(clogger* self, tree_location loc)
         cerror(self, CES_ERROR, loc, "empty initializer list is invalid in C99");
 }
 
+extern void cerror_too_many_initializer_values(clogger* self, tree_location loc)
+{
+        cerror(self, CES_ERROR, loc, "too many initializer values");
+}
+
 extern void cerror_undeclared_identifier(clogger* self, tree_location loc, tree_id name)
 {
         cerror(self, CES_ERROR, loc, "undeclared identifier '%s'",
-                tree_get_id_cstr(self->tree, name));
+                tree_get_id_string(self->tree, name));
 }
 
 extern void cerror_multiple_storage_classes(clogger* self, const cdecl_specs* ds)
 {
-        cerror(self, CES_ERROR, cdecl_specs_get_start_loc(ds),
+        cerror(self, CES_ERROR, ds->loc.begin,
                 "multiple storage classes in declaration specifiers");
 }
 
@@ -181,8 +186,15 @@ extern void cerror_inline_allowed_on_functions_only(clogger* self, tree_location
 
 extern void cerror_invalid_parameter_storage_class(clogger* self, const cdeclarator* d)
 {       
-        cerror(self, CES_ERROR, d->id_loc, "invalid storage class for parameter '%s'",
-                tree_get_id_cstr(self->tree, d->id));
+        cerror(self, CES_ERROR, d->name_loc, "invalid storage class for parameter '%s'",
+                tree_get_id_string(self->tree, d->name));
+}
+
+extern void cerror_function_initialized_like_a_variable(clogger* self, const tree_decl* func)
+{
+        cerror(self, CES_ERROR, tree_get_decl_loc_begin(func),
+                "function '%s' is initialized like a variable",
+                tree_get_id_string(self->tree, tree_get_decl_name(func)));
 }
 
 extern void cerror_named_argument_before_ellipsis_required(clogger* self, tree_location loc)
@@ -192,8 +204,7 @@ extern void cerror_named_argument_before_ellipsis_required(clogger* self, tree_l
 
 extern void cerror_redefinition(clogger* self, tree_location loc, tree_id id)
 {
-        cerror(self, CES_ERROR, loc, "redefinition of '%s'",
-                tree_get_id_cstr(self->tree, id));
+        cerror(self, CES_ERROR, loc, "redefinition of '%s'", tree_get_id_string(self->tree, id));
 }
 
 extern void cerror_decl_redefinition(clogger* self, const tree_decl* decl)
@@ -205,49 +216,49 @@ extern void cerror_enumerator_value_isnt_constant(
         clogger* self, tree_location loc, tree_id name)
 {
         cerror(self, CES_ERROR, loc, "enumerator value for '%s' is not an integer constant",
-                tree_get_id_cstr(self->tree, name));
+                tree_get_id_string(self->tree, name));
 }
 
 extern void cerror_wrong_king_of_tag(clogger* self, tree_location loc, tree_id name)
 {
         cerror(self, CES_ERROR, loc, "'%s' defined as wrong kind of tag",
-                tree_get_id_cstr(self->tree, name));
+                tree_get_id_string(self->tree, name));
 }
 
 static void cerror_decl(clogger* self, const char* msg, const tree_decl* decl)
 {
         cerror(self, CES_ERROR, tree_get_decl_loc_begin(decl), msg,
-                tree_get_id_cstr(self->tree, tree_get_decl_name(decl)));
+                tree_get_id_string(self->tree, tree_get_decl_name(decl)));
 }
 
-extern void cerror_member_function(clogger* self, const tree_decl* member)
+extern void cerror_field_function(clogger* self, const tree_decl* field)
 {
-        cerror_decl(self, "field '%s' declared as function", member);
+        cerror_decl(self, "field '%s' declared as function", field);
 }
 
-extern void cerror_invalid_bitfield_type(clogger* self, const tree_decl* member)
+extern void cerror_invalid_bitfield_type(clogger* self, const tree_decl* field)
 {
-        cerror_decl(self, "bit-field '%s' has invalid type", member);
+        cerror_decl(self, "bit-field '%s' has invalid type", field);
 }
 
-extern void cerror_bitfield_width_isnt_constant(clogger* self, const tree_decl* member)
+extern void cerror_bitfield_width_isnt_constant(clogger* self, const tree_decl* field)
 {
-        cerror_decl(self, "bit-field '%s' width not an integer constant", member);
+        cerror_decl(self, "bit-field '%s' width not an integer constant", field);
 }
 
-extern void cerror_bitfield_width_is_zero(clogger* self, const tree_decl* member)
+extern void cerror_bitfield_width_is_zero(clogger* self, const tree_decl* field)
 {
-        cerror_decl(self, "zero width for bit-field '%s'", member);
+        cerror_decl(self, "zero width for bit-field '%s'", field);
 }
 
-extern void cerror_negative_bitfield_width(clogger* self, const tree_decl* member)
+extern void cerror_negative_bitfield_width(clogger* self, const tree_decl* field)
 {
-        cerror_decl(self, "negative width in bit-field '%s'", member);
+        cerror_decl(self, "negative width in bit-field '%s'", field);
 }
 
-extern void cerror_bitfield_width_exceeds_type(clogger* self, const tree_decl* member)
+extern void cerror_bitfield_width_exceeds_type(clogger* self, const tree_decl* field)
 {
-        cerror_decl(self, "width of '%s' exceeds its type", member);
+        cerror_decl(self, "width of '%s' exceeds its type", field);
 }
 
 extern void cerror_invalid_storage_class(clogger* self, const tree_decl* decl)
@@ -381,14 +392,14 @@ extern void cerror_to_few_arguments(clogger* self, const tree_expr* call)
                 "too few arguments in function call");
 }
 
-extern void cerror_operand_of_sizeof_is_function(clogger* self, const csizeof_operand* op)
+extern void cerror_operand_of_sizeof_is_function(clogger* self, tree_location loc)
 {
-        cerror(self, CES_ERROR, op->loc, "operand of sizeof may not be a function");
+        cerror(self, CES_ERROR, loc, "operand of sizeof may not be a function");
 }
 
-extern void cerror_operand_of_sizeof_is_bitfield(clogger* self, const csizeof_operand* op)
+extern void cerror_operand_of_sizeof_is_bitfield(clogger* self, tree_location loc)
 {
-        cerror(self, CES_ERROR, op->loc, "operand of sizeof may not be a bitfield");
+        cerror(self, CES_ERROR, loc, "operand of sizeof may not be a bitfield");
 }
 
 extern void cerror_invalid_binop_operands(clogger* self, tree_location loc, int opcode)
@@ -461,7 +472,7 @@ extern void cerror_invalid_storage_class_for_loop_decl(clogger* self, const tree
                 tree_get_decl_loc_begin(decl),
                 "declaration of '%s' variable '%s' in 'for' loop initial declaration",
                 cget_decl_storage_class_string(sc),
-                tree_get_id_cstr(self->tree, tree_get_decl_name(decl)));
+                tree_get_id_string(self->tree, tree_get_decl_name(decl)));
 }
 
 extern void cerror_return_non_void(clogger* self, const tree_expr* expr)
@@ -490,7 +501,7 @@ extern void cerror_return_from_incompatible_pointer_type(clogger* self, tree_loc
 
 static void cerror_stmt(clogger* self, const char* msg, const tree_stmt* stmt)
 {
-        cerror(self, CES_ERROR, tree_get_xloc_begin(tree_get_stmt_loc(stmt)), msg);
+        cerror(self, CES_ERROR, tree_get_stmt_loc(stmt).begin, msg);
 }
 
 extern void cerror_break_stmt_outside_loop_or_switch(clogger* self, const tree_stmt* stmt)

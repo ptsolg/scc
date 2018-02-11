@@ -1,6 +1,6 @@
 #include "scc/c/c-lexer.h"
 #include "scc/c/c-info.h"
-#include "scc/c/c-tree.h"
+#include "scc/c/c-context.h"
 #include "scc/c/c-errors.h"
 #include "scc/c/c-reswords.h"
 #include <stdlib.h> // strtoll, strtod, ...
@@ -45,7 +45,7 @@ extern void clexer_dispose(clexer* self)
 
 static inline const char* clexer_get_string(clexer* self, tree_id ref)
 {
-        return tree_get_id_cstr(cget_tree(self->pp.context), ref);
+        return tree_get_id_string(cget_tree(self->pp.context), ref);
 }
 
 static inline bool clexer_pp_num_is_floating_constant(clexer* self, const ctoken* pp)

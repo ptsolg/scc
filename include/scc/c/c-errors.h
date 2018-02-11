@@ -8,7 +8,6 @@ typedef struct _clogger clogger;
 typedef struct _ctoken ctoken;
 typedef struct _cdecl_specs cdecl_specs;
 typedef struct _cdeclarator cdeclarator;
-typedef struct _csizeof_operand csizeof_operand;
 typedef struct _tree_context tree_context;
 typedef struct _tree_decl tree_decl;
 typedef struct _tree_expr tree_expr;
@@ -54,12 +53,15 @@ extern void cerror_empty_struct(clogger* self, tree_location loc);
 extern void cerror_empty_enum(clogger* self, tree_location loc);
 extern void cerror_expected_expr(clogger* self, tree_location loc);
 extern void cerror_empty_initializer(clogger* self, tree_location loc);
+extern void cerror_too_many_initializer_values(clogger* self, tree_location loc);
 
 // sema
 extern void cerror_undeclared_identifier(clogger* self, tree_location loc, tree_id name);
 extern void cerror_multiple_storage_classes(clogger* self, const cdecl_specs* ds);
 extern void cerror_inline_allowed_on_functions_only(clogger* self, tree_location loc);
 extern void cerror_invalid_parameter_storage_class(clogger* self, const cdeclarator* d);
+
+extern void cerror_function_initialized_like_a_variable(clogger* self, const tree_decl* func);
 
 extern void cerror_named_argument_before_ellipsis_required(clogger* self, tree_location loc);
 extern void cerror_redefinition(clogger* self, tree_location loc, tree_id id);
@@ -68,12 +70,12 @@ extern void cerror_enumerator_value_isnt_constant(
         clogger* self, tree_location loc, tree_id name);
 
 extern void cerror_wrong_king_of_tag(clogger* self, tree_location loc, tree_id name);
-extern void cerror_member_function(clogger* self, const tree_decl* member);
-extern void cerror_invalid_bitfield_type(clogger* self, const tree_decl* member);
-extern void cerror_bitfield_width_isnt_constant(clogger* self, const tree_decl* member);
-extern void cerror_bitfield_width_is_zero(clogger* self, const tree_decl* member);
-extern void cerror_negative_bitfield_width(clogger* self, const tree_decl* member);
-extern void cerror_bitfield_width_exceeds_type(clogger* self, const tree_decl* member);
+extern void cerror_field_function(clogger* self, const tree_decl* field);
+extern void cerror_invalid_bitfield_type(clogger* self, const tree_decl* field);
+extern void cerror_bitfield_width_isnt_constant(clogger* self, const tree_decl* field);
+extern void cerror_bitfield_width_is_zero(clogger* self, const tree_decl* field);
+extern void cerror_negative_bitfield_width(clogger* self, const tree_decl* field);
+extern void cerror_bitfield_width_exceeds_type(clogger* self, const tree_decl* field);
 extern void cerror_invalid_storage_class(clogger* self, const tree_decl* decl);
 extern void cerror_different_kind_of_symbol(clogger* self, const tree_decl* decl);
 extern void cerror_different_storage_class(clogger* self, const tree_decl* decl);
@@ -103,8 +105,8 @@ extern void cerror_passing_argument_from_incompatible_pointer_type(
 
 extern void cerror_to_many_arguments(clogger* self, const tree_expr* call);
 extern void cerror_to_few_arguments(clogger* self, const tree_expr* call);
-extern void cerror_operand_of_sizeof_is_function(clogger* self, const csizeof_operand* op);
-extern void cerror_operand_of_sizeof_is_bitfield(clogger* self, const csizeof_operand* op);
+extern void cerror_operand_of_sizeof_is_function(clogger* self, tree_location loc);
+extern void cerror_operand_of_sizeof_is_bitfield(clogger* self, tree_location loc);
 extern void cerror_invalid_binop_operands(clogger* self, tree_location loc, int opcode);
 extern void cerror_cmp_of_distinct_pointers(clogger* self, tree_location loc);
 extern void cerror_assignment_discards_quals(clogger* self, tree_location loc, int quals);

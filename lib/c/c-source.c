@@ -1,5 +1,5 @@
 #include "scc/c/c-source.h"
-#include "scc/c/c-tree.h"
+#include "scc/c/c-context.h"
 
 extern bool csource_has(const csource* self, tree_location loc)
 {

@@ -8,5 +8,5 @@ extern tree_module* cparse_module(cparser* self)
                 if (!cparse_decl(self))
                         return NULL;
 
-        return csema_finish_module(self->sema);
+        return self->sema->module;
 }

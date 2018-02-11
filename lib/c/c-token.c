@@ -1,5 +1,5 @@
 #include "scc/c/c-token.h"
-#include "scc/c/c-tree.h"
+#include "scc/c/c-context.h"
 
 extern ctoken* ctoken_new(ccontext* context, ctoken_kind kind, tree_location loc)
 {
