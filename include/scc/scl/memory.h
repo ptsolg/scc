@@ -76,19 +76,37 @@ static inline allocator* obstack_allocator(const obstack* self)
         return self->_alloc;
 }
 
-typedef struct _object_allocator
+typedef struct _objpool
 {
         obstack _base;
         suint8* _top;
         ssize _obsize;
-} object_allocator;
+} objpool;
 
-extern void object_allocator_init(object_allocator* self, ssize obsize);
-extern void object_allocator_init_ex(object_allocator* self, ssize obsize, allocator* alloc);
-extern void object_allocator_dispose(object_allocator* self);
+extern void objpool_init(objpool* self, ssize obsize);
+extern void objpool_init_ex(objpool* self, ssize obsize, allocator* alloc);
+extern void objpool_dispose(objpool* self);
 
-static inline void* object_allocate(object_allocator* self);
-static inline void object_deallocate(object_allocator* self, void* object);
+static inline void* objpool_allocate(objpool* self)
+{
+        if (!self->_top)
+                if (!(self->_top = obstack_allocate(&self->_base, sizeof(void*) + self->_obsize)))
+                        return NULL;
+
+        void* object = self->_top + sizeof(void*);
+        self->_top = *(void**)self->_top;
+        return object;
+}
+
+static inline void objpool_deallocate(objpool* self, void* object)
+{
+        if (!object)
+                return;
+
+        object = (suint8*)object - sizeof(void*);
+        *(void**)object = self->_top;
+        self->_top = object;
+}
 
 typedef void*(*bad_alloc_handler)(void*, ssize);
 
@@ -130,27 +148,6 @@ static inline allocator* malloc_allocator_base(malloc_allocator* self);
 extern allocator* _get_stdalloc();
 
 #define STDALLOC (_get_stdalloc())
-
-static inline void* object_allocate(object_allocator* self)
-{
-        if (!self->_top)
-                if (!(self->_top = obstack_allocate(&self->_base, sizeof(void*) + self->_obsize)))
-                        return NULL;
-
-        void* object = self->_top + sizeof(void*);
-        self->_top = *(void**)self->_top;
-        return object;
-}
-
-static inline void object_deallocate(object_allocator* self, void* object)
-{
-        if (!object)
-                return;
-
-        object = (suint8*)object - sizeof(void*);
-        *(void**)object = self->_top;
-        self->_top = object;
-}
 
 static inline void* base_allocate(base_allocator* self, ssize bytes)
 {

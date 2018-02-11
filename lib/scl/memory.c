@@ -45,19 +45,19 @@ extern serrcode obstack_grow(obstack* self, ssize at_least)
         return S_NO_ERROR;
 }
 
-extern void object_allocator_init(object_allocator* self, ssize obsize)
+extern void objpool_init(objpool* self, ssize obsize)
 {
-        object_allocator_init_ex(self, obsize, STDALLOC);
+        objpool_init_ex(self, obsize, STDALLOC);
 }
 
-extern void object_allocator_init_ex(object_allocator* self, ssize obsize, allocator* alloc)
+extern void objpool_init_ex(objpool* self, ssize obsize, allocator* alloc)
 {
         obstack_init_ex(&self->_base, alloc);
         self->_obsize = obsize;
         self->_top = NULL;
 }
 
-extern void object_allocator_dispose(object_allocator* self)
+extern void objpool_dispose(objpool* self)
 {
         obstack_dispose(&self->_base);
 }
