@@ -10,7 +10,11 @@ extern "C" {
 #endif
 
 #include "c-parser.h"
-#include "c-tree.h"
+
+typedef struct _cdeclarator cdeclarator;
+typedef struct _cdecl_specs cdecl_specs;
+typedef struct _tree_type tree_type;
+typedef struct _tree_decl tree_decl;
 
 // c99 6.9 external-declaration:
 //      function-definition
@@ -79,7 +83,7 @@ extern tree_type* cparse_type_specifier(cparser* self);
 // type-qualifier-list:
 //      type-qualifier
 //      type-qualifier-list type-qualifier
-extern tree_type_quals cparse_type_qualifier_list_opt(cparser* self);
+extern int cparse_type_qualifier_list_opt(cparser* self);
 
 // c99 6.7.2.1 specifier-qualifier-list:
 //      type-specifier specifier-qualifier-list-opt
