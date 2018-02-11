@@ -6,7 +6,7 @@
 
 typedef void*(*allocate_fn)(void*, ssize);
 typedef void*(*allocate_aligned_fn)(void*, ssize, ssize);
-typedef void*(*deallocate_fn)(void*, void*);
+typedef void(*deallocate_fn)(void*, void*);
 
 // an allocator for 'heavy' allocations that is used by various data structures
 typedef struct _allocator
