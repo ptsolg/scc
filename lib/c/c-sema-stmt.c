@@ -9,7 +9,7 @@
 extern tree_stmt* csema_add_stmt(csema* self, tree_stmt* s)
 {
         S_ASSERT(s);
-        tree_scope_add(self->scope, s);
+        tree_add_stmt_to_scope(self->scope, s);
         return s;
 }
 

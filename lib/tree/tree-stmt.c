@@ -15,14 +15,14 @@ extern void tree_init_scope_ex(
         tree_scope_flags flags)
 {
         tree_init_decl_scope(tree_get_scope_decls(self), context, decl_parent);
-        list_init(&self->_stmts);
-        self->_parent = parent;
-        self->_flags = flags;
+        list_init(&self->stmts);
+        self->parent = parent;
+        self->flags = flags;
 }
 
-extern void tree_scope_add(tree_scope* self, tree_stmt* s)
+extern void tree_add_stmt_to_scope(tree_scope* self, tree_stmt* s)
 {
-        list_push_back(&self->_stmts, &_tree_get_stmt(s)->_node);
+        list_push_back(&self->stmts, &s->base.node);
 }
 
 extern tree_stmt* tree_new_stmt(
@@ -34,7 +34,7 @@ extern tree_stmt* tree_new_stmt(
 
         tree_set_stmt_kind(s, kind);
         tree_set_stmt_loc(s, loc);
-        list_node_init(&_tree_get_stmt(s)->_node);
+        list_node_init(&s->base.node);
         return s;
 }
 
