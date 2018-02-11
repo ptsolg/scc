@@ -127,7 +127,7 @@ extern float_value int_to_dp(const int_value* val);
 extern int int_print(const int_value* val, char* buf, ssize count);
 extern int int_print_as_hex(const int_value* val, char* buf, ssize count);
 
-typedef struct _value
+typedef struct _avalue
 {
         bool _integer;
         union

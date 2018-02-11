@@ -759,6 +759,7 @@ extern double avalue_get_dp(const avalue* val)
         else
                 return int_get_dp(&val->_int);
 }
+
 extern int_value avalue_get_int(const avalue* val)
 {
         S_ASSERT(avalue_is_int(val));
