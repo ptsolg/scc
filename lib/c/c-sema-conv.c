@@ -6,14 +6,14 @@ extern tree_expr* csema_new_impl_cast(csema* self, tree_expr* e, tree_type* t)
 {
         tree_type* et = tree_desugar_type(tree_get_expr_type(e));
 
-        if (et == t || tree_types_are_same(tree_get_unqualified_type(et),
-                                           tree_get_unqualified_type(t)))
+        if (csema_types_are_same(self, tree_get_unqualified_type(et),
+                                       tree_get_unqualified_type(t)))
         {
                 return e;
         }
   
-        return tree_new_implicit_cast_expr(self->context,
-                tree_get_expr_value_kind(e), tree_get_expr_loc(e), t, e);
+        return tree_new_cast_expr(self->context,
+                tree_get_expr_value_kind(e), tree_get_expr_loc(e), t, e, true);
 }
 
 extern tree_type* csema_lvalue_conversion(csema* self, tree_expr** e)
@@ -138,7 +138,7 @@ extern tree_type* csema_usual_arithmetic_conversion(
 
         S_ASSERT(tree_type_is_arithmetic(lt));
         S_ASSERT(tree_type_is_arithmetic(rt)); 
-        if (tree_types_are_same(lt, rt))
+        if (csema_types_are_same(self, lt, rt))
                 return lt;
 
         tree_type* result = csema_get_type_for_usual_arithmetic_conversion(self, lt, rt);
@@ -199,7 +199,7 @@ static bool csema_check_pointer_qualifier_discartion(
 
 static bool csema_pointer_operands_are_compatible(csema* self, tree_type* lt, tree_type* rt)
 {
-        if (tree_types_are_same(lt, rt))
+        if (csema_types_are_same(self, lt, rt))
                 return true;
 
         if ((tree_type_is_incomplete(lt) || tree_type_is_object(lt)) && tree_type_is_void(rt))
@@ -245,11 +245,14 @@ extern tree_type* csema_assignment_conversion(
         {
                 if (!tree_type_is_record(rt))
                         return cassign_conv_error(CACRK_RHS_NOT_A_RECORD, r);
-                if (!tree_types_are_same(lt, rt))
+                if (!csema_types_are_same(self, lt, rt))
                         return cassign_conv_error(CACRK_INCOMPATIBLE_RECORDS, r);
         }
-        else if (tree_type_is_object_pointer(lt) && tree_expr_is_null_pointer_constant(*rhs))
+        else if (tree_type_is_object_pointer(lt)
+                && tree_expr_is_null_pointer_constant(self->context, *rhs))
+        {
                 ; // nothing to check
+        }
         else if (tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt))
         {
                 if (!csema_check_assignment_pointer_types(self, lt, rt, r))

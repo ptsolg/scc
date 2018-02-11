@@ -86,7 +86,7 @@ extern void csema_push_switch_stmt_info(csema* self, tree_stmt* switch_stmt)
         dseq_resize(&self->switch_stack, dseq_size(&self->switch_stack) + 1);
         cswitch_stmt_info* last = csema_get_switch_stmt_info(self);
         last->switch_stmt = switch_stmt;
-        last->has_default = false;
+        last->has_default_label = false;
         htab_init_ex_ptr(&last->used_values, cget_alloc(self->ccontext));
 }
 
@@ -98,9 +98,9 @@ extern void csema_pop_switch_stmt_info(csema* self)
         dseq_resize(&self->switch_stack, size - 1);
 }
 
-extern void csema_set_switch_stmt_has_default(csema* self)
+extern void csema_set_switch_stmt_has_default_label(csema* self)
 {
-        csema_get_switch_stmt_info(self)->has_default = true;
+        csema_get_switch_stmt_info(self)->has_default_label = true;
 }
 
 extern cswitch_stmt_info* csema_get_switch_stmt_info(const csema* self)
@@ -115,9 +115,9 @@ extern bool csema_in_switch_stmt(const csema* self)
         return dseq_size(&self->switch_stack) != 0;
 }
 
-extern bool csema_switch_stmt_has_default(const csema* self)
+extern bool csema_switch_stmt_has_default_label(const csema* self)
 {
-        return csema_get_switch_stmt_info(self)->has_default;
+        return csema_get_switch_stmt_info(self)->has_default_label;
 }
 
 extern bool csema_switch_stmt_register_case_label(const csema* self, tree_stmt* label)
@@ -139,114 +139,6 @@ extern bool csema_switch_stmt_register_case_label(const csema* self, tree_stmt* 
 
         htab_insert_ptr(used, h, label);
         return true;
-}
-
-extern void csema_init_dseq_ptr(csema* self, dseq* args)
-{
-        dseq_init_ex_ptr(args, tree_get_allocator(self->context));
-}
-
-extern tree_decl* csema_get_any_decl(
-        const csema* self, const tree_decl_scope* scope, tree_id name, bool parent_lookup)
-{
-        tree_decl* d = csema_get_decl(self, scope, name, false, parent_lookup);
-        return d ? d : csema_get_decl(self, scope, name, true, parent_lookup);
-}
-
-extern tree_decl* csema_get_decl(
-        const csema* self,
-        const tree_decl_scope* scope,
-        tree_id name,
-        bool is_tag,
-        bool parent_lookup)
-{
-        return tree_decl_scope_lookup(scope,
-                ctree_id_to_key(self->ccontext, name, is_tag), parent_lookup);
-}
-
-extern tree_decl* csema_get_local_decl(const csema* self, tree_id name, bool is_tag)
-{
-        return csema_get_decl(self, self->locals, name, is_tag, false);
-}
-
-extern tree_decl* csema_get_global_decl(const csema* self, tree_id name, bool is_tag)
-{
-        return csema_get_decl(self, self->globals, name, is_tag, false);
-}
-
-extern tree_decl* csema_get_label_decl(const csema* self, tree_id name)
-{
-        return csema_get_decl(self, self->labels, name, false, false);
-}
-
-extern tree_decl* csema_require_decl(
-        const csema* self,
-        const tree_decl_scope* scope,
-        tree_location name_loc,
-        tree_decl_kind kind,
-        tree_id name,
-        bool parent_lookup)
-{
-        tree_decl* d = csema_get_any_decl(self, scope, name, parent_lookup);
-        if (!d)
-        {
-                cerror_undeclared_identifier(self->logger, name_loc, name);
-                return NULL;
-        }
-
-        if (kind != TDK_UNKNOWN && tree_get_decl_kind(d) != kind)
-                return NULL;
-
-        return d;
-}
-
-extern tree_decl* csema_require_local_decl(
-        const csema* self, tree_location name_loc, tree_decl_kind kind, tree_id name)
-{
-        return csema_require_decl(self, self->locals, name_loc, kind, name, true);
-}
-
-extern tree_decl* csema_require_global_decl(
-        const csema* self, tree_location name_loc, tree_decl_kind kind, tree_id name)
-{
-        return csema_require_decl(self, self->locals, name_loc, kind, name, false);
-}
-
-extern tree_decl* csema_require_label_decl(
-        const csema* self, tree_location name_loc, tree_id name)
-{
-        return csema_require_decl(self, self->locals, name_loc, TDK_LABEL, name, false);
-}
-
-extern tree_decl* csema_require_member_decl(
-        const csema* self, tree_location name_loc, const tree_decl* record, tree_id name)
-{
-        tree_decl* d = csema_require_decl(self, 
-                tree_get_record_cscope(record), name_loc, TDK_UNKNOWN, name, false);
-
-        return d && (tree_decl_is(d, TDK_MEMBER) || tree_decl_is(d, TDK_INDIRECT_MEMBER))
-                ? d : NULL;
-}
-
-extern bool csema_require_complete_type(
-        const csema* self, tree_location loc, const tree_type* type)
-{
-        if (tree_type_is_incomplete(type))
-        {
-                cerror_incomplete_type(self->logger, loc);
-                return false;
-        }
-        return true;
-}
-
-extern tree_module* csema_finish_module(csema* self)
-{
-        return self->module;
-}
-
-extern const char* csema_get_id_cstr(const csema* self, tree_id id)
-{
-        return tree_get_id_cstr(self->context, id);
 }
 
 extern bool csema_at_file_scope(const csema* self)

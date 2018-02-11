@@ -1,6 +1,28 @@
 #include "scc/c/c-sema-type.h"
+#include "scc/c/c-sema-decl.h"
 #include "scc/c/c-errors.h"
 #include "scc/tree/tree-eval.h"
+
+extern bool csema_types_are_same(const csema* self, const tree_type* a, const tree_type* b)
+{
+        return tree_compare_types(a, b) == TTEK_EQ;
+}
+
+extern bool csema_types_are_compatible(const csema* self, const tree_type* a, const tree_type* b)
+{
+        // todo
+        return csema_types_are_same(self, a, b);
+}
+
+extern bool csema_require_complete_type(const csema* self, tree_location loc, const tree_type* type)
+{
+        if (tree_type_is_incomplete(type))
+        {
+                cerror_incomplete_type(self->logger, loc);
+                return false;
+        }
+        return true;
+}
 
 extern tree_type* csema_get_int_type(csema* self, bool signed_, bool extended)
 {
@@ -74,20 +96,11 @@ extern tree_type* csema_new_decl_type(csema* self, tree_decl* d, bool referenced
 
 extern tree_type* csema_new_typedef_name(csema* self, tree_location name_loc, tree_id name)
 {
-        tree_decl* d = csema_require_local_decl(self, name_loc, TDK_TYPEDEF, name);
-        if (!d)
+        tree_decl* d = csema_require_local_decl(self, name_loc, name);
+        if (!d || !tree_decl_is(d, TDK_TYPEDEF))
                 return NULL;
 
         return csema_new_decl_type(self, d, true);
-}
-
-extern bool csema_typedef_name_exists(csema* self, tree_id name)
-{
-        tree_decl* d = csema_get_decl(self, self->locals, name, false, true);
-        if (!d)
-                return false;
-
-        return tree_get_decl_kind(d) == TDK_TYPEDEF;
 }
 
 extern tree_type* csema_new_pointer(csema* self, tree_type_quals quals, tree_type* target)
@@ -115,11 +128,15 @@ extern tree_type* csema_new_array_type(
         if (!size)
                 return tree_new_incomplete_array_type(self->context, eltype);
 
-        int_value size_value;
-        tree_eval_info info;
-        tree_init_eval_info(&info, self->target);
+        tree_eval_result result;
         // we'll check size-value later
-        tree_eval_as_integer(&info, size, &size_value);
+        tree_eval_expr(self->context, size, &result);
+        
+        int_value size_value;
+        int_init(&size_value, 32, false, 0);
+        if (avalue_is_int(&result.value))
+                size_value = avalue_get_int(&result.value);
+
         return tree_new_constant_array_type(self->context, eltype, size, &size_value);
 }
 
@@ -132,13 +149,10 @@ extern tree_type* csema_new_constant_array_type(
         return tree_new_constant_array_type(self->context, eltype, NULL, &value);
 }
 
-extern tree_type* csema_set_type_quals(csema* self, tree_type* type, tree_type_quals quals)
+extern bool csema_typedef_name_exists(csema* self, tree_id name)
 {
-        if (!type)
-                return NULL;
-
-        tree_set_type_quals(type, quals);
-        return type;
+        tree_decl* d = csema_local_lookup(self, name, TLK_DECL);
+        return d && tree_decl_is(d, TDK_TYPEDEF);
 }
 
 extern bool csema_check_array_type(const csema* self, const tree_type* t, tree_location l)
