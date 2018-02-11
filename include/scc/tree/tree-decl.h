@@ -19,11 +19,18 @@ typedef struct _tree_decl tree_decl;
 typedef struct _tree_expr tree_expr;
 typedef struct _tree_stmt tree_stmt;
 
+typedef enum
+{
+        TLK_DECL,
+        TLK_TAG,
+        TLK_ANY,
+} tree_lookup_kind;
+
 typedef struct _tree_decl_scope
 {
-        struct _tree_decl_scope* _parent;
-        htab _lookup;
-        list_head _decls;
+        struct _tree_decl_scope* parent;
+        list_head decls;
+        htab* lookup[2];
 } tree_decl_scope;
 
 extern void tree_init_decl_scope(
@@ -31,35 +38,50 @@ extern void tree_init_decl_scope(
 
 extern tree_decl_scope* tree_new_decl_scope(tree_context* context, tree_decl_scope* parent);
 
-extern bool tree_decl_scopes_are_same(const tree_decl_scope* a, const tree_decl_scope* b);
-
-// adds decl only to lookup table
-extern void tree_decl_scope_add_lookup(tree_decl_scope* self, hval key, tree_decl* decl);
-
-// adds decl to this scope, but not to its lookup table
-extern void tree_decl_scope_add_hidden(tree_decl_scope* self, tree_decl* decl);
-
-// adds decl to this scope 
-extern void tree_decl_scope_add(tree_decl_scope* self, hval key, tree_decl* decl);
-
 extern tree_decl* tree_decl_scope_lookup(
-        const tree_decl_scope* self, hval key, bool parent_lookup);
+        const tree_decl_scope* self,
+        tree_lookup_kind lookup_kind,
+        tree_id id,
+        bool parent_lookup);
 
-static inline tree_decl_scope* tree_get_decl_scope_parent(const tree_decl_scope* self);
-static inline tree_decl* tree_get_decl_scope_decls_begin(const tree_decl_scope* self);
-static inline tree_decl* tree_get_decl_scope_decls_end(tree_decl_scope* self);
-static inline const tree_decl* tree_get_decl_scope_decls_cend(const tree_decl_scope* self);
-static inline hiter tree_get_decl_scope_lookup_begin(const tree_decl_scope* self);
-static inline bool tree_decl_scope_is_empty(const tree_decl_scope* self);
+extern serrcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context* context, tree_decl* decl);
+extern serrcode tree_decl_scope_add_decl(tree_decl_scope* self, tree_context* context, tree_decl* decl);
+extern void tree_decl_scope_add_hidden_decl(tree_decl_scope* self, tree_decl* decl);
+
+static TREE_INLINE tree_decl_scope* tree_get_decl_scope_parent(const tree_decl_scope* self)
+{
+        return self->parent;
+}
+
+static TREE_INLINE void tree_set_decl_scope_parent(tree_decl_scope* self, tree_decl_scope* parent)
+{
+        self->parent = parent;
+}
+
+static TREE_INLINE tree_decl* tree_get_decl_scope_decls_begin(const tree_decl_scope* self)
+{
+        return (tree_decl*)list_begin(&self->decls);
+}
+
+static TREE_INLINE tree_decl* tree_get_decl_scope_decls_end(tree_decl_scope* self)
+{
+        return (tree_decl*)list_end(&self->decls);
+}
+
+static TREE_INLINE const tree_decl* tree_get_decl_scope_decls_cend(const tree_decl_scope* self)
+{
+        return (const tree_decl*)list_cend(&self->decls);
+}
+
+static TREE_INLINE bool tree_decl_scope_is_empty(const tree_decl_scope* self)
+{
+        return list_empty(&self->decls);
+}
 
 #define TREE_FOREACH_DECL_IN_SCOPE(PSCOPE, ITNAME) \
         for (tree_decl* ITNAME = tree_get_decl_scope_decls_begin(PSCOPE); \
                 ITNAME != tree_get_decl_scope_decls_cend(PSCOPE); \
                 ITNAME = tree_get_next_decl(ITNAME))
-
-#define TREE_FOREACH_DECL_IN_LOOKUP(PSCOPE, ITNAME) \
-        for (hiter ITNAME = tree_get_decl_scope_lookup_begin(PSCOPE); \
-                hiter_valid(&ITNAME); hiter_advance(&ITNAME))
 
 typedef enum
 {
@@ -78,8 +100,8 @@ typedef enum _tree_decl_kind
         TDK_RECORD,
         TDK_ENUM,
         TDK_FUNCTION,
-        TDK_MEMBER,
-        TDK_INDIRECT_MEMBER,
+        TDK_FIELD,
+        TDK_INDIRECT_FIELD,
         TDK_VAR,
         TDK_ENUMERATOR,
         TDK_LABEL,
@@ -93,12 +115,132 @@ typedef enum _tree_decl_kind
 
 struct _tree_decl_base
 {
-        list_node _node;
-        tree_decl_kind _kind;
-        tree_decl_scope* _scope;
-        tree_xlocation _loc;
-        bool _is_implicit;
+        list_node node;
+        tree_decl_kind kind;
+        tree_decl_scope* scope;
+        tree_xlocation loc;
+        bool is_implicit;
 };
+
+struct _tree_named_decl
+{
+        struct _tree_decl_base base;
+        tree_id name;
+};
+
+struct _tree_typed_decl
+{
+        struct _tree_named_decl base;
+        tree_type* type;
+};
+
+struct _tree_value_decl
+{
+        struct _tree_typed_decl base;
+        tree_decl_storage_class storage_class;
+};
+
+struct _tree_typedef_decl
+{
+        struct _tree_typed_decl base;
+};
+
+struct _tree_tag_decl
+{
+        struct _tree_named_decl base;
+        bool complete;
+};
+
+struct _tree_record_decl
+{
+        struct _tree_tag_decl base;
+        tree_decl_scope fields;
+        bool is_union;
+};
+
+struct _tree_enum_decl
+{
+        struct _tree_tag_decl base;
+        tree_decl_scope values;
+};
+
+typedef enum
+{
+        TFSK_NONE,
+        TFSK_INLINE,
+} tree_function_specifier_kind;
+
+struct _tree_function_decl
+{
+        struct _tree_value_decl base;
+        tree_function_specifier_kind specs;
+        tree_decl_scope params;
+        tree_decl_scope labels;
+        tree_stmt* body;
+};
+
+struct _tree_var_decl
+{
+        struct _tree_value_decl base;
+        tree_expr* init;
+};
+
+struct _tree_field_decl
+{
+        struct _tree_value_decl base;
+        tree_expr* bit_width;
+        uint index;
+};
+
+struct _tree_indirect_field_decl
+{
+        struct _tree_value_decl base;
+        tree_decl* anon_record;
+};
+
+struct _tree_enumerator_decl
+{
+        struct _tree_typed_decl base;
+        tree_expr* expr;
+        int_value value;
+};
+
+struct _tree_label_decl
+{
+        struct _tree_named_decl base;
+        tree_stmt* stmt;
+};
+
+struct _tree_decl_group
+{
+        struct _tree_decl_base base;
+        tree_array decls;
+};
+
+typedef struct _tree_decl
+{
+        union
+        {
+                struct _tree_decl_base base;
+                struct _tree_named_decl named;
+                struct _tree_typed_decl typed;
+                struct _tree_value_decl value;
+                struct _tree_tag_decl tag;
+                struct _tree_typedef_decl typedef_decl;
+                struct _tree_record_decl record;
+                struct _tree_enum_decl enum_decl;
+                struct _tree_function_decl func;
+                struct _tree_var_decl var;
+                struct _tree_field_decl field;
+                struct _tree_indirect_field_decl indirect_field;
+                struct _tree_enumerator_decl enumerator;
+                struct _tree_label_decl label;
+                struct _tree_decl_group group;
+        };
+} tree_decl;
+
+extern bool tree_decls_have_same_name(const tree_decl* a, const tree_decl* b);
+extern bool tree_decls_have_same_linkage(const tree_decl* a, const tree_decl* b);
 
 extern tree_decl* tree_new_decl(
         tree_context* context,
@@ -107,32 +249,85 @@ extern tree_decl* tree_new_decl(
         tree_xlocation loc,
         ssize size);
 
-static inline struct _tree_decl_base* _tree_get_decl(tree_decl* self);
-static inline const struct _tree_decl_base* _tree_get_cdecl(const tree_decl* self);
-
-static inline tree_decl* tree_get_next_decl(const tree_decl* self);
-static inline tree_decl* tree_get_prev_decl(const tree_decl* self);
-static inline tree_decl_kind tree_get_decl_kind(const tree_decl* self);
-static inline bool tree_decl_is(const tree_decl* self, tree_decl_kind k);
-static inline bool tree_decl_is_global(const tree_decl* self);
-static inline tree_decl_scope* tree_get_decl_scope(const tree_decl* self);
-static inline tree_xlocation tree_get_decl_loc(const tree_decl* self);
-static inline tree_location tree_get_decl_loc_begin(const tree_decl* self);
-static inline tree_location tree_get_decl_loc_end(const tree_decl* self);
-static inline bool tree_decl_is_implicit(const tree_decl* self);
-
-static inline void tree_set_decl_scope(tree_decl* self, tree_decl_scope* scope);
-static inline void tree_set_decl_kind(tree_decl* self, tree_decl_kind k);
-static inline void tree_set_decl_loc(tree_decl* self, tree_xlocation l);
-static inline void tree_set_decl_loc_begin(tree_decl* self, tree_location l);
-static inline void tree_set_decl_loc_end(tree_decl* self, tree_location l);
-static inline void tree_set_decl_implicit(tree_decl* self, bool v);
-
-struct _tree_named_decl
+static TREE_INLINE tree_decl* tree_get_next_decl(const tree_decl* self)
 {
-        struct _tree_decl_base _base;
-        tree_id _name;
-};
+        return (tree_decl*)list_node_next(&self->base.node);
+}
+
+static TREE_INLINE tree_decl* tree_get_prev_decl(const tree_decl* self)
+{
+        return (tree_decl*)list_node_prev(&self->base.node);
+}
+
+static TREE_INLINE tree_decl_kind tree_get_decl_kind(const tree_decl* self)
+{
+        return self->base.kind;
+}
+
+static TREE_INLINE bool tree_decl_is(const tree_decl* self, tree_decl_kind k)
+{
+        return tree_get_decl_kind(self) == k;
+}
+
+static TREE_INLINE tree_decl_scope* tree_get_decl_scope(const tree_decl* self)
+{
+        return self->base.scope;
+}
+
+static TREE_INLINE bool tree_decl_is_global(const tree_decl* self)
+{
+        return tree_get_decl_scope_parent(tree_get_decl_scope(self)) == NULL;
+}
+
+static TREE_INLINE tree_xlocation tree_get_decl_loc(const tree_decl* self)
+{
+        return self->base.loc;
+}
+
+static TREE_INLINE tree_location tree_get_decl_loc_begin(const tree_decl* self)
+{
+        return tree_get_decl_loc(self).begin;
+}
+
+static TREE_INLINE tree_location tree_get_decl_loc_end(const tree_decl* self)
+{
+        return tree_get_decl_loc(self).end;
+}
+
+static TREE_INLINE bool tree_decl_is_implicit(const tree_decl* self)
+{
+        return self->base.is_implicit;
+}
+
+static TREE_INLINE void tree_set_decl_scope(tree_decl* self, tree_decl_scope* scope)
+{
+        self->base.scope = scope;
+}
+
+static TREE_INLINE void tree_set_decl_kind(tree_decl* self, tree_decl_kind k)
+{
+        self->base.kind = k;
+}
+
+static TREE_INLINE void tree_set_decl_loc(tree_decl* self, tree_xlocation l)
+{
+        self->base.loc = l;
+}
+
+static TREE_INLINE void tree_set_decl_loc_begin(tree_decl* self, tree_location l)
+{
+        self->base.loc.begin = l;
+}
+
+static TREE_INLINE void tree_set_decl_loc_end(tree_decl* self, tree_location l)
+{
+        self->base.loc.end = l;
+}
+
+static TREE_INLINE void tree_set_decl_implicit(tree_decl* self, bool v)
+{
+        self->base.is_implicit = v;
+}
 
 extern tree_decl* tree_new_named_decl(
         tree_context* context,
@@ -142,18 +337,20 @@ extern tree_decl* tree_new_named_decl(
         tree_id name,
         ssize size);
 
-static inline struct _tree_named_decl* _tree_get_named_decl(tree_decl* self);
-static inline const struct _tree_named_decl* _tree_get_named_cdecl(const tree_decl* self);
-
-static inline tree_id tree_get_decl_name(const tree_decl* self);
-static inline bool tree_decl_is_unnamed(const tree_decl* self);
-static inline void tree_set_decl_name(tree_decl* self, tree_id name);
-
-struct _tree_typed_decl
+static TREE_INLINE tree_id tree_get_decl_name(const tree_decl* self)
 {
-        struct _tree_named_decl _base;
-        tree_type* _type;
-};
+        return self->named.name;
+}
+
+static TREE_INLINE bool tree_decl_is_anon(const tree_decl* self)
+{
+        return tree_get_decl_name(self) == TREE_EMPTY_ID;
+}
+
+static TREE_INLINE void tree_set_decl_name(tree_decl* self, tree_id name)
+{
+        self->named.name = name;
+}
 
 extern tree_decl* tree_new_typed_decl(
         tree_context* context,
@@ -164,18 +361,15 @@ extern tree_decl* tree_new_typed_decl(
         tree_type* type,
         ssize size);
 
-static inline struct _tree_typed_decl* _tree_get_typed_decl(tree_decl* self);
-static inline const struct _tree_typed_decl* _tree_get_typed_cdecl(const tree_decl* self);
-
-static inline tree_type* tree_get_decl_type(const tree_decl* self);
-static inline void tree_set_decl_type(tree_decl* self, tree_type* type);
-
-
-struct _tree_value_decl
+static TREE_INLINE tree_type* tree_get_decl_type(const tree_decl* self)
 {
-        struct _tree_typed_decl _base;
-        tree_decl_storage_class _class;
-};
+        return self->typed.type;
+}
+
+static TREE_INLINE void tree_set_decl_type(tree_decl* self, tree_type* type)
+{
+        self->typed.type = type;
+}
 
 extern tree_decl* tree_new_value_decl(
         tree_context* context,
@@ -187,17 +381,15 @@ extern tree_decl* tree_new_value_decl(
         tree_type* type,
         ssize size);
 
-static inline struct _tree_value_decl* _tree_get_value_decl(tree_decl* self);
-static inline const struct _tree_value_decl* _tree_get_value_cdecl(const tree_decl* self);
-
-static inline tree_decl_storage_class tree_get_decl_storage_class(const tree_decl* self);
-
-static inline void tree_set_decl_storage_class(tree_decl* self, tree_decl_storage_class class_);
-
-struct _tree_typedef_decl
+static TREE_INLINE tree_decl_storage_class tree_get_decl_storage_class(const tree_decl* self)
 {
-        struct _tree_typed_decl _base;
-};
+        return self->value.storage_class;
+}
+
+static TREE_INLINE void tree_set_decl_storage_class(tree_decl* self, tree_decl_storage_class class_)
+{
+        self->value.storage_class = class_;
+}
 
 extern tree_decl* tree_new_typedef_decl(
         tree_context* context,
@@ -206,16 +398,28 @@ extern tree_decl* tree_new_typedef_decl(
         tree_id name,
         tree_type* type);
 
-static inline struct _tree_typedef_decl* _tree_get_typedef(tree_decl* self);
-static inline const struct _tree_typedef_decl* _tree_get_ctypedef(const tree_decl* self);
+extern tree_decl* tree_new_tag_decl(
+        tree_context* context,
+        tree_decl_kind kind,
+        tree_decl_scope* scope,
+        tree_xlocation loc,
+        tree_id name,
+        ssize size);
 
-struct _tree_record_decl
+static TREE_INLINE bool tree_decl_is_tag(const tree_decl* self)
 {
-        struct _tree_named_decl _base;
-        tree_decl_scope _scope;
-        bool _complete;
-        bool _is_union;
-};
+        return tree_decl_is(self, TDK_RECORD) || tree_decl_is(self, TDK_ENUM);
+}
+
+static TREE_INLINE bool tree_tag_decl_is_complete(const tree_decl* self)
+{
+        return self->tag.complete;
+}
+
+static TREE_INLINE void tree_set_tag_decl_complete(tree_decl* self, bool complete)
+{
+        self->tag.complete = complete;
+}
 
 extern tree_decl* tree_new_record_decl(
         tree_context* context,
@@ -224,53 +428,53 @@ extern tree_decl* tree_new_record_decl(
         tree_id name,
         bool is_union);
 
-extern tree_decl* tree_get_record_members_begin(tree_decl* self);
-extern const tree_decl* tree_get_record_members_cbegin(const tree_decl* self);
-extern tree_decl* tree_get_record_members_end(tree_decl* self);
-extern const tree_decl* tree_get_record_members_cend(const tree_decl* self);
-extern tree_decl* tree_get_next_member(const tree_decl* member);
-extern tree_decl* tree_get_prev_member(const tree_decl* member);
-
-static inline struct _tree_record_decl* _tree_get_record(tree_decl* self);
-static inline const struct _tree_record_decl* _tree_get_crecord(const tree_decl* self);
-
-static inline tree_decl_scope* tree_get_record_scope(tree_decl* self);
-static inline const tree_decl_scope* tree_get_record_cscope(const tree_decl* self);
-static inline bool tree_record_is_union(const tree_decl* self);
-static inline bool tree_record_is_complete(const tree_decl* self);
-
-static inline void tree_set_record_union(tree_decl* self, bool val);
-static inline void tree_set_record_complete(tree_decl* self, bool complete);
-
-struct _tree_enum_decl
+static TREE_INLINE tree_decl* tree_get_record_fields_begin(const tree_decl* self)
 {
-        struct _tree_named_decl _base;
-        tree_decl_scope _scope;
-};
+        return tree_get_decl_scope_decls_begin(&self->record.fields);
+}
+
+static TREE_INLINE tree_decl* tree_get_record_fields_end(tree_decl* self)
+{
+        return tree_get_decl_scope_decls_end(&self->record.fields);
+}
+
+static TREE_INLINE const tree_decl* tree_get_record_fields_cend(const tree_decl* self)
+{
+        return tree_get_decl_scope_decls_cend(&self->record.fields);
+}
+
+static TREE_INLINE tree_decl_scope* tree_get_record_fields(tree_decl* self)
+{
+        return &self->record.fields;
+}
+
+static TREE_INLINE const tree_decl_scope* tree_get_record_cfields(const tree_decl* self)
+{
+        return &self->record.fields;
+}
+
+static TREE_INLINE bool tree_record_is_union(const tree_decl* self)
+{
+        return self->record.is_union;
+}
+
+static TREE_INLINE void tree_set_record_union(tree_decl* self, bool val)
+{
+        self->record.is_union = val;
+}
 
 extern tree_decl* tree_new_enum_decl(
         tree_context* context, tree_decl_scope* scope, tree_xlocation loc, tree_id name);
 
-static inline struct _tree_enum_decl* _tree_get_enum(tree_decl* self);
-static inline const struct _tree_enum_decl* _tree_get_cenum(const tree_decl* self);
-
-static inline tree_decl_scope* tree_get_enum_scope(tree_decl* self);
-static inline const tree_decl_scope* tree_get_enum_cscope(const tree_decl* self);
-
-typedef enum
+static TREE_INLINE tree_decl_scope* tree_get_enum_values(tree_decl* self)
 {
-        TFSK_NONE,
-        TFSK_INLINE,
-} tree_function_specifier_kind;
+        return &self->enum_decl.values;
+}
 
-struct _tree_function_decl
+static TREE_INLINE const tree_decl_scope* tree_get_enum_cvalues(const tree_decl* self)
 {
-        struct _tree_value_decl _base;
-        tree_function_specifier_kind _specs;
-        tree_decl_scope _args;
-        tree_decl_scope _labels;
-        tree_stmt* _body;
-};
+        return &self->enum_decl.values;
+}
 
 extern tree_decl* tree_new_function_decl(
         tree_context* context,
@@ -282,24 +486,45 @@ extern tree_decl* tree_new_function_decl(
         tree_function_specifier_kind spec,
         tree_stmt* body);
 
-static inline struct _tree_function_decl* _tree_get_function(tree_decl* self);
-static inline const struct _tree_function_decl* _tree_get_cfunction(const tree_decl* self);
-
-static inline tree_function_specifier_kind tree_get_function_specifier(const tree_decl* self);
-static inline tree_decl_scope* tree_get_function_params(tree_decl* self);
-static inline const tree_decl_scope* tree_get_function_cparams(const tree_decl* self);
-static inline tree_decl_scope* tree_get_function_labels(tree_decl* self);
-static inline const tree_decl_scope* tree_get_function_clabels(const tree_decl* self);
-static inline tree_stmt* tree_get_function_body(const tree_decl* self);
-
-static inline void tree_set_function_specifier(tree_decl* self, tree_function_specifier_kind specs);
-static inline void tree_set_function_body(tree_decl* self, tree_stmt* body);
-
-struct _tree_var_decl
+static TREE_INLINE tree_function_specifier_kind tree_get_function_specifier(const tree_decl* self)
 {
-        struct _tree_value_decl _base;
-        tree_expr* _init;
-};
+        return self->func.specs;
+}
+
+static TREE_INLINE tree_decl_scope* tree_get_function_params(tree_decl* self)
+{
+        return &self->func.params;
+}
+
+static TREE_INLINE const tree_decl_scope* tree_get_function_cparams(const tree_decl* self)
+{
+        return &self->func.params;
+}
+
+static TREE_INLINE tree_decl_scope* tree_get_function_labels(tree_decl* self)
+{
+        return &self->func.labels;
+}
+
+static TREE_INLINE const tree_decl_scope* tree_get_function_clabels(const tree_decl* self)
+{
+        return &self->func.labels;
+}
+
+static TREE_INLINE tree_stmt* tree_get_function_body(const tree_decl* self)
+{
+        return self->func.body;
+}
+
+static TREE_INLINE void tree_set_function_specifier(tree_decl* self, tree_function_specifier_kind specs)
+{
+        self->func.specs = specs;
+}
+
+static TREE_INLINE void tree_set_function_body(tree_decl* self, tree_stmt* body)
+{
+        self->func.body = body;
+}
 
 extern tree_decl* tree_new_var_decl(
         tree_context* context,
@@ -310,63 +535,59 @@ extern tree_decl* tree_new_var_decl(
         tree_type* type,
         tree_expr* init);
 
-static inline struct _tree_var_decl* _tree_get_var(tree_decl* self);
-static inline const struct _tree_var_decl* _tree_get_cvar(const tree_decl* self);
-
-static inline tree_expr* tree_get_var_init(const tree_decl* self);
-static inline void tree_set_var_init(tree_decl* self, tree_expr* init);
-
-struct _tree_member_decl
+static TREE_INLINE tree_expr* tree_get_var_init(const tree_decl* self)
 {
-        struct _tree_value_decl _base;
-        tree_expr* _bits;
-        uint _index;
-};
+        return self->var.init;
+}
 
-extern tree_decl* tree_new_member_decl(
+static TREE_INLINE void tree_set_var_init(tree_decl* self, tree_expr* init)
+{
+        self->var.init = init;
+}
+
+extern tree_decl* tree_new_field_decl(
         tree_context* context,
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
         tree_type* type,
-        tree_expr* bits);
+        tree_expr* bit_width);
 
-extern uint tree_get_member_index(tree_decl* self);
+extern uint tree_get_field_index(tree_decl* self);
 
-static inline struct _tree_member_decl* _tree_get_member(tree_decl* self);
-static inline const struct _tree_member_decl* _tree_get_cmember(const tree_decl* self);
-
-static inline tree_decl* tree_get_member_parent(const tree_decl* self);
-static inline tree_expr* tree_get_member_bits(const tree_decl* self);
-static inline void tree_set_member_bits(tree_decl* self, tree_expr* bits);
-
-struct _tree_inderect_member_decl
+static TREE_INLINE tree_decl* tree_get_field_record(const tree_decl* self)
 {
-        struct _tree_value_decl _base;
-        tree_decl* _anon_member;
-};
+        return (tree_decl*)((suint8*)tree_get_decl_scope(self)
+                - offsetof(struct _tree_record_decl, fields));
+}
 
-extern tree_decl* tree_new_inderect_member_decl(
+static TREE_INLINE tree_expr* tree_get_field_bit_width(const tree_decl* self)
+{
+        return self->field.bit_width;
+}
+
+static TREE_INLINE void tree_set_field_bit_width(tree_decl* self, tree_expr* bit_width)
+{
+        self->field.bit_width = bit_width;
+}
+
+extern tree_decl* tree_new_indirect_field_decl(
         tree_context* context,
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
         tree_type* type,
-        tree_decl* anon_member);
+        tree_decl* anon_record);
 
-static inline struct _tree_inderect_member_decl* _tree_inderect_member_decl(tree_decl* self);
-static inline const struct _tree_inderect_member_decl* _tree_inderect_member_cdecl(const tree_decl* self);
-
-static inline tree_decl* tree_get_inderect_member_anon_member(const tree_decl* self);
-
-static inline void tree_set_inderect_member_anon_member(tree_decl* self, tree_decl* anon);
-
-struct _tree_enumerator_decl
+static TREE_INLINE tree_decl* tree_get_indirect_field_anon_record(const tree_decl* self)
 {
-        struct _tree_typed_decl _base;
-        tree_expr* _expr;
-        int_value _value;
-};
+        return self->indirect_field.anon_record;
+}
+
+static TREE_INLINE void tree_set_indirect_field_anon_record(tree_decl* self, tree_decl* anon)
+{
+        self->indirect_field.anon_record = anon;
+}
 
 extern tree_decl* tree_new_enumerator_decl(
         tree_context* context,
@@ -377,19 +598,25 @@ extern tree_decl* tree_new_enumerator_decl(
         tree_expr* expr,
         const int_value* val);
 
-static inline struct _tree_enumerator_decl* _tree_get_enumerator(tree_decl* self);
-static inline const struct _tree_enumerator_decl* _tree_get_cenumerator(const tree_decl* self);
-
-static inline tree_expr* tree_get_enumerator_expr(const tree_decl* self);
-static inline const int_value* tree_get_enumerator_cvalue(const tree_decl* self);
-static inline void tree_set_enumerator_expr(tree_decl* self, tree_expr* expr);
-static inline void tree_set_enumerator_value(tree_decl* self, const int_value* val);
-
-struct _tree_label_decl
+static TREE_INLINE tree_expr* tree_get_enumerator_expr(const tree_decl* self)
 {
-        struct _tree_named_decl _base;
-        tree_stmt* _stmt;
-};
+        return self->enumerator.expr;
+}
+
+static TREE_INLINE const int_value* tree_get_enumerator_cvalue(const tree_decl* self)
+{
+        return &self->enumerator.value;
+}
+
+static TREE_INLINE void tree_set_enumerator_expr(tree_decl* self, tree_expr* expr)
+{
+        self->enumerator.expr = expr;
+}
+
+static TREE_INLINE void tree_set_enumerator_value(tree_decl* self, const int_value* val)
+{
+        self->enumerator.value = *val;
+}
 
 extern tree_decl* tree_new_label_decl(
         tree_context* context,
@@ -398,527 +625,44 @@ extern tree_decl* tree_new_label_decl(
         tree_id name,
         tree_stmt* stmt);
 
-static inline struct _tree_label_decl* _tree_get_label_decl(tree_decl* self);
-static inline const struct _tree_label_decl* _tree_get_label_cdecl(const tree_decl* self);
-
-static inline tree_stmt* tree_get_label_decl_stmt(const tree_decl* self);
-static inline void tree_set_label_decl_stmt(tree_decl* self, tree_stmt* stmt);
-
-struct _tree_decl_group
+static TREE_INLINE tree_stmt* tree_get_label_decl_stmt(const tree_decl* self)
 {
-        struct _tree_decl_base _base;
-        dseq _group;
-};
+        return self->label.stmt;
+}
+
+static TREE_INLINE void tree_set_label_decl_stmt(tree_decl* self, tree_stmt* stmt)
+{
+        self->label.stmt = stmt;
+}
 
 extern tree_decl* tree_new_decl_group(
         tree_context* context, tree_decl_scope* scope, tree_xlocation loc);
 
-extern serrcode tree_decl_group_add(tree_decl* self, tree_decl* d);
+extern serrcode tree_add_decl_in_group(tree_decl* self, tree_context* context, tree_decl* decl);
 
-static inline struct _tree_decl_group* _tree_get_decl_group(tree_decl* self);
-static inline const struct _tree_decl_group* _tree_get_decl_cgroup(const tree_decl* self);
+static TREE_INLINE tree_decl** tree_get_decl_group_begin(const tree_decl* self)
+{
+        return (tree_decl**)self->group.decls.data;
+}
 
-static inline tree_decl** tree_get_decl_group_begin(const tree_decl* self);
-static inline tree_decl** tree_get_decl_group_end(const tree_decl* self);
+static TREE_INLINE tree_decl** tree_get_decl_group_end(const tree_decl* self)
+{
+        return tree_get_decl_group_begin(self) + self->group.decls.size;
+}
+
+static TREE_INLINE ssize tree_get_decl_group_size(const tree_decl* self)
+{
+        return self->group.decls.size;
+}
+
+static TREE_INLINE tree_decl* tree_get_decl_group_decl(const tree_decl* self, ssize i)
+{
+        return tree_get_decl_group_begin(self)[i];
+}
 
 #define TREE_FOREACH_DECL_IN_GROUP(PGROUP, ITNAME) \
         for (tree_decl** ITNAME = tree_get_decl_group_begin(PGROUP); \
                 ITNAME != tree_get_decl_group_end(PGROUP); ITNAME++)
-
-typedef struct _tree_decl
-{
-        union
-        {
-                struct _tree_typedef_decl _typedef;
-                struct _tree_record_decl _record;
-                struct _tree_function_decl _func;
-                struct _tree_inderect_member_decl _inderect;
-                struct _tree_member_decl _member;
-                struct _tree_var_decl _var;
-                struct _tree_enum_decl _enum;
-                struct _tree_enumerator_decl _enumerator;
-                struct _tree_label_decl _label;
-        };
-} tree_decl;
-
-extern bool tree_decls_have_same_name(const tree_decl* a, const tree_decl* b);
-extern bool tree_decls_have_same_linkage(const tree_decl* a, const tree_decl* b);
-extern bool tree_decls_are_same(const tree_decl* a, const tree_decl* b);
-
-// accessors
-
-static inline tree_decl_scope* tree_get_decl_scope_parent(const tree_decl_scope* self)
-{
-        return self->_parent;
-}
-
-static inline tree_decl* tree_get_decl_scope_decls_begin(const tree_decl_scope* self)
-{
-        return (tree_decl*)list_begin(&self->_decls);
-}
-
-static inline tree_decl* tree_get_decl_scope_decls_end(tree_decl_scope* self)
-{
-        return (tree_decl*)list_end(&self->_decls);
-}
-
-static inline const tree_decl* tree_get_decl_scope_decls_cend(const tree_decl_scope* self)
-{
-        return (const tree_decl*)list_cend(&self->_decls);
-}
-
-static inline hiter tree_get_decl_scope_lookup_begin(const tree_decl_scope* self)
-{
-        return htab_begin(&self->_lookup);
-}
-
-static inline bool tree_decl_scope_is_empty(const tree_decl_scope* self)
-{
-        return list_empty(&self->_decls);
-}
-
-#define TREE_ASSERT_DECL(D) S_ASSERT(D)
-
-static inline struct _tree_decl_base* _tree_get_decl(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self);
-        return (struct _tree_decl_base*)self;
-}
-
-static inline const struct _tree_decl_base* _tree_get_cdecl(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self);
-        return (const struct _tree_decl_base*)self;
-}
-
-static inline tree_decl* tree_get_next_decl(const tree_decl* self)
-{
-        return (tree_decl*)list_node_next(&_tree_get_cdecl(self)->_node);
-}
-
-static inline tree_decl* tree_get_prev_decl(const tree_decl* self)
-{
-        return (tree_decl*)list_node_prev(&_tree_get_cdecl(self)->_node);
-}
-
-static inline tree_decl_kind tree_get_decl_kind(const tree_decl* self)
-{
-        return _tree_get_cdecl(self)->_kind;
-}
-
-static inline bool tree_decl_is(const tree_decl* self, tree_decl_kind k)
-{
-        return tree_get_decl_kind(self) == k;
-}
-
-static inline bool tree_decl_is_global(const tree_decl* self)
-{
-        return tree_get_decl_scope_parent(tree_get_decl_scope(self)) == NULL;
-}
-
-static inline tree_decl_scope* tree_get_decl_scope(const tree_decl* self)
-{
-        return _tree_get_cdecl(self)->_scope;
-}
-
-static inline tree_xlocation tree_get_decl_loc(const tree_decl* self)
-{
-        return _tree_get_cdecl(self)->_loc;
-}
-
-static inline tree_location tree_get_decl_loc_begin(const tree_decl* self)
-{
-        return tree_get_xloc_begin(tree_get_decl_loc(self));
-}
-
-static inline tree_location tree_get_decl_loc_end(const tree_decl* self)
-{
-        return tree_get_xloc_end(tree_get_decl_loc(self));
-}
-
-static inline bool tree_decl_is_implicit(const tree_decl* self)
-{
-        return _tree_get_cdecl(self)->_is_implicit;
-}
-
-static inline void tree_set_decl_scope(tree_decl* self, tree_decl_scope* scope)
-{
-        _tree_get_decl(self)->_scope = scope;
-}
-
-static inline void tree_set_decl_kind(tree_decl* self, tree_decl_kind k)
-{
-        _tree_get_decl(self)->_kind = k;
-}
-
-static inline void tree_set_decl_loc(tree_decl* self, tree_xlocation l)
-{
-        _tree_get_decl(self)->_loc = l;
-}
-
-static inline void tree_set_decl_loc_begin(tree_decl* self, tree_location l)
-{
-        _tree_get_decl(self)->_loc = tree_set_xloc_begin(tree_get_decl_loc(self), l);
-}
-
-static inline void tree_set_decl_loc_end(tree_decl* self, tree_location l)
-{
-        _tree_get_decl(self)->_loc = tree_set_xloc_end(tree_get_decl_loc(self), l);
-}
-
-static inline void tree_set_decl_implicit(tree_decl* self, bool v)
-{
-        _tree_get_decl(self)->_is_implicit = v;
-}
-
-static inline struct _tree_named_decl* _tree_get_named_decl(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self);
-        return (struct _tree_named_decl*)self;
-}
-
-static inline const struct _tree_named_decl* _tree_get_named_cdecl(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self);
-        return (const struct _tree_named_decl*)self;
-}
-
-static inline tree_id tree_get_decl_name(const tree_decl* self)
-{
-        return _tree_get_named_cdecl(self)->_name;
-}
-
-static inline bool tree_decl_is_unnamed(const tree_decl* self)
-{
-        return tree_id_is_empty(tree_get_decl_name(self));
-}
-
-static inline void tree_set_decl_name(tree_decl* self, tree_id name)
-{
-        _tree_get_named_decl(self)->_name = name;
-}
-
-static inline struct _tree_typed_decl* _tree_get_typed_decl(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self);
-        return (struct _tree_typed_decl*)self;
-}
-
-static inline const struct _tree_typed_decl* _tree_get_typed_cdecl(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self);
-        return (const struct _tree_typed_decl*)self;
-}
-
-static inline tree_type* tree_get_decl_type(const tree_decl* self)
-{
-        return _tree_get_typed_cdecl(self)->_type;
-}
-
-static inline void tree_set_decl_type(tree_decl* self, tree_type* type)
-{
-        _tree_get_typed_decl(self)->_type = type;
-}
-
-static inline struct _tree_value_decl* _tree_get_value_decl(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self);
-        return (struct _tree_value_decl*)self;
-}
-
-static inline const struct _tree_value_decl* _tree_get_value_cdecl(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self);
-        return (const struct _tree_value_decl*)self;
-}
-
-static inline tree_decl_storage_class tree_get_decl_storage_class(const tree_decl* self)
-{
-        return _tree_get_value_cdecl(self)->_class;
-}
-
-static inline void tree_set_decl_storage_class(tree_decl* self, tree_decl_storage_class class_)
-{
-        _tree_get_value_decl(self)->_class = class_;
-}
-
-#undef TREE_ASSERT_DECL
-#define TREE_ASSERT_DECL(D, K) S_ASSERT((D) && tree_get_decl_kind(D) == (K))
-
-static inline struct _tree_typedef_decl* _tree_get_typedef(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_TYPEDEF);
-        return (struct _tree_typedef_decl*)self;
-}
-static inline const struct _tree_typedef_decl* _tree_get_ctypedef(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_TYPEDEF);
-        return (const struct _tree_typedef_decl*)self;
-}
-
-static inline struct _tree_record_decl* _tree_get_record(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_RECORD);
-        return (struct _tree_record_decl*)self;
-}
-
-static inline const struct _tree_record_decl* _tree_get_crecord(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_RECORD);
-        return (const struct _tree_record_decl*)self;
-}
-
-static inline tree_decl_scope* tree_get_record_scope(tree_decl* self)
-{
-        return &_tree_get_record(self)->_scope;
-}
-
-static inline const tree_decl_scope* tree_get_record_cscope(const tree_decl* self)
-{
-        return &_tree_get_crecord(self)->_scope;
-}
-
-static inline bool tree_record_is_union(const tree_decl* self)
-{
-        return _tree_get_crecord(self)->_is_union;
-}
-
-static inline bool tree_record_is_complete(const tree_decl* self)
-{
-        return _tree_get_crecord(self)->_complete;
-}
-
-static inline void tree_set_record_union(tree_decl* self, bool val)
-{
-        _tree_get_record(self)->_is_union = val;
-}
-
-static inline void tree_set_record_complete(tree_decl* self, bool complete)
-{
-        _tree_get_record(self)->_complete = complete;
-}
-
-static inline struct _tree_enum_decl* _tree_get_enum(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_ENUM);
-        return (struct _tree_enum_decl*)self;
-}
-
-static inline const struct _tree_enum_decl* _tree_get_cenum(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_ENUM);
-        return (const struct _tree_enum_decl*)self;
-}
-
-static inline tree_decl_scope* tree_get_enum_scope(tree_decl* self)
-{
-        return &_tree_get_enum(self)->_scope;
-}
-
-static inline const tree_decl_scope* tree_get_enum_cscope(const tree_decl* self)
-{
-        return &_tree_get_cenum(self)->_scope;
-}
-
-static inline struct _tree_function_decl* _tree_get_function(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_FUNCTION);
-        return (struct _tree_function_decl*)self;
-}
-
-static inline const struct _tree_function_decl* _tree_get_cfunction(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_FUNCTION);
-        return (const struct _tree_function_decl*)self;
-}
-
-static inline tree_function_specifier_kind tree_get_function_specifier(const tree_decl* self)
-{
-        return _tree_get_cfunction(self)->_specs;
-}
-
-static inline tree_decl_scope* tree_get_function_params(tree_decl* self)
-{
-        return &_tree_get_function(self)->_args;
-}
-
-static inline const tree_decl_scope* tree_get_function_cparams(const tree_decl* self)
-{
-        return &_tree_get_cfunction(self)->_args;
-}
-
-static inline tree_decl_scope* tree_get_function_labels(tree_decl* self)
-{
-        return &_tree_get_function(self)->_labels;
-}
-
-static inline const tree_decl_scope* tree_get_function_clabels(const tree_decl* self)
-{
-        return &_tree_get_cfunction(self)->_labels;
-}
-
-static inline tree_stmt* tree_get_function_body(const tree_decl* self)
-{
-        return _tree_get_cfunction(self)->_body;
-}
-
-static inline void tree_set_function_specifier(tree_decl* self, tree_function_specifier_kind specs)
-{
-        _tree_get_function(self)->_specs = specs;
-}
-
-static inline void tree_set_function_body(tree_decl* self, tree_stmt* body)
-{
-        _tree_get_function(self)->_body = body;
-}
-
-static inline struct _tree_var_decl* _tree_get_var(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_VAR);
-        return (struct _tree_var_decl*)self;
-}
-
-static inline const struct _tree_var_decl* _tree_get_cvar(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_VAR);
-        return (const struct _tree_var_decl*)self;
-}
-
-static inline tree_expr* tree_get_var_init(const tree_decl* self)
-{
-        return _tree_get_cvar(self)->_init;
-}
-
-static inline void tree_set_var_init(tree_decl* self, tree_expr* init)
-{
-        _tree_get_var(self)->_init = init;
-}
-
-static inline struct _tree_member_decl* _tree_get_member(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_MEMBER);
-        return (struct _tree_member_decl*)self;
-}
-
-static inline const struct _tree_member_decl* _tree_get_cmember(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_MEMBER);
-        return (const struct _tree_member_decl*)self;
-}
-
-static inline tree_decl* tree_get_member_parent(const tree_decl* self)
-{
-        return (tree_decl*)((uint8_t*)tree_get_decl_scope(self) 
-                - offsetof(struct _tree_record_decl, _scope));
-}
-
-static inline tree_expr* tree_get_member_bits(const tree_decl* self)
-{
-        return _tree_get_cmember(self)->_bits;
-}
-
-static inline void tree_set_member_bits(tree_decl* self, tree_expr* bits)
-{
-        _tree_get_member(self)->_bits = bits;
-}
-
-static inline struct _tree_inderect_member_decl* _tree_inderect_member_decl(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_INDIRECT_MEMBER);
-        return (struct _tree_inderect_member_decl*)self;
-}
-
-static inline const struct _tree_inderect_member_decl* _tree_inderect_member_cdecl(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_INDIRECT_MEMBER);
-        return (const struct _tree_inderect_member_decl*)self;
-}
-
-static inline tree_decl* tree_get_inderect_member_anon_member(const tree_decl* self)
-{
-        return _tree_inderect_member_cdecl(self)->_anon_member;
-}
-
-static inline void tree_set_inderect_member_anon_member(tree_decl* self, tree_decl* anon)
-{
-        _tree_inderect_member_decl(self)->_anon_member = anon;
-}
-
-static inline struct _tree_enumerator_decl* _tree_get_enumerator(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_ENUMERATOR);
-        return (struct _tree_enumerator_decl*)self;
-}
-
-static inline const struct _tree_enumerator_decl* _tree_get_cenumerator(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_ENUMERATOR);
-        return (const struct _tree_enumerator_decl*)self;
-}
-
-static inline tree_expr* tree_get_enumerator_expr(const tree_decl* self)
-{
-        return _tree_get_cenumerator(self)->_expr;
-}
-
-static inline const int_value* tree_get_enumerator_cvalue(const tree_decl* self)
-{
-        return &_tree_get_cenumerator(self)->_value;
-}
-
-static inline void tree_set_enumerator_expr(tree_decl* self, tree_expr* expr)
-{
-        _tree_get_enumerator(self)->_expr = expr;
-}
-
-static inline void tree_set_enumerator_value(tree_decl* self, const int_value* val)
-{
-        _tree_get_enumerator(self)->_value = *val;
-}
-
-static inline struct _tree_label_decl* _tree_get_label_decl(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_LABEL);
-        return (struct _tree_label_decl*)self;
-}
-
-static inline const struct _tree_label_decl* _tree_get_label_cdecl(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_LABEL);
-        return (const struct _tree_label_decl*)self;
-}
-
-static inline tree_stmt* tree_get_label_decl_stmt(const tree_decl* self)
-{
-        return _tree_get_label_cdecl(self)->_stmt;
-}
-
-static inline void tree_set_label_decl_stmt(tree_decl* self, tree_stmt* stmt)
-{
-        _tree_get_label_decl(self)->_stmt = stmt;
-}
-
-static inline struct _tree_decl_group* _tree_get_decl_group(tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_GROUP);
-        return (struct _tree_decl_group*)self;
-}
-
-static inline const struct _tree_decl_group* _tree_get_decl_cgroup(const tree_decl* self)
-{
-        TREE_ASSERT_DECL(self, TDK_GROUP);
-        return (const struct _tree_decl_group*)self;
-}
-
-static inline tree_decl** tree_get_decl_group_begin(const tree_decl* self)
-{
-        return (tree_decl**)dseq_begin_ptr(&_tree_get_decl_cgroup(self)->_group);
-}
-
-static inline tree_decl** tree_get_decl_group_end(const tree_decl* self)
-{
-        return (tree_decl**)dseq_end_ptr(&_tree_get_decl_cgroup(self)->_group);
-}
 
 #ifdef __cplusplus
 }
