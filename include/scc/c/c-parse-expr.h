@@ -13,6 +13,7 @@ extern "C" {
 
 typedef struct _tree_expr tree_expr;
 typedef struct _tree_decl tree_decl;
+typedef struct _tree_type tree_type;
 
 extern const ctoken_kind ctk_rbracket_or_comma[];
 
@@ -147,7 +148,7 @@ extern tree_expr* cparse_const_expr(cparser* self);
 // designator:
 //      [ constant-expression ]
 //      . identifier
-extern tree_expr* cparse_initializer(cparser* self, tree_decl* decl);
+extern tree_expr* cparse_initializer(cparser* self, tree_type* initialized_type);
 
 #ifdef __cplusplus
 }
