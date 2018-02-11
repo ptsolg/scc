@@ -14,55 +14,48 @@ extern "C" {
 #include "scc/scl/list.h"
 #include "scc/scl/dseq-ext.h"
 
+#define TREE_INLINE inline
+
 #define TREE_INVALID_ID STRREF_INVALID
 #define TREE_INVALID_LOC ((tree_location)-1)
-#define TREE_INVALID_XLOC ((tree_xlocation)-1)
+#define TREE_INVALID_XLOC ((suint64)-1)
 
 typedef strref tree_id;
+
+#define TREE_EMPTY_ID (STRREF(""))
+
 typedef suint32 tree_location;
-// extended location wich stores begin and end
-typedef suint64 tree_xlocation;
-typedef struct _tree_context tree_context;
 
-extern tree_xlocation tree_init_xloc(tree_location begin, tree_location end);
-
-typedef union
+typedef struct _tree_xlocation
 {
-        tree_xlocation val;
-        struct
+        union
         {
-                tree_location begin;
-                tree_location end;
+                suint64 val;
+                struct
+                {
+                        tree_location begin;
+                        tree_location end;
+                };
         };
-} _tree_xlocation;
+} tree_xlocation;
 
-static inline tree_location tree_get_xloc_begin(tree_xlocation self)
+static tree_xlocation tree_create_xloc(tree_location begin, tree_location end)
 {
-        _tree_xlocation l = { self };
-        return l.begin;
+        tree_xlocation x = { .begin = begin, .end = end };
+        return x;
 }
 
-static inline tree_location tree_get_xloc_end(tree_xlocation self)
+typedef struct _tree_array
 {
-        _tree_xlocation l = { self };
-        return l.end;
-}
+        suint8* data;
+        ssize size;
+} tree_array;
 
-static inline tree_xlocation tree_set_xloc_begin(tree_xlocation self, tree_location begin)
+static TREE_INLINE void tree_init_array(tree_array* self)
 {
-        _tree_xlocation l = { self };
-        l.begin = begin;
-        return l.val;
+        self->data = NULL;
+        self->size = 0;
 }
-static inline tree_xlocation tree_set_xloc_end(tree_xlocation self, tree_location end)
-{
-        _tree_xlocation l = { self };
-        l.end = end;
-        return l.val;
-}
-
-extern tree_id tree_get_empty_id();
-extern bool tree_id_is_empty(tree_id id);
 
 #ifdef __cplusplus
 }

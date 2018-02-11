@@ -28,7 +28,7 @@ extern void tree_scope_add(tree_scope* self, tree_stmt* s)
 extern tree_stmt* tree_new_stmt(
         tree_context* context, tree_stmt_kind kind, tree_xlocation loc, ssize size)
 {
-        tree_stmt* s = tree_allocate(context, size);
+        tree_stmt* s = tree_allocate_node(context, size);
         if (!s)
                 return NULL;
 

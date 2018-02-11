@@ -84,13 +84,13 @@ extern ssize tree_get_builtin_type_align(const tree_target_info* self, tree_buil
 extern ssize tree_get_sizeof_record(const tree_target_info* info, const tree_decl* d)
 {
         bool is_union = tree_record_is_union(d);
-        const tree_decl_scope* scope = tree_get_record_cscope(d);
+        const tree_decl_scope* scope = tree_get_record_cfields(d);
         ssize total_size = 0;
 
         // todo: padding?
         TREE_FOREACH_DECL_IN_SCOPE(scope, member)
         {
-                if (tree_decl_is(member, TDK_INDIRECT_MEMBER))
+                if (!tree_decl_is(member, TDK_FIELD))
                         continue;
 
                 ssize member_size = tree_get_sizeof(info, tree_get_decl_type(member));
@@ -133,7 +133,7 @@ extern ssize tree_get_sizeof(const tree_target_info* info, const tree_type* t)
 extern ssize tree_get_alignof_record(const tree_target_info* info, const tree_decl* d)
 {
         bool is_union = tree_record_is_union(d);
-        const tree_decl_scope* scope = tree_get_record_cscope(d);
+        const tree_decl_scope* scope = tree_get_record_cfields(d);
         ssize max_align = 0;
 
         TREE_FOREACH_DECL_IN_SCOPE(scope, member)
