@@ -64,8 +64,9 @@ extern tree_expr* csema_new_string_literal(csema* self, tree_location loc, tree_
 extern tree_expr* csema_new_subscript_expr(
         csema* self, tree_location loc, tree_expr* lhs, tree_expr* rhs);
 
-extern tree_expr* csema_new_call_expr(
-        csema* self, tree_location loc, tree_expr* lhs, dseq* args);
+extern tree_expr* csema_new_call_expr(csema* self, tree_location loc, tree_expr* lhs);
+extern void csema_add_call_expr_arg(csema* self, tree_expr* call, tree_expr* arg);
+extern tree_expr* csema_check_call_expr_args(csema* self, tree_expr* call);
 
 extern tree_expr* csema_new_member_expr(
         csema* self,
@@ -78,7 +79,8 @@ extern tree_expr* csema_new_member_expr(
 extern tree_expr* csema_new_unary_expr(
         csema* self, tree_location loc, tree_unop_kind opcode, tree_expr* expr);
 
-extern tree_expr* csema_new_sizeof_expr(csema* self, tree_location loc, csizeof_operand* rhs);
+extern tree_expr* csema_new_sizeof_expr(
+        csema* self, tree_location loc, void* operand, bool contains_type);
 
 extern tree_expr* csema_new_cast_expr(
         csema* self, tree_location loc, tree_type* type, tree_expr* expr);
@@ -93,30 +95,21 @@ extern tree_expr* csema_new_conditional_expr(
         tree_expr* lhs,
         tree_expr* rhs);
 
-extern tree_designation* csema_new_designation(csema* self);
-
-extern tree_designation* csema_finish_designation(
-        csema* self, tree_expr* list, tree_designation* d, tree_expr* init);
-
-// adds empty designation to initializer list to check whether it has trailing comma or not
-extern bool csema_add_empty_designation(csema* self, tree_expr* initializer_list);
-
-extern tree_type* csema_get_designation_type(csema* self, tree_designation* d);
-
-extern tree_designator* csema_new_member_designator(
-        csema* self, tree_location loc, tree_type* t, tree_id name);
-
-extern tree_designator* csema_new_array_designator(
-        csema* self, tree_location loc, tree_type* t, tree_expr* index);
-
-extern tree_designator* csema_finish_designator(
-        csema* self, tree_designation* designation, tree_designator* designator);
-
-extern tree_type* csema_get_designator_type(csema* self, tree_designator* d);
-
-extern tree_expr* csema_new_init_expr(csema* self, tree_location loc);
-
 extern tree_expr* csema_finish_expr(csema* self, tree_expr* expr);
+
+extern tree_expr* csema_new_initializer_list(csema* self, tree_location loc);
+extern tree_expr* csema_add_initializer_list_expr(
+        csema* self, tree_expr* list, tree_expr* expr);
+
+extern tree_expr* csema_check_initializer(csema* self, tree_type* type, tree_expr* init);
+
+extern tree_expr* csema_new_designation(csema* self);
+extern tree_expr* csema_add_designation_designator(
+        csema* self, tree_expr* designation, tree_designator* designator);
+extern tree_expr* csema_set_designation_initializer(csema* self, tree_expr* designation, tree_expr* init);
+
+extern tree_designator* csema_new_field_designator(csema* self, tree_location loc, tree_id field);
+extern tree_designator* csema_new_array_designator(csema* self, tree_location loc, tree_expr* index);
 
 #ifdef __cplusplus
 }

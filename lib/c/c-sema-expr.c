@@ -1,5 +1,6 @@
 #include "scc/c/c-sema-expr.h"
 #include "scc/c/c-sema-type.h"
+#include "scc/c/c-sema-decl.h"
 #include "scc/c/c-sema-conv.h"
 #include "scc/c/c-info.h"
 #include "scc/c/c-errors.h"
@@ -14,6 +15,7 @@ extern bool csema_require_object_pointer_expr_type(
         }
         return true;
 }
+
 extern bool csema_require_function_pointer_expr_type(
         const csema* self, const tree_type* t, tree_location l)
 {
@@ -140,7 +142,7 @@ extern bool csema_require_modifiable_lvalue(const csema* self, const tree_expr* 
 extern bool csema_require_compatible_expr_types(
         const csema* self, const tree_type* a, const tree_type* b, tree_location l)
 {
-        if (!tree_types_are_same(a, b))
+        if (!csema_types_are_compatible(self, a, b))
         {
                 cerror_types_are_not_compatible(self->logger, l);
                 return false;
@@ -164,7 +166,7 @@ extern tree_expr* csema_new_paren_expr(
 
 extern tree_expr* csema_new_decl_expr(csema* self, tree_id id, tree_location id_loc)
 {
-        tree_decl* d = csema_require_local_decl(self, id_loc, TDK_UNKNOWN, id);
+        tree_decl* d = csema_require_local_decl(self, id_loc, id);
         if (!d)
                 return NULL; // unknown decl
 
@@ -287,9 +289,9 @@ static bool csema_check_call_argument(
 // have a type such that its value may be assigned to an object with the unqualified version
 // of the type of its corresponding parameter.
 extern tree_expr* csema_new_call_expr(
-        csema* self, tree_location loc, tree_expr* lhs, dseq* args)
+        csema* self, tree_location loc, tree_expr* lhs)
 {
-        if (!lhs || !args)
+        if (!lhs)
                 return NULL;
 
         tree_type* t = csema_unary_conversion(self, &lhs);
@@ -297,30 +299,49 @@ extern tree_expr* csema_new_call_expr(
                 return NULL;
 
         t = tree_desugar_type(tree_get_pointer_target(tree_desugar_ctype(t)));
-        ssize nparams = tree_get_function_type_nparams(t);
-        ssize nargs = dseq_size(args);
-        if (nargs < nparams)
+
+        return tree_new_call_expr(self->context,
+                TVK_RVALUE, tree_get_function_type_result(t), loc, lhs);
+}
+
+extern void csema_add_call_expr_arg(csema* self, tree_expr* call, tree_expr* arg)
+{
+        S_ASSERT(call && arg);
+        tree_add_call_arg(call, self->context, arg);
+}
+
+extern tree_expr* csema_check_call_expr_args(csema* self, tree_expr* call)
+{
+        S_ASSERT(call);
+
+        tree_expr* lhs = tree_get_call_lhs(call);
+        tree_type* ft = tree_desugar_type(tree_get_pointer_target(tree_get_expr_type(lhs)));
+        ssize num_params = tree_get_function_type_nparams(ft);
+        ssize num_args = tree_get_call_args_size(call);
+
+        if (num_args < num_params)
         {
                 cerror_to_few_arguments(self->logger, lhs);
                 return NULL;
         }
-        if (!tree_function_type_is_vararg(t) && nargs > nparams)
+        if (!tree_function_type_is_vararg(ft) && num_args > num_params)
         {
                 cerror_to_many_arguments(self->logger, lhs);
                 return NULL;
         }
 
         ssize i = 0;
-        for (tree_type** atype = tree_get_function_type_params_begin(t); i < nparams; i++, atype++)
-                if (!csema_check_call_argument(self, *atype, dseq_get(args, i), (uint)i + 1))
+        for (; i < num_params; i++)
+        {
+                tree_expr** parg = tree_get_call_args_begin(call) + i;
+                tree_type* arg_type = tree_get_function_type_param(ft, i);
+                if (!csema_check_call_argument(self, arg_type, parg, i + 1))
                         return NULL;
+        }
 
-        for (; i < nargs; i++)
-                csema_default_argument_promotion(self, dseq_get(args, i));
+        for (; i < num_args; i++)
+                csema_default_argument_promotion(self, tree_get_call_args_begin(call) + i);
 
-        tree_expr* call = tree_new_call_expr(self->context, TVK_RVALUE,
-                tree_get_function_type_result(t), loc, lhs);
-        tree_set_call_args(call, args);
         return call;
 }
 
@@ -357,15 +378,15 @@ extern tree_expr* csema_new_member_expr(
                 return NULL;
         
         tree_decl* record = tree_get_decl_type_entity(lhs_type);
-        tree_decl* m = csema_require_member_decl(self, id_loc, record, id);
-        if (!m)
+        tree_decl* field = csema_require_field_decl(self, record, id_loc, id);
+        if (!field)
                 return NULL;
         
-        if (tree_decl_is(m, TDK_MEMBER))
+        if (tree_decl_is(field, TDK_FIELD))
                 return tree_new_member_expr(self->context,
-                        TVK_LVALUE, tree_get_decl_type(m), loc, lhs, m, is_arrow);
+                        TVK_LVALUE, tree_get_decl_type(field), loc, lhs, field, is_arrow);
 
-        tree_decl* anon = tree_get_inderect_member_anon_member(m);
+        tree_decl* anon = tree_get_indirect_field_anon_record(field);
         lhs = tree_new_member_expr(self->context,
                 TVK_LVALUE, tree_get_decl_type(anon), loc, lhs, anon, is_arrow);
      
@@ -496,27 +517,28 @@ extern tree_expr* csema_new_unary_expr(
 // The sizeof operator shall not be applied to an expression that has function type or an
 // incomplete type, to the parenthesized name of such a type, or to an expression that
 // designates a bit - field member.
-extern tree_expr* csema_new_sizeof_expr(csema* self, tree_location loc, csizeof_operand* op)
+extern tree_expr* csema_new_sizeof_expr(
+        csema* self, tree_location loc, void* operand, bool contains_type)
 {
-        if (!op)
+        if (!operand)
                 return NULL;
 
-        tree_type* rt = op->unary ? tree_get_expr_type(op->expr) : op->type;
-        if (tree_type_is(rt, TTK_FUNCTION))
+        tree_type* type = contains_type ? operand : tree_get_expr_type(operand);
+        if (tree_type_is(type, TTK_FUNCTION))
         {
-                cerror_operand_of_sizeof_is_function(self->logger, op);
+                cerror_operand_of_sizeof_is_function(self->logger, loc);
                 return NULL;
         }
-        if (!csema_require_complete_type(self, op->loc, rt))
+        if (!csema_require_complete_type(self, loc, type))
                 return NULL;
-        if (op->unary && tree_expr_designates_bitfield(op->expr))
+        if (!contains_type && tree_expr_designates_bitfield(operand))
         {
-                cerror_operand_of_sizeof_is_bitfield(self->logger, op);
+                cerror_operand_of_sizeof_is_bitfield(self->logger, loc);
                 return NULL;
         }
 
         return tree_new_sizeof_expr(self->context,
-                csema_get_size_t_type(self), loc, op->pointer, op->unary);
+                csema_get_size_t_type(self), loc, operand, contains_type);
 }
 
 // c99 6.5.4 cast operators
@@ -540,7 +562,7 @@ extern tree_expr* csema_new_cast_expr(
         }
 
         tree_value_kind vk = tree_get_expr_value_kind(expr);
-        return tree_new_explicit_cast_expr(self->context, vk, loc, type, expr);
+        return tree_new_cast_expr(self->context, vk, loc, type, expr, false);
 }
 
 // 6.5.5 multiplicative
@@ -644,10 +666,16 @@ static tree_type* csema_check_compare_expr(
 
         if (tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt))
                 csema_usual_arithmetic_conversion(self, lhs, rhs, true);
-        else if (tree_type_is_pointer(lt) && tree_expr_is_null_pointer_constant(*rhs))
+        else if (tree_type_is_pointer(lt)
+                && tree_expr_is_null_pointer_constant(self->context, *rhs))
+        {
                 ;
-        else if (tree_type_is_pointer(rt) && tree_expr_is_null_pointer_constant(*lhs))
+        }
+        else if (tree_type_is_pointer(rt)
+                && tree_expr_is_null_pointer_constant(self->context, *lhs))
+        {
                 ;
+        }
         else if (tree_type_is_pointer(lt) && tree_type_is_pointer(rt))
         {
                 tree_type* ltarget = tree_desugar_type(tree_get_pointer_target(lt));
@@ -741,7 +769,7 @@ static tree_type* csema_check_sub_expr(
                 return csema_usual_arithmetic_conversion(self, lhs, rhs, !is_assign);
         else if (tree_type_is_object_pointer(lt))
         {
-                if (tree_type_is_object_pointer(rt) && tree_types_are_same(lt, rt))
+                if (tree_type_is_object_pointer(rt) && csema_types_are_compatible(self, lt, rt))
                         return lt;
 
                 if (!csema_require_integral_expr_type(self, rt, rl))
@@ -928,14 +956,14 @@ static tree_type* csema_check_conditional_operator_pointer_types(
 
         tree_type* target = NULL;
         tree_type_quals quals = TTQ_UNQUALIFIED;
-        if (rpointer && tree_expr_is_null_pointer_constant(lhs))
+        if (rpointer && tree_expr_is_null_pointer_constant(self->context, lhs))
         {
                 target = tree_get_pointer_target(rt);
                 quals = tree_get_type_quals(target);
                 if (lpointer)
                         quals |= tree_get_type_quals(tree_get_pointer_target(lt));
         }
-        else if (lpointer && tree_expr_is_null_pointer_constant(rhs))
+        else if (lpointer && tree_expr_is_null_pointer_constant(self->context, rhs))
         {
                 target = tree_get_pointer_target(lt);
                 quals = tree_get_type_quals(target);
@@ -950,8 +978,8 @@ static tree_type* csema_check_conditional_operator_pointer_types(
                         target = ltarget;
                 else if (tree_type_is_void(rtarget))
                         target = rtarget;
-                else if (tree_types_are_same(tree_get_unqualified_type(ltarget),
-                                             tree_get_unqualified_type(rtarget)))
+                else if (csema_types_are_compatible(self,
+                        tree_get_unqualified_type(ltarget), tree_get_unqualified_type(rtarget)))
                 {
                         target = ltarget;
                 }
@@ -1018,99 +1046,6 @@ extern tree_expr* csema_new_conditional_expr(
         return tree_new_conditional_expr(self->context, TVK_RVALUE, t, loc, condition, lhs, rhs);
 }
 
-extern tree_designation* csema_new_designation(csema* self)
-{
-        return tree_new_designation(self->context, NULL);
-}
-
-extern tree_designation* csema_finish_designation(
-        csema* self, tree_expr* list, tree_designation* d, tree_expr* init)
-{
-        tree_set_designation_initializer(d, init);
-        tree_add_init_designation(list, d);
-        return d;
-}
-
-extern bool csema_add_empty_designation(csema* self, tree_expr* initializer_list)
-{
-        return csema_finish_designation(self, initializer_list, csema_new_designation(self), NULL);
-}
-
-extern tree_type* csema_get_designation_type(csema* self, tree_designation* d)
-{
-        return csema_get_designator_type(self, tree_get_designation_last(d));
-}
-
-extern tree_designator* csema_new_member_designator(
-        csema* self, tree_location loc, tree_type* t, tree_id name)
-{
-        t = tree_desugar_type(t);
-        if (!csema_require_record_expr_type(self, t, loc))
-                return NULL;
-
-        tree_decl* record = tree_get_decl_type_entity(t);
-        tree_decl* m = csema_require_member_decl(self, loc, record, name);
-        if (!m)
-                return NULL;
-        
-        if (tree_decl_is(m, TDK_MEMBER))
-                return tree_new_member_designator(self->context, m);
-
-        tree_decl* anon = tree_get_inderect_member_anon_member(m);
-        tree_designator* next = csema_new_member_designator(
-                self, loc, tree_get_decl_type(anon), name);
-        S_ASSERT(next);
-
-        tree_designator* current = tree_new_member_designator(self->context, anon);
-        tree_add_designator_after(next, current);
-        return current;
-}
-
-extern tree_designator* csema_new_array_designator(
-        csema* self, tree_location loc, tree_type* t, tree_expr* index)
-{
-        t = tree_desugar_type(t);
-        if (!csema_require_array_expr_type(self, t, loc))
-                return NULL;
-
-        tree_type* eltype = tree_get_array_eltype(t);
-        if (!eltype)
-                return NULL;
-
-        return tree_new_array_designator(self->context, eltype, index);
-}
-
-extern tree_designator* csema_finish_designator(
-        csema* self, tree_designation* designation, tree_designator* designator)
-{
-        tree_designator* end = tree_get_designation_end(designation);
-        tree_designator* it = designator;
-        while (it)
-        {
-                tree_designator* next = tree_get_next_designator(it);
-                tree_add_designator_before(it, end);
-                it = next;
-        }
-        return designator;
-}
-
-extern tree_type* csema_get_designator_type(csema* self, tree_designator* d)
-{
-        if (!d)
-                return NULL;
-
-        if (tree_designator_is(d, TDK_DES_ARRAY))
-                return tree_get_array_designator_type(d);
-
-        tree_decl* member = tree_get_member_designator_decl(d);
-        return tree_get_decl_type(member);
-}
-
-extern tree_expr* csema_new_init_expr(csema* self, tree_location loc)
-{
-        return tree_new_init_expr(self->context, loc);
-}
-
 extern tree_expr* csema_finish_expr(csema* self, tree_expr* expr)
 {
         if (!expr)
@@ -1118,4 +1053,343 @@ extern tree_expr* csema_finish_expr(csema* self, tree_expr* expr)
 
         csema_unary_conversion(self, &expr);
         return expr;
+}
+
+extern tree_expr* csema_new_initializer_list(csema* self, tree_location loc)
+{
+        return tree_new_init_list_expr(self->context, loc);
+}
+
+extern tree_expr* csema_add_initializer_list_expr(
+        csema* self, tree_expr* list, tree_expr* expr)
+{
+        S_ASSERT(expr);
+        tree_add_init_list_expr(list, self->context, expr);
+        return list;
+}
+
+typedef struct
+{
+        tree_expr* init;
+        union
+        {
+                struct
+                {
+                        tree_expr** pos;
+                        tree_expr** end;
+                } list;
+
+                struct
+                {
+                        bool iterated_once;
+                } scalar;
+        };
+} cinit_iterator;
+
+static void cinit_iterator_init(cinit_iterator* self, tree_expr* init)
+{
+        self->init = init;
+        if (tree_expr_is(init, TEK_INIT_LIST))
+        {
+                self->list.pos = tree_get_init_list_exprs_begin(init);
+                self->list.end = tree_get_init_list_exprs_end(init);
+        }
+        else
+                self->scalar.iterated_once = false;
+}
+
+static bool cinit_iterator_valid(const cinit_iterator* self)
+{
+        return tree_expr_is(self->init, TEK_INIT_LIST)
+                ? self->list.pos != self->list.end
+                : !self->scalar.iterated_once;
+}
+
+static void cinit_iterator_advance(cinit_iterator* self)
+{
+        S_ASSERT(cinit_iterator_valid(self));
+        if (tree_expr_is(self->init, TEK_INIT_LIST))
+                self->list.pos++;
+        else
+                self->scalar.iterated_once = true;
+}
+
+static tree_expr* cinit_iterator_get_expr(const cinit_iterator* self)
+{
+        S_ASSERT(cinit_iterator_valid(self));
+        return tree_expr_is(self->init, TEK_INIT_LIST)
+                ? *self->list.pos
+                : self->init;
+}
+
+typedef enum
+{
+        CITK_SCALAR,
+        CITK_ARRAY,
+        CITK_RECORD,
+} cinitialized_type_kind;
+
+typedef struct _cinitialized_type_iterator
+{
+        cinitialized_type_kind kind;
+        union
+        {
+                struct
+                {
+                        tree_type* type;
+                        uint index;
+                } array;
+
+                struct
+                {
+                        tree_decl* decl;
+                        tree_decl* field;
+                } record;
+
+                struct
+                {
+                        tree_type* type;
+                        bool iterated_once;
+                } scalar;
+        };
+} cinitialized_type_iterator;
+
+static void cinitialized_type_iterator_skip_non_field_decls(cinitialized_type_iterator* self)
+{
+        tree_decl* end = tree_get_record_fields_end(self->record.decl);
+        if (self->record.field == end)
+                return;
+
+        while (self->record.field != end)
+        {
+                if (tree_decl_is(self->record.field, TDK_FIELD))
+                        return;
+
+                self->record.field = tree_get_next_decl(self->record.field);
+        }
+}
+
+static void cinitialized_type_iterator_init(cinitialized_type_iterator* self, tree_type* type)
+{
+        type = tree_desugar_type(type);
+        if (tree_type_is_record(type))
+        {
+                self->kind = CITK_RECORD;
+                self->record.decl = tree_get_decl_type_entity(type);
+                self->record.field = tree_get_record_fields_begin(self->record.decl);
+                cinitialized_type_iterator_skip_non_field_decls(self);
+        }
+        else if (tree_type_is_array(type))
+        {
+                self->kind = CITK_ARRAY;
+                self->array.type = type;
+                self->array.index = 0;
+        }
+        else
+        {
+                self->kind = CITK_SCALAR;
+                self->scalar.iterated_once = false;
+                self->scalar.type = type;
+        }
+}
+
+static bool cinitialized_type_iterator_valid(const cinitialized_type_iterator* self)
+{
+        if (self->kind == CITK_SCALAR)
+                return !self->scalar.iterated_once;
+        else if (self->kind == CITK_ARRAY)
+                return true; // todo check index
+        else if (self->kind == CITK_RECORD)
+                return self->record.field != tree_get_record_fields_end(self->record.decl);
+
+        S_UNREACHABLE();
+        return false;
+}
+
+static void cinitialized_type_iterator_advance(cinitialized_type_iterator* self)
+{
+        S_ASSERT(cinitialized_type_iterator_valid(self));
+
+        if (self->kind == CITK_SCALAR)
+                self->scalar.iterated_once = true;
+        else if (self->kind == CITK_ARRAY)
+                self->array.index++;
+        else if (self->kind == CITK_RECORD)
+        {
+                self->record.field = tree_get_next_decl(self->record.field);
+                cinitialized_type_iterator_skip_non_field_decls(self);
+        }
+}
+
+static tree_type* cinitialized_type_iterator_get_type(const cinitialized_type_iterator* self)
+{
+        if (self->kind == CITK_SCALAR)
+                return self->scalar.type;
+        else if (self->kind == CITK_ARRAY)
+                return tree_get_array_eltype(self->array.type);
+        else if (self->kind == CITK_RECORD)
+                return tree_get_decl_type(self->record.field);
+
+        S_UNREACHABLE();
+        return NULL;
+}
+
+static bool csema_check_field_designator(
+        csema* self, tree_type* type, tree_designator* designator, cinitialized_type_iterator* result)
+{
+        type = tree_desugar_type(type);
+        if (!tree_declared_type_is(type, TDK_RECORD))
+                return false; // field name not in record or union initializer
+
+        tree_decl* rec = tree_get_decl_type_entity(type);
+        tree_id name = tree_get_designator_field(designator);
+        tree_id loc = tree_get_designator_loc(designator);
+        tree_decl* field = csema_require_field_decl(self, rec, loc, name);
+        if (!field)
+                return false;
+
+        while (tree_decl_is(field, TDK_INDIRECT_FIELD))
+        {
+                tree_decl* anon_field = tree_get_indirect_field_anon_record(field);
+                rec = tree_get_decl_type_entity(tree_get_decl_type(anon_field));
+                field = tree_decl_scope_lookup(tree_get_record_fields(rec), TLK_DECL, name, false);
+        }
+
+        result->kind = CITK_RECORD;
+        result->record.field = field;
+        result->record.decl = rec;
+        return true;
+}
+
+static bool csema_check_array_designator(
+        csema* self, tree_type* type, tree_designator* designator, cinitialized_type_iterator* result)
+{
+        type = tree_desugar_type(type);
+        if (!tree_type_is_array(type))
+                return false; // array index in non-array initializer
+
+        result->kind = CITK_ARRAY;
+        result->array.type = type;
+        // it->array.index = ??;
+        return true;
+}
+
+static bool csema_check_designation(
+        csema* self, tree_type* base_type, cinit_iterator* it, cinitialized_type_iterator* result)
+{
+        tree_expr* designation = cinit_iterator_get_expr(it);
+        S_ASSERT(tree_expr_is(designation, TEK_DESIGNATION));
+
+        TREE_FOREACH_DESIGNATION_DESIGNATOR(designation, pdesignator, end)
+        {
+                bool correct = tree_designator_is_field(*pdesignator)
+                        ? csema_check_field_designator(self, base_type, *pdesignator, result)
+                        : csema_check_array_designator(self, base_type, *pdesignator, result);
+                if (!correct)
+                        return false;
+
+                base_type = cinitialized_type_iterator_get_type(result);
+        }
+        // todo check init
+        cinit_iterator_advance(it);
+        return true;
+}
+
+static bool _csema_check_initializer(csema*, tree_type*, cinit_iterator*, bool);
+
+static bool csema_check_array_or_record_initializer(
+        csema* self, tree_type* type, cinit_iterator* it, bool top_level)
+{
+        cinitialized_type_iterator type_it;
+        cinitialized_type_iterator_init(&type_it, type);
+
+        for (;; cinitialized_type_iterator_advance(&type_it))
+        {
+                if (!cinit_iterator_valid(it))
+                        return true;
+
+                tree_expr* init = cinit_iterator_get_expr(it);
+                if (tree_expr_is(init, TEK_DESIGNATION))
+                {
+                        if (!top_level)
+                                return true;
+                        if (!csema_check_designation(self, type, it, &type_it))
+                                return false;
+                        continue;
+                }
+
+                if (!cinitialized_type_iterator_valid(&type_it))
+                {
+                        if (!top_level || !cinit_iterator_valid(it))
+                                return true;
+                        cerror_too_many_initializer_values(self->logger, tree_get_expr_loc(init));
+                        return false;
+                }
+
+                if (!_csema_check_initializer(self,
+                        cinitialized_type_iterator_get_type(&type_it), it, false))
+                {
+                        return false;
+                }
+        }
+}
+
+static bool csema_check_scalar_initializer(csema* self, tree_type* type, tree_expr* init)
+{
+        S_ASSERT(tree_type_is_scalar(type));
+        return true;
+}
+
+static bool _csema_check_initializer(csema* self, tree_type* type, cinit_iterator* it, bool top_level)
+{
+        tree_expr* init = cinit_iterator_get_expr(it);
+
+        if (tree_type_is_array(type) || tree_type_is_record(type))
+                return csema_check_array_or_record_initializer(self, type, it, top_level);
+        else if (tree_expr_is(init, TEK_INIT_LIST))
+        {
+                if (!csema_check_initializer(self, type, init))
+                        return false;
+        }
+        else if (!csema_check_scalar_initializer(self, type, init))
+                return false;
+
+        cinit_iterator_advance(it);
+        return true;
+}
+
+extern tree_expr* csema_check_initializer(csema* self, tree_type* type, tree_expr* init)
+{
+        cinit_iterator it;
+        cinit_iterator_init(&it, init);
+        return _csema_check_initializer(self, type, &it, true) ? init : NULL;
+}
+
+extern tree_expr* csema_new_designation(csema* self)
+{
+        return tree_new_designation(self->context, NULL);
+}
+
+extern tree_expr* csema_add_designation_designator(
+        csema* self, tree_expr* designation, tree_designator* designator)
+{
+        tree_add_designation_designator(designation, self->context, designator);
+        return designation;
+}
+
+extern tree_expr* csema_set_designation_initializer(csema* self, tree_expr* designation, tree_expr* init)
+{
+        S_ASSERT(designation);
+        tree_set_designation_init(designation, init);
+        return designation;
+}
+
+extern tree_designator* csema_new_field_designator(csema* self, tree_location loc, tree_id field)
+{
+        return tree_new_field_designator(self->context, loc, field);
+}
+
+extern tree_designator* csema_new_array_designator(csema* self, tree_location loc, tree_expr* index)
+{
+        return tree_new_array_designator(self->context, loc, index);
 }
