@@ -1,5 +1,5 @@
 add_scc_lib(scl
-	alloc.c
+	allocator.c
 	file.c
 	htab.c
 	malloc.c
@@ -12,6 +12,7 @@ add_scc_lib(scl
 	value.c
 	dseq.c
 	misc.c
+	memory.c
 
 	INCLUDE
 	${SCC_INC_DIR}

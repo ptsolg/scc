@@ -1,5 +1,5 @@
 add_scc_target_sources(scl
-	alloc.h
+	allocator.h
 	common.h
 	error.h
 	file.h
@@ -20,4 +20,5 @@ add_scc_target_sources(scl
 	dseq.h
 	dseq-ext.h
 	def-type.inc
+	memory.h
 )
