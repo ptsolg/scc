@@ -21,17 +21,17 @@ typedef struct _tree_module
 
 extern tree_module* tree_new_module(tree_context* context);
 
-static inline tree_decl_scope* tree_get_module_globals(tree_module* self)
+static TREE_INLINE tree_decl_scope* tree_get_module_globals(tree_module* self)
 {
         return &self->globals;
 }
 
-static inline const tree_decl_scope* tree_get_module_cglobals(const tree_module* self)
+static TREE_INLINE const tree_decl_scope* tree_get_module_cglobals(const tree_module* self)
 {
         return &self->globals;
 }
 
-static inline tree_target_info* tree_get_module_target(const tree_module* self)
+static TREE_INLINE tree_target_info* tree_get_module_target(const tree_module* self)
 {
         return self->target;
 }
