@@ -287,7 +287,7 @@ static ssa_value* ssaize_dec(ssaizer* self, ssa_value* operand, bool prefix)
 
 extern ssa_value* ssaize_unary_expr(ssaizer* self, const tree_expr* expr)
 {
-        ssa_value* operand = ssaize_expr(self, tree_get_unop_expr(expr));
+        ssa_value* operand = ssaize_expr(self, tree_get_unop_operand(expr));
         if (!operand)
                 return NULL;
 
@@ -486,7 +486,7 @@ extern ssa_value* ssaize_member_expr(ssaizer* self, const tree_expr* expr)
 
         ssa_value* field_addr;
         tree_decl* member = tree_get_member_expr_decl(expr);
-        tree_type* rec = tree_get_decl_type_entity(
+        tree_decl* rec = tree_get_decl_type_entity(
                 tree_get_pointer_target(ssa_get_value_type(lhs)));
 
         if (tree_record_is_union(rec))
@@ -508,7 +508,7 @@ extern ssa_value* ssaize_member_expr(ssaizer* self, const tree_expr* expr)
 
 extern ssa_value* ssaize_cast_expr(ssaizer* self, const tree_expr* expr)
 {
-        ssa_value* operand = ssaize_expr(self, tree_get_cast_expr(expr));
+        ssa_value* operand = ssaize_expr(self, tree_get_cast_operand(expr));
         if (!operand)
                 return NULL;
 
@@ -517,17 +517,12 @@ extern ssa_value* ssaize_cast_expr(ssaizer* self, const tree_expr* expr)
 
 extern ssa_value* ssaize_sizeof_expr(ssaizer* self, const tree_expr* expr)
 {
-        tree_type* type = tree_sizeof_is_unary(expr)
-                ? tree_get_expr_type(tree_get_sizeof_expr(expr))
-                : tree_get_sizeof_type(expr);
+        tree_type* type = tree_sizeof_contains_type(expr)
+                ? tree_get_sizeof_type(expr)
+                : tree_get_expr_type(tree_get_sizeof_expr(expr));
 
         ssize size = tree_get_sizeof(ssa_get_target(self->context), type);
         return ssa_build_int_constant(&self->builder, tree_get_expr_type(expr), size);
-}
-
-extern ssa_value* ssaize_paren_expr(ssaizer* self, const tree_expr* expr)
-{
-        return ssaize_expr(self, tree_get_paren_expr(expr));
 }
 
 extern ssa_value* ssaize_init_expr(ssaizer* self, const tree_expr* expr)
@@ -535,42 +530,34 @@ extern ssa_value* ssaize_init_expr(ssaizer* self, const tree_expr* expr)
         return NULL;
 }
 
-extern ssa_value* ssaize_impl_init_expr(ssaizer* self, const tree_expr* expr)
-{
-        return ssaize_expr(self, tree_get_impl_init_expr(expr));
-}
-
-static ssa_value* (*ssaize_expr_table[TEK_SIZE])(ssaizer*, const tree_expr*) =
-{
-        NULL, // TEK_UNKNOWN
-        &ssaize_binary_expr, // TEK_BINARY
-        &ssaize_unary_expr, // TEK_UNARY
-        &ssaize_call_expr, // TEK_CALL
-        &ssaize_subscript_expr, // TEK_SUBSCRIPT
-        &ssaize_conditional_expr, // TEK_CONDITIONAL
-        &ssaize_integer_literal, // TEK_INTEGER_LITERAL
-        &ssaize_character_literal, // TEK_CHARACTER_LITERAL
-        &ssaize_floating_literal, // TEK_FLOATING_LITERAL
-        &ssaize_string_literal, // TEK_STRING_LITERAL
-        &ssaize_decl_expr, // TEK_DECL
-        &ssaize_member_expr, // TEK_MEMBER
-        &ssaize_cast_expr, // TEK_EXPLICIT_CAST
-        &ssaize_cast_expr, // TEK_IMPLICIT_CAST
-        &ssaize_sizeof_expr, // TEK_SIZEOF
-        &ssaize_paren_expr, // TEK_PAREN
-        &ssaize_init_expr, // TEK_INIT
-        &ssaize_impl_init_expr, // TEK_IMPL_INIT
-};
-
-S_STATIC_ASSERT(S_ARRAY_SIZE(ssaize_expr_table) == TEK_SIZE,
-        "ssaize_expr_table needs an update");
-
 extern ssa_value* ssaize_expr(ssaizer* self, const tree_expr* expr)
 {
         S_ASSERT(expr);
-        tree_expr_kind k = tree_get_expr_kind(expr);
-        TREE_ASSERT_EXPR_KIND(k);
-        return ssaize_expr_table[k](self, expr);
+        switch (tree_get_expr_kind(expr))
+        {
+                case TEK_BINARY:            return ssaize_binary_expr(self, expr);
+                case TEK_UNARY:             return ssaize_unary_expr(self, expr);
+                case TEK_CALL:              return ssaize_call_expr(self, expr);
+                case TEK_SUBSCRIPT:         return ssaize_subscript_expr(self, expr);
+                case TEK_CONDITIONAL:       return ssaize_conditional_expr(self, expr);
+                case TEK_INTEGER_LITERAL:   return ssaize_integer_literal(self, expr);
+                case TEK_CHARACTER_LITERAL: return ssaize_character_literal(self, expr);
+                case TEK_FLOATING_LITERAL:  return ssaize_floating_literal(self, expr);
+                case TEK_STRING_LITERAL:    return ssaize_string_literal(self, expr);
+                case TEK_DECL:              return ssaize_decl_expr(self, expr);
+                case TEK_MEMBER:            return ssaize_member_expr(self, expr);
+                case TEK_CAST:              return ssaize_cast_expr(self, expr);
+                case TEK_SIZEOF:            return ssaize_sizeof_expr(self, expr);
+                case TEK_PAREN:             return ssaize_expr(self, tree_get_paren_expr(expr));
+                case TEK_INIT_LIST:         return ssaize_init_expr(self, expr);
+                case TEK_IMPL_INIT:         return ssaize_expr(self, tree_get_impl_init_expr(expr));
+
+                case TEK_DESIGNATION:
+                        S_ASSERT(0 && "todo");
+                default:
+                        S_ASSERT(0 && "Invalid expr");
+                        return NULL;
+        }
 }
 
 extern ssa_value* ssaize_expr_as_condition(ssaizer* self, const tree_expr* cond)
