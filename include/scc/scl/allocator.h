@@ -26,9 +26,9 @@ static void allocator_init_ex(
 
 static inline void* allocate(allocator*, ssize);
 
-static void* _allocate_aligned(allocator* self, ssize bytes, ssize alignment)
+static void* _allocate_aligned(void* allocator, ssize bytes, ssize alignment)
 {
-        void* block = allocate(self, bytes + alignment);
+        void* block = allocate(allocator, bytes + alignment);
         return block
                 ? align_pointer(block, alignment)
                 : NULL;

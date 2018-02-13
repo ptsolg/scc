@@ -2,7 +2,7 @@
 #include "scc/scl/malloc.h"
 #include <setjmp.h>
 
-static void* mallocate(allocator* self, ssize bytes)
+static void* mallocate(void* self, ssize bytes)
 {
         return smalloc(bytes);
 }
