@@ -1,5 +1,4 @@
 add_scc_lib(scl
-	allocator.c
 	file.c
 	htab.c
 	malloc.c
