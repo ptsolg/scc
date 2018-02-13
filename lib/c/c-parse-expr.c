@@ -281,6 +281,7 @@ static tree_expr* cparse_designation(cparser* self)
                 if (k == CTK_DOT)
                 {
                         cparser_consume_token(self);
+                        loc = cparser_get_loc(self);
                         tree_id field = cparse_identifier(self);
                         if (field == TREE_INVALID_ID)
                                 return NULL;
@@ -311,7 +312,7 @@ static tree_expr* cparse_designation(cparser* self)
 
 static tree_expr* _cparse_initializer(cparser*);
 
-static tree_expr* cparse_initializer_list(cparser* self)
+static tree_expr* cparse_initializer_list(cparser* self, tree_location lbrace_loc)
 {
         if (cparser_at(self, CTK_RBRACE))
         {
@@ -319,7 +320,7 @@ static tree_expr* cparse_initializer_list(cparser* self)
                 return NULL;
         }
 
-        tree_expr* list = csema_new_initializer_list(self->sema, cparser_get_loc(self));
+        tree_expr* list = csema_new_initializer_list(self->sema, lbrace_loc);
         while (1)
         {
                 tree_expr* designation = NULL;
@@ -355,6 +356,8 @@ static tree_expr* cparse_initializer_list(cparser* self)
 static tree_expr* _cparse_initializer(cparser* self)
 {
         tree_expr* init;
+        tree_location loc = cparser_get_loc(self);
+
         if (!cparser_at(self, CTK_LBRACE))
         {
                 if (!(init = cparse_assignment_expr(self)))
@@ -363,7 +366,7 @@ static tree_expr* _cparse_initializer(cparser* self)
         }
 
         cparser_consume_token(self); // {
-        if (!(init = cparse_initializer_list(self)))
+        if (!(init = cparse_initializer_list(self, loc)))
                 return NULL;
 
         return cparser_require(self, CTK_RBRACE) ? init : NULL;
