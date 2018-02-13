@@ -12,6 +12,7 @@ typedef struct _tree_context tree_context;
 typedef struct _tree_decl tree_decl;
 typedef struct _tree_expr tree_expr;
 typedef struct _tree_stmt tree_stmt;
+typedef struct _tree_designator tree_designator;
 
 // preprocessing lexer
 extern void cerror_cannot_open_source_file(clogger* self, tree_location loc, const char* file);
@@ -62,6 +63,16 @@ extern void cerror_inline_allowed_on_functions_only(clogger* self, tree_location
 extern void cerror_invalid_parameter_storage_class(clogger* self, const cdeclarator* d);
 
 extern void cerror_function_initialized_like_a_variable(clogger* self, const tree_decl* func);
+extern void cerror_invalid_initializer(clogger* self, const tree_expr* init);
+extern void cerror_initialization_discards_qualifer(clogger* self, const tree_expr* init, int quals);
+extern void cerror_initialization_from_incompatible_pointer_types(clogger* self, const tree_expr* init);
+extern void cerror_braces_around_scalar_initializer(clogger* self, tree_location loc);
+extern void cerror_field_name_not_in_record_initializer(clogger* self, const tree_designator* d);
+extern void cerror_array_index_in_non_array_intializer(clogger* self, const tree_designator* d);
+extern void cerror_array_index_in_initializer_not_of_integer_type(clogger* self, const tree_expr* index);
+extern void cerror_nonconstant_array_index_in_initializer(clogger* self, const tree_expr* index);
+extern void cerror_array_index_in_initializer_exceeds_array_bounds(clogger* self, const tree_expr* index);
+extern void cerror_initializer_element_isnt_constant(clogger* self, const tree_expr* init);
 
 extern void cerror_named_argument_before_ellipsis_required(clogger* self, tree_location loc);
 extern void cerror_redefinition(clogger* self, tree_location loc, tree_id id);

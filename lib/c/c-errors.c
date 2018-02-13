@@ -197,6 +197,63 @@ extern void cerror_function_initialized_like_a_variable(clogger* self, const tre
                 tree_get_id_string(self->tree, tree_get_decl_name(func)));
 }
 
+extern void cerror_invalid_initializer(clogger* self, const tree_expr* init)
+{
+        cerror(self, CES_ERROR, tree_get_expr_loc(init), "invalid initializer");
+}
+
+extern void cerror_initialization_discards_qualifer(clogger* self, const tree_expr* init, int quals)
+{
+        char qstring[128];
+        cqet_qual_string(quals, qstring);
+        cerror(self, CES_ERROR, tree_get_expr_loc(init),
+                "initialization discards '%s' qualifier", qstring);
+}
+
+extern void cerror_initialization_from_incompatible_pointer_types(clogger* self, const tree_expr* init)
+{
+        cerror(self, CES_ERROR, tree_get_expr_loc(init),
+                "initialization from incompatible pointer types");
+}
+
+extern void cerror_braces_around_scalar_initializer(clogger* self, tree_location loc)
+{
+        cerror(self, CES_ERROR, loc, "braces around scalar initializer");
+}
+
+extern void cerror_field_name_not_in_record_initializer(clogger* self, const tree_designator* d)
+{
+        cerror(self, CES_ERROR, tree_get_designator_loc(d),
+                "field name not in record or union initializer");
+}
+
+extern void cerror_array_index_in_non_array_intializer(clogger* self, const tree_designator* d)
+{
+        cerror(self, CES_ERROR, tree_get_designator_loc(d), "array index in non-array initializer");
+}
+
+extern void cerror_array_index_in_initializer_not_of_integer_type(clogger* self, const tree_expr* index)
+{
+        cerror(self, CES_ERROR, tree_get_expr_loc(index),
+                "array index in initializer not of integer type");
+}
+
+extern void cerror_nonconstant_array_index_in_initializer(clogger* self, const tree_expr* index)
+{
+        cerror(self, CES_ERROR, tree_get_expr_loc(index), "nonconstant array index in initializer");
+}
+
+extern void cerror_array_index_in_initializer_exceeds_array_bounds(clogger* self, const tree_expr* index)
+{
+        cerror(self, CES_ERROR, tree_get_expr_loc(index),
+                "array index in initializer exceeds array bounds");
+}
+
+extern void cerror_initializer_element_isnt_constant(clogger* self, const tree_expr* init)
+{
+        cerror(self, CES_ERROR, tree_get_expr_loc_begin(init), "initializer element is not constant");
+}
+
 extern void cerror_named_argument_before_ellipsis_required(clogger* self, tree_location loc)
 {
         cerror(self, CES_ERROR, loc, "ISO C requires a named argument before '...'");
