@@ -912,10 +912,6 @@ extern tree_decl* csema_declare_external_decl(csema* self, cdecl_specs* ds, cdec
 extern tree_decl* csema_define_var_decl(csema* self, tree_decl* var, tree_expr* init)
 {
         S_ASSERT(init && tree_get_decl_kind(var) == TDK_VAR);
-
-        if (tree_get_expr_kind(init) != TEK_INIT_LIST)
-                init = csema_new_impl_cast(self, init, tree_get_decl_type(var));
-
         tree_decl* orig = csema_local_lookup(self, tree_get_decl_name(var), false);
         if (orig && tree_get_var_init(orig))
         {
