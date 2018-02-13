@@ -1,4 +1,4 @@
 void test()
 {
-	"abs"; // not-a-constant
+	"abs"; // address constant
 }

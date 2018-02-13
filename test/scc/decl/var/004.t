@@ -1,3 +1,3 @@
 int b;
 int c;
-int a = b + 10 - c;
+int a = 1 + 10 - 2;
