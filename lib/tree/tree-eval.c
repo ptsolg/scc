@@ -212,7 +212,7 @@ static bool tree_eval_cast(
         if (!_tree_eval_expr(context, tree_get_cast_operand(expr), result, addressof_operand))
                 return false;
 
-        tree_type* cast_type = tree_get_expr_type(expr);
+        tree_type* cast_type = tree_desugar_type(tree_get_expr_type(expr));
         if (result->kind == TERK_ADDRESS_CONSTANT)
         {
                 if (tree_type_is_pointer(cast_type))
@@ -220,6 +220,12 @@ static bool tree_eval_cast(
 
                 result->kind = TERK_INVALID;
                 result->error = expr;
+                return false;
+        }
+
+        if (!tree_type_is_arithmetic(cast_type))
+        {
+                result->kind = TERK_INVALID;
                 return false;
         }
 
