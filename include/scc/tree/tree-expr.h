@@ -269,7 +269,9 @@ typedef struct _tree_expr
         };
 } tree_expr;
 
-extern bool tree_expr_is_literal(const tree_expr* self);
+extern tree_location tree_get_expr_loc_begin(const tree_expr* self);
+
+extern bool tree_expr_is_literal(const tree_expr* expr);
 extern const tree_expr* tree_ignore_ccasts(const tree_expr* self);
 extern tree_expr* tree_ignore_impl_casts(tree_expr* self);
 extern const tree_expr* tree_ignore_impl_ccasts(const tree_expr* self);
@@ -819,9 +821,19 @@ static TREE_INLINE tree_expr** tree_get_init_list_exprs_begin(const tree_expr* s
         return (tree_expr**)self->init_list.exprs.data;
 }
 
+static TREE_INLINE tree_expr* tree_get_init_list_expr(const tree_expr* self, ssize i)
+{
+        return tree_get_init_list_exprs_begin(self)[i];
+}
+
 static TREE_INLINE tree_expr** tree_get_init_list_exprs_end(const tree_expr* self)
 {
         return tree_get_init_list_exprs_begin(self) + self->init_list.exprs.size;
+}
+
+static TREE_INLINE ssize tree_get_init_list_exprs_size(const tree_expr* self)
+{
+        return tree_get_init_list_exprs_end(self) - tree_get_init_list_exprs_begin(self);
 }
 
 static TREE_INLINE bool tree_init_list_has_trailing_comma(const tree_expr* self)

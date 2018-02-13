@@ -338,6 +338,27 @@ extern tree_expr* tree_new_impl_init_expr(tree_context* context, tree_expr* expr
         return e;
 }
 
+extern tree_location tree_get_expr_loc_begin(const tree_expr* expr)
+{
+        while (1)
+        {
+                tree_expr_kind k = tree_get_expr_kind(expr);
+                if (k == TEK_BINARY)
+                        expr = tree_get_binop_lhs(expr);
+                else if (k == TEK_CALL)
+                        expr = tree_get_call_lhs(expr);
+                else if (k == TEK_SUBSCRIPT)
+                        expr = tree_get_subscript_lhs(expr);
+                else if (k == TEK_CONDITIONAL)
+                        expr = tree_get_conditional_condition(expr);
+                else if (k == TEK_MEMBER)
+                        expr = tree_get_member_expr_lhs(expr);
+                else
+                        break;
+        }
+        return tree_get_expr_loc(expr);
+}
+
 extern bool tree_expr_is_literal(const tree_expr* self)
 {
         switch (tree_get_expr_kind(self))
