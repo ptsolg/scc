@@ -1,5 +1,4 @@
 #include "scc/scl/strpool.h"
-#include "scc/scl/string.h"
 #include <stdarg.h>
 
 typedef struct
@@ -70,5 +69,8 @@ extern strref strpool_insert(strpool* self, const void* data, ssize size)
 
         copy->size = size;
         memcpy(copy->data, data, size);
-        return strmap_insert(&self->_map, ref, copy);
+        if (S_FAILED(strmap_insert(&self->_map, ref, copy)))
+                return STRREF_INVALID;
+
+        return ref;
 }
