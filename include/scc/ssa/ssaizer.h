@@ -39,8 +39,9 @@ typedef struct _ssaizer
         strmap labels;
         strmap globals;
 
-        dseq break_stack;
         dseq continue_stack;
+        dseq break_stack;
+        dseq switch_stack;
 } ssaizer;
 
 extern void ssaizer_init(ssaizer* self, ssa_context* context);
@@ -65,10 +66,13 @@ extern ssa_block* ssaizer_get_label_block(ssaizer* self, const tree_decl* label)
 
 extern void ssaizer_push_continue_dest(ssaizer* self, ssa_block* block);
 extern void ssaizer_push_break_dest(ssaizer* self, ssa_block* block);
+extern void ssaizer_push_switch_instr(ssaizer* self, ssa_instr* switch_instr);
 extern void ssaizer_pop_continue_dest(ssaizer* self);
 extern void ssaizer_pop_break_dest(ssaizer* self);
+extern void ssaizer_pop_switch_instr(ssaizer* self);
 extern ssa_block* ssaizer_get_continue_dest(ssaizer* self);
 extern ssa_block* ssaizer_get_break_dest(ssaizer* self);
+extern ssa_instr* ssaizer_get_switch_instr(ssaizer* self);
 
 extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module);
 

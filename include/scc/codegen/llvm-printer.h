@@ -21,6 +21,7 @@ typedef struct _llvm_printer
         const ssa_context* ssa;
         const tree_context* tree;
         ssa_id tmp_uid;
+        int indent_lvl;
 } llvm_printer;
 
 extern void llvm_printer_init(llvm_printer* self, write_cb* write, const ssa_context* ssa);

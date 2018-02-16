@@ -75,6 +75,7 @@ extern ssa_value* ssa_build_phi(ssa_builder* self, tree_type* type);
 extern ssa_instr* ssa_build_inderect_jmp(ssa_builder* self, ssa_value* dest);
 extern ssa_instr* ssa_build_conditional_jmp(
         ssa_builder* self, ssa_value* cond, ssa_value* if_true, ssa_value* if_false);
+extern ssa_instr* ssa_build_switch_instr(ssa_builder* self, ssa_value* cond, ssa_value* otherwise);
 
 extern ssa_instr* ssa_build_return(ssa_builder* self, ssa_value* val);
 

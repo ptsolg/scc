@@ -48,12 +48,31 @@ extern bool ssaize_labeled_stmt(ssaizer* self, const tree_stmt* stmt)
 
 extern bool ssaize_default_stmt(ssaizer* self, const tree_stmt* stmt)
 {
-        return false;
+        ssa_instr* switch_instr = ssaizer_get_switch_instr(self);
+        ssa_block* body = ssa_get_label_block(ssa_get_instr_operand_value(switch_instr, 1));
+
+        if (!ssaizer_build_jmp(self, body))
+                return false;
+
+        ssaizer_enter_block(self, body);
+        return ssaize_stmt(self, tree_get_default_body(stmt));
 }
 
 extern bool ssaize_case_stmt(ssaizer* self, const tree_stmt* stmt)
 {
-        return false;
+        ssa_instr* switch_instr = ssaizer_get_switch_instr(self);
+        ssa_block* body = ssaizer_new_block(self);
+        ssa_value* case_val = ssa_build_int_constant(&self->builder,
+                tree_get_expr_type(tree_get_case_expr(stmt)),
+                int_get_u64(tree_get_case_cvalue(stmt)));
+
+        if (!ssaizer_maybe_build_jmp(self, body))
+                return false;
+
+        ssa_add_switch_case(switch_instr, self->context, case_val, ssa_get_block_label(body));
+        ssaizer_enter_block(self, body);
+
+        return ssaize_stmt(self, tree_get_case_body(stmt));
 }
 
 extern bool ssaize_compound_stmt(ssaizer* self, const tree_stmt* stmt)
@@ -130,7 +149,36 @@ extern bool ssaize_if_stmt(ssaizer* self, const tree_stmt* stmt)
 
 extern bool ssaize_switch_stmt(ssaizer* self, const tree_stmt* stmt)
 {
-        return false;
+        ssa_value* cond = ssaize_expr(self, tree_get_switch_expr(stmt));
+        if (!cond)
+                return false;
+
+        ssa_block* otherwise = ssaizer_new_block(self);
+        ssa_value* switch_instr = ssa_build_switch_instr(
+                &self->builder, cond, ssa_get_block_label(otherwise));
+        if (!switch_instr)
+                return false;
+
+        ssa_block* body = ssaizer_new_block(self);
+        ssa_block* exit = ssaizer_new_block(self);
+        ssaizer_finish_current_block(self);
+        ssaizer_enter_block(self, body);
+
+        ssaizer_push_break_dest(self, exit);
+        ssaizer_push_switch_instr(self, switch_instr);
+        bool correct = ssaize_stmt(self, tree_get_switch_body(stmt));
+        ssaizer_pop_break_dest(self);
+        ssaizer_pop_switch_instr(self);
+        
+        if (!correct || !ssaizer_maybe_build_jmp(self, exit))
+                return false;
+
+        ssaizer_enter_block(self, otherwise);
+        if (!ssaizer_maybe_build_jmp(self, exit))
+                return false;
+
+        ssaizer_enter_block(self, exit);
+        return true;
 }
 
 static bool ssaize_loop_cond(

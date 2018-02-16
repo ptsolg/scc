@@ -11,6 +11,7 @@ extern void llvm_printer_init(llvm_printer* self, write_cb* write, const ssa_con
         self->ssa = ssa;
         self->tree = ssa_get_tree(ssa);
         self->tmp_uid = 0;
+        self->indent_lvl = 0;
         writebuf_init(&self->buf, write);
 }
 
@@ -54,7 +55,8 @@ static void llvm_print_endl(llvm_printer* self)
 
 static void llvm_print_indent(llvm_printer* self)
 {
-        llvm_prints(self, "    ");
+        for (int i = 0; i < self->indent_lvl; i++)
+                llvm_prints(self, "    ");
 }
 
 static const char* llvm_builtin_type_table[] = 
@@ -490,6 +492,30 @@ static void llvm_printer_emit_return(llvm_printer* self, const ssa_instr* instr)
                 llvm_prints(self, "void");
 }
 
+static void llvm_printer_emit_switch(llvm_printer* self, const ssa_instr* instr)
+{
+        llvm_prints(self, "switch ");
+        llvm_printer_emit_value(self, ssa_get_instr_operand_value(instr, 0), true);
+        llvm_prints(self, ", ");
+        llvm_printer_emit_value(self, ssa_get_instr_operand_value(instr, 1), true);
+        llvm_prints(self, " [");
+
+        self->indent_lvl++;
+        ssize num_ops = ssa_get_instr_operands_size(instr);
+        for (ssize i = 2; i < num_ops; i += 2)
+        {
+                llvm_print_endl(self);
+                llvm_print_indent(self);
+                llvm_printer_emit_value(self, ssa_get_instr_operand_value(instr, i), true);
+                llvm_prints(self, ", ");
+                llvm_printer_emit_value(self, ssa_get_instr_operand_value(instr, i + 1), true);
+        }
+        self->indent_lvl--;
+        llvm_print_endl(self);
+        llvm_print_indent(self);
+        llvm_printc(self, ']');
+}
+
 static void llvm_printer_emit_terminator_instr(llvm_printer* self, const ssa_instr* instr)
 {
         ssa_terminator_instr_kind k = ssa_get_terminator_instr_kind(instr);
@@ -500,7 +526,7 @@ static void llvm_printer_emit_terminator_instr(llvm_printer* self, const ssa_ins
         else if (k == STIK_RETURN)
                 llvm_printer_emit_return(self, instr);
         else if (k == STIK_SWITCH)
-                ;
+                llvm_printer_emit_switch(self, instr);
 }
 
 extern void llvm_printer_emit_instr(llvm_printer* self, const ssa_instr* instr)
@@ -562,11 +588,15 @@ extern void llvm_printer_emit_function_decl(llvm_printer* self, const ssa_functi
         llvm_print_endl(self);
         llvm_printer_emit_function_header(self, "define ", ssa_get_function_entity(func));
         llvm_print_endl(self);
+
         llvm_printc(self, '{');
+        self->indent_lvl++;
         SSA_FOREACH_FUNCTION_BLOCK(func, block)
                 llvm_printer_emit_block(self, block);
+        self->indent_lvl--;
         llvm_print_endl(self);
         llvm_printc(self, '}');
+
         llvm_print_endl(self);
 }
 

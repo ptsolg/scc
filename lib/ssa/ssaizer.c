@@ -56,6 +56,7 @@ extern void ssaizer_init(ssaizer* self, ssa_context* context)
         strmap_init_alloc(&self->globals, alloc);
         dseq_init_alloc(&self->continue_stack, alloc);
         dseq_init_alloc(&self->break_stack, alloc);
+        dseq_init_alloc(&self->switch_stack, alloc);
 }
 
 extern void ssaizer_dispose(ssaizer* self)
@@ -173,6 +174,11 @@ extern void ssaizer_push_break_dest(ssaizer* self, ssa_block* block)
         dseq_append(&self->break_stack, block);
 }
 
+extern void ssaizer_push_switch_instr(ssaizer* self, ssa_instr* switch_instr)
+{
+        dseq_append(&self->switch_stack, switch_instr);
+}
+
 extern void ssaizer_pop_continue_dest(ssaizer* self)
 {
         ssize size = dseq_size(&self->continue_stack);
@@ -187,6 +193,13 @@ extern void ssaizer_pop_break_dest(ssaizer* self)
         dseq_resize(&self->break_stack, size - 1);
 }
 
+extern void ssaizer_pop_switch_instr(ssaizer* self)
+{
+        ssize size = dseq_size(&self->switch_stack);
+        S_ASSERT(size);
+        dseq_resize(&self->switch_stack, size - 1);
+}
+
 extern ssa_block* ssaizer_get_continue_dest(ssaizer* self)
 {
         return *(dseq_end(&self->continue_stack) - 1);
@@ -195,6 +208,11 @@ extern ssa_block* ssaizer_get_continue_dest(ssaizer* self)
 extern ssa_block* ssaizer_get_break_dest(ssaizer* self)
 {
         return *(dseq_end(&self->break_stack) - 1);
+}
+
+extern ssa_instr* ssaizer_get_switch_instr(ssaizer* self)
+{
+        return *(dseq_end(&self->switch_stack) - 1);
 }
 
 extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module)

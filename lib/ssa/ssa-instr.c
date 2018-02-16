@@ -79,6 +79,7 @@ static void ssa_add_value_use(ssa_value* value, ssa_value_use* use)
 
 extern ssa_value_use* ssa_add_instr_operand(ssa_instr* self, ssa_context* context, ssa_value* value)
 {
+        S_ASSERT(value);
         ssa_array* ops = &_ssa_instr_base(self)->_operands;
         ssa_array new_ops;
         ssa_init_array(&new_ops);

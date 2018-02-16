@@ -426,6 +426,16 @@ extern ssa_instr* ssa_build_conditional_jmp(
         return ssa_build_block_terminator(self, jmp);
 }
 
+extern ssa_instr* ssa_build_switch_instr(ssa_builder* self, ssa_value* cond, ssa_value* otherwise)
+{
+        ssa_instr* switch_instr = ssa_new_switch_instr(self->context, cond);
+        if (!switch_instr)
+                return NULL;
+
+        ssa_add_instr_operand(switch_instr, self->context, otherwise);
+        return ssa_build_block_terminator(self, switch_instr);
+}
+
 extern ssa_instr* ssa_build_return(ssa_builder* self, ssa_value* val)
 {
         ssa_instr* ret = val 

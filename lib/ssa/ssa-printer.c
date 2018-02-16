@@ -144,7 +144,7 @@ static const char* ssa_terminator_instr_table[] =
         "",
         "br",
         "br",
-        "todo",
+        "switch",
         "ret"
 };
 
@@ -215,6 +215,23 @@ static void ssa_print_getfieldaddr_operands(ssa_printer* self, const ssa_instr* 
         ssa_printf(self, "%u", ssa_get_getfieldaddr_index(instr));
 }
 
+static void ssa_print_switch_instr_operands(ssa_printer* self, const ssa_instr* instr)
+{
+        ssa_print_value_ref(self, ssa_get_instr_operand_value(instr, 0));
+        ssa_prints(self, ", ");
+        ssa_print_value_ref(self, ssa_get_instr_operand_value(instr, 1));
+
+        ssa_prints(self, " [");
+        ssize num_ops = ssa_get_instr_operands_size(instr);
+        for (ssize i = 2; i < num_ops; i++)
+        {
+                ssa_print_value_ref(self, ssa_get_instr_operand_value(instr, i));
+                if (i + 1 != num_ops)
+                        ssa_prints(self, ", ");
+        }
+        ssa_prints(self, "]");
+}
+
 static void ssa_print_instr_operands(ssa_printer* self, const ssa_instr* instr)
 {
         SSA_FOREACH_INSTR_OPERAND(instr, it, end)
@@ -255,6 +272,8 @@ extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
                 ssa_print_phi_operands(self, instr);
         else if (k == SIK_GETFIELDADDR)
                 ssa_print_getfieldaddr_operands(self, instr);
+        else if (k == SIK_TERMINATOR && ssa_get_terminator_instr_kind(instr) == STIK_SWITCH)
+                ssa_print_switch_instr_operands(self, instr);
         else
                 ssa_print_instr_operands(self, instr);
        
