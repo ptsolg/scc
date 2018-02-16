@@ -1,0 +1,25 @@
+; Definition for test
+@0:
+    $1 = alloca 4
+    $2 = load $1
+    switch $2, @7 [10, @4, 20, @5, 30, @6]
+
+@3:
+    br @4
+
+@4:
+    br @5
+
+@5:
+    store 1, $1
+    br @6
+
+@6:
+    store 2, $1
+    br @8
+
+@7:
+    br @8
+
+@8:
+    ret
