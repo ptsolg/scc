@@ -1,5 +1,5 @@
 #include "scc/scl/args.h"
-#include "scc/scl/sstring.h"
+#include "scc/scl/string.h"
 #include "scc/scl/file.h"
 #include <stdlib.h> // strtoi
 #include <stdio.h> // strtoi
@@ -109,7 +109,7 @@ static void _arg_to_cmd(cmd_data* cmd, const char* arg)
         const char* space_pos = strchr(arg, ' ');
         bool has_spaces = quote_pos
                 ? space_pos && space_pos < quote_pos
-                : space_pos;
+                : space_pos != NULL;
         if (has_spaces)
                 cmd_data_append(cmd, '"');
         while (*arg)

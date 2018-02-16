@@ -9,8 +9,7 @@
 extern "C" {
 #endif
 
-#include "htab.h"
-#include "dseq-ext.h"
+#include "error.h"
 
 typedef struct _aparser aparser;
 
