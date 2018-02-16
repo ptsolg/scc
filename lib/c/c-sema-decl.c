@@ -4,6 +4,7 @@
 #include "scc/c/c-sema-expr.h"
 #include "scc/c/c-errors.h"
 #include "scc/tree/tree-eval.h"
+#include "scc/scl/dseq-instance.h"
 
 extern tree_decl* csema_local_lookup(const csema* self, tree_id name, tree_lookup_kind lk)
 {
@@ -73,13 +74,13 @@ extern void cdeclarator_init(cdeclarator* self, csema* sema, cdeclarator_kind k)
         self->context = sema->ccontext;
 
         ctype_chain_init(&self->type);
-        dseq_init_ex_ptr(&self->params, cget_alloc(sema->ccontext));
+        dseq_init_alloc(&self->params, cget_alloc(sema->ccontext));
 }
 
 extern void cdeclarator_dispose(cdeclarator* self)
 {
-        for (void** p = dseq_begin_ptr(&self->params);
-                p != dseq_end_ptr(&self->params); p++)
+        for (void** p = dseq_begin(&self->params);
+                p != dseq_end(&self->params); p++)
         {
                 // todo: delete(*p)
         }
@@ -171,9 +172,9 @@ extern void csema_add_declarator_param(csema* self, cdeclarator* d, cparam* p)
         tree_type* t = d->type.tail;
         S_ASSERT(t && tree_get_type_kind(t) == TTK_FUNCTION);
 
-        tree_add_function_type_param(t, cparam_get_type(p));
+        tree_add_function_type_param(t, self->context, cparam_get_type(p));
         if (!d->params_initialized)
-                dseq_append_ptr(&d->params, p);
+                dseq_append(&d->params, p);
         else
                 ;// todo delete(p)
 }
@@ -785,7 +786,7 @@ static bool csema_set_function_params(csema* self, tree_decl* func, dseq* params
         csema_enter_decl_scope(self, tree_get_function_params(func));
 
         for (ssize i = 0; i < dseq_size(params); i++)
-                if (!csema_define_param_decl(self, dseq_get_ptr(params, i)))
+                if (!csema_define_param_decl(self, dseq_get(params, i)))
                 {
                         csema_exit_decl_scope(self);
                         return false;

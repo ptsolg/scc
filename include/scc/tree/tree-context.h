@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "scc/scl/allocator.h"
+#include "scc/scl/memory.h"
 #include "tree-common.h"
 #include "tree-type.h"
 
@@ -76,6 +76,7 @@ static TREE_INLINE serrcode tree_resize_array(
         if (!new_data)
                 return S_ERROR;
 
+        ssize num_objects = S_MIN(new_size, array->size);
         memcpy(new_data, array->data, array->size * object_size);
         tree_deallocate(self, array->data);
         array->data = new_data;

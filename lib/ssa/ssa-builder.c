@@ -193,7 +193,7 @@ extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* to, ssa_value* op
         return ssa_build_instr(self, c);
 }
 
-extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const dseq* args)
+extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const ssa_array* args)
 {
         S_ASSERT(func && args);
         tree_type* func_type = tree_desugar_type(
@@ -205,12 +205,9 @@ extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const dseq*
         if (!call)
                 return NULL;
 
-        for (void** arg = dseq_begin_ptr(args),
-                **end = dseq_end_ptr(args); arg != end; arg++)
-        {
-                ssa_add_instr_operand(call, *arg);
-        }
-
+        for (ssize i = 0; i < args->size; i++)
+                ssa_add_instr_operand(call, self->context, *((ssa_value**)args->data + i));
+       
         return ssa_build_instr(self, call);
 }
 

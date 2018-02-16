@@ -20,7 +20,7 @@ typedef struct _ssa_context
 {
         obstack nodes;
         mempool memory;
-
+        allocator* alloc;
         tree_context* tree;
         const tree_target_info* target;
 } ssa_context;
@@ -51,6 +51,37 @@ static inline const tree_target_info* ssa_get_target(const ssa_context* self)
 static inline tree_context* ssa_get_tree(const ssa_context* self)
 {
         return self->tree;
+}
+
+static inline serrcode ssa_resize_array(
+        ssa_context* self,
+        ssa_array* array,
+        const ssize object_size,
+        const ssize new_size)
+{
+        suint8* new_data = mempool_allocate(&self->memory, object_size * new_size);
+        if (!new_data)
+                return S_ERROR;
+
+        ssize num_objects = S_MIN(new_size, array->size);
+        memcpy(new_data, array->data, num_objects * object_size);
+        mempool_deallocate(&self->memory, array->data);
+        array->data = new_data;
+        array->size = new_size;
+        return S_NO_ERROR;
+}
+
+static inline void* ssa_reserve_object(ssa_context* self, ssa_array* array, const ssize object_size)
+{
+        if (S_FAILED(ssa_resize_array(self, array, object_size, array->size + 1)))
+                return NULL;
+        return array->data + (array->size - 1) * object_size;
+}
+
+static inline void ssa_dispose_array(ssa_context* self, ssa_array* array)
+{
+        mempool_deallocate(&self->memory, array->data);
+        ssa_init_array(array);
 }
 
 #ifdef __cplusplus

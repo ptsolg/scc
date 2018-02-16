@@ -16,8 +16,8 @@ typedef enum _ctoken_kind ctoken_kind;
 
 typedef struct _creswords
 {
-        htab reswords;
-        htab pp_reswords;
+        strmap reswords;
+        strmap pp_reswords;
 } creswords;
 
 extern void creswords_init(creswords* self, ccontext* context);
@@ -25,9 +25,9 @@ extern void creswords_dispose(creswords* self);
 extern void creswords_add(creswords* self, const char* string, ctoken_kind k);
 extern void creswords_add_pp(creswords* self, const char* string, ctoken_kind k);
 extern ctoken_kind creswords_get(const creswords* self, const char* string, ssize len);
-extern ctoken_kind creswords_get_h(const creswords* self, hval h);
+extern ctoken_kind creswords_get_by_ref(const creswords* self, strref h);
 extern ctoken_kind creswords_get_pp(const creswords* self, const char* string, ssize len);
-extern ctoken_kind creswords_get_pp_h(const creswords* self, hval h);
+extern ctoken_kind creswords_get_pp_by_ref(const creswords* self, strref h);
 
 typedef struct _clogger clogger;
 typedef struct _ctoken ctoken;

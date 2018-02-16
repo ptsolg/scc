@@ -57,7 +57,7 @@ extern serrcode cenv_lex_source(cenv* self, file_entry* source, dseq* result)
         while (1)
         {
                 ctoken* t = clex(&self->lexer);
-                if (!t || S_FAILED(dseq_append_ptr(result, t)))
+                if (!t || S_FAILED(dseq_append(result, t)))
                         return S_ERROR;
 
                 if (ctoken_is(t, CTK_EOF))

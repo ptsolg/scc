@@ -1,6 +1,7 @@
 #include "scc/ssa/ssa-module.h"
 #include "scc/ssa/ssa-context.h"
 #include "scc/ssa/ssa-function.h"
+#include "scc/scl/dseq-instance.h"
 
 extern ssa_module* ssa_new_module(ssa_context* context)
 {
@@ -8,9 +9,9 @@ extern ssa_module* ssa_new_module(ssa_context* context)
         if (!m)
                 return NULL;
 
-        htab_init_ex_ptr(&m->_lookup, ssa_get_alloc(context));
-        dseq_init_ex_ptr(&m->strings, ssa_get_alloc(context));
-        list_init(&m->_defs);
+        strmap_init_alloc(&m->lookup, ssa_get_alloc(context));
+        dseq_init_alloc(&m->globals, ssa_get_alloc(context));
+        list_init(&m->defs);
         return m;
 }
 
@@ -18,20 +19,30 @@ extern void ssa_module_add_func_def(ssa_module* self, ssa_function* func)
 {
         tree_decl* entity = ssa_get_function_entity(func);
         S_ASSERT(entity);
-        htab_insert_ptr(&self->_lookup, tree_get_decl_name(entity), func);
-        list_push_back(&self->_defs, &func->_node);
+        strmap_insert(&self->lookup, tree_get_decl_name(entity), func);
+        list_push_back(&self->defs, &func->_node);
 }
 
-extern void ssa_module_add_global(ssa_module* self, ssa_value* string)
+extern void ssa_module_add_global_value(ssa_module* self, ssa_value* global)
 {
-        S_ASSERT(ssa_get_value_kind(string) == SVK_STRING);
-        dseq_append_ptr(&self->strings, string);
+        S_ASSERT(ssa_get_value_kind(global) == SVK_STRING);
+        dseq_append(&self->globals, global);
 }
 
 extern ssa_function* ssa_module_lookup(const ssa_module* self, const tree_decl* func)
 {
-        hiter res;
-        return htab_find(&self->_lookup, tree_get_decl_name(func), &res)
-                ? hiter_get_ptr(&res)
+        strmap_iter res;
+        return strmap_find(&self->lookup, tree_get_decl_name(func), &res)
+                ? *strmap_iter_value(&res)
                 : NULL;
+}
+
+extern ssa_value** ssa_get_module_globals_begin(const ssa_module* self)
+{
+        return (ssa_value**)dseq_begin(&self->globals);
+}
+
+extern ssa_value** ssa_get_module_globals_end(const ssa_module* self)
+{
+        return (ssa_value**)dseq_end(&self->globals);
 }

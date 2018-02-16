@@ -9,16 +9,16 @@ extern bool csource_has(const csource* self, tree_location loc)
 extern int csource_get_line(const csource* self, tree_location loc)
 {
         // todo: log(n) search
-        ssize nlines = dseq_size(&self->_lines);
+        ssize nlines = dseq_u32_size(&self->_lines);
         if (!nlines)
                 return 0;
 
         for (ssize i = 0; i < nlines; i++)
         {
-                tree_location cur = dseq_get_u32(&self->_lines, i);
+                tree_location cur = dseq_u32_get(&self->_lines, i);
                 tree_location next = csource_get_loc_end(self);
                 if (i + 1 < nlines)
-                        next = dseq_get_u32(&self->_lines, i + 1);
+                        next = dseq_u32_get(&self->_lines, i + 1);
 
                 if (loc >= cur && loc < next)
                         return (int)(i + 1);
@@ -33,13 +33,13 @@ extern int csource_get_col(const csource* self, tree_location loc)
         if (line == 0)
                 return 0;
 
-        tree_location line_loc = dseq_get_u32(&self->_lines, (ssize)(line - 1));
+        tree_location line_loc = dseq_u32_get(&self->_lines, (ssize)(line - 1));
         return loc - line_loc + 1;
 }
 
 extern serrcode csource_save_line_loc(csource* self, tree_location loc)
 {
-        return dseq_append_u32(&self->_lines, loc);
+        return dseq_u32_append(&self->_lines, loc);
 }
 
 extern const char* csource_get_name(const csource* self)
@@ -59,7 +59,7 @@ extern tree_location csource_get_loc_end(const csource* self)
 
 extern readbuf* csource_open(csource* self)
 {
-        dseq_dispose(&self->_lines);
+        dseq_u32_dispose(&self->_lines);
         return file_open(self->_file);
 }
 
@@ -74,19 +74,16 @@ extern void csource_manager_init(
         self->context = context;
         self->lookup = lookup;
         allocator* alloc = cget_alloc(context);
-        dseq_init_ex_ptr(&self->sources, alloc);
-        htab_init_ex_ptr(&self->file_to_source, alloc);
+        dseq_init_alloc(&self->sources, alloc);
+        strmap_init_alloc(&self->file_to_source, alloc);
 }
 
 extern void csource_manager_dispose(csource_manager* self)
 {
-        HTAB_FOREACH(&self->file_to_source, it)
-        {
-                csource*ss = hiter_get_ptr(&it);
-                csource_delete(self->context, hiter_get_ptr(&it));
-        }
+        STRMAP_FOREACH(&self->file_to_source, it)
+                csource_delete(self->context, *strmap_iter_value(&it));
 
-        htab_dispose(&self->file_to_source);
+        strmap_dispose(&self->file_to_source);
         dseq_dispose(&self->sources);
 }
 
@@ -100,19 +97,19 @@ extern csource* csource_get_from_file(csource_manager* self, file_entry* file)
         if (!file)
                 return NULL;
 
-        hval ref = STRREF(file_get_path(file));
-        hiter res;
-        if (htab_find(&self->file_to_source, ref, &res))
-                return hiter_get_ptr(&res);
+        strref ref = STRREF(file_get_path(file));
+        strmap_iter res;
+        if (strmap_find(&self->file_to_source, ref, &res))
+                return *strmap_iter_value(&res);
 
         csource* source = csource_new(self->context, file);
         source->_begin = 0;
         if (dseq_size(&self->sources))
-                source->_begin = csource_get_loc_end(dseq_last_ptr(&self->sources));
+                source->_begin = csource_get_loc_end(*(dseq_end(&self->sources) - 1));
 
         source->_end = source->_begin + (tree_location)file_size(file) + 1; // space for eof
-        dseq_append_ptr(&self->sources, source);
-        htab_insert_ptr(&self->file_to_source, ref, source);
+        dseq_append(&self->sources, source);
+        strmap_insert(&self->file_to_source, ref, source);
         return source;
 }
 
@@ -132,7 +129,7 @@ extern serrcode csource_find_loc(const csource_manager* self, clocation* res, tr
 
         for (ssize i = 0; i < dseq_size(&self->sources); i++)
         {
-                csource* s = dseq_get_ptr(&self->sources, i);
+                csource* s = dseq_get(&self->sources, i);
                 if (csource_has(s, loc))
                 {
                         res->file = csource_get_name(s);

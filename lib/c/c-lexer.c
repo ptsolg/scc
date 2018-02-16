@@ -165,7 +165,7 @@ static ctoken* clex_pp_num(clexer* self, ctoken* num)
 // converts identifier to keyword
 static ctoken* clex_identifier(clexer* self, ctoken* t)
 {
-        ctoken_kind k = creswords_get_h(&self->reswords, (hval)ctoken_get_string(t));
+        ctoken_kind k = creswords_get_by_ref(&self->reswords, ctoken_get_string(t));
         if (k != CTK_UNKNOWN)
                 ctoken_set_kind(t, k);
 

@@ -7,52 +7,51 @@
 
 extern void creswords_init(creswords* self, ccontext* context)
 {
-        htab_init_ex_i32(&self->reswords, cget_alloc(context));
-        htab_init_ex_i32(&self->pp_reswords, cget_alloc(context));
+        strmap_init_alloc(&self->reswords, cget_alloc(context));
+        strmap_init_alloc(&self->pp_reswords, cget_alloc(context));
 }
 
 extern void creswords_dispose(creswords* self)
 {
-        htab_dispose(&self->reswords);
-        htab_dispose(&self->pp_reswords);
+        strmap_dispose(&self->reswords);
+        strmap_dispose(&self->pp_reswords);
 }
 
 extern void creswords_add(creswords* self, const char* string, ctoken_kind k)
 {
-        htab_insert_i32(&self->reswords, STRREF(string), k);
+        strref r = STRREF(string);
+        strmap_insert(&self->reswords, r, (void*)k);
 }
 
 extern void creswords_add_pp(creswords* self, const char* string, ctoken_kind k)
 {
-        htab_insert_i32(&self->pp_reswords, STRREF(string), k);
+        strmap_insert(&self->pp_reswords, STRREF(string), (void*)k);
 }
 
 extern ctoken_kind creswords_get(const creswords* self, const char* string, ssize len)
 {
-        return creswords_get_h(self, STRREFL(string, len));
+        return creswords_get_by_ref(self, STRREFL(string, len));
 }
 
-extern ctoken_kind creswords_get_h(const creswords* self, hval h)
+extern ctoken_kind creswords_get_by_ref(const creswords* self, strref ref)
 {
-        hiter res;
-        if (!htab_find(&self->reswords, h, &res))
-                return CTK_UNKNOWN;
-
-        return hiter_get_i32(&res);
+        strmap_iter res;
+        return strmap_find(&self->reswords, ref, &res)
+                ? (ctoken_kind)*strmap_iter_value(&res)
+                : CTK_UNKNOWN;
 }
 
 extern ctoken_kind creswords_get_pp(const creswords* self, const char* string, ssize len)
 {
-        return creswords_get_pp_h(self, STRREFL(string, len));
+        return creswords_get_pp_by_ref(self, STRREFL(string, len));
 }
 
-extern ctoken_kind creswords_get_pp_h(const creswords* self, hval h)
+extern ctoken_kind creswords_get_pp_by_ref(const creswords* self, strref ref)
 {
-        hiter res;
-        if (!htab_find(&self->pp_reswords, h, &res))
-                return CTK_UNKNOWN;
-
-        return hiter_get_i32(&res);
+        strmap_iter res;
+        return strmap_find(&self->pp_reswords, ref, &res)
+                ? (ctoken_kind)*strmap_iter_value(&res)
+                : CTK_UNKNOWN;
 }
 
 static inline tree_location cpplexer_loc(const cpplexer* self)
@@ -609,7 +608,7 @@ extern void cpproc_init(
         self->source_manager = source_manager;
         self->logger = logger;
         self->context = context;
-        dseq_init_ex_ptr(&self->expansion, cget_alloc(context));
+        dseq_init_alloc(&self->expansion, cget_alloc(context));
 }
 
 extern void cpproc_dispose(cpproc* self)
@@ -736,7 +735,7 @@ static ctoken* cpproc_lex_directive(cpproc* self)
 
         ctoken_kind directive = CTK_UNKNOWN;
         if (ctoken_is(t, CTK_ID))
-                directive = creswords_get_pp_h(self->reswords, ctoken_get_string(t));
+                directive = creswords_get_pp_by_ref(self->reswords, ctoken_get_string(t));
 
         if (directive == CTK_UNKNOWN)
         {
@@ -759,7 +758,11 @@ static ctoken* cpproc_lex_directive(cpproc* self)
 static ctoken* cpproc_lex_macro_id(cpproc* self)
 {
         if (dseq_size(&self->expansion))
-                return dseq_pop_ptr(&self->expansion);
+        {
+                ctoken* last = *(dseq_end(&self->expansion) - 1);
+                dseq_resize(&self->expansion, dseq_size(&self->expansion) - 1);
+                return last;
+        }
 
         ctoken* t = cpproc_lex_directive(self);
         if (!t)
@@ -779,7 +782,7 @@ static ctoken* cpproc_lex_macro_id(cpproc* self)
 
 static inline void cpproc_unget_macro_id(cpproc* self, ctoken* t)
 {
-        dseq_append_ptr(&self->expansion, t);
+        dseq_append(&self->expansion, t);
 }
 
 static bool cpproc_collect_adjacent_strings(cpproc* self, dseq* result)
@@ -796,7 +799,7 @@ static bool cpproc_collect_adjacent_strings(cpproc* self, dseq* result)
                         return true;
                 }
 
-                dseq_append_ptr(result, t);
+                dseq_append(result, t);
         }
 }
 
@@ -804,25 +807,25 @@ static ctoken* cpproc_concat_and_escape_strings(cpproc* self, dseq* strings)
 {
         S_ASSERT(dseq_size(strings));
 
-        dseq concat;
-        dseq_init_ex_u8(&concat, cget_alloc(self->context));
+        dseq_u8 concat;
+        dseq_u8_init_alloc(&concat, cget_alloc(self->context));
         for (ssize i = 0; i < dseq_size(strings); i++)
         {
-                ctoken* t = dseq_get_ptr(strings, i);
+                ctoken* t = dseq_get(strings, i);
                 const char* string = tree_get_id_string(
                         cget_tree(self->context), ctoken_get_string(t));
 
                 char escaped[CMAX_LINE_LENGTH + 1];
                 ssize size = cget_escaped_string(escaped, string, strlen(string));
                 for (ssize j = 0; j < size - 1; j++)
-                        dseq_append_i8(&concat, escaped[j]);
+                        dseq_u8_append(&concat, escaped[j]);
         }
-        dseq_append_i8(&concat, '\0');
+        dseq_u8_append(&concat, '\0');
 
         tree_id concat_ref = tree_get_id_for_string(
-                cget_tree(self->context), (char*)dseq_begin_u8(&concat), dseq_size(&concat));
-        tree_location loc = ctoken_get_loc(dseq_get_ptr(strings, 0));
-        dseq_dispose(&concat);
+                cget_tree(self->context), (char*)dseq_u8_begin(&concat), dseq_u8_size(&concat));
+        tree_location loc = ctoken_get_loc(dseq_get(strings, 0));
+        dseq_u8_dispose(&concat);
 
         return ctoken_new_string(self->context, loc, concat_ref);
 }
@@ -837,8 +840,8 @@ static ctoken* cpproc_lex_string(cpproc* self)
                 return t;
 
         dseq adjacent_strings;
-        dseq_init_ex_ptr(&adjacent_strings, cget_alloc(self->context));
-        dseq_append_ptr(&adjacent_strings, t);
+        dseq_init_alloc(&adjacent_strings, cget_alloc(self->context));
+        dseq_append(&adjacent_strings, t);
 
         ctoken* result = cpproc_collect_adjacent_strings(self, &adjacent_strings)
                 ? cpproc_concat_and_escape_strings(self, &adjacent_strings)

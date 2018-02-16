@@ -14,8 +14,8 @@ extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc)
         self->input.llc_path = NULL;
         self->input.lld_path = NULL;
         self->input.entry = NULL;
-        dseq_init_ex_ptr(&self->input.sources, alloc);
-        dseq_init_ex_ptr(&self->input.libs, alloc);
+        dseq_init_alloc(&self->input.sources, alloc);
+        dseq_init_alloc(&self->input.libs, alloc);
         flookup_init_ex(&self->input.source_lookup, alloc);
         flookup_init_ex(&self->input.lib_lookup, alloc);
 
@@ -80,7 +80,7 @@ extern serrcode cc_add_lib(cc_instance* self, const char* lib)
                 return S_ERROR;
         }
 
-        dseq_append_ptr(&self->input.libs, file);
+        dseq_append(&self->input.libs, file);
         return S_NO_ERROR;
 }
 
@@ -98,7 +98,7 @@ extern serrcode cc_add_source_file(cc_instance* self, const char* file)
                 return S_ERROR;
         }
 
-        dseq_append_ptr(&self->input.sources, source);
+        dseq_append(&self->input.sources, source);
         return S_NO_ERROR;
 }
 
@@ -109,7 +109,7 @@ extern serrcode cc_emulate_source_file(
         if (!source)
                 return S_ERROR;
 
-        dseq_append_ptr(&self->input.sources, source);
+         dseq_append(&self->input.sources, source);
         return S_NO_ERROR;
 }
 

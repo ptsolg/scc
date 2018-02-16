@@ -12,6 +12,7 @@ extern "C" {
 #include "ssa-common.h"
 #include "ssa-builder.h"
 #include "ssa-function.h"
+#include "scc/scl/dseq-common.h"
 
 typedef struct _ssa_context ssa_context;
 typedef struct _tree_stmt tree_stmt;
@@ -22,6 +23,8 @@ typedef struct _ssa_module ssa_module;
 typedef struct _tree_decl tree_decl;
 typedef struct _tree_module tree_module;
 typedef struct _ssa_value ssa_value;
+typedef struct _dseq strmap_stack;
+typedef struct _dseq dseq;
 
 typedef struct _ssaizer
 {
@@ -31,10 +34,10 @@ typedef struct _ssaizer
         ssa_module* module;
         ssa_builder builder;
 
-        // stack of htab's used for tracking the last definition of the variable
-        dseq defs;
-        htab labels;
-        htab globals;
+        // stack of strmap's used for tracking the last definition of the variable
+        strmap_stack defs;
+        strmap labels;
+        strmap globals;
 
         dseq break_stack;
         dseq continue_stack;

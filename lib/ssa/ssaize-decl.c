@@ -54,7 +54,7 @@ static bool ssaizer_maybe_insert_return(ssaizer* self)
 
 static void ssaizer_function_cleanup(ssaizer* self)
 {
-        htab_clear(&self->labels);
+      //  htab_clear(&self->labels);
         ssaizer_pop_scope(self); // params
 }
 
@@ -70,7 +70,7 @@ static bool ssaize_function_args(ssaizer* self, ssa_function* func, tree_decl* d
                 if (!param_value)
                         return false;
 
-                ssa_add_function_param(func, param_value);
+                ssa_add_function_param(func, self->context, param_value);
                 ssa_value* param = ssa_build_alloca(&self->builder, param_type);
                 if (!param || !ssa_build_store(&self->builder, param_value, param))
                         return false;

@@ -484,7 +484,7 @@ static void llvm_printer_emit_inderect_jump(llvm_printer* self, const ssa_instr*
 static void llvm_printer_emit_return(llvm_printer* self, const ssa_instr* instr)
 {
         llvm_prints(self, "ret ");
-        if (ssa_get_instr_num_operands(instr))
+        if (ssa_get_instr_operands_size(instr))
                 llvm_printer_emit_value(self, ssa_get_instr_operand_value(instr, 0), true);
         else
                 llvm_prints(self, "void");

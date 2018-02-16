@@ -1,8 +1,6 @@
 #include "scc/ssa/ssa-instr.h"
 #include "scc/ssa/ssa-context.h"
 
-DSEQ_GEN(value_use, ssa_value_use);
-
 extern ssa_instr* ssa_new_instr(
         ssa_context* context,
         ssa_instr_kind kind,
@@ -18,9 +16,8 @@ extern ssa_instr* ssa_new_instr(
         ssa_init_variable(ssa_get_instr_var(instr), id, type);
         ssa_set_instr_kind(instr, kind);
 
-        dseq* ops = &_ssa_instr_base(instr)->_operands;
-        dseq_init_ex_value_use(ops, ssa_get_alloc(context));
-        dseq_reserve(ops, reserved_operands);
+        ssa_array* ops = &_ssa_instr_base(instr)->_operands;
+        ssa_init_array(ops);
 
         list_node_init(&_ssa_instr_base(instr)->_node);
         return instr;
@@ -38,7 +35,7 @@ extern ssa_instr* ssa_new_unary_instr(
         if (!instr)
                 return NULL;
 
-        ssa_add_instr_operand(instr, operand);
+        ssa_add_instr_operand(instr, context, operand);
         return instr;
 }
 
@@ -55,8 +52,8 @@ extern ssa_instr* ssa_new_binary_instr(
         if (!instr)
                 return NULL;
 
-        ssa_add_instr_operand(instr, first);
-        ssa_add_instr_operand(instr, second);
+        ssa_add_instr_operand(instr, context, first);
+        ssa_add_instr_operand(instr, context, second);
         return instr;
 }
 
@@ -80,36 +77,24 @@ static void ssa_add_value_use(ssa_value* value, ssa_value_use* use)
         list_push_back(&_ssa_value_base(value)->_use_list, &use->_node);
 }
 
-extern ssa_value_use* ssa_add_instr_operand(ssa_instr* self, ssa_value* value)
+extern ssa_value_use* ssa_add_instr_operand(ssa_instr* self, ssa_context* context, ssa_value* value)
 {
-        SSA_FOREACH_VALUE_USE(value, it, end)
-                ;
-
-        dseq* ops = &_ssa_instr_base(self)->_operands;
-        ssize num_ops = dseq_size(ops);
-        if (num_ops + 1 < dseq_total(ops))
-                dseq_resize(ops, num_ops + 1);
-        else 
+        ssa_array* ops = &_ssa_instr_base(self)->_operands;
+        ssa_array new_ops;
+        ssa_init_array(&new_ops);
+        ssa_resize_array(context, &new_ops, sizeof(ssa_value_use), ops->size + 1);
+        for (ssize i = 0; i < ops->size; i++)
         {
-                dseq new_ops;
-                dseq_init_ex(&new_ops, dseq_obsize(ops), dseq_alloc(ops));
-                dseq_resize(&new_ops, num_ops + 1);
-                //memcpy(dseq_begin_value_use(&new_ops),
-                //        dseq_begin_value_use(ops), sizeof(ssa_value_use) * num_ops);
-
-                for (ssize i = 0; i < num_ops; i++)
-                {
-                        ssa_value_use* op = dseq_begin_value_use(ops) + i;
-                        ssa_value_use* new_op = dseq_begin_value_use(&new_ops) + i;
-                        *new_op = *op;
-                        op->_node._prev->_next = &new_op->_node;
-                        op->_node._next->_prev = &new_op->_node;
-                }
-
-                dseq_dispose(ops);
-                dseq_move(ops, &new_ops);
+                ssa_value_use* op = (ssa_value_use*)ops->data + i;
+                ssa_value_use* new_op = (ssa_value_use*)new_ops.data + i;
+                *new_op = *op;
+                op->_node._prev->_next = &new_op->_node;
+                op->_node._next->_prev = &new_op->_node;
         }
-        ssa_value_use* last = dseq_end_value_use(ops) - 1;
+        ssa_dispose_array(context, ops);
+        *ops = new_ops;
+        
+        ssa_value_use* last = (ssa_value_use*)ops->data + ops->size - 1;
         ssa_init_value_use(last, self);
         ssa_add_value_use(value, last);
         return last;
@@ -138,24 +123,24 @@ extern ssa_value* ssa_get_instr_operand_value(const ssa_instr* self, size_t i)
 
 extern ssa_value_use* ssa_get_instr_operand(const ssa_instr* self, size_t i)
 {
-        const dseq* ops = &_ssa_instr_cbase(self)->_operands;
-        S_ASSERT(i < dseq_size(ops));
-        return dseq_begin_value_use(ops) + i;
+        const ssa_array* ops = &_ssa_instr_cbase(self)->_operands;
+        S_ASSERT(i < ops->size);
+        return (ssa_value_use*)ops->data + i;
 }
 
 extern ssa_value_use* ssa_get_instr_operands_begin(const ssa_instr* self)
 {
-        return dseq_begin_value_use(&_ssa_instr_cbase(self)->_operands);
+        return (ssa_value_use*)_ssa_instr_cbase(self)->_operands.data;
 }
 
 extern ssa_value_use* ssa_get_instr_operands_end(const ssa_instr* self)
 {
-        return dseq_end_value_use(&_ssa_instr_cbase(self)->_operands);
+        return ssa_get_instr_operands_begin(self) + ssa_get_instr_operands_size(self);
 }
 
-extern ssize ssa_get_instr_num_operands(const ssa_instr* self)
+extern ssize ssa_get_instr_operands_size(const ssa_instr* self)
 {
-        return dseq_size(&_ssa_instr_cbase(self)->_operands);
+        return _ssa_instr_cbase(self)->_operands.size;
 }
 
 extern void ssa_add_instr_after(ssa_instr* self, ssa_instr* pos)
@@ -272,8 +257,8 @@ extern ssa_instr* ssa_new_phi(ssa_context* context, ssa_id id, tree_type* restyp
 extern void ssa_add_phi_operand(
         ssa_instr* self, ssa_context* context, ssa_value* value, ssa_value* label)
 {
-        ssa_add_instr_operand(self, value);
-        ssa_add_instr_operand(self, label);
+        ssa_add_instr_operand(self, context, value);
+        ssa_add_instr_operand(self, context, label);
 }
 
 extern ssa_instr* ssa_new_terminator_instr(
@@ -330,9 +315,9 @@ extern ssa_instr* ssa_new_conditional_jump(
         if (!jump)
                 return NULL;
 
-        ssa_add_instr_operand(jump, condition);
-        ssa_add_instr_operand(jump, on_true);
-        ssa_add_instr_operand(jump, on_false);
+        ssa_add_instr_operand(jump, context, condition);
+        ssa_add_instr_operand(jump, context, on_true);
+        ssa_add_instr_operand(jump, context, on_false);
         return jump;
 }
 
@@ -350,8 +335,8 @@ extern ssa_instr* ssa_new_switch_instr(ssa_context* context, ssa_value* conditio
 extern void ssa_add_switch_case(ssa_instr* self,
         ssa_context* context, ssa_value* value, ssa_value* label)
 {
-        ssa_add_instr_operand(self, value);
-        ssa_add_instr_operand(self, label);
+        ssa_add_instr_operand(self, context, value);
+        ssa_add_instr_operand(self, context, label);
 }
 
 extern ssa_instr* ssa_new_ret_void(ssa_context* context)
@@ -367,6 +352,6 @@ extern ssa_instr* ssa_new_ret(ssa_context* context, ssa_value* value)
         if (!ret)
                 return NULL;
 
-        ssa_add_instr_operand(ret, value);
+        ssa_add_instr_operand(ret, context, value);
         return ret;
 }

@@ -2,7 +2,7 @@
 #define CC_LLVM_H
 
 #include "scc/scl/error.h"
-#include "scc/scl/dseq-ext.h"
+#include "scc/scl/dseq-instance.h"
 
 typedef enum
 {

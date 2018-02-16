@@ -40,7 +40,7 @@ struct _ssa_instr_base
         list_node _node;
         ssa_instr_kind _kind;
         struct _ssa_variable _val;
-        dseq _operands;
+        ssa_array _operands;
 };
 
 extern ssa_instr* ssa_new_instr(
@@ -68,13 +68,13 @@ extern ssa_instr* ssa_new_binary_instr(
         ssa_value* second,
         ssize size);
 
-extern ssa_value_use* ssa_add_instr_operand(ssa_instr* self, ssa_value* value);
+extern ssa_value_use* ssa_add_instr_operand(ssa_instr* self, ssa_context* context, ssa_value* value);
 extern bool ssa_instr_has_var(const ssa_instr* self);
 extern ssa_value* ssa_get_instr_operand_value(const ssa_instr* self, size_t i);
 extern ssa_value_use* ssa_get_instr_operand(const ssa_instr* self, size_t i);
 extern ssa_value_use* ssa_get_instr_operands_begin(const ssa_instr* self);
 extern ssa_value_use* ssa_get_instr_operands_end(const ssa_instr* self);
-extern ssize ssa_get_instr_num_operands(const ssa_instr* self);
+extern ssize ssa_get_instr_operands_size(const ssa_instr* self);
 
 extern void ssa_add_instr_after(ssa_instr* self, ssa_instr* pos);
 extern void ssa_add_instr_before(ssa_instr* self, ssa_instr* pos);

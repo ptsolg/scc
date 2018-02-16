@@ -20,12 +20,12 @@ typedef struct _ssa_function
         list_node _node;
         tree_decl* _function;
         list_head _blocks;
-        dseq _params;
+        ssa_array _params;
 } ssa_function;
 
 extern ssa_function* ssa_new_function(ssa_context* context, tree_decl* func);
 extern void ssa_add_function_block(ssa_function* self, ssa_block* block);
-extern void ssa_add_function_param(ssa_function* self, ssa_value* param);
+extern void ssa_add_function_param(ssa_function* self, ssa_context* context, ssa_value* param);
 extern bool ssa_function_returns_void(const ssa_function* self);
 
 extern void ssa_fix_function_content_uids(ssa_function* self);
@@ -81,12 +81,12 @@ static inline ssa_block* ssa_get_function_blocks_cend(const ssa_function* self)
 
 static inline ssa_value** ssa_get_function_params_begin(const ssa_function* self)
 {
-        return (ssa_value**)dseq_begin_ptr(&self->_params);
+        return (ssa_value**)self->_params.data;
 }
 
 static inline ssa_value** ssa_get_function_params_end(const ssa_function* self)
 {
-        return (ssa_value**)dseq_end_ptr(&self->_params);
+        return ssa_get_function_params_begin(self) + self->_params.size;
 }
 
 static inline void ssa_set_function_entity(ssa_function* self, tree_decl* func)

@@ -35,7 +35,7 @@ extern csource* csource_new(ccontext* context, file_entry* entry)
         s->_end = TREE_INVALID_LOC;
         s->_file = entry;
         list_node_init(&s->_node);
-        dseq_init_ex_u32(&s->_lines, cget_alloc(context));
+        dseq_u32_init_alloc(&s->_lines, cget_alloc(context));
         list_push_back(&context->sources, &s->_node);
         return s;
 }

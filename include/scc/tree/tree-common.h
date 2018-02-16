@@ -10,9 +10,8 @@ extern "C" {
 #endif
 
 #include "scc/scl/common.h"
-#include "scc/scl/sstring.h"
+#include "scc/scl/strpool.h"
 #include "scc/scl/list.h"
-#include "scc/scl/dseq-ext.h"
 
 #define TREE_INLINE inline
 

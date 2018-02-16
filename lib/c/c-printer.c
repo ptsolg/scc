@@ -198,20 +198,20 @@ extern void cprint_token(cprinter* self, const ctoken* token, const ctoken_print
         if (false) // todo: -print-token-file
         {
                 strncpy(file, path_get_cfile(loc.file), S_MAX_PATH_LEN);
-                sstrfill(sstrend(file), ' ', 1 + info->max_file_len - strlen(file));
+                strfill(strend(file), ' ', 1 + info->max_file_len - strlen(file));
         }
 
         char col[32];
         sprintf(col, "%d", loc.column);
-        sstrfill(sstrend(col), ' ', 1 + info->max_col - ndigits(loc.column));
+        strfill(strend(col), ' ', 1 + info->max_col - ndigits(loc.column));
 
         char line[32];
         sprintf(line, "%d", loc.line);
-        sstrfill(sstrend(line), ' ', 1 + info->max_line - ndigits(loc.line));
+        strfill(strend(line), ' ', 1 + info->max_line - ndigits(loc.line));
 
         const char* kind = cget_token_kind_string(ctoken_get_kind(token));
         char trail[32];
-        sstrfill(trail, ' ', 1 + info->max_kind_len - strlen(kind));
+        strfill(trail, ' ', 1 + info->max_kind_len - strlen(kind));
 
         cprintf(self, "%s%s%s%s%s", file, line, col, kind, trail);
         cprint_token_value(self, token);
@@ -224,7 +224,7 @@ extern void cprint_tokens(cprinter* self, const dseq* tokens)
 
         for (ssize i = 0; i < dseq_size(tokens); i++)
         {
-                const ctoken* token = dseq_get_ptr(tokens, i);
+                const ctoken* token = dseq_get(tokens, i);
                 clocation loc;
                 csource_find_loc(self->source_manager, &loc, ctoken_get_loc(token));
 
@@ -242,7 +242,7 @@ extern void cprint_tokens(cprinter* self, const dseq* tokens)
                         info.max_kind_len = len;
         }
         for (ssize i = 0; i < dseq_size(tokens); i++)
-                cprint_token(self, dseq_get_ptr(tokens, i), &info);
+                cprint_token(self, dseq_get(tokens, i), &info);
 }
 
 static inline void cprint_lbracket(cprinter* self)

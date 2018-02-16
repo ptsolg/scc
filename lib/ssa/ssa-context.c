@@ -13,6 +13,7 @@ extern void ssa_init_ex(ssa_context* self,
 {
          S_ASSERT(on_out_of_mem && context);
 
+         self->alloc = alloc;
          self->target = context->target;
          self->tree = context;
 

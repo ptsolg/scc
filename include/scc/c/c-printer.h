@@ -11,7 +11,7 @@ extern "C" {
 
 #include <stdio.h>
 #include "scc/scl/read-write.h"
-#include "scc/scl/dseq-ext.h"
+#include "scc/scl/dseq-instance.h"
 
 typedef struct _ctoken ctoken;
 typedef struct _ccontext ccontext;

@@ -9,11 +9,15 @@
 extern "C" {
 #endif
 
-#include <scc/scl/value.h>
+#include "scc/scl/value.h"
 #include "scc/tree/tree-common.h"
 
 // a unique identifier
 typedef uint ssa_id;
+
+typedef tree_array ssa_array;
+
+#define ssa_init_array tree_init_array
 
 #ifdef __cplusplus
 }

@@ -26,20 +26,19 @@ static TREE_INLINE tree_decl* _tree_decl_scope_lookup(
         tree_lookup_kind lookup_kind,
         tree_id id)
 {
-        hiter res;
+        strmap_iter res;
         if (lookup_kind == TLK_DECL || lookup_kind == TLK_TAG)
-                return self->lookup[lookup_kind] 
-                        && htab_find(self->lookup[lookup_kind], id, &res)
-                                ? hiter_get_ptr(&res) : NULL;
+                return self->lookup[lookup_kind] && strmap_find(self->lookup[lookup_kind], id, &res)
+                        ? *strmap_iter_value(&res) : NULL;
 
 
         S_ASSERT(lookup_kind == TLK_ANY);
 
-        if (self->lookup[TLK_DECL] && htab_find(self->lookup[TLK_DECL], id, &res))
-                return hiter_get_ptr(&res);
+        if (self->lookup[TLK_DECL] && strmap_find(self->lookup[TLK_DECL], id, &res))
+                return *strmap_iter_value(&res);
 
-        if (self->lookup[TLK_TAG] && htab_find(self->lookup[TLK_TAG], id, &res))
-                return hiter_get_ptr(&res);
+        if (self->lookup[TLK_TAG] && strmap_find(self->lookup[TLK_TAG], id, &res))
+                return *strmap_iter_value(&res);
 
         return NULL;
 }
@@ -66,17 +65,17 @@ extern serrcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_contex
 {
         S_ASSERT(decl && tree_get_decl_scope(decl) == self);
 
-        htab** p = tree_decl_is_tag(decl)
+        strmap** p = tree_decl_is_tag(decl)
                 ? self->lookup + TLK_TAG
                 : self->lookup + TLK_DECL;
         if (!*p)
         {
-                if (!(*p = tree_allocate_node(context, sizeof(htab))))
+                if (!(*p = tree_allocate_node(context, sizeof(strmap))))
                         return S_ERROR;
-                htab_init_ex_ptr(*p, context->alloc);
+                strmap_init_alloc(*p, context->alloc);
         }
 
-        return htab_insert_ptr(*p, tree_get_decl_name(decl), decl);
+        return strmap_insert(*p, tree_get_decl_name(decl), decl);
 }
 
 extern serrcode tree_decl_scope_add_decl(tree_decl_scope* self, tree_context* context, tree_decl* decl)

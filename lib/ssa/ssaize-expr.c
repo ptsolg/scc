@@ -326,23 +326,23 @@ extern ssa_value* ssaize_call_expr(ssaizer* self, const tree_expr* expr)
         if (!func)
                 return NULL;
 
-        dseq args;
-        dseq_init_ex_ptr(&args, ssa_get_alloc(self->context));
-
+        ssa_array args;
+        ssa_init_array(&args);
         TREE_FOREACH_CALL_ARG(expr, it)
         {
                 ssa_value* arg = ssaize_expr(self, *it);
                 if (!arg)
                 {
-                        dseq_dispose(&args);
+                        ssa_dispose_array(self->context, &args);
                         return NULL;
                 }
 
-                dseq_append_ptr(&args, arg);
+                ssa_value** last = ssa_reserve_object(self->context, &args, sizeof(ssa_value*));
+                *last = arg;
         }
 
         ssa_value* call = ssa_build_call(&self->builder, func, &args);
-        dseq_dispose(&args);
+        ssa_dispose_array(self->context, &args);
         return call;
 }
 
@@ -443,7 +443,7 @@ extern ssa_value* ssaize_string_literal(ssaizer* self, const tree_expr* expr)
         if (!string)
                 return NULL;
 
-        ssa_module_add_global(self->module, string);
+        ssa_module_add_global_value(self->module, string);
         return string;
 }
 

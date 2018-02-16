@@ -30,7 +30,7 @@ typedef struct _tree_decl_scope
 {
         struct _tree_decl_scope* parent;
         list_head decls;
-        htab* lookup[2];
+        strmap* lookup[2];
 } tree_decl_scope;
 
 extern void tree_init_decl_scope(

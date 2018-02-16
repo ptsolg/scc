@@ -11,7 +11,7 @@ extern ssa_function* ssa_new_function(ssa_context* context, tree_decl* func)
         ssa_set_function_entity(f, func);
         list_init(&f->_blocks);
         list_node_init(&f->_node);
-        dseq_init_ex_ptr(&f->_params, ssa_get_alloc(context));
+        ssa_init_array(&f->_params);
         return f;
 }
 
@@ -21,10 +21,11 @@ extern void ssa_add_function_block(ssa_function* self, ssa_block* block)
         list_push_back(&self->_blocks, &block->_node);
 }
 
-extern void ssa_add_function_param(ssa_function* self, ssa_value* param)
+extern void ssa_add_function_param(ssa_function* self, ssa_context* context, ssa_value* param)
 {
         S_ASSERT(param);
-        dseq_append_ptr(&self->_params, param);
+        ssa_value** obj = ssa_reserve_object(context, &self->_params, sizeof(ssa_value*));
+        *obj = param;
 }
 
 extern bool ssa_function_returns_void(const ssa_function* self)

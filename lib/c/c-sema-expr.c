@@ -317,7 +317,7 @@ extern tree_expr* csema_check_call_expr_args(csema* self, tree_expr* call)
 
         tree_expr* lhs = tree_get_call_lhs(call);
         tree_type* ft = tree_desugar_type(tree_get_pointer_target(tree_get_expr_type(lhs)));
-        ssize num_params = tree_get_function_type_nparams(ft);
+        ssize num_params = tree_get_function_type_params_size(ft);
         ssize num_args = tree_get_call_args_size(call);
 
         if (num_args < num_params)

@@ -11,13 +11,18 @@ extern "C" {
 
 #include "c-error.h"
 #include "c-context.h"
+#include "scc/scl/dseq-common.h"
+
+typedef struct _htab ccase_label_map;
 
 typedef struct
 {
         tree_stmt* switch_stmt;
-        htab used_values;
+        ccase_label_map labels;
         bool has_default_label;
 } cswitch_stmt_info;
+
+typedef struct _dseq cswitch_stack;
 
 // The structure, used for semantic analysis and building AST
 typedef struct _csema
@@ -29,7 +34,7 @@ typedef struct _csema
         tree_decl_scope* globals;
         tree_decl_scope* labels;
         tree_decl_scope* locals;
-        dseq switch_stack;
+        cswitch_stack switch_stack;
         tree_scope* scope;
         tree_module* module;
         tree_target_info* target;

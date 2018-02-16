@@ -44,12 +44,12 @@ static void cc_context_dispose(cc_context* self)
 
 static file_entry** cc_sources_begin(cc_instance* self)
 {
-        return (file_entry**)dseq_begin_ptr(&self->input.sources);
+        return (file_entry**)dseq_begin(&self->input.sources);
 }
 
 static file_entry** cc_sources_end(cc_instance* self)
 {
-        return (file_entry**)dseq_end_ptr(&self->input.sources);
+        return (file_entry**)dseq_end(&self->input.sources);
 }
 
 #define CC_FOREACH_SOURCE(PCC, ITNAME, ENDNAME) \
@@ -58,12 +58,12 @@ static file_entry** cc_sources_end(cc_instance* self)
 
 static file_entry** cc_libs_begin(cc_instance* self)
 {
-        return (file_entry**)dseq_begin_ptr(&self->input.libs);
+        return (file_entry**)dseq_begin(&self->input.libs);
 }
 
 static file_entry** cc_libs_end(cc_instance* self)
 {
-        return (file_entry**)dseq_end_ptr(&self->input.libs);
+        return (file_entry**)dseq_end(&self->input.libs);
 }
 
 #define CC_FOREACH_LIB(PCC, ITNAME, ENDNAME) \
@@ -137,7 +137,7 @@ extern serrcode cc_dump_tokens(cc_instance* self)
 
         cc_context_init(&context, self, fatal);
         cenv_init(&env, &context.c, &self->input.source_lookup, self->output.message);
-        dseq_init_ex_ptr(&tokens, self->alloc);
+        dseq_init_alloc(&tokens, self->alloc);
 
         if (setjmp(fatal))
                 goto cleanup;

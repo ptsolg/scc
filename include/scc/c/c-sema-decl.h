@@ -39,6 +39,8 @@ typedef enum
         CDK_MEMBER,
 } cdeclarator_kind;
 
+typedef struct _dseq dseq;
+
 typedef struct _cdeclarator
 {
         cdeclarator_kind kind;
