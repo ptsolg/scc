@@ -53,20 +53,13 @@ extern tree_type* tree_new_function_type(tree_context* context, tree_type* resty
                 return NULL;
 
         tree_set_function_type_vararg(t, false);
-        dseq_init_ex_ptr(&_tree_get_function_type(t)->_args, context->alloc);
+        tree_init_array(&_tree_function_type(t)->params);
         return t;
 }
 
-extern void tree_set_function_type_params(tree_type* self, dseq* params)
+extern serrcode tree_add_function_type_param(tree_type* self, tree_context* context, tree_type* param)
 {
-        dseq* this_group = &_tree_get_function_type(self)->_args;
-        dseq_dispose(this_group);
-        dseq_move(this_group, params);
-}
-
-extern void tree_add_function_type_param(tree_type* self, tree_type* param)
-{
-        dseq_append_ptr(&_tree_get_function_type(self)->_args, param);
+        return tree_array_append_ptr(context, &_tree_function_type(self)->params, param);
 }
 
 extern tree_type* tree_new_array_type_ex(
@@ -385,8 +378,8 @@ extern tree_type* tree_new_qual_type(
         if (!qt)
                 return NULL;
 
-        qt->_qtype._type = (union _tree_unqualified_type*)type;
-        qt->_qtype._quals = quals;
+        qt->qualified.type = (union _tree_unqualified_type*)type;
+        qt->qualified.quals = quals;
         qt = (tree_type*)((ssize)qt | _TREE_QUAL_FLAG);
         return qt;
 }
@@ -495,8 +488,8 @@ static tree_type_equal_kind tree_compare_function_type_params(const tree_type* a
         if (tree_function_type_is_vararg(a) != tree_function_type_is_vararg(b))
                 return TTEK_NEQ;
 
-        ssize n = tree_get_function_type_nparams(a);
-        if (n != tree_get_function_type_nparams(b))
+        ssize n = tree_get_function_type_params_size(a);
+        if (n != tree_get_function_type_params_size(b))
                 return TTEK_NEQ;
 
         tree_type_equal_kind k = TTEK_EQ;
