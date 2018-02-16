@@ -154,7 +154,7 @@ extern bool ssaize_switch_stmt(ssaizer* self, const tree_stmt* stmt)
                 return false;
 
         ssa_block* otherwise = ssaizer_new_block(self);
-        ssa_value* switch_instr = ssa_build_switch_instr(
+        ssa_instr* switch_instr = ssa_build_switch_instr(
                 &self->builder, cond, ssa_get_block_label(otherwise));
         if (!switch_instr)
                 return false;
