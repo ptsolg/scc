@@ -1,5 +1,5 @@
 #include "scc/scl/membuf.h"
-#include "scc/scl/sstring.h"
+#include "scc/scl/memory.h"
 #include <memory.h>
 
 extern void membuf_init_ex(membuf* self, allocator* alloc)
@@ -40,7 +40,7 @@ extern serrcode membuf_resize_ex(membuf* self, ssize mul, ssize cst)
         if (!new_buf)
                 return S_ERROR;
 
-        ssize cpy_size = SMIN(old_size, new_size);
+        ssize cpy_size = S_MIN(old_size, new_size);
         memcpy(new_buf, self->_begin, cpy_size);
         deallocate(self->_alloc, self->_begin);
 

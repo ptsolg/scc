@@ -5,12 +5,14 @@ add_scc_target_sources(scl
 	file.h
 	hash.h
 	htab.h
-	htab-ext.h
+	htab-common.h
 	malloc.h
 	misc.h
 	args.h
 	membuf.h
-	sstring.h
+	strpool.h
+	strmap.h
+	string.h
 	target.h
 	char-info.h
 	heap-debug.h
@@ -18,7 +20,7 @@ add_scc_target_sources(scl
 	value.h
 	list.h
 	dseq.h
-	dseq-ext.h
-	def-type.inc
+	dseq-common.h
+	dseq-instance.h
 	memory.h
 )

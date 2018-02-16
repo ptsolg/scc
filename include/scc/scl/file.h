@@ -10,9 +10,9 @@ extern "C" {
 #endif
 
 #include "common.h"
-#include "htab.h"
 #include "read-write.h"
-#include "dseq-ext.h"
+#include "strmap.h"
+#include "dseq-instance.h"
 #include <stdio.h>
 
 extern serrcode path_get_cd(char* path);
@@ -84,7 +84,7 @@ extern ssize file_size(const file_entry* entry);
 
 typedef struct _file_lookup
 {
-        htab _lookup;
+        strmap _lookup;
         dseq _dirs;
         allocator* _alloc;
 } file_lookup;

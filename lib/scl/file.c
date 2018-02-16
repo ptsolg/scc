@@ -1,5 +1,5 @@
 #include "scc/scl/file.h"
-#include "scc/scl/sstring.h"
+#include "scc/scl/string.h"
 #include <stdio.h>
 
 #if S_WIN
@@ -122,7 +122,7 @@ extern bool path_is_valid(const char* path)
 
 extern char* path_get_file(char* path)
 {
-        char* end = sstrend(path);
+        char* end = strend(path);
         while (end != path)
         {
                 end--;
@@ -134,7 +134,7 @@ extern char* path_get_file(char* path)
 
 extern const char* path_get_cfile(const char* path)
 {
-        const char* end = scstrend(path);
+        const char* end = cstrend(path);
         while (end != path)
         {
                 end--;
@@ -197,7 +197,7 @@ extern void path_fix_delimeter(char* path)
 extern serrcode path_change_ext(char* path, const char* ext)
 {
         path_fix_delimeter(path);
-        char* end = sstrend(path);
+        char* end = strend(path);
         char* pos = end;
         while (pos != path && *pos != '.' && *pos != S_PATH_DELIMETER)
                 pos--;
@@ -376,7 +376,7 @@ static file_entry* flookup_new_entry(file_lookup* self, const char* path, const 
         if (!entry)
                 return NULL;
 
-        if (S_FAILED(htab_insert_ptr(&self->_lookup, STRREF(path), entry)))
+        if (S_FAILED(strmap_insert(&self->_lookup, STRREF(path), entry)))
         {
                 file_entry_delete(self->_alloc, entry);
                 return NULL;
@@ -393,18 +393,18 @@ extern void flookup_init(file_lookup* self)
 extern void flookup_init_ex(file_lookup* self, allocator* alloc)
 {
         self->_alloc = alloc;
-        htab_init_ex_ptr(&self->_lookup, alloc);
-        dseq_init_ex_ptr(&self->_dirs, alloc);
+        strmap_init_alloc(&self->_lookup, alloc);
+        dseq_init_alloc(&self->_dirs, alloc);
 }
 
 extern void flookup_dispose(file_lookup* self)
 {
-        HTAB_FOREACH(&self->_lookup, it)
-                file_entry_delete(self->_alloc, hiter_get_ptr(&it));
-        htab_dispose(&self->_lookup);
+        STRMAP_FOREACH(&self->_lookup, it)
+                file_entry_delete(self->_alloc, *strmap_iter_value(&it));
+        strmap_dispose(&self->_lookup);
 
-        for (void** it = dseq_begin_ptr(&self->_dirs);
-                it != dseq_end_ptr(&self->_dirs); it++)
+        for (void** it = dseq_begin(&self->_dirs);
+                it != dseq_end(&self->_dirs); it++)
         {
                 deallocate(self->_alloc, *it);
         }
@@ -419,17 +419,17 @@ extern serrcode flookup_add(file_lookup* self, const char* dir)
                 return S_ERROR;
 
         strcpy(copy, dir);
-        return dseq_append_ptr(&self->_dirs, copy);
+        return dseq_append(&self->_dirs, copy);
 }
 
 extern const char** flookup_dirs_begin(const file_lookup* self)
 {
-        return (const char**)dseq_begin_ptr(&self->_dirs);
+        return (const char**)dseq_begin(&self->_dirs);
 }
 
 extern const char** flookup_dirs_end(const file_lookup* self)
 {
-        return (const char**)dseq_end_ptr(&self->_dirs);
+        return (const char**)dseq_end(&self->_dirs);
 }
 
 extern bool file_exists(file_lookup* lookup, const char* path)
@@ -443,9 +443,9 @@ static file_entry* file_get_without_lookup(file_lookup* self, const char* path)
         if (S_FAILED(path_get_abs(abs, path)))
                 return NULL;
 
-        hiter res;
-        if (htab_find(&self->_lookup, STRREF(abs), &res))
-                return hiter_get_ptr(&res);
+        strmap_iter res;
+        if (strmap_find(&self->_lookup, STRREF(abs), &res))
+                return *strmap_iter_value(&res);
 
         if (!path_is_file(abs))
                 return NULL;
@@ -458,15 +458,15 @@ static file_entry* file_get_with_lookup(file_lookup* self, const char* path)
         char abs[S_MAX_PATH_LEN + 1];
         for (ssize i = 0; i < dseq_size(&self->_dirs); i++)
         {
-                if (S_FAILED(path_get_abs(abs, dseq_get_ptr(&self->_dirs, i))))
+                if (S_FAILED(path_get_abs(abs, dseq_get(&self->_dirs, i))))
                         continue;
                 if (S_FAILED(path_join(abs, path)))
                         continue;
                 path_fix_delimeter(abs);
 
-                hiter res;
-                if (htab_find(&self->_lookup, STRREF(abs), &res))
-                        return hiter_get_ptr(&res);
+                strmap_iter res;
+                if (strmap_find(&self->_lookup, STRREF(abs), &res))
+                        return *strmap_iter_value(&res);
 
                 if (path_is_file(abs))
                         return flookup_new_entry(self, abs, NULL);

@@ -368,7 +368,7 @@ extern op_result int_not(int_value* self)
 
 extern op_result int_neg(int_value* self)
 {
-        self->_val = mod2(-int_get_u64(self), int_get_bits(self));
+        self->_val = mod2((suint64)(-int_get_i64(self)), int_get_bits(self));
         return OR_OK;
 }
 

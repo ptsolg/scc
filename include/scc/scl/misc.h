@@ -12,8 +12,8 @@ extern "C" {
 #include "common.h"
 #include <math.h>
 
-#define SMIN(a, b) ((a) < (b) ? (a) : (b))
-#define SMAX(a, b) ((a) > (b) ? (a) : (b))
+#define S_MIN(a, b) ((a) < (b) ? (a) : (b))
+#define S_MAX(a, b) ((a) > (b) ? (a) : (b))
 
 #define MEM_FOREACH(PFIRST, PLAST, ITTYPE, ITNAME) \
         for (ITTYPE ITNAME = (ITTYPE)(PFIRST); \
@@ -37,6 +37,8 @@ static inline uint prev_powerof2(uint v)
 {
         return v ? next_powerof2(v) - 1 : 0;
 }
+
+#define IS_POWEROF2(X) ((X) && !((X) & ((X) - 1)))
 
 static inline void* align_pointer(void* p, ssize alignment)
 {
