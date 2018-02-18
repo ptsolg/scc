@@ -20,6 +20,10 @@ add_scc_lib(c
 	c-preprocessor.c
 	c-printer.c
 	c-env.c
+	c-builtin-type.h
+	c-builtin-type.c
+	c-initializer.h
+	c-initializer.c
 
 	DEPENDS
 	tree
