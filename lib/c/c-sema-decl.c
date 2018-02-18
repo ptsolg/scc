@@ -382,25 +382,25 @@ extern tree_type* csema_new_type_name(csema* self, cdeclarator* d, tree_type* ty
         return csema_add_declarator_type(self, d, typespec);
 }
 
-extern tree_decl* csema_add_init_declarator(csema* self, tree_decl* list, tree_decl* decl)
+extern tree_decl* csema_add_decl_to_group(csema* self, tree_decl* group, tree_decl* decl)
 {
-        if (!list)
+        if (!group)
                 return decl;
 
-        if (!tree_decl_is(list, TDK_GROUP))
+        if (!tree_decl_is(group, TDK_GROUP))
         {
-                tree_decl* first = list;
+                tree_decl* first = group;
                 tree_set_decl_implicit(first, true);
-                list = tree_new_decl_group(self->context,
+                group = tree_new_decl_group(self->context,
                         self->locals, tree_get_decl_loc(first));
 
-                tree_add_decl_in_group(list, self->context, first);
-                tree_decl_scope_add_hidden_decl(self->locals, list);
+                tree_add_decl_in_group(group, self->context, first);
+                tree_decl_scope_add_hidden_decl(self->locals, group);
         }
 
-        tree_add_decl_in_group(list, self->context, decl);
+        tree_add_decl_in_group(group, self->context, decl);
         tree_set_decl_implicit(decl, true);
-        return list;
+        return group;
 }
 
 static bool csema_compute_enumerator_value(

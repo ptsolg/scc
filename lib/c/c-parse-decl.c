@@ -76,7 +76,7 @@ static const ctoken_kind ctk_comma_eq_semicolon_lbracket[] =
 
 static tree_decl* cparse_function_or_init_declarator_list(cparser* self, cdecl_specs* specs)
 {
-        tree_decl* list = NULL;
+        tree_decl* group = NULL;
         bool func_def_expected = true;
         while (1)
         {
@@ -86,15 +86,15 @@ static tree_decl* cparse_function_or_init_declarator_list(cparser* self, cdecl_s
                 if (!d)
                         return NULL;
 
-                if (!(list = csema_add_init_declarator(self->sema, list, d)))
+                if (!(group = csema_add_decl_to_group(self->sema, group, d)))
                         return NULL;
 
                 if (func_has_def)
-                        return list;
+                        return group;
                 else if (cparser_at(self, CTK_SEMICOLON))
                 {
                         cparser_consume_token(self);
-                        return list;
+                        return group;
                 }
                 else if (cparser_at(self, CTK_COMMA))
                         cparser_consume_token(self);
@@ -311,6 +311,7 @@ static bool cparse_struct_declaration(cparser* self)
         if (!cparse_decl_specs(self, &ds))
                 return false;
 
+        tree_decl* group = NULL;
         while (1)
         {
                 cdeclarator sd;
@@ -329,9 +330,11 @@ static bool cparse_struct_declaration(cparser* self)
                         bits = cparse_const_expr(self);
                 }
 
-                tree_decl* m = csema_define_field_decl(self->sema, &ds, &sd, bits);
+                tree_decl* field = csema_define_field_decl(self->sema, &ds, &sd, bits);
                 cdeclarator_dispose(&sd);
-                if (!m)
+                if (!field)
+                        return false;
+                if (!(group = csema_add_decl_to_group(self->sema, group, field)))
                         return false;
 
                 if (cparser_at(self, CTK_SEMICOLON))

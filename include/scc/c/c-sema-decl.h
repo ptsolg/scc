@@ -105,7 +105,7 @@ extern cparam* csema_finish_param(csema* self, cparam* p);
 
 extern tree_type* csema_new_type_name(csema* self, cdeclarator* d, tree_type* typespec);
 
-extern tree_decl* csema_add_init_declarator(csema* self, tree_decl* list, tree_decl* decl);
+extern tree_decl* csema_add_decl_to_group(csema* self, tree_decl* group, tree_decl* decl);
 
 extern tree_decl* csema_define_enumerator_decl(
         csema* self, tree_decl* enum_, tree_location name_loc, tree_id name, tree_expr* value);
