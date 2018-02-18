@@ -22,35 +22,52 @@ typedef enum
 {
         CIOK_SCALAR,
         CIOK_ARRAY,
-        CIOK_RECORD,
+        CIOK_STRUCT,
+        CIOK_UNION,
 } cinitialized_object_kind;
 
-typedef struct _cinitialized_subobject
+typedef struct _cinitialized_object
 {
         cinitialized_object_kind kind;
+        tree_type* type;
+        bool implicit;
         union
         {
                 struct
                 {
-                        tree_type* type;
                         uint index;
+                        uint size;
                 } array;
 
                 struct
                 {
                         tree_decl* decl;
                         tree_decl* field;
+                        bool union_field_initialized;
                 } record;
 
                 struct
                 {
-                        tree_type* type;
                         bool initialized;
                 } scalar;
         };
+        struct _cinitialized_object* semantical_parent;
+        struct _cinitialized_object* syntactical_parent;
 } cinitialized_object;
 
-extern void cinitialized_object_init(cinitialized_object* self, tree_type* type);
+extern void cinitialized_object_init(
+        cinitialized_object* self, tree_type* type, bool implicit, cinitialized_object* parent);
+
+extern cinitialized_object* cinitialized_object_new(
+        ccontext* context, tree_type* type, bool implicit, cinitialized_object* parent);
+
+extern cinitialized_object* cinitialized_object_new_rec(
+        ccontext* context, tree_decl* record, tree_decl* field, bool implicit, cinitialized_object* parent);
+
+extern void cinitialized_object_set_field(cinitialized_object* self, tree_decl* field);
+extern void cinitialized_object_set_index(cinitialized_object* self, uint index);
+extern void cinitialized_object_set_initialized(cinitialized_object* self);
+
 extern bool cinitialized_object_valid(const cinitialized_object* self);
 extern void cinitialized_object_next_subobject(cinitialized_object* self);
 extern tree_type* cinitialized_object_get_subobject(const cinitialized_object* self);
