@@ -6,6 +6,7 @@
 #include "scc/c/c-info.h"
 #include "scc/c/c-context.h"
 #include "scc/c/c-errors.h"
+#include "c-builtin-type.h"
 
 static tree_decl* cparse_function_or_init_declarator(
         cparser* self, cdecl_specs* specs, bool func_def_expected, bool* func_has_def)
@@ -205,160 +206,33 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result)
         return true;
 }
 
-typedef struct
-{
-        // void/char/int/float or double
-        tree_builtin_type_kind base;
-
-        // counters for long/short/...
-        int nshort;
-        int nlong;
-        int nsigned;
-        int nunsigned;
-} cbuiltin_type_info;
-
-static void cbuiltin_type_info_init(cbuiltin_type_info* self)
-{
-        self->base = TBTK_INVALID;
-        self->nshort = 0;
-        self->nlong = 0;
-        self->nsigned = 0;
-        self->nunsigned = 0;
-}
-
-static bool cbuiltin_type_info_set_base(cbuiltin_type_info* self, tree_builtin_type_kind base)
-{
-        if (self->base != TBTK_INVALID)
-                return false; // base is already set
-
-        bool has_size_specs = self->nlong || self->nshort;
-        bool has_sign_specs = self->nsigned || self->nunsigned;
-        bool has_specs = has_size_specs || has_sign_specs;
-        if (base == TBTK_VOID || base == TBTK_FLOAT)
-        {
-                if (has_specs)
-                        return false;
-        }
-        else if (base == TBTK_INT32)
-                ;
-        else if (base == TBTK_INT8)
-        {
-                if (has_size_specs)
-                        return false;
-        }
-        else if (base == TBTK_DOUBLE)
-        {
-                if (self->nshort || self->nlong > 2)
-                        return false;
-        }
-        else
-                S_UNREACHABLE(); // invalid base type
-
-        self->base = base;
-        return true;
-}
-
-static tree_builtin_type_kind cbuiltin_type_info_get_type(const cbuiltin_type_info* self)
-{
-        tree_builtin_type_kind base = self->base;
-        if (base == TBTK_VOID || base == TBTK_FLOAT || base == TBTK_DOUBLE)
-                return base;
-        else if (base == TBTK_INT8)
-                return self->nunsigned ? TBTK_UINT8 : TBTK_INT8;
-        else if (base == TBTK_INT32 || base == TBTK_INVALID)
-        {
-                if (base == TBTK_INVALID
-                        && !self->nshort
-                        && !self->nlong
-                        && !self->nsigned
-                        && !self->nunsigned)
-                        return false; // type info was not set
-
-                tree_builtin_type_kind t = self->nunsigned ? TBTK_UINT32 : TBTK_INT32;
-                if (self->nlong == 2)
-                        t = self->nunsigned ? TBTK_UINT64 : TBTK_INT64;
-                else if (self->nshort)
-                        t = self->nunsigned ? TBTK_UINT16 : TBTK_INT16;
-
-                return t;
-        }
-
-        S_UNREACHABLE();
-        return TBTK_INVALID;
-}
-
-static inline bool cbuiltin_type_can_have_size_or_sign_specifiers(tree_builtin_type_kind k)
-{
-        return k == TBTK_INVALID || k == TBTK_INT8 || k == TBTK_INT32;
-}
-
-static bool cbuiltin_type_info_set_signed(cbuiltin_type_info* self)
-{
-        if (self->nunsigned || !cbuiltin_type_can_have_size_or_sign_specifiers(self->base))
-                return false;
-
-        self->nsigned++;
-        return true;
-}
-
-static bool cbuiltin_type_info_set_unsigned(cbuiltin_type_info* self)
-{
-        if (self->nsigned || !cbuiltin_type_can_have_size_or_sign_specifiers(self->base))
-                return false;
-
-        self->nunsigned++;
-        return true;
-}
-
-static bool cbuiltin_type_info_set_short(cbuiltin_type_info* self)
-{
-        if (self->nlong || self->nshort
-                || !cbuiltin_type_can_have_size_or_sign_specifiers(self->base))
-                return false;
-
-        self->nshort++;
-        return true;
-}
-
-static bool cbuiltin_type_info_set_long(cbuiltin_type_info* self)
-{
-
-        if (self->nshort || self->nlong == 2
-                || !cbuiltin_type_can_have_size_or_sign_specifiers(self->base))
-                return false;
-
-        self->nlong++;
-        return true;
-}
-
-
 static tree_type* cparse_builtin_type_specifier(cparser* self)
 {
         tree_location begin = cparser_get_loc(self);
-        cbuiltin_type_info info;
-        cbuiltin_type_info_init(&info);
+        cbuiltin_type type;
+        cbuiltin_type_init(&type);
         while (1)
         {
                 bool correct = true;
                 ctoken_kind k = ctoken_get_kind(cparser_get_token(self));
                 if (k == CTK_VOID)
-                        correct = cbuiltin_type_info_set_base(&info, TBTK_VOID);
+                        correct = cbuiltin_type_set_kind(&type, TBTK_VOID);
                 else if (k == CTK_CHAR)
-                        correct = cbuiltin_type_info_set_base(&info, TBTK_INT8);
+                        correct = cbuiltin_type_set_kind(&type, TBTK_INT8);
                 else if (k == CTK_INT)
-                        correct = cbuiltin_type_info_set_base(&info, TBTK_INT32);
+                        correct = cbuiltin_type_set_kind(&type, TBTK_INT32);
                 else if (k == CTK_FLOAT)
-                        correct = cbuiltin_type_info_set_base(&info, TBTK_FLOAT);
+                        correct = cbuiltin_type_set_kind(&type, TBTK_FLOAT);
                 else if (k == CTK_DOUBLE)
-                        correct = cbuiltin_type_info_set_base(&info, TBTK_DOUBLE);
+                        correct = cbuiltin_type_set_kind(&type, TBTK_DOUBLE);
                 else if (k == CTK_SIGNED)
-                        correct = cbuiltin_type_info_set_signed(&info);
+                        correct = cbuiltin_type_add_signed_specifier(&type);
                 else if (k == CTK_UNSIGNED)
-                        correct = cbuiltin_type_info_set_unsigned(&info);
+                        correct = cbuiltin_type_add_unsigned_specifier(&type);
                 else if (k == CTK_SHORT)
-                        correct = cbuiltin_type_info_set_short(&info);
+                        correct = cbuiltin_type_add_short_specifier(&type);
                 else if (k == CTK_LONG)
-                        correct = cbuiltin_type_info_set_long(&info);
+                        correct = cbuiltin_type_add_long_specifier(&type);
                 else
                         break;
 
@@ -370,7 +244,7 @@ static tree_type* cparse_builtin_type_specifier(cparser* self)
                 cparser_consume_token(self);
         }
 
-        tree_builtin_type_kind k = cbuiltin_type_info_get_type(&info);
+        tree_builtin_type_kind k = cbuiltin_type_get_kind(&type);
         if (k == TBTK_INVALID)
         {
                 cerror_expected_type_specifier(self->logger, cparser_get_loc(self));
