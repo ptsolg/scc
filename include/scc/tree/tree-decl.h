@@ -269,6 +269,14 @@ static TREE_INLINE bool tree_decl_is(const tree_decl* self, tree_decl_kind k)
         return tree_get_decl_kind(self) == k;
 }
 
+static TREE_INLINE tree_decl* tree_get_first_decl_in_scope(const tree_decl_scope* self, tree_decl_kind k)
+{
+        TREE_FOREACH_DECL_IN_SCOPE(self, it)
+                if (tree_decl_is(it, k))
+                        return it;
+        return NULL;
+}
+
 static TREE_INLINE tree_decl_scope* tree_get_decl_scope(const tree_decl* self)
 {
         return self->base.scope;
