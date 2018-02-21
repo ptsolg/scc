@@ -1,5 +1,5 @@
-#ifndef CTOKEN_H
-#define CTOKEN_H
+#ifndef C_TOKEN_H
+#define C_TOKEN_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -12,343 +12,342 @@ extern "C" {
 #include "scc/tree/tree-common.h"
 #include "c-token-kind.h"
 
-typedef struct _ctoken ctoken;
-typedef struct _ccontext ccontext;
+typedef struct _c_token c_token;
+typedef struct _c_context c_context;
 
-struct _ctoken_base
+struct _c_token_base
 {
-        ctoken_kind _kind;
-        tree_location _loc;
+        c_token_kind kind;
+        tree_location loc;
 };
 
-extern ctoken* ctoken_new(ccontext* context, ctoken_kind kind, tree_location loc);
+extern c_token* c_token_new(c_context* context, c_token_kind kind, tree_location loc);
 
-extern ctoken* ctoken_new_ex(
-        ccontext* context, ctoken_kind kind, tree_location loc, ssize size);
+extern c_token* c_token_new_ex(
+        c_context* context, c_token_kind kind, tree_location loc, ssize size);
 
-static inline struct _ctoken_base* _ctoken_get(ctoken* self);
-static inline const struct _ctoken_base* _ctoken_cget(const ctoken* self);
+static inline struct _c_token_base* _c_token_base(c_token* self);
+static inline const struct _c_token_base* _c_token_base_c(const c_token* self);
 
-static inline ctoken_kind ctoken_get_kind(const ctoken* self);
-static inline bool ctoken_is(const ctoken* self, ctoken_kind k);
-static inline tree_location ctoken_get_loc(const ctoken* self);
+static inline c_token_kind c_token_get_kind(const c_token* self);
+static inline bool c_token_is(const c_token* self, c_token_kind k);
+static inline tree_location c_token_get_loc(const c_token* self);
 
-static inline void ctoken_set_kind(ctoken* self, ctoken_kind k);
-static inline void ctoken_set_loc(ctoken* self, tree_location l);
+static inline void c_token_set_kind(c_token* self, c_token_kind k);
+static inline void c_token_set_loc(c_token* self, tree_location l);
 
-struct _cstring_token
+struct _c_string_token
 {
-        struct _ctoken_base _base;
-        tree_id _string;
+        struct _c_token_base base;
+        tree_id ref;
 };
 
-extern ctoken* ctoken_new_string_ex(
-        ccontext* context, ctoken_kind kind, tree_location loc, tree_id ref, ssize size);
+extern c_token* c_token_new_string_ex(
+        c_context* context, c_token_kind kind, tree_location loc, tree_id ref, ssize size);
 
-extern ctoken* ctoken_new_string(ccontext* context, tree_location loc, tree_id ref);
-extern ctoken* ctoken_new_angle_string(ccontext* context, tree_location loc, tree_id ref);
-extern ctoken* ctoken_new_id(ccontext* context, tree_location loc, tree_id id);
+extern c_token* c_token_new_string(c_context* context, tree_location loc, tree_id ref);
+extern c_token* c_token_new_angle_string(c_context* context, tree_location loc, tree_id ref);
+extern c_token* c_token_new_id(c_context* context, tree_location loc, tree_id id);
 
-static inline struct _cstring_token* _cstring_token_get(ctoken* self);
-static inline const struct _cstring_token* _cstring_token_cget(const ctoken* self);
+static inline struct _c_string_token* _c_string_token(c_token* self);
+static inline const struct _c_string_token* _c_string_token_c(const c_token* self);
 
-static inline tree_id ctoken_get_string(const ctoken* self);
-static inline void ctoken_set_string(ctoken* self, tree_id s);
+static inline tree_id c_token_get_string(const c_token* self);
+static inline void c_token_set_string(c_token* self, tree_id s);
 
-struct _cfloat_token
+struct _c_float_token
 {
-        struct _ctoken_base _base;
-        float _value;
+        struct _c_token_base base;
+        float value;
 };
 
-extern ctoken* ctoken_new_float(ccontext* context, tree_location loc, float val);
+extern c_token* c_token_new_float(c_context* context, tree_location loc, float val);
 
-static inline struct _cfloat_token* _cfloat_token_get(ctoken* self);
-static inline const struct _cfloat_token* _cfloat_token_cget(const ctoken* self);
+static inline struct _c_float_token* _c_float_token(c_token* self);
+static inline const struct _c_float_token* _c_float_token_c(const c_token* self);
 
-static inline float ctoken_get_float(const ctoken* self);
-static inline void ctoken_set_float(ctoken* self, float v);
+static inline float c_token_get_float(const c_token* self);
+static inline void c_token_set_float(c_token* self, float v);
 
-struct _cdouble_token
+struct _c_double_token
 {
-        struct _ctoken_base _base;
-        ldouble _value;
+        struct _c_token_base base;
+        ldouble value;
 };
 
-extern ctoken* ctoken_new_double(ccontext* context, tree_location loc, ldouble val);
+extern c_token* c_token_new_double(c_context* context, tree_location loc, ldouble val);
 
-static inline struct _cdouble_token* _cdouble_token_get(ctoken* self);
-static inline const struct _cdouble_token* _cdouble_token_cget(const ctoken* self);
+static inline struct _c_double_token* _c_double_token(c_token* self);
+static inline const struct _c_double_token* _c_double_token_c(const c_token* self);
 
-static inline ldouble ctoken_get_double(const ctoken* self);
-static inline void ctoken_set_double(ctoken* self, ldouble v);
+static inline ldouble c_token_get_double(const c_token* self);
+static inline void c_token_set_double(c_token* self, ldouble v);
 
-struct _cint_token
+struct _c_int_token
 {
-        struct _ctoken_base _base;
-        suint64 _value;
-        bool _signed;
-        int _ls;
+        struct _c_token_base base;
+        suint64 value;
+        bool signed_;
+        int ls;
 };
 
-extern ctoken* ctoken_new_int(
-        ccontext* context, tree_location loc, suint64 val, bool is_signed, int ls);
+extern c_token* c_token_new_int(
+        c_context* context, tree_location loc, suint64 val, bool is_signed, int ls);
 
-static inline struct _cint_token* _cint_token_get(ctoken* self);
-static inline const struct _cint_token* _cint_token_cget(const ctoken* self);
+static inline struct _c_int_token* _c_int_token(c_token* self);
+static inline const struct _c_int_token* _c_int_token_c(const c_token* self);
 
-static inline suint64 ctoken_get_int(const ctoken* self);
-static inline int ctoken_get_int_ls(const ctoken* self);
-static inline bool ctoken_is_int_signed(const ctoken* self);
+static inline suint64 c_token_get_int(const c_token* self);
+static inline int c_token_get_int_ls(const c_token* self);
+static inline bool c_token_int_is_signed(const c_token* self);
 
-static inline void ctoken_set_int(ctoken* self, suint64 v);
-static inline void ctoken_set_int_signed(ctoken* self, bool s);
-static inline void ctoken_set_int_ls(ctoken* self, int n);
+static inline void c_token_set_int(c_token* self, suint64 v);
+static inline void c_token_set_int_signed(c_token* self, bool s);
+static inline void c_token_set_int_ls(c_token* self, int n);
 
-struct _cchar_token
+struct _c_char_token
 {
-        struct _ctoken_base _base;
-        int _value;
+        struct _c_token_base base;
+        int value;
 };
 
-extern ctoken* ctoken_new_char(ccontext* context, tree_location loc, int val);
+extern c_token* c_token_new_char(c_context* context, tree_location loc, int val);
 
-static inline struct _cchar_token* _cchar_token_get(ctoken* self);
-static inline const struct _cchar_token* _cchar_token_cget(const ctoken* self);
+static inline struct _c_char_token* _c_char_token(c_token* self);
+static inline const struct _c_char_token* _c_char_token_c(const c_token* self);
 
-static inline int ctoken_get_char(const ctoken* self);
-static inline void ctoken_set_char(ctoken* self, int v);
+static inline int c_token_get_char(const c_token* self);
+static inline void c_token_set_char(c_token* self, int v);
 
-struct _cwspace_token
+struct _c_wspace_token
 {
-        struct _ctoken_base _base;
-        int _count;
+        struct _c_token_base base;
+        int count;
 };
 
-extern ctoken* ctoken_new_wspace(ccontext* context, tree_location loc, int count);
+extern c_token* c_token_new_wspace(c_context* context, tree_location loc, int count);
 
-static inline struct _cwspace_token* _cwspace_token_get(ctoken* self);
-static inline const struct _cwspace_token* _cwspace_token_cget(const ctoken* self);
+static inline struct _c_wspace_token* _cwspace_token_get(c_token* self);
+static inline const struct _c_wspace_token* _cwspace_token_get_c(const c_token* self);
 
-static inline int ctoken_get_spaces(const ctoken* self);
-static inline void ctoken_set_spaces(ctoken* self, int count);
+static inline int c_token_get_spaces(const c_token* self);
+static inline void c_token_set_spaces(c_token* self, int count);
 
-typedef struct _ctoken
+typedef struct _c_token
 {
         union
         {
-                struct _ctoken_base _token;
-                struct _cstring_token _string;
-                struct _cfloat_token _float;
-                struct _cdouble_token _double;
-                struct _cint_token _int;
-                struct _cchar_token _char;
-                struct _cwspace_token _wspace;
+                struct _c_token_base base;
+                struct _c_string_token string;
+                struct _c_float_token float_token;
+                struct _c_double_token double_token;
+                struct _c_int_token int_token;
+                struct _c_char_token char_token;
+                struct _c_wspace_token wspace;
         };
-} ctoken;
+} c_token;
 
-extern ctoken* ctoken_copy(ccontext* self, const ctoken* other);
 // allocates token with a size sufficient for converting it to float/double/int token
-extern ctoken* ctoken_new_pp_num(ccontext* context, tree_location loc, tree_id ref);
+extern c_token* ctoken_new_pp_num(c_context* context, tree_location loc, tree_id ref);
 
-#define CTOKEN_ASSERT(P, K) S_ASSERT((P) && ctoken_is((P), (K)))
+#define CTOKEN_ASSERT(P, K) S_ASSERT((P) && c_token_is((P), (K)))
 
-static inline struct _ctoken_base* _ctoken_get(ctoken* self)
+static inline struct _c_token_base* _c_token_base(c_token* self)
 {
         S_ASSERT(self);
-        return (struct _ctoken_base*)self;
+        return (struct _c_token_base*)self;
 }
 
-static inline const struct _ctoken_base* _ctoken_cget(const ctoken* self)
+static inline const struct _c_token_base* _c_token_base_c(const c_token* self)
 {
         S_ASSERT(self);
-        return (const struct _ctoken_base*)self;
+        return (const struct _c_token_base*)self;
 }
 
-static inline ctoken_kind ctoken_get_kind(const ctoken* self)
+static inline c_token_kind c_token_get_kind(const c_token* self)
 {
-        return _ctoken_cget(self)->_kind;
+        return _c_token_base_c(self)->kind;
 }
 
-static inline bool ctoken_is(const ctoken* self, ctoken_kind k)
+static inline bool c_token_is(const c_token* self, c_token_kind k)
 {
-        return ctoken_get_kind(self) == k;
+        return c_token_get_kind(self) == k;
 }
 
-static inline tree_location ctoken_get_loc(const ctoken* self)
+static inline tree_location c_token_get_loc(const c_token* self)
 {
-        return _ctoken_cget(self)->_loc;
+        return _c_token_base_c(self)->loc;
 }
 
-static inline void ctoken_set_kind(ctoken* self, ctoken_kind k)
+static inline void c_token_set_kind(c_token* self, c_token_kind k)
 {
-        _ctoken_get(self)->_kind = k;
+        _c_token_base(self)->kind = k;
 }
 
-static inline void ctoken_set_loc(ctoken* self, tree_location l)
+static inline void c_token_set_loc(c_token* self, tree_location l)
 {
-        _ctoken_get(self)->_loc = l;
+        _c_token_base(self)->loc = l;
 }
 
 #define CSTRING_TOKEN_ASSERT(P, K) \
         S_ASSERT((P) && (K) == CTK_ID || (K) == CTK_CONST_STRING || (K) == CTK_PP_NUM \
                 || (K) == CTK_ANGLE_STRING)
 
-static inline struct _cstring_token* _cstring_token_get(ctoken* self)
+static inline struct _c_string_token* _c_string_token(c_token* self)
 {
-        CSTRING_TOKEN_ASSERT(self, self->_token._kind);
-        return (struct _cstring_token*)self;
+        CSTRING_TOKEN_ASSERT(self, self->base.kind);
+        return (struct _c_string_token*)self;
 }
 
-static inline const struct _cstring_token* _cstring_token_cget(const ctoken* self)
+static inline const struct _c_string_token* _c_string_token_c(const c_token* self)
 {
-        CSTRING_TOKEN_ASSERT(self, self->_token._kind);
-        return (const struct _cstring_token*)self;
+        CSTRING_TOKEN_ASSERT(self, self->base.kind);
+        return (const struct _c_string_token*)self;
 }
 
-static inline tree_id ctoken_get_string(const ctoken* self)
+static inline tree_id c_token_get_string(const c_token* self)
 {
-        return _cstring_token_cget(self)->_string;
+        return _c_string_token_c(self)->ref;
 }
 
-static inline void ctoken_set_string(ctoken* self, tree_id s)
+static inline void c_token_set_string(c_token* self, tree_id s)
 {
-        _cstring_token_get(self)->_string = s;
+        _c_string_token(self)->ref = s;
 }
 
-static inline struct _cfloat_token* _cfloat_token_get(ctoken* self)
-{
-        CTOKEN_ASSERT(self, CTK_CONST_FLOAT);
-        return (struct _cfloat_token*)self;
-}
-
-static inline const struct _cfloat_token* _cfloat_token_cget(const ctoken* self)
+static inline struct _c_float_token* _c_float_token(c_token* self)
 {
         CTOKEN_ASSERT(self, CTK_CONST_FLOAT);
-        return (const struct _cfloat_token*)self;
+        return (struct _c_float_token*)self;
 }
 
-static inline float ctoken_get_float(const ctoken* self)
+static inline const struct _c_float_token* _c_float_token_c(const c_token* self)
 {
-        return _cfloat_token_cget(self)->_value;
+        CTOKEN_ASSERT(self, CTK_CONST_FLOAT);
+        return (const struct _c_float_token*)self;
 }
 
-static inline void ctoken_set_float(ctoken* self, float v)
+static inline float c_token_get_float(const c_token* self)
 {
-        _cfloat_token_get(self)->_value = v;
+        return _c_float_token_c(self)->value;
 }
 
-static inline struct _cdouble_token* _cdouble_token_get(ctoken* self)
+static inline void c_token_set_float(c_token* self, float v)
+{
+        _c_float_token(self)->value = v;
+}
+
+static inline struct _c_double_token* _c_double_token(c_token* self)
 {
         CTOKEN_ASSERT(self, CTK_CONST_DOUBLE);
-        return (struct _cdouble_token*)self;
+        return (struct _c_double_token*)self;
 }
 
-static inline const struct _cdouble_token* _cdouble_token_cget(const ctoken* self)
+static inline const struct _c_double_token* _c_double_token_c(const c_token* self)
 {
         CTOKEN_ASSERT(self, CTK_CONST_DOUBLE);
-        return (const struct _cdouble_token*)self;
+        return (const struct _c_double_token*)self;
 }
 
-static inline ldouble ctoken_get_double(const ctoken* self)
+static inline ldouble c_token_get_double(const c_token* self)
 {
-        return _cdouble_token_cget(self)->_value;
+        return _c_double_token_c(self)->value;
 }
 
-static inline void ctoken_set_double(ctoken* self, ldouble v)
+static inline void c_token_set_double(c_token* self, ldouble v)
 {
-        _cdouble_token_get(self)->_value = v;
+        _c_double_token(self)->value = v;
 }
 
-static inline struct _cint_token* _cint_token_get(ctoken* self)
-{
-        CTOKEN_ASSERT(self, CTK_CONST_INT);
-        return (struct _cint_token*)self;
-}
-
-static inline const struct _cint_token* _cint_token_cget(const ctoken* self)
+static inline struct _c_int_token* _c_int_token(c_token* self)
 {
         CTOKEN_ASSERT(self, CTK_CONST_INT);
-        return (const struct _cint_token*)self;
+        return (struct _c_int_token*)self;
 }
 
-static inline suint64 ctoken_get_int(const ctoken* self)
+static inline const struct _c_int_token* _c_int_token_c(const c_token* self)
 {
-        return _cint_token_cget(self)->_value;
+        CTOKEN_ASSERT(self, CTK_CONST_INT);
+        return (const struct _c_int_token*)self;
 }
 
-static inline int ctoken_get_int_ls(const ctoken* self)
+static inline suint64 c_token_get_int(const c_token* self)
 {
-        return _cint_token_cget(self)->_ls;
+        return _c_int_token_c(self)->value;
 }
 
-static inline bool ctoken_is_int_signed(const ctoken* self)
+static inline int c_token_get_int_ls(const c_token* self)
 {
-        return _cint_token_cget(self)->_signed;
+        return _c_int_token_c(self)->ls;
 }
 
-static inline void ctoken_set_int(ctoken* self, suint64 v)
+static inline bool c_token_int_is_signed(const c_token* self)
 {
-        _cint_token_get(self)->_value = v;
+        return _c_int_token_c(self)->signed_;
 }
 
-static inline void ctoken_set_int_signed(ctoken* self, bool s)
+static inline void c_token_set_int(c_token* self, suint64 v)
 {
-        _cint_token_get(self)->_signed = s;
+        _c_int_token(self)->value = v;
 }
 
-static inline void ctoken_set_int_ls(ctoken* self, int n)
+static inline void c_token_set_int_signed(c_token* self, bool s)
+{
+        _c_int_token(self)->signed_ = s;
+}
+
+static inline void c_token_set_int_ls(c_token* self, int n)
 {
         S_ASSERT(n >= 0 && n < 3 && "integer suffix can have maximum 2 L's");
-        _cint_token_get(self)->_ls = n;
+        _c_int_token(self)->ls = n;
 }
 
-static inline struct _cchar_token* _cchar_token_get(ctoken* self)
+static inline struct _c_char_token* _c_char_token(c_token* self)
 {
         CTOKEN_ASSERT(self, CTK_CONST_CHAR);
-        return (struct _cchar_token*)self;
+        return (struct _c_char_token*)self;
 }
 
-static inline const struct _cchar_token* _cchar_token_cget(const ctoken* self)
+static inline const struct _c_char_token* _c_char_token_c(const c_token* self)
 {
         CTOKEN_ASSERT(self, CTK_CONST_CHAR);
-        return (const struct _cchar_token*)self;
+        return (const struct _c_char_token*)self;
 }
 
-static inline int ctoken_get_char(const ctoken* self)
+static inline int c_token_get_char(const c_token* self)
 {
-        return _cchar_token_cget(self)->_value;
+        return _c_char_token_c(self)->value;
 }
 
-static inline void ctoken_set_char(ctoken* self, int v)
+static inline void c_token_set_char(c_token* self, int v)
 {
-        _cchar_token_get(self)->_value = v;
+        _c_char_token(self)->value = v;
 }
 
-static inline struct _cwspace_token* _cwspace_token_get(ctoken* self)
-{
-        CTOKEN_ASSERT(self, CTK_WSPACE);
-        return (struct _cwspace_token*)self;
-}
-
-static inline const struct _cwspace_token* _cwspace_token_cget(const ctoken* self)
+static inline struct _c_wspace_token* _cwspace_token_get(c_token* self)
 {
         CTOKEN_ASSERT(self, CTK_WSPACE);
-        return (const struct _cwspace_token*)self;
+        return (struct _c_wspace_token*)self;
 }
 
-static inline int ctoken_get_spaces(const ctoken* self)
+static inline const struct _c_wspace_token* _cwspace_token_get_c(const c_token* self)
 {
-        return _cwspace_token_cget(self)->_count;
+        CTOKEN_ASSERT(self, CTK_WSPACE);
+        return (const struct _c_wspace_token*)self;
 }
 
-static inline void ctoken_set_spaces(ctoken* self, int count)
+static inline int c_token_get_spaces(const c_token* self)
 {
-        _cwspace_token_get(self)->_count = count;
+        return _cwspace_token_get_c(self)->count;
+}
+
+static inline void c_token_set_spaces(c_token* self, int count)
+{
+        _cwspace_token_get(self)->count = count;
 }
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // !CTOKEN_H
+#endif

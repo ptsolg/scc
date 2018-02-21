@@ -1,85 +1,85 @@
 #include "scc/c/c-env.h"
 #include "scc/c/c-parse-module.h"
 
-extern serrcode clex_source(
-        ccontext* context,
+extern serrcode c_lex_source(
+        c_context* context,
         file_lookup* source_lookup,
         file_entry* source,
         FILE* error,
         dseq* result)
 {
-        cenv env;
-        cenv_init(&env, context, source_lookup, error);
-        serrcode err = cenv_lex_source(&env, source, result);
-        cenv_dispose(&env);
+        c_env env;
+        c_env_init(&env, context, source_lookup, error);
+        serrcode err = c_env_lex_source(&env, source, result);
+        c_env_dispose(&env);
         return err;
 }
 
-extern tree_module* cparse_source(
-        ccontext* context,
+extern tree_module* c_parse_source(
+        c_context* context,
         file_lookup* source_lookup,
         file_entry* source,
         FILE* error)
 {
-        cenv env;
-        cenv_init(&env, context, source_lookup, error);
-        tree_module* module = cenv_parse_source(&env, source);
-        cenv_dispose(&env);
+        c_env env;
+        c_env_init(&env, context, source_lookup, error);
+        tree_module* module = c_env_parse_source(&env, source);
+        c_env_dispose(&env);
         return module;
 }
 
 
-extern void cenv_init(cenv* self, ccontext* context, file_lookup* source_lookup, FILE* err)
+extern void c_env_init(c_env* self, c_context* context, file_lookup* source_lookup, FILE* err)
 {
         self->context = context;
-        csource_manager_init(&self->source_manager, source_lookup, context);
-        clogger_init(&self->logger, &self->source_manager, self->context->tree, err);
-        clexer_init(&self->lexer, &self->source_manager, &self->logger, context);
-        clexer_init_reswords(&self->lexer);
-        csema_init(&self->sema, context, &self->logger);
-        cparser_init(&self->parser, &self->lexer, &self->sema, &self->logger);
+        c_source_manager_init(&self->source_manager, source_lookup, context);
+        c_logger_init(&self->logger, &self->source_manager, self->context->tree, err);
+        c_lexer_init(&self->lexer, &self->source_manager, &self->logger, context);
+        c_lexer_init_reswords(&self->lexer);
+        c_sema_init(&self->sema, context, &self->logger);
+        c_parser_init(&self->parser, &self->lexer, &self->sema, &self->logger);
 }
 
-extern void cenv_dispose(cenv* self)
+extern void c_env_dispose(c_env* self)
 {
-        cparser_dispose(&self->parser);
-        csema_dispose(&self->sema);
-        clexer_dispose(&self->lexer);
-        csource_manager_dispose(&self->source_manager);
+        c_parser_dispose(&self->parser);
+        c_sema_dispose(&self->sema);
+        c_lexer_dispose(&self->lexer);
+        c_source_manager_dispose(&self->source_manager);
 }
 
-extern serrcode cenv_lex_source(cenv* self, file_entry* source, dseq* result)
+extern serrcode c_env_lex_source(c_env* self, file_entry* source, dseq* result)
 {
-        csource* s = csource_get_from_file(&self->source_manager, source);
-        if (!source || S_FAILED(clexer_enter_source_file(&self->lexer, s)))
+        c_source* s = c_source_get_from_file(&self->source_manager, source);
+        if (!source || S_FAILED(c_lexer_enter_source_file(&self->lexer, s)))
                 return S_ERROR;
 
         while (1)
         {
-                ctoken* t = clex(&self->lexer);
+                c_token* t = c_lex(&self->lexer);
                 if (!t || S_FAILED(dseq_append(result, t)))
                         return S_ERROR;
 
-                if (ctoken_is(t, CTK_EOF))
+                if (c_token_is(t, CTK_EOF))
                         break;
         }
 
         return S_NO_ERROR;
 }
 
-extern tree_module* cenv_parse_source(cenv* self, file_entry* source)
+extern tree_module* c_env_parse_source(c_env* self, file_entry* source)
 {
-        csource* s = csource_get_from_file(&self->source_manager, source);
-        if (!source || S_FAILED(clexer_enter_source_file(&self->lexer, s)))
+        c_source* s = c_source_get_from_file(&self->source_manager, source);
+        if (!source || S_FAILED(c_lexer_enter_source_file(&self->lexer, s)))
                 return NULL;
 
         jmp_buf on_parser_error;
         if (setjmp(on_parser_error))
                 return NULL;
 
-        tree_module* module = tree_new_module(cget_tree(self->context));
-        csema_enter_module(&self->sema, module);
-        cparser_set_on_error(&self->parser, on_parser_error);
-        cparser_enter_token_stream(&self->parser);
-        return cparse_module(&self->parser);
+        tree_module* module = tree_new_module(c_context_get_tree_context(self->context));
+        c_sema_enter_module(&self->sema, module);
+        c_parser_set_on_error(&self->parser, on_parser_error);
+        c_parser_enter_token_stream(&self->parser);
+        return c_parse_module(&self->parser);
 }

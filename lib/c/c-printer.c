@@ -9,7 +9,7 @@
 #include "scc/scl/char-info.h"
 #include <stdarg.h>
 
-extern void cprinter_opts_init(cprinter_opts* self)
+extern void c_printer_opts_init(c_printer_opts* self)
 {
         self->print_expr_type = false;
         self->print_expr_value = false;
@@ -20,33 +20,33 @@ extern void cprinter_opts_init(cprinter_opts* self)
         self->force_brackets = false;
 }
 
-extern void cprinter_init(
-        cprinter* self,
+extern void c_printer_init(
+        c_printer* self,
         write_cb* write,
-        const ccontext* context,
-        const csource_manager* source_manager)
+        const c_context* context,
+        const c_source_manager* source_manager)
 {
-        self->context = cget_tree(context);
+        self->context = c_context_get_tree_context(context);
         self->ccontext = context;
         self->source_manager = source_manager;
         self->target = self->context->target;
         self->indent_level = 0;
         writebuf_init(&self->buf, write);
-        cprinter_opts_init(&self->opts);
+        c_printer_opts_init(&self->opts);
 }
 
-extern void cprinter_dispose(cprinter* self)
+extern void c_printer_dispose(c_printer* self)
 {
         writebuf_flush(&self->buf);
 }
 
-static inline void cprints(cprinter* self, const char* s)
+static inline void c_prints(c_printer* self, const char* s)
 {
         if (s)
                 writebuf_writes(&self->buf, s);
 }
 
-static inline void cprintf(cprinter* self, const char* f, ...)
+static inline void c_printf(c_printer* self, const char* f, ...)
 {
         char buf[1024];
 
@@ -54,91 +54,91 @@ static inline void cprintf(cprinter* self, const char* f, ...)
         va_start(args, f);
         vsnprintf(buf, 1024, f, args);
 
-        cprints(self, buf);
+        c_prints(self, buf);
 }
 
-static inline void cprint_float(cprinter* self, float v)
+static inline void c_print_float(c_printer* self, float v)
 {
-        cprintf(self, "%.*ff", self->opts.float_precision, v);
+        c_printf(self, "%.*ff", self->opts.float_precision, v);
 }
 
-static inline void cprint_double(cprinter* self, double v)
+static inline void c_print_double(c_printer* self, double v)
 {
-        cprintf(self, "%.*f", self->opts.double_precision, v);
+        c_printf(self, "%.*f", self->opts.double_precision, v);
 }
 
-static inline void cprint_d(cprinter* self, int v)
+static inline void c_print_d(c_printer* self, int v)
 {
-        cprintf(self, "%d", v);
+        c_printf(self, "%d", v);
 }
 
-static inline void cprint_lld(cprinter* self, sint64 v)
+static inline void c_print_lld(c_printer* self, sint64 v)
 {
-        cprintf(self, "%lld", v);
-        cprints(self, "LL");
+        c_printf(self, "%lld", v);
+        c_prints(self, "LL");
 }
 
-static inline void cprint_u(cprinter* self, uint v)
+static inline void c_print_u(c_printer* self, uint v)
 {
-        cprintf(self, "%u", v);
-        cprints(self, "U");
+        c_printf(self, "%u", v);
+        c_prints(self, "U");
 }
 
-static inline void cprint_llu(cprinter* self, suint64 v)
+static inline void c_print_llu(c_printer* self, suint64 v)
 {
-        cprintf(self, "%llu", v);
-        cprints(self, "ULL");
+        c_printf(self, "%llu", v);
+        c_prints(self, "ULL");
 }
 
-static inline void cprintc(cprinter* self, int c)
+static inline void c_printc(c_printer* self, int c)
 {
         writebuf_writec(&self->buf, c);
 }
 
-static inline void cprintcn(cprinter* self, int c, int n)
+static inline void c_printcn(c_printer* self, int c, int n)
 {
         while (n--)
-                cprintc(self, c);
+                c_printc(self, c);
 }
 
-static inline void cprint_id(cprinter* self, tree_id id)
+static inline void c_print_id(c_printer* self, tree_id id)
 {
-        cprints(self, tree_get_id_string(self->context, id));
+        c_prints(self, tree_get_id_string(self->context, id));
 }
 
-static inline void cprint_space(cprinter* self)
+static inline void c_print_space(c_printer* self)
 {
-        cprintc(self, ' ');
+        c_printc(self, ' ');
 }
 
-static inline void cprint_indent(cprinter* self)
+static inline void c_print_indent(c_printer* self)
 {
-        cprintcn(self, '\t', self->indent_level);
+        c_printcn(self, '\t', self->indent_level);
 }
 
-static inline void cprinter_add_indent(cprinter* self)
+static inline void c_printer_add_indent(c_printer* self)
 {
         self->indent_level++;
 }
 
-static inline void cprinter_sub_indent(cprinter* self)
+static inline void c_printer_sub_indent(c_printer* self)
 {
         S_ASSERT(self->indent_level);
         self->indent_level--;
 }
 
-static inline void cprint_endl(cprinter* self)
+static inline void c_print_endl(c_printer* self)
 {
-        cprintc(self, '\n');
-        cprint_indent(self);
+        c_printc(self, '\n');
+        c_print_indent(self);
 }
 
-static inline void cprintrw(cprinter* self, ctoken_kind k)
+static inline void c_printrw(c_printer* self, c_token_kind k)
 {
-        cprints(self, cget_token_kind_info(k)->string);
+        c_prints(self, c_get_token_kind_info(k)->string);
 }
 
-extern void ctoken_print_info_init(ctoken_print_info* self)
+extern void c_token_print_info_init(c_token_print_info* self)
 {
         self->max_col = 0;
         self->max_file_len = 0;
@@ -146,51 +146,51 @@ extern void ctoken_print_info_init(ctoken_print_info* self)
         self->max_line = 0;
 }
 
-static void _cprint_string_literal(cprinter* self, tree_id id)
+static void _c_print_string_literal(c_printer* self, tree_id id)
 {
         strentry entry;
         tree_get_id_strentry(self->context, id, &entry);
-        char unescaped[CMAX_LINE_LENGTH + 1];
-        cget_unescaped_string(unescaped, (const char*)entry.data, entry.size - 1);
-        cprintf(self, "\"%s\"", unescaped);
+        char unescaped[C_MAX_LINE_LENGTH + 1];
+        c_get_unescaped_string(unescaped, (const char*)entry.data, entry.size - 1);
+        c_printf(self, "\"%s\"", unescaped);
 }
 
-static void cprint_token_value(cprinter* self, const ctoken* token)
+static void c_print_token_value(c_printer* self, const c_token* token)
 {
-        ctoken_kind k = ctoken_get_kind(token);
+        c_token_kind k = c_token_get_kind(token);
 
         if (k == CTK_ID)
-                cprint_id(self, ctoken_get_string(token));
+                c_print_id(self, c_token_get_string(token));
         else if (k == CTK_CONST_INT)
         {
-                cprintf(self, "%llu", ctoken_get_int(token));
-                int ls = ctoken_get_int_ls(token);
+                c_printf(self, "%llu", c_token_get_int(token));
+                int ls = c_token_get_int_ls(token);
                 while (ls--)
-                        cprintc(self, 'L');
-                if (!ctoken_is_int_signed(token))
-                        cprintc(self, 'U');
+                        c_printc(self, 'L');
+                if (!c_token_int_is_signed(token))
+                        c_printc(self, 'U');
         }
         else if (k == CTK_CONST_FLOAT)
-                cprintf(self, "%ff", ctoken_get_float(token));
+                c_printf(self, "%ff", c_token_get_float(token));
         else if (k == CTK_CONST_DOUBLE)
-                cprintf(self, "%f", (double)ctoken_get_double(token));
+                c_printf(self, "%f", (double)c_token_get_double(token));
         else if (k == CTK_CONST_STRING)
-                _cprint_string_literal(self, ctoken_get_string(token));
+                _c_print_string_literal(self, c_token_get_string(token));
         else if (k == CTK_CONST_CHAR)
         {
-                int c = ctoken_get_char(token);
+                int c = c_token_get_char(token);
                 if (char_is_escape(c))
-                        cprintf(self, "'\\%c'", escape_to_char(c));
+                        c_printf(self, "'\\%c'", escape_to_char(c));
                 else
-                        cprintf(self, "'%c'", c);
+                        c_printf(self, "'%c'", c);
         }
-        cprint_endl(self);
+        c_print_endl(self);
 }
 
-extern void cprint_token(cprinter* self, const ctoken* token, const ctoken_print_info* info)
+extern void c_print_token(c_printer* self, const c_token* token, const c_token_print_info* info)
 {
-        clocation loc;
-        csource_find_loc(self->source_manager, &loc, ctoken_get_loc(token));
+        c_location loc;
+        c_source_find_loc(self->source_manager, &loc, c_token_get_loc(token));
 
         char file[S_MAX_PATH_LEN];
         file[0] = '\0';
@@ -209,24 +209,24 @@ extern void cprint_token(cprinter* self, const ctoken* token, const ctoken_print
         sprintf(line, "%d", loc.line);
         strfill(strend(line), ' ', 1 + info->max_line - ndigits(loc.line));
 
-        const char* kind = cget_token_kind_string(ctoken_get_kind(token));
+        const char* kind = c_get_token_kind_string(c_token_get_kind(token));
         char trail[32];
         strfill(trail, ' ', 1 + info->max_kind_len - strlen(kind));
 
-        cprintf(self, "%s%s%s%s%s", file, line, col, kind, trail);
-        cprint_token_value(self, token);
+        c_printf(self, "%s%s%s%s%s", file, line, col, kind, trail);
+        c_print_token_value(self, token);
 }
 
-extern void cprint_tokens(cprinter* self, const dseq* tokens)
+extern void c_print_tokens(c_printer* self, const dseq* tokens)
 {
-        ctoken_print_info info;
-        ctoken_print_info_init(&info);
+        c_token_print_info info;
+        c_token_print_info_init(&info);
 
         for (ssize i = 0; i < dseq_size(tokens); i++)
         {
-                const ctoken* token = dseq_get(tokens, i);
-                clocation loc;
-                csource_find_loc(self->source_manager, &loc, ctoken_get_loc(token));
+                const c_token* token = dseq_get(tokens, i);
+                c_location loc;
+                c_source_find_loc(self->source_manager, &loc, c_token_get_loc(token));
 
                 if (ndigits(loc.line) > info.max_line)
                         info.max_line = ndigits(loc.line);
@@ -237,153 +237,153 @@ extern void cprint_tokens(cprinter* self, const dseq* tokens)
                 if (len > info.max_file_len)
                         info.max_file_len = len;
 
-                len = (int)strlen(cget_token_kind_string(ctoken_get_kind(token)));
+                len = (int)strlen(c_get_token_kind_string(c_token_get_kind(token)));
                 if (len > info.max_kind_len)
                         info.max_kind_len = len;
         }
         for (ssize i = 0; i < dseq_size(tokens); i++)
-                cprint_token(self, dseq_get(tokens, i), &info);
+                c_print_token(self, dseq_get(tokens, i), &info);
 }
 
-static inline void cprint_lbracket(cprinter* self)
+static inline void c_print_lbracket(c_printer* self)
 {
-        cprintrw(self, CTK_LBRACKET);
+        c_printrw(self, CTK_LBRACKET);
 }
 
-static inline void cprint_rbracket(cprinter* self)
+static inline void c_print_rbracket(c_printer* self)
 {
-        cprintrw(self, CTK_RBRACKET);
+        c_printrw(self, CTK_RBRACKET);
 }
 
-static inline void cprint_lsbracket(cprinter* self)
+static inline void c_print_lsbracket(c_printer* self)
 {
-        cprintrw(self, CTK_LSBRACKET);
+        c_printrw(self, CTK_LSBRACKET);
 }
 
-static inline void cprint_rsbracket(cprinter* self)
+static inline void c_print_rsbracket(c_printer* self)
 {
-        cprintrw(self, CTK_RSBRACKET);
+        c_printrw(self, CTK_RSBRACKET);
 }
 
-static inline void cprint_lbrace(cprinter* self, bool newline)
-{
-        if (newline)
-        {
-                cprint_endl(self);
-                cprinter_add_indent(self);
-        }
-        cprintrw(self, CTK_LBRACE);
-}
-
-static inline void cprint_rbrace(cprinter* self, bool newline)
+static inline void c_print_lbrace(c_printer* self, bool newline)
 {
         if (newline)
         {
-                cprinter_sub_indent(self);
-                cprint_endl(self);
+                c_print_endl(self);
+                c_printer_add_indent(self);
         }
-        cprintrw(self, CTK_RBRACE);
+        c_printrw(self, CTK_LBRACE);
 }
 
-static inline void cprint_comma(cprinter* self)
+static inline void c_print_rbrace(c_printer* self, bool newline)
 {
-        cprintrw(self, CTK_COMMA);
-        cprint_space(self);
+        if (newline)
+        {
+                c_printer_sub_indent(self);
+                c_print_endl(self);
+        }
+        c_printrw(self, CTK_RBRACE);
 }
 
-static inline void cprint_decl_name(cprinter* self, const tree_decl* d)
+static inline void c_print_comma(c_printer* self)
 {
-        cprint_id(self, tree_get_decl_name(d));
+        c_printrw(self, CTK_COMMA);
+        c_print_space(self);
 }
 
-static void cprint_binop(cprinter* self, const tree_expr* expr)
+static inline void c_print_decl_name(c_printer* self, const tree_decl* d)
 {
-        cprint_expr(self, tree_get_binop_lhs(expr));
-        cprint_space(self);
-        cprints(self, cget_binop_string(tree_get_binop_kind(expr)));
-        cprint_space(self);
-        cprint_expr(self, tree_get_binop_rhs(expr));
+        c_print_id(self, tree_get_decl_name(d));
 }
 
-static void cprint_unop(cprinter* self, const tree_expr* expr)
+static void c_print_binop(c_printer* self, const tree_expr* expr)
+{
+        c_print_expr(self, tree_get_binop_lhs(expr));
+        c_print_space(self);
+        c_prints(self, c_get_binop_string(tree_get_binop_kind(expr)));
+        c_print_space(self);
+        c_print_expr(self, tree_get_binop_rhs(expr));
+}
+
+static void c_print_unop(c_printer* self, const tree_expr* expr)
 {
         tree_unop_kind k = tree_get_unop_kind(expr);
         const tree_expr* e = tree_get_unop_operand(expr);
-        const char* unop = cget_unop_string(k);
+        const char* unop = c_get_unop_string(k);
 
         if (k == TUK_POST_INC || k == TUK_POST_DEC)
         {
-                cprint_expr(self, e);
-                cprints(self, unop);
+                c_print_expr(self, e);
+                c_prints(self, unop);
         }
         else
         {
-                cprints(self, unop);
-                cprint_expr(self, e);
+                c_prints(self, unop);
+                c_print_expr(self, e);
         }
 }
 
-static inline bool cprinter_postfix_expr_needs_wrapping(const cprinter* self, const tree_expr* e)
+static inline bool c_printer_postfix_expr_needs_wrapping(const c_printer* self, const tree_expr* e)
 {
         return tree_get_expr_kind(e) == TEK_CAST
                 && tree_cast_is_implicit(e) && self->opts.print_impl_casts;
 }
 
-static void _cprint_expr(cprinter*, const tree_expr*, bool);
+static void _c_print_expr(c_printer*, const tree_expr*, bool);
 
-static void cprint_call_expr(cprinter* self, const tree_expr* expr)
+static void c_print_call_expr(c_printer* self, const tree_expr* expr)
 {
         const tree_expr* lhs = tree_get_call_lhs(expr);
-        _cprint_expr(self, lhs, cprinter_postfix_expr_needs_wrapping(self, lhs));
+        _c_print_expr(self, lhs, c_printer_postfix_expr_needs_wrapping(self, lhs));
 
-        cprint_lbracket(self);
+        c_print_lbracket(self);
         TREE_FOREACH_CALL_ARG(expr, arg)
         {
-                cprint_expr(self, *arg);
+                c_print_expr(self, *arg);
                 if (arg + 1 != tree_get_call_args_end(expr))
-                        cprint_comma(self);
+                        c_print_comma(self);
         }
-        cprint_rbracket(self);
+        c_print_rbracket(self);
 }
 
-static void cprint_subscript_expr(cprinter* self, const tree_expr* expr)
+static void c_print_subscript_expr(c_printer* self, const tree_expr* expr)
 {
         const tree_expr* lhs = tree_get_subscript_lhs(expr);
-        _cprint_expr(self, lhs, cprinter_postfix_expr_needs_wrapping(self, lhs));
-        cprint_lsbracket(self);
-        cprint_expr(self, tree_get_subscript_rhs(expr));
-        cprint_rsbracket(self);
+        _c_print_expr(self, lhs, c_printer_postfix_expr_needs_wrapping(self, lhs));
+        c_print_lsbracket(self);
+        c_print_expr(self, tree_get_subscript_rhs(expr));
+        c_print_rsbracket(self);
 }
 
-static void cprint_conditional_expr(cprinter* self, const tree_expr* expr)
+static void c_print_conditional_expr(c_printer* self, const tree_expr* expr)
 {
-        cprint_expr(self, tree_get_conditional_condition(expr));
-        cprint_space(self);
-        cprintrw(self, CTK_QUESTION);
-        cprint_space(self);
-        cprint_expr(self, tree_get_conditional_lhs(expr));
-        cprint_space(self);
-        cprintrw(self, CTK_COLON);
-        cprint_space(self);
-        cprint_expr(self, tree_get_conditional_rhs(expr));
+        c_print_expr(self, tree_get_conditional_condition(expr));
+        c_print_space(self);
+        c_printrw(self, CTK_QUESTION);
+        c_print_space(self);
+        c_print_expr(self, tree_get_conditional_lhs(expr));
+        c_print_space(self);
+        c_printrw(self, CTK_COLON);
+        c_print_space(self);
+        c_print_expr(self, tree_get_conditional_rhs(expr));
 }
 
-static void cprint_decl_expr(cprinter* self, const tree_expr* expr)
+static void c_print_decl_expr(c_printer* self, const tree_expr* expr)
 {
-        cprint_decl(self, tree_get_decl_expr_entity(expr),
+        c_print_decl(self, tree_get_decl_expr_entity(expr),
                 CPRINT_DECL_NAME | CPRINTER_IGNORE_DECL_ENDING);
 }
 
-static void cprint_floating_literal(cprinter* self, const tree_expr* expr)
+static void c_print_floating_literal(c_printer* self, const tree_expr* expr)
 {
         const float_value* value = tree_get_floating_literal_cvalue(expr);
         if (tree_builtin_type_is(tree_get_expr_type(expr), TBTK_FLOAT))
-                cprint_float(self, float_get_sp(value));
+                c_print_float(self, float_get_sp(value));
         else
-                cprint_double(self, float_get_dp(value));
+                c_print_double(self, float_get_dp(value));
 }
 
-static void cprint_integer(cprinter* self, const tree_type* t, suint64 v)
+static void c_print_integer(c_printer* self, const tree_type* t, suint64 v)
 {
         S_ASSERT(tree_type_is_integer(t));
         bool sign = !tree_type_is_unsigned_integer(t);
@@ -391,53 +391,53 @@ static void cprint_integer(cprinter* self, const tree_type* t, suint64 v)
                 || tree_builtin_type_is(t, TBTK_INT64);
 
         if (sign && ext)
-                cprint_lld(self, (sint64)v);
+                c_print_lld(self, (sint64)v);
         else if (!sign && ext)
-                cprint_llu(self, v);
+                c_print_llu(self, v);
         else if (!sign)
-                cprint_u(self, (uint)v);
+                c_print_u(self, (uint)v);
         else
-                cprint_d(self, (int)v);
+                c_print_d(self, (int)v);
 }
 
-static void cprint_integer_literal(cprinter* self, const tree_expr* expr)
+static void c_print_integer_literal(c_printer* self, const tree_expr* expr)
 {
-        cprint_integer(self, tree_get_expr_type(expr), tree_get_integer_literal(expr));
+        c_print_integer(self, tree_get_expr_type(expr), tree_get_integer_literal(expr));
 }
 
-static void cprint_char_literal(cprinter* self, const tree_expr* expr)
+static void c_print_char_literal(c_printer* self, const tree_expr* expr)
 {
-        cprintf(self, "'%c'", tree_get_character_literal(expr));
+        c_printf(self, "'%c'", tree_get_character_literal(expr));
 }
 
-static void cprint_string_literal(cprinter* self, const tree_expr* expr)
+static void c_print_string_literal(c_printer* self, const tree_expr* expr)
 {
-        _cprint_string_literal(self, tree_get_string_literal(expr));
+        _c_print_string_literal(self, tree_get_string_literal(expr));
 }
 
-static void cprint_member_expr(cprinter* self, const tree_expr* expr)
+static void c_print_member_expr(c_printer* self, const tree_expr* expr)
 {
         const tree_expr* lhs = tree_get_member_expr_lhs(expr);
-        _cprint_expr(self, lhs, cprinter_postfix_expr_needs_wrapping(self, lhs));
+        _c_print_expr(self, lhs, c_printer_postfix_expr_needs_wrapping(self, lhs));
 
         const tree_decl* decl = tree_get_member_expr_decl(expr);
         if (tree_decl_is_anon(decl))
                 return;
 
-        cprintrw(self, (tree_member_expr_is_arrow(expr) ? CTK_ARROW : CTK_DOT));
-        cprint_decl(self, decl, CPRINT_DECL_NAME);
+        c_printrw(self, (tree_member_expr_is_arrow(expr) ? CTK_ARROW : CTK_DOT));
+        c_print_decl(self, decl, CPRINT_DECL_NAME);
 }
 
-static void cprint_cast_expr(cprinter* self, const tree_expr* expr)
+static void c_print_cast_expr(c_printer* self, const tree_expr* expr)
 {
         const tree_expr* e = tree_get_cast_operand(expr);
         bool implicit = tree_cast_is_implicit(expr);
         if (!implicit || self->opts.print_impl_casts)
         {
-                cprint_lbracket(self);
+                c_print_lbracket(self);
                 int opts = implicit ? CPRINT_IMPL_TYPE_BRACKETS : CPRINT_OPTS_NONE;
-                cprint_type_name(self, tree_get_expr_type(expr), opts);
-                cprint_rbracket(self);
+                c_print_type_name(self, tree_get_expr_type(expr), opts);
+                c_print_rbracket(self);
         }
 
         bool brackets = false;
@@ -446,103 +446,103 @@ static void cprint_cast_expr(cprinter* self, const tree_expr* expr)
                 brackets = (self->opts.print_impl_casts && tree_get_expr_kind(e) == TEK_BINARY)
                         || self->opts.force_brackets;
         }
-        _cprint_expr(self, e, brackets);
+        _c_print_expr(self, e, brackets);
 }
 
-static void cprint_sizeof_expr(cprinter* self, const tree_expr* expr)
+static void c_print_sizeof_expr(c_printer* self, const tree_expr* expr)
 {
-        cprintrw(self, CTK_SIZEOF);
+        c_printrw(self, CTK_SIZEOF);
         if (tree_sizeof_contains_type(expr))
         {
-                cprint_lbracket(self);
-                cprint_type_name(self, tree_get_sizeof_type(expr), CPRINT_OPTS_NONE);
-                cprint_rbracket(self);
+                c_print_lbracket(self);
+                c_print_type_name(self, tree_get_sizeof_type(expr), CPRINT_OPTS_NONE);
+                c_print_rbracket(self);
         }
         else
         {
-                cprint_space(self);
-                cprint_expr(self, tree_get_sizeof_expr(expr));
+                c_print_space(self);
+                c_print_expr(self, tree_get_sizeof_expr(expr));
         }
 }
 
-static void cprint_paren_expr(cprinter* self, const tree_expr* expr)
+static void c_print_paren_expr(c_printer* self, const tree_expr* expr)
 {
-        cprint_lbracket(self);
-        _cprint_expr(self, tree_get_paren_expr(expr), false);
-        cprint_rbracket(self);
+        c_print_lbracket(self);
+        _c_print_expr(self, tree_get_paren_expr(expr), false);
+        c_print_rbracket(self);
 }
 
-static void cprint_designation(cprinter* self, const tree_expr* d)
+static void c_print_designation(c_printer* self, const tree_expr* d)
 {
         TREE_FOREACH_DESIGNATION_DESIGNATOR(d, it, end)
         {
                 if (tree_designator_is_field(*it))
                 {
-                        cprintrw(self, CTK_DOT);
-                        cprint_id(self, tree_get_designator_field(*it));
+                        c_printrw(self, CTK_DOT);
+                        c_print_id(self, tree_get_designator_field(*it));
                 }
                 else
                 {
-                        cprint_lsbracket(self);
-                        cprint_expr(self, tree_get_designator_index(*it));
-                        cprint_rsbracket(self);
+                        c_print_lsbracket(self);
+                        c_print_expr(self, tree_get_designator_index(*it));
+                        c_print_rsbracket(self);
                 }
         }
 
-        cprint_space(self);
-        cprintrw(self, CTK_EQ);
-        cprint_space(self);
-        cprint_expr(self, tree_get_designation_init(d));
+        c_print_space(self);
+        c_printrw(self, CTK_EQ);
+        c_print_space(self);
+        c_print_expr(self, tree_get_designation_init(d));
 }
 
-static void cprint_initializer(cprinter* self, const tree_expr* expr)
+static void c_print_initializer(c_printer* self, const tree_expr* expr)
 {
-        cprint_lbrace(self, false);
+        c_print_lbrace(self, false);
         TREE_FOREACH_INIT_LIST_EXPR(expr, it, end)
         {
-                cprint_expr(self, *it);
+                c_print_expr(self, *it);
                 if (it + 1 != end )
-                        cprint_comma(self);
+                        c_print_comma(self);
         }
         if (tree_init_list_has_trailing_comma(expr))
-                cprint_comma(self);
-        cprint_rbrace(self, false);
+                c_print_comma(self);
+        c_print_rbrace(self, false);
 }
 
-static void _cprint_expr(cprinter* self, const tree_expr* e, bool print_brackets)
+static void _c_print_expr(c_printer* self, const tree_expr* e, bool print_brackets)
 {
         if (!e)
                 return;
 
         if (print_brackets)
-                cprint_lbracket(self);
+                c_print_lbracket(self);
         switch (tree_get_expr_kind(e))
         {
-                case TEK_BINARY: cprint_binop(self, e); break;
-                case TEK_UNARY: cprint_unop(self, e); break;
-                case TEK_CALL: cprint_call_expr(self, e); break;
-                case TEK_SUBSCRIPT: cprint_subscript_expr(self, e); break;
-                case TEK_CONDITIONAL: cprint_conditional_expr(self, e); break;
-                case TEK_CHARACTER_LITERAL: cprint_char_literal(self, e); break;
-                case TEK_FLOATING_LITERAL: cprint_floating_literal(self, e); break;
-                case TEK_INTEGER_LITERAL: cprint_integer_literal(self, e); break;
-                case TEK_STRING_LITERAL: cprint_string_literal(self, e); break;
-                case TEK_DECL: cprint_decl_expr(self, e); break;
-                case TEK_MEMBER: cprint_member_expr(self, e); break;
-                case TEK_CAST: cprint_cast_expr(self, e); break;
-                case TEK_SIZEOF: cprint_sizeof_expr(self, e); break;
-                case TEK_PAREN: cprint_paren_expr(self, e); break;
-                case TEK_INIT_LIST: cprint_initializer(self, e); break;
-                case TEK_DESIGNATION: cprint_designation(self, e); break;
+                case TEK_BINARY: c_print_binop(self, e); break;
+                case TEK_UNARY: c_print_unop(self, e); break;
+                case TEK_CALL: c_print_call_expr(self, e); break;
+                case TEK_SUBSCRIPT: c_print_subscript_expr(self, e); break;
+                case TEK_CONDITIONAL: c_print_conditional_expr(self, e); break;
+                case TEK_CHARACTER_LITERAL: c_print_char_literal(self, e); break;
+                case TEK_FLOATING_LITERAL: c_print_floating_literal(self, e); break;
+                case TEK_INTEGER_LITERAL: c_print_integer_literal(self, e); break;
+                case TEK_STRING_LITERAL: c_print_string_literal(self, e); break;
+                case TEK_DECL: c_print_decl_expr(self, e); break;
+                case TEK_MEMBER: c_print_member_expr(self, e); break;
+                case TEK_CAST: c_print_cast_expr(self, e); break;
+                case TEK_SIZEOF: c_print_sizeof_expr(self, e); break;
+                case TEK_PAREN: c_print_paren_expr(self, e); break;
+                case TEK_INIT_LIST: c_print_initializer(self, e); break;
+                case TEK_DESIGNATION: c_print_designation(self, e); break;
 
                 default:
                         ; // unknown exp kind
         }
         if (print_brackets)
-                cprint_rbracket(self);
+                c_print_rbracket(self);
 }
 
-extern void cprint_expr(cprinter* self, const tree_expr* expr)
+extern void c_print_expr(c_printer* self, const tree_expr* expr)
 {
         if (!expr)
                 return;
@@ -554,28 +554,28 @@ extern void cprint_expr(cprinter* self, const tree_expr* expr)
                 || k == TEK_CAST;
 
         bool brackets = self->opts.force_brackets && !is_primitive;
-        _cprint_expr(self, expr, brackets);
+        _c_print_expr(self, expr, brackets);
 }
 
-static void cprint_type_quals(cprinter* self, tree_type_quals q)
+static void c_print_type_quals(c_printer* self, tree_type_quals q)
 {
         if (q == TTQ_UNQUALIFIED)
                 return;
 
         if (q & TTQ_CONST)
         {
-                cprintrw(self, CTK_CONST);
-                cprint_space(self);
+                c_printrw(self, CTK_CONST);
+                c_print_space(self);
         }
         if (q & TTQ_RESTRICT)
         {
-                cprintrw(self, CTK_RESTRICT);
-                cprint_space(self);
+                c_printrw(self, CTK_RESTRICT);
+                c_print_space(self);
         }
         if (q & TTQ_VOLATILE)
         {
-                cprintrw(self, CTK_VOLATILE);
-                cprint_space(self);
+                c_printrw(self, CTK_VOLATILE);
+                c_print_space(self);
         }
 }
 
@@ -589,10 +589,10 @@ typedef struct
         const tree_decl_scope* params;
         const tree_type* type_parts[100]; // todo: size
         const tree_type* suffixes[100];
-} ctype_name_info;
+} c_type_name_info;
 
-static void ctype_name_info_init(
-        ctype_name_info* self,
+static void c_type_name_info_init(
+        c_type_name_info* self,
         const tree_type* type,
         tree_id name,
         bool params_vararg,
@@ -613,26 +613,26 @@ static void ctype_name_info_init(
         }
 }
 
-static void cprint_builtin_type(cprinter* self, const tree_type* t, int opts)
+static void c_print_builtin_type(c_printer* self, const tree_type* t, int opts)
 {
         if (opts & CPRINTER_IGNORE_TYPESPEC)
                 return;
 
-        cprint_type_quals(self, tree_get_type_quals(t));
-        cprints(self, cget_builtin_type_string(tree_get_builtin_type_kind(t)));
+        c_print_type_quals(self, tree_get_type_quals(t));
+        c_prints(self, c_get_builtin_type_string(tree_get_builtin_type_kind(t)));
 }
 
-static void cprint_decl_type(cprinter* self, const tree_type* t, int opts)
+static void c_print_decl_type(c_printer* self, const tree_type* t, int opts)
 {
         if (opts & CPRINTER_IGNORE_TYPESPEC)
                 return;
         if (tree_decl_type_is_referenced(t))
                 opts |= CPRINT_DECL_NAME;
 
-        cprint_decl(self, tree_get_decl_type_entity(t), opts);
+        c_print_decl(self, tree_get_decl_type_entity(t), opts);
 }
 
-static void cprint_type_parts(cprinter* self, ctype_name_info* info, int opts)
+static void c_print_type_parts(c_printer* self, c_type_name_info* info, int opts)
 {
         int part_it = info->ntype_parts;
         while (part_it)
@@ -644,19 +644,19 @@ static void cprint_type_parts(cprinter* self, ctype_name_info* info, int opts)
                         next = info->type_parts[part_it - 1];
 
                 if (k == TTK_BUILTIN)
-                        cprint_builtin_type(self, t, opts);
+                        c_print_builtin_type(self, t, opts);
                 else if (k == TTK_DECL)
-                        cprint_decl_type(self, t, opts);
+                        c_print_decl_type(self, t, opts);
                 else if (k == TTK_ARRAY || k == TTK_FUNCTION || k == TTK_PAREN)
                 {
                         if (k == TTK_PAREN || opts & CPRINT_IMPL_TYPE_BRACKETS)
-                                cprint_lbracket(self);
+                                c_print_lbracket(self);
                         info->suffixes[info->nsuffixes++] = t;
                 }
                 else if (k == TTK_POINTER)
                 {
-                        cprintrw(self, CTK_STAR);
-                        cprint_type_quals(self, tree_get_type_quals(t));
+                        c_printrw(self, CTK_STAR);
+                        c_print_type_quals(self, tree_get_type_quals(t));
                 }
                 else
                         ; // unknown type kind
@@ -666,31 +666,31 @@ static void cprint_type_parts(cprinter* self, ctype_name_info* info, int opts)
 
                 if (!info->name_printed && info->name != TREE_INVALID_ID)
                 {
-                        cprint_space(self);
-                        cprint_id(self, info->name);
+                        c_print_space(self);
+                        c_print_id(self, info->name);
 
                         if (!info->params)
                                 continue;
 
-                        cprint_lbracket(self);
+                        c_print_lbracket(self);
                         TREE_FOREACH_DECL_IN_SCOPE(info->params, param)
                         {
-                                cprint_decl(self, param, CPRINTER_IGNORE_DECL_ENDING);
+                                c_print_decl(self, param, CPRINTER_IGNORE_DECL_ENDING);
                                 const tree_decl* next = tree_get_next_decl(param);
                                 if (next != tree_get_decl_scope_decls_cend(info->params))
-                                        cprint_comma(self);
+                                        c_print_comma(self);
                         }
                         if (info->params_vararg)
                         {
-                                cprint_comma(self);
-                                cprintrw(self, CTK_ELLIPSIS);
+                                c_print_comma(self);
+                                c_printrw(self, CTK_ELLIPSIS);
                         }
-                        cprint_rbracket(self);
+                        c_print_rbracket(self);
                 }
         }
 }
 
-static void cprint_suffix_endings(cprinter* self, ctype_name_info* info, int opts)
+static void c_print_suffix_endings(c_printer* self, c_type_name_info* info, int opts)
 {
         int suffix_it = info->nsuffixes;
         while (suffix_it)
@@ -698,38 +698,38 @@ static void cprint_suffix_endings(cprinter* self, ctype_name_info* info, int opt
                 const tree_type* t = info->suffixes[--suffix_it];
                 tree_type_kind k = tree_get_type_kind(t);
                 if (opts & CPRINT_IMPL_TYPE_BRACKETS)
-                        cprint_rbracket(self);
+                        c_print_rbracket(self);
 
                 if (k == TTK_FUNCTION)
                 {
-                        cprint_lbracket(self);
+                        c_print_lbracket(self);
                         TREE_FOREACH_FUNCTION_TYPE_PARAM(t, param)
                         {
-                                cprint_type_name(self, *param, CPRINT_OPTS_NONE);
+                                c_print_type_name(self, *param, CPRINT_OPTS_NONE);
                                 if (param + 1 != tree_get_function_type_params_end(t))
-                                        cprint_comma(self);
+                                        c_print_comma(self);
                         }
                         if (tree_function_type_is_vararg(t))
                         {
-                                cprint_comma(self);
-                                cprintrw(self, CTK_ELLIPSIS);
+                                c_print_comma(self);
+                                c_printrw(self, CTK_ELLIPSIS);
                         }
-                        cprint_rbracket(self);
+                        c_print_rbracket(self);
                 }
                 else if (k == TTK_ARRAY)
                 {
-                        cprint_lsbracket(self);
+                        c_print_lsbracket(self);
                         if (tree_array_is(t, TAK_CONSTANT))
-                                cprint_expr(self, tree_get_constant_array_size_expr(t));
-                        cprint_rsbracket(self);
+                                c_print_expr(self, tree_get_constant_array_size_expr(t));
+                        c_print_rsbracket(self);
                 }
                 else if (k == TTK_PAREN)
-                        cprint_rbracket(self);
+                        c_print_rbracket(self);
         }
 }
 
-static void _cprint_type_name(
-        cprinter* self,
+static void _c_print_type_name(
+        c_printer* self,
         const tree_type* type,
         tree_id name,
         bool params_vararg,
@@ -739,299 +739,296 @@ static void _cprint_type_name(
         if (!type)
                 return;
 
-        ctype_name_info info;
-        ctype_name_info_init(&info, type, name, params_vararg, params);
-        cprint_type_parts(self, &info, opts);
-        cprint_suffix_endings(self, &info, opts);
+        c_type_name_info info;
+        c_type_name_info_init(&info, type, name, params_vararg, params);
+        c_print_type_parts(self, &info, opts);
+        c_print_suffix_endings(self, &info, opts);
 }
 
-extern void cprint_type_name(cprinter* self, const tree_type* type, int opts)
+extern void c_print_type_name(c_printer* self, const tree_type* type, int opts)
 {
-        _cprint_type_name(self, type, TREE_INVALID_ID, false, NULL, opts);
+        _c_print_type_name(self, type, TREE_INVALID_ID, false, NULL, opts);
 }
 
-static void cprint_decl_scope(cprinter* self, const tree_decl_scope* scope, bool braces, int opts)
+static void c_print_decl_scope(c_printer* self, const tree_decl_scope* scope, bool braces, int opts)
 {
         if (!scope)
                 return;
 
         if (braces)
-                cprint_lbrace(self, true);
+                c_print_lbrace(self, true);
         TREE_FOREACH_DECL_IN_SCOPE(scope, decl)
                 if (!tree_decl_is_implicit(decl))
                 {
-                        cprint_endl(self);
-                        cprint_decl(self, decl, CPRINT_OPTS_NONE);
+                        c_print_endl(self);
+                        c_print_decl(self, decl, CPRINT_OPTS_NONE);
                 }
         if (braces)
-                cprint_rbrace(self, true);
+                c_print_rbrace(self, true);
 }
 
-static void cprint_typedef(cprinter* self, const tree_decl* decl, int opts)
+static void c_print_typedef(c_printer* self, const tree_decl* decl, int opts)
 {
         tree_id name = tree_get_decl_name(decl);
         if (opts & CPRINT_DECL_NAME)
         {
-                cprint_id(self, name);
+                c_print_id(self, name);
                 return;
         }
 
         if (!(opts & CPRINTER_IGNORE_STORAGE_SPECS))
         {
-                cprintrw(self, CTK_TYPEDEF);
-                cprint_space(self);
+                c_printrw(self, CTK_TYPEDEF);
+                c_print_space(self);
         }
 
-        _cprint_type_name(self, tree_get_decl_type(decl), name, false, NULL, opts);
+        _c_print_type_name(self, tree_get_decl_type(decl), name, false, NULL, opts);
         if (!(opts & CPRINTER_IGNORE_DECL_ENDING))
-                cprintrw(self, CTK_SEMICOLON);
+                c_printrw(self, CTK_SEMICOLON);
 }
 
-static void cprint_struct_or_union_specifier(cprinter* self, const tree_decl* record, int opts)
+static void c_print_struct_or_union_specifier(c_printer* self, const tree_decl* record, int opts)
 {
-        cprintrw(self, (tree_record_is_union(record) ? CTK_UNION : CTK_STRUCT));
-        cprint_space(self);
-        cprint_decl_name(self, record);
+        c_printrw(self, (tree_record_is_union(record) ? CTK_UNION : CTK_STRUCT));
+        c_print_space(self);
+        c_print_decl_name(self, record);
         if (opts & CPRINT_DECL_NAME)
                 return;
 
-        cprint_decl_scope(self, tree_get_record_cfields(record), true, CPRINT_OPTS_NONE);
+        c_print_decl_scope(self, tree_get_record_cfields(record), true, CPRINT_OPTS_NONE);
 }
 
-static void cprint_enum_specifier(cprinter* self, const tree_decl* enum_, int opts)
+static void c_print_enum_specifier(c_printer* self, const tree_decl* enum_, int opts)
 {
-        cprintrw(self, CTK_ENUM);
-        cprint_space(self);
-        cprint_decl_name(self, enum_);
+        c_printrw(self, CTK_ENUM);
+        c_print_space(self);
+        c_print_decl_name(self, enum_);
         if (opts & CPRINT_DECL_NAME)
                 return;
 
-        cprint_decl_scope(self, tree_get_enum_cvalues(enum_), true, CPRINT_OPTS_NONE);
+        c_print_decl_scope(self, tree_get_enum_cvalues(enum_), true, CPRINT_OPTS_NONE);
 }
 
-static void cprint_decl_storage_class(cprinter* self, tree_decl_storage_class c)
+static void c_print_decl_storage_class(c_printer* self, tree_decl_storage_class c)
 {
-        if (c == TDSC_NONE)
-                return;
-
         if (c == TDSC_AUTO)
-                cprintrw(self, CTK_AUTO);
+                c_printrw(self, CTK_AUTO);
         else if (c == TDSC_REGISTER)
-                cprintrw(self, CTK_REGISTER);
+                c_printrw(self, CTK_REGISTER);
         else if (c == TDSC_EXTERN)
-                cprintrw(self, CTK_EXTERN);
+                c_printrw(self, CTK_EXTERN);
         else if (c == TDSC_STATIC)
-                cprintrw(self, CTK_STATIC);
+                c_printrw(self, CTK_STATIC);
         else
                 return;
-        cprint_space(self);
+        c_print_space(self);
 }
 
-static void cprint_function_specifier(cprinter* self, tree_function_specifier_kind k)
+static void c_print_function_specifier(c_printer* self, tree_function_specifier_kind k)
 {
         if (k == TFSK_INLINE)
-                cprintrw(self, CTK_INLINE);
+                c_printrw(self, CTK_INLINE);
         else
                 return;
-        cprint_space(self);
+        c_print_space(self);
 }
 
-static void cprint_function(cprinter* self, const tree_decl* f, int opts)
+static void c_print_function(c_printer* self, const tree_decl* f, int opts)
 {
         if (opts & CPRINT_DECL_NAME)
         {
-                cprint_decl_name(self, f);
+                c_print_decl_name(self, f);
                 return;
         }
 
         if (!(opts & CPRINTER_IGNORE_STORAGE_SPECS))
-                cprint_decl_storage_class(self, tree_get_decl_storage_class(f));
+                c_print_decl_storage_class(self, tree_get_decl_storage_class(f));
 
-        cprint_function_specifier(self, tree_get_function_specifier(f));
+        c_print_function_specifier(self, tree_get_function_specifier(f));
 
         const tree_type* func_type = tree_get_decl_type(f);
         // since we have param-list we skip first function type
         const tree_type* restype = tree_get_function_type_result(func_type);
-        _cprint_type_name(self, restype, tree_get_decl_name(f),
+        _c_print_type_name(self, restype, tree_get_decl_name(f),
                 tree_function_type_is_vararg(func_type), tree_get_function_cparams(f), opts);
 
         const tree_stmt* body = tree_get_function_body(f);
         if (body)
-                cprint_stmt(self, body);
+                c_print_stmt(self, body);
         else if (!(opts & CPRINTER_IGNORE_DECL_ENDING))
-                cprintrw(self, CTK_SEMICOLON);
+                c_printrw(self, CTK_SEMICOLON);
 }
 
-static void cprint_field(cprinter* self, const tree_decl* m, int opts)
+static void c_print_field(c_printer* self, const tree_decl* m, int opts)
 {
         if (opts & CPRINT_DECL_NAME)
         {
-                cprint_decl_name(self, m);
+                c_print_decl_name(self, m);
                 return;
         }
 
-        _cprint_type_name(self, tree_get_decl_type(m), tree_get_decl_name(m), false, NULL, opts);
+        _c_print_type_name(self, tree_get_decl_type(m), tree_get_decl_name(m), false, NULL, opts);
         const tree_expr* bits = tree_get_field_bit_width(m);
         if (bits)
         {
-                cprint_space(self);
-                cprintrw(self, CTK_COLON);
-                cprint_space(self);
-                cprint_expr(self, bits);
+                c_print_space(self);
+                c_printrw(self, CTK_COLON);
+                c_print_space(self);
+                c_print_expr(self, bits);
         }
         if (!(opts & CPRINTER_IGNORE_DECL_ENDING))
-                cprintrw(self, CTK_SEMICOLON);
+                c_printrw(self, CTK_SEMICOLON);
 }
 
-static void cprint_var_decl(cprinter* self, const tree_decl* v, int opts)
+static void c_print_var_decl(c_printer* self, const tree_decl* v, int opts)
 {
         if (opts & CPRINT_DECL_NAME)
         {
-                cprint_decl_name(self, v);
+                c_print_decl_name(self, v);
                 return;
         }
 
-        cprint_decl_storage_class(self, tree_get_decl_storage_class(v));
-        _cprint_type_name(self, tree_get_decl_type(v), tree_get_decl_name(v), false, NULL, opts);
+        c_print_decl_storage_class(self, tree_get_decl_storage_class(v));
+        _c_print_type_name(self, tree_get_decl_type(v), tree_get_decl_name(v), false, NULL, opts);
 
         const tree_expr* init = tree_get_var_init(v);
         if (init)
         {
-                cprint_space(self);
-                cprintrw(self, CTK_EQ);
-                cprint_space(self);
-                cprint_expr(self, init);
+                c_print_space(self);
+                c_printrw(self, CTK_EQ);
+                c_print_space(self);
+                c_print_expr(self, init);
         }
         if (!(opts & CPRINTER_IGNORE_DECL_ENDING))
-                cprintrw(self, CTK_SEMICOLON);
+                c_printrw(self, CTK_SEMICOLON);
 }
 
-static void cprint_enumerator(cprinter* self, const tree_decl* e, int opts)
+static void c_print_enumerator(c_printer* self, const tree_decl* e, int opts)
 {
-        cprint_decl_name(self, e);
+        c_print_decl_name(self, e);
 
         const tree_expr* value = tree_get_enumerator_expr(e);
         if (value && !tree_expr_is(value, TEK_IMPL_INIT) && !(opts & CPRINT_DECL_NAME))
         {
-                cprint_space(self);
-                cprintrw(self, CTK_EQ);
-                cprint_space(self);
-                cprint_expr(self, value);
+                c_print_space(self);
+                c_printrw(self, CTK_EQ);
+                c_print_space(self);
+                c_print_expr(self, value);
         }
         if (!(opts & CPRINTER_IGNORE_DECL_ENDING))
-                cprint_comma(self);
+                c_print_comma(self);
 }
 
-static void cprint_decl_group(cprinter* self, const tree_decl* g, int opts)
+static void c_print_decl_group(c_printer* self, const tree_decl* g, int opts)
 {
         bool first_printed = false;
         TREE_FOREACH_DECL_IN_GROUP(g, it)
         {
                 int o = first_printed ? CPRINTER_IGNORE_SPECS : CPRINT_OPTS_NONE;
-                cprint_decl(self, *it, o | CPRINTER_IGNORE_DECL_ENDING);
+                c_print_decl(self, *it, o | CPRINTER_IGNORE_DECL_ENDING);
                 first_printed = true;
 
                 if (it + 1 != tree_get_decl_group_end(g))
-                        cprint_comma(self);
+                        c_print_comma(self);
                 else
-                        cprintrw(self, CTK_SEMICOLON);
+                        c_printrw(self, CTK_SEMICOLON);
         }
 }
 
-extern void cprint_decl(cprinter* self, const tree_decl* d, int opts)
+extern void c_print_decl(c_printer* self, const tree_decl* d, int opts)
 {
         if (!d)
                 return;
 
         switch (tree_get_decl_kind(d))
         {
-                case TDK_TYPEDEF: cprint_typedef(self, d, opts); break;
-                case TDK_RECORD: cprint_struct_or_union_specifier(self, d, opts); break;
-                case TDK_ENUM: cprint_enum_specifier(self, d, opts); break;
-                case TDK_FUNCTION: cprint_function(self, d, opts); break;
-                case TDK_FIELD: cprint_field(self, d, opts); break;
-                case TDK_VAR: cprint_var_decl(self, d, opts); break;
-                case TDK_ENUMERATOR: cprint_enumerator(self, d, opts); break;
-                case TDK_GROUP: cprint_decl_group(self, d, opts); break;
+                case TDK_TYPEDEF: c_print_typedef(self, d, opts); break;
+                case TDK_RECORD: c_print_struct_or_union_specifier(self, d, opts); break;
+                case TDK_ENUM: c_print_enum_specifier(self, d, opts); break;
+                case TDK_FUNCTION: c_print_function(self, d, opts); break;
+                case TDK_FIELD: c_print_field(self, d, opts); break;
+                case TDK_VAR: c_print_var_decl(self, d, opts); break;
+                case TDK_ENUMERATOR: c_print_enumerator(self, d, opts); break;
+                case TDK_GROUP: c_print_decl_group(self, d, opts); break;
                 default: break;
         }
 }
 
-static void cprint_stmt_with_indent(cprinter*self, const tree_stmt* s)
+static void c_print_stmt_with_indent(c_printer*self, const tree_stmt* s)
 {
         if (!s)
                 return;
 
         if (tree_get_stmt_kind(s) != TSK_COMPOUND)
         {
-                cprinter_add_indent(self);
-                cprint_endl(self);
-                cprint_stmt(self, s);
-                cprinter_sub_indent(self);
+                c_printer_add_indent(self);
+                c_print_endl(self);
+                c_print_stmt(self, s);
+                c_printer_sub_indent(self);
         }
         else
-                cprint_stmt(self, s);
+                c_print_stmt(self, s);
 }
 
-static void cprint_labeled_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_labeled_stmt(c_printer* self, const tree_stmt* s)
 {
         bool restore_indent = false;
         if (self->indent_level)
         {
-                cprinter_sub_indent(self);
+                c_printer_sub_indent(self);
                 restore_indent = true;
         }
 
-        cprint_endl(self);
+        c_print_endl(self);
         const tree_decl* label = tree_get_label_stmt_decl(s);
-        cprint_decl_name(self, label);
-        cprintrw(self, CTK_COLON);
+        c_print_decl_name(self, label);
+        c_printrw(self, CTK_COLON);
 
         if (restore_indent)
-                cprinter_add_indent(self);
-        cprint_endl(self);
-        cprint_stmt(self, tree_get_label_decl_stmt(label));
+                c_printer_add_indent(self);
+        c_print_endl(self);
+        c_print_stmt(self, tree_get_label_decl_stmt(label));
 }
 
-static void cprint_case_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_case_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprintrw(self, CTK_CASE);
-        cprint_space(self);
-        cprint_expr(self, tree_get_case_expr(s));
-        cprintrw(self, CTK_COLON);
-        cprinter_add_indent(self);
-        cprint_endl(self);
-        cprint_stmt(self, tree_get_case_body(s));
-        cprinter_sub_indent(self);
+        c_printrw(self, CTK_CASE);
+        c_print_space(self);
+        c_print_expr(self, tree_get_case_expr(s));
+        c_printrw(self, CTK_COLON);
+        c_printer_add_indent(self);
+        c_print_endl(self);
+        c_print_stmt(self, tree_get_case_body(s));
+        c_printer_sub_indent(self);
 }
 
-static void cprint_default_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_default_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprintrw(self, CTK_DEFAULT);
-        cprintrw(self, CTK_COLON);
-        cprinter_add_indent(self);
-        cprint_endl(self);
-        cprint_stmt(self, tree_get_default_body(s));
-        cprinter_sub_indent(self);
+        c_printrw(self, CTK_DEFAULT);
+        c_printrw(self, CTK_COLON);
+        c_printer_add_indent(self);
+        c_print_endl(self);
+        c_print_stmt(self, tree_get_default_body(s));
+        c_printer_sub_indent(self);
 }
 
-static void cprint_compound_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_compound_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprint_lbrace(self, true);
+        c_print_lbrace(self, true);
         const tree_scope* scope = tree_get_compound_cscope(s);
         TREE_FOREACH_STMT(scope, stmt)
         {
-                cprint_endl(self);
-                cprint_stmt(self, stmt);
+                c_print_endl(self);
+                c_print_stmt(self, stmt);
         }
-        cprint_rbrace(self, true);
+        c_print_rbrace(self, true);
 }
 
-static void cprint_expr_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_expr_stmt(c_printer* self, const tree_stmt* s)
 {
         const tree_expr* expr = tree_get_expr_stmt_root(s);
-        cprint_expr(self, expr);
-        cprintrw(self, CTK_SEMICOLON);
+        c_print_expr(self, expr);
+        c_printrw(self, CTK_SEMICOLON);
         if (!expr)
                 return;
 
@@ -1039,157 +1036,157 @@ static void cprint_expr_stmt(cprinter* self, const tree_stmt* s)
         bool print_val = self->opts.print_expr_value;
         bool print_eval_result = self->opts.print_eval_result;
         if (print_eval_result || print_val || print_type)
-                cprints(self, " // ");
+                c_prints(self, " // ");
 
         if (print_val)
-                cprints(self, (tree_expr_is_lvalue(expr) ? "lvalue " : "rvalue "));
+                c_prints(self, (tree_expr_is_lvalue(expr) ? "lvalue " : "rvalue "));
         if (print_type)
-                cprint_type_name(self, tree_get_expr_type(expr),
+                c_print_type_name(self, tree_get_expr_type(expr),
                         CPRINT_TYPE_REF | CPRINT_IMPL_TYPE_BRACKETS);
         if (print_eval_result)
         {
                 tree_eval_result r;
                 tree_eval_expr(self->context, expr, &r);
                 if (r.kind == TERK_INVALID)
-                        cprints(self, "not-a-constant ");
+                        c_prints(self, "not-a-constant ");
                 else if (r.kind == TERK_ADDRESS_CONSTANT)
-                        cprints(self, "address constant ");
+                        c_prints(self, "address constant ");
                 else
                 {
                         tree_type* t = tree_get_expr_type(expr);
                         if (tree_type_is_integer(t))
-                                cprint_integer(self, t, avalue_get_u64(&r.value));
+                                c_print_integer(self, t, avalue_get_u64(&r.value));
                         else if (tree_builtin_type_is(t, TBTK_FLOAT))
-                                cprint_float(self, avalue_get_sp(&r.value));
+                                c_print_float(self, avalue_get_sp(&r.value));
                         else if (tree_builtin_type_is(t, TBTK_DOUBLE))
-                                cprint_double(self, avalue_get_dp(&r.value));
+                                c_print_double(self, avalue_get_dp(&r.value));
                 }
         }
 }
 
-static void cprint_if_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_if_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprintrw(self, CTK_IF);
-        cprint_space(self);
-        _cprint_expr(self, tree_get_if_condition(s), true);
-        cprint_stmt_with_indent(self, tree_get_if_body(s));
+        c_printrw(self, CTK_IF);
+        c_print_space(self);
+        _c_print_expr(self, tree_get_if_condition(s), true);
+        c_print_stmt_with_indent(self, tree_get_if_body(s));
 
         const tree_stmt* else_ = tree_get_if_else(s);
         if (else_)
         {
-                cprint_endl(self);
-                cprintrw(self, CTK_ELSE);
-                cprint_space(self);
+                c_print_endl(self);
+                c_printrw(self, CTK_ELSE);
+                c_print_space(self);
                 if (tree_get_stmt_kind(else_) != TSK_IF)
-                        cprint_stmt_with_indent(self, else_);
+                        c_print_stmt_with_indent(self, else_);
                 else
-                        cprint_stmt(self, else_);
+                        c_print_stmt(self, else_);
         }
 }
 
-static void cprint_switch_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_switch_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprintrw(self, CTK_SWITCH);
-        cprint_space(self);
-        _cprint_expr(self, tree_get_switch_expr(s), true);
-        cprint_stmt_with_indent(self, tree_get_switch_body(s));
+        c_printrw(self, CTK_SWITCH);
+        c_print_space(self);
+        _c_print_expr(self, tree_get_switch_expr(s), true);
+        c_print_stmt_with_indent(self, tree_get_switch_body(s));
 }
 
-static void cprint_while_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_while_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprintrw(self, CTK_WHILE);
-        cprint_space(self);
-        _cprint_expr(self, tree_get_while_condition(s), true);
-        cprint_stmt_with_indent(self, tree_get_while_body(s));
+        c_printrw(self, CTK_WHILE);
+        c_print_space(self);
+        _c_print_expr(self, tree_get_while_condition(s), true);
+        c_print_stmt_with_indent(self, tree_get_while_body(s));
 }
 
-static void cprint_do_while_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_do_while_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprintrw(self, CTK_DO);
-        cprint_space(self);
-        cprint_stmt_with_indent(self, tree_get_do_while_body(s));
-        cprint_endl(self);
-        cprintrw(self, CTK_WHILE);
-        cprint_space(self);
-        _cprint_expr(self, tree_get_do_while_condition(s), true);
-        cprintrw(self, CTK_SEMICOLON);
+        c_printrw(self, CTK_DO);
+        c_print_space(self);
+        c_print_stmt_with_indent(self, tree_get_do_while_body(s));
+        c_print_endl(self);
+        c_printrw(self, CTK_WHILE);
+        c_print_space(self);
+        _c_print_expr(self, tree_get_do_while_condition(s), true);
+        c_printrw(self, CTK_SEMICOLON);
 }
 
-static void cprint_for_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_for_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprintrw(self, CTK_FOR);
-        cprint_space(self);
-        cprint_lbracket(self);
-        cprint_stmt(self, tree_get_for_init(s));
-        cprint_space(self);
-        cprint_expr(self, tree_get_for_condition(s));
-        cprintrw(self, CTK_SEMICOLON);
-        cprint_space(self);
-        cprint_expr(self, tree_get_for_step(s));
-        cprint_rbracket(self);
-        cprint_stmt_with_indent(self, tree_get_for_body(s));
+        c_printrw(self, CTK_FOR);
+        c_print_space(self);
+        c_print_lbracket(self);
+        c_print_stmt(self, tree_get_for_init(s));
+        c_print_space(self);
+        c_print_expr(self, tree_get_for_condition(s));
+        c_printrw(self, CTK_SEMICOLON);
+        c_print_space(self);
+        c_print_expr(self, tree_get_for_step(s));
+        c_print_rbracket(self);
+        c_print_stmt_with_indent(self, tree_get_for_body(s));
 }
 
-static void cprint_goto_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_goto_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprintrw(self, CTK_GOTO);
-        cprint_space(self);
-        cprint_decl_name(self, tree_get_goto_label(s));
-        cprintrw(self, CTK_SEMICOLON);
+        c_printrw(self, CTK_GOTO);
+        c_print_space(self);
+        c_print_decl_name(self, tree_get_goto_label(s));
+        c_printrw(self, CTK_SEMICOLON);
 }
 
-static void cprint_continue_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_continue_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprintrw(self, CTK_CONTINUE);
-        cprintrw(self, CTK_SEMICOLON);
+        c_printrw(self, CTK_CONTINUE);
+        c_printrw(self, CTK_SEMICOLON);
 }
 
-static void cprint_break_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_break_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprintrw(self, CTK_BREAK);
-        cprintrw(self, CTK_SEMICOLON);
+        c_printrw(self, CTK_BREAK);
+        c_printrw(self, CTK_SEMICOLON);
 }
 
-static void cprint_decl_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_decl_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprint_decl(self, tree_get_decl_stmt_entity(s), CPRINT_OPTS_NONE);
+        c_print_decl(self, tree_get_decl_stmt_entity(s), CPRINT_OPTS_NONE);
 }
 
-static void cprint_return_stmt(cprinter* self, const tree_stmt* s)
+static void c_print_return_stmt(c_printer* self, const tree_stmt* s)
 {
-        cprintrw(self, CTK_RETURN);
-        cprint_space(self);
-        cprint_expr(self, tree_get_return_value(s));
-        cprintrw(self, CTK_SEMICOLON);
+        c_printrw(self, CTK_RETURN);
+        c_print_space(self);
+        c_print_expr(self, tree_get_return_value(s));
+        c_printrw(self, CTK_SEMICOLON);
 }
 
-extern void cprint_stmt(cprinter* self, const tree_stmt* s)
+extern void c_print_stmt(c_printer* self, const tree_stmt* s)
 {
         if (!s)
                 return;
 
         switch (tree_get_stmt_kind(s))
         {
-                case TSK_LABELED: cprint_labeled_stmt(self, s); break;
-                case TSK_CASE: cprint_case_stmt(self, s); break;
-                case TSK_DEFAULT: cprint_default_stmt(self, s); break;
-                case TSK_COMPOUND: cprint_compound_stmt(self, s); break;
-                case TSK_EXPR: cprint_expr_stmt(self, s); break;
-                case TSK_IF: cprint_if_stmt(self, s); break;
-                case TSK_SWITCH: cprint_switch_stmt(self, s); break;
-                case TSK_WHILE: cprint_while_stmt(self, s); break;
-                case TSK_DO_WHILE: cprint_do_while_stmt(self, s); break;
-                case TSK_FOR: cprint_for_stmt(self, s); break;
-                case TSK_GOTO: cprint_goto_stmt(self, s); break;
-                case TSK_CONTINUE: cprint_continue_stmt(self, s); break;
-                case TSK_BREAK: cprint_break_stmt(self, s); break;
-                case TSK_DECL: cprint_decl_stmt(self, s); break;
-                case TSK_RETURN: cprint_return_stmt(self, s); break;
+                case TSK_LABELED: c_print_labeled_stmt(self, s); break;
+                case TSK_CASE: c_print_case_stmt(self, s); break;
+                case TSK_DEFAULT: c_print_default_stmt(self, s); break;
+                case TSK_COMPOUND: c_print_compound_stmt(self, s); break;
+                case TSK_EXPR: c_print_expr_stmt(self, s); break;
+                case TSK_IF: c_print_if_stmt(self, s); break;
+                case TSK_SWITCH: c_print_switch_stmt(self, s); break;
+                case TSK_WHILE: c_print_while_stmt(self, s); break;
+                case TSK_DO_WHILE: c_print_do_while_stmt(self, s); break;
+                case TSK_FOR: c_print_for_stmt(self, s); break;
+                case TSK_GOTO: c_print_goto_stmt(self, s); break;
+                case TSK_CONTINUE: c_print_continue_stmt(self, s); break;
+                case TSK_BREAK: c_print_break_stmt(self, s); break;
+                case TSK_DECL: c_print_decl_stmt(self, s); break;
+                case TSK_RETURN: c_print_return_stmt(self, s); break;
                 default: break;
         }
 }
 
-extern void cprint_module(cprinter* self, const tree_module* module)
+extern void c_print_module(c_printer* self, const tree_module* module)
 {
-        cprint_decl_scope(self, tree_get_module_cglobals(module), false, CPRINT_OPTS_NONE);
+        c_print_decl_scope(self, tree_get_module_cglobals(module), false, CPRINT_OPTS_NONE);
 }

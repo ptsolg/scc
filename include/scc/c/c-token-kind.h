@@ -1,5 +1,5 @@
-#ifndef CTOKEN_KIND_H
-#define CTOKEN_KIND_H
+#ifndef C_TOKEN_KIND_H
+#define C_TOKEN_KIND_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -9,47 +9,47 @@
 extern "C" {
 #endif
 
-#define CTOKEN(T) CTK_##T
+#define C_TOKEN(T) CTK_##T
 
 // C preprocessor token
-#define CPP_KEYWORD(T) CTK_PP_##T
+#define C_PP_KEYWORD(T) CTK_PP_##T
 
 // {} [] () & * etc...
-#define CPUNCTUATOR(T) CTOKEN(T)
+#define C_PUNCTUATOR(T) C_TOKEN(T)
 
 // if else do while etc...
-#define CKEYWORD(T) CTOKEN(T)
+#define C_KEYWORD(T) C_TOKEN(T)
 
-typedef enum _ctoken_kind
+typedef enum _c_token_kind
 {
 #include "c-token-kind.inc"
-} ctoken_kind;
+} c_token_kind;
 
-#undef CTOKEN
-#undef CPP_KEYWORD
-#undef CPUNCTUATOR
-#undef CKEYWORD
+#undef C_TOKEN
+#undef C_PP_KEYWORD
+#undef C_PUNCTUATOR
+#undef C_KEYWORD
 
 #define _TOSTR(X) #X
-#define CTOKEN(T) _TOSTR(CTK_##T)
-#define CPP_KEYWORD(T) _TOSTR(CTK_PP_##T)
-#define CPUNCTUATOR(T) CTOKEN(T)
-#define CKEYWORD(T) CTOKEN(T)
+#define C_TOKEN(T) _TOSTR(CTK_##T)
+#define C_PP_KEYWORD(T) _TOSTR(CTK_PP_##T)
+#define C_PUNCTUATOR(T) C_TOKEN(T)
+#define C_KEYWORD(T) C_TOKEN(T)
 
-static const char* ctoken_kind_to_string[] = 
+static const char* c_token_kind_to_string[] = 
 {
 #include "c-token-kind.inc"
         "",
 };
 
-#undef CTOKEN
-#undef CPP_KEYWORD
-#undef CPUNCTUATOR
-#undef CKEYWORD
+#undef C_TOKEN
+#undef C_PP_KEYWORD
+#undef C_PUNCTUATOR
+#undef C_KEYWORD
 #undef _TOSTR
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // !CTOKEN_KIND_H
+#endif

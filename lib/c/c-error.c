@@ -3,9 +3,9 @@
 #include "scc/c/c-source.h"
 #include <stdarg.h>
 
-extern void clogger_init(
-        clogger* self,
-        const csource_manager* source_manager,
+extern void c_logger_init(
+        c_logger* self,
+        const c_source_manager* source_manager,
         const tree_context* tree,
         FILE* log)
 {
@@ -18,49 +18,49 @@ extern void clogger_init(
         self->output = log;
 }
 
-extern void clogger_set_output(clogger* self, FILE* output)
+extern void c_logger_set_output(c_logger* self, FILE* output)
 {
         self->output = output;
 }
 
-extern void clogger_set_enabled(clogger* self)
+extern void c_logger_set_enabled(c_logger* self)
 {
         self->enabled = true;
 }
 
-extern void clogger_set_disabled(clogger* self)
+extern void c_logger_set_disabled(c_logger* self)
 {
         self->enabled = false;
 }
 
-static const char* cerror_severity_to_str[] =
+static const char* c_error_severity_to_str[] =
 {
         "warning",
         "error",
         "fatal error",
 };
 
-extern void cerror(
-        clogger* self,
-        cerror_severity severity,
+extern void c_error(
+        c_logger* self,
+        c_error_severity severity,
         tree_location location,
         const char* description, ...)
 {
         if (!self->enabled)
                 return;
 
-        clocation l;
-        csource_find_loc(self->source_manager, &l, location);
+        c_location l;
+        c_source_find_loc(self->source_manager, &l, location);
 
-        char buffer[CMAX_LINE_LENGTH];
+        char buffer[C_MAX_LINE_LENGTH];
         va_list args;
         va_start(args, description);
-        vsnprintf(buffer, CMAX_LINE_LENGTH, description, args);
+        vsnprintf(buffer, C_MAX_LINE_LENGTH, description, args);
 
         fprintf(self->output, "%s:%d:%d: %s: %s\n",
                 path_get_cfile(l.file),
                 l.line,
                 l.column,
-                cerror_severity_to_str[severity],
+                c_error_severity_to_str[severity],
                 buffer);
 }

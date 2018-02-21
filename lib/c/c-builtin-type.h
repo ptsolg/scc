@@ -1,5 +1,5 @@
-#ifndef CBUILTIN_TYPE_H
-#define CBUILTIN_TYPE_H
+#ifndef C_BUILTIN_TYPE_H
+#define C_BUILTIN_TYPE_H
 
 #include "scc/tree/tree-type.h"
 
@@ -10,14 +10,14 @@ typedef struct
         int num_long;
         int num_signed;
         int num_unsigned;
-} cbuiltin_type;
+} c_builtin_type;
 
-extern void cbuiltin_type_init(cbuiltin_type* self);
-extern bool cbuiltin_type_set_kind(cbuiltin_type* self, tree_builtin_type_kind type);
-extern tree_builtin_type_kind cbuiltin_type_get_kind(const cbuiltin_type* self);
-extern bool cbuiltin_type_add_signed_specifier(cbuiltin_type* self);
-extern bool cbuiltin_type_add_unsigned_specifier(cbuiltin_type* self);
-extern bool cbuiltin_type_add_short_specifier(cbuiltin_type* self);
-extern bool cbuiltin_type_add_long_specifier(cbuiltin_type* self);
+extern void c_builtin_type_init(c_builtin_type* self);
+extern bool c_builtin_type_set_kind(c_builtin_type* self, tree_builtin_type_kind type);
+extern tree_builtin_type_kind c_builtin_type_get_kind(const c_builtin_type* self);
+extern bool c_builtin_type_add_signed_specifier(c_builtin_type* self);
+extern bool c_builtin_type_add_unsigned_specifier(c_builtin_type* self);
+extern bool c_builtin_type_add_short_specifier(c_builtin_type* self);
+extern bool c_builtin_type_add_long_specifier(c_builtin_type* self);
 
 #endif

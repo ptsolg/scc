@@ -4,48 +4,48 @@
 #include "scc/c/c-source.h"
 #include <setjmp.h>
 
-extern void cinit(ccontext* self, tree_context* tree, jmp_buf on_bad_alloc)
+extern void c_context_init(c_context* self, tree_context* tree, jmp_buf on_bad_alloc)
 {
-        cinit_ex(self, tree, on_bad_alloc, STDALLOC);
+        c_context_init_ex(self, tree, on_bad_alloc, STDALLOC);
 }
 
-extern void cinit_ex(ccontext* self,
+extern void c_context_init_ex(c_context* self,
         tree_context* tree, jmp_buf on_bad_alloc, allocator* alloc)
 {
         self->tree = tree;
 
         mempool_init_ex(&self->memory, NULL, on_bad_alloc, alloc);
-        obstack_init_ex(&self->nodes, cget_alloc(self));
+        obstack_init_ex(&self->nodes, c_context_get_allocator(self));
         list_init(&self->sources);
 }
 
-extern void cdispose(ccontext* self)
+extern void c_context_dispose(c_context* self)
 {
         while (!list_empty(&self->sources))
-                csource_delete(self, (csource*)list_pop_back(&self->sources));
+                c_delete_source(self, (c_source*)list_pop_back(&self->sources));
 
         obstack_dispose(&self->nodes);
         mempool_dispose(&self->memory);
 }
 
-extern csource* csource_new(ccontext* context, file_entry* entry)
+extern c_source* c_new_source(c_context* context, file_entry* entry)
 {
-        csource* s = allocate(cget_alloc(context), sizeof(*s));
-        s->_begin = TREE_INVALID_LOC;
-        s->_end = TREE_INVALID_LOC;
-        s->_file = entry;
-        list_node_init(&s->_node);
-        dseq_u32_init_alloc(&s->_lines, cget_alloc(context));
-        list_push_back(&context->sources, &s->_node);
+        c_source* s = allocate(c_context_get_allocator(context), sizeof(*s));
+        s->begin = TREE_INVALID_LOC;
+        s->end = TREE_INVALID_LOC;
+        s->file = entry;
+        list_node_init(&s->node);
+        dseq_u32_init_alloc(&s->lines, c_context_get_allocator(context));
+        list_push_back(&context->sources, &s->node);
         return s;
 }
 
-extern void csource_delete(ccontext* context, csource* source)
+extern void c_delete_source(c_context* context, c_source* source)
 {
         if (!source)
                 return;
 
-        file_close(source->_file);
-        list_node_remove(&source->_node);
-        deallocate(cget_alloc(context), source);
+        file_close(source->file);
+        list_node_remove(&source->node);
+        deallocate(c_context_get_allocator(context), source);
 }

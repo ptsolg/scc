@@ -1,5 +1,5 @@
-#ifndef CPARSE_MODULE_H
-#define CPARSE_MODULE_H
+#ifndef C_PARSE_MODULE_H
+#define C_PARSE_MODULE_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -14,10 +14,10 @@ extern "C" {
 // c99 6.9 translation-unit:
 // external-declaration
 // translation-unit external-declaration
-extern tree_module* cparse_module(cparser* self);
+extern tree_module* c_parse_module(c_parser* self);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // !CPARSE_MODULE_H
+#endif

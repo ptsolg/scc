@@ -3,21 +3,21 @@
 #include "scc/c/c-errors.h"
 #include "scc/scl/bit-utils.h"
 
-#define DSEQ_VALUE_TYPE cswitch_stmt_info
-#define DSEQ_TYPE cswitch_stack
-#define DSEQ_INIT cswitch_stack_init
-#define DSEQ_INIT_ALLOC cswitch_stack_init_alloc
-#define DSEQ_DISPOSE cswitch_stack_dispose
-#define DSEQ_GET_SIZE cswitch_stack_size
-#define DSEQ_GET_CAPACITY cswitch_stack_capacity
-#define DSEQ_GET_ALLOCATOR cswitch_stack_allocator
-#define DSEQ_RESERVE cswitch_stack_reserve
-#define DSEQ_RESIZE cswitch_stack_resize
-#define DSEQ_GET_BEGIN cswitch_stack_begin
-#define DSEQ_GET_END cswitch_stack_end
-#define DSEQ_GET cswitch_stack_get
-#define DSEQ_SET cswitch_stack_set
-#define DSEQ_APPEND cswitch_stack_append
+#define DSEQ_VALUE_TYPE c_switch_stmt_info
+#define DSEQ_TYPE c_switch_stack
+#define DSEQ_INIT c_switch_stack_init
+#define DSEQ_INIT_ALLOC c_switch_stack_init_alloc
+#define DSEQ_DISPOSE c_switch_stack_dispose
+#define DSEQ_GET_SIZE c_switch_stack_size
+#define DSEQ_GET_CAPACITY c_switch_stack_capacity
+#define DSEQ_GET_ALLOCATOR c_switch_stack_allocator
+#define DSEQ_RESERVE c_switch_stack_reserve
+#define DSEQ_RESIZE c_switch_stack_resize
+#define DSEQ_GET_BEGIN c_switch_stack_begin
+#define DSEQ_GET_END c_switch_stack_end
+#define DSEQ_GET c_switch_stack_get
+#define DSEQ_SET c_switch_stack_set
+#define DSEQ_APPEND c_switch_stack_append
 
 #include "scc/scl/dseq.h"
 
@@ -40,30 +40,30 @@
 #define CCASE_LABEL_MAP_EMPTY_KEY ((suint32)-1)
 #define CCASE_LABEL_MAP_DELETED_KEY ((suint32)-2)
 
-#define HTAB_TYPE ccase_label_map
-#define HTAB_IMPL_FN_GENERATOR(NAME) _ccase_label_map_##NAME
+#define HTAB_TYPE c_case_label_map
+#define HTAB_IMPL_FN_GENERATOR(NAME) _c_case_label_map_##NAME
 #define HTAB_KEY_TYPE suint32
 #define HTAB_DELETED_KEY CCASE_LABEL_MAP_EMPTY_KEY
 #define HTAB_EMPTY_KEY CCASE_LABEL_MAP_DELETED_KEY
 #define HTAB_VALUE_TYPE void*
-#define HTAB_INIT ccase_label_map_init
-#define HTAB_INIT_ALLOC ccase_label_map_init_alloc
-#define HTAB_DISPOSE ccase_label_map_dispose
-#define HTAB_GET_SIZE ccase_label_map_size
-#define HTAB_GET_ALLOCATOR ccase_label_map_alloc
-#define HTAB_RESERVE ccase_label_map_reserve
-#define HTAB_CLEAR ccase_label_map_clear
-#define HTAB_GROW ccase_label_map_grow
-#define HTAB_INSERT ccase_label_map_insert
-#define HTAB_FIND ccase_label_map_find
+#define HTAB_INIT c_case_label_map_init
+#define HTAB_INIT_ALLOC c_case_label_map_init_alloc
+#define HTAB_DISPOSE c_case_label_map_dispose
+#define HTAB_GET_SIZE c_case_label_map_size
+#define HTAB_GET_ALLOCATOR c_case_label_map_alloc
+#define HTAB_RESERVE c_case_label_map_reserve
+#define HTAB_CLEAR c_case_label_map_clear
+#define HTAB_GROW c_case_label_map_grow
+#define HTAB_INSERT c_case_label_map_insert
+#define HTAB_FIND c_case_label_map_find
 
-#define HTAB_ITERATOR_TYPE ccase_label_map_iter
-#define HTAB_ITERATOR_GET_KEY ccase_label_map_iter_key
-#define HTAB_ITERATOR_ADVANCE ccase_label_map_iter_advance
-#define HTAB_ITERATOR_INIT ccase_label_map_iter_init
-#define HTAB_ITERATOR_CREATE ccase_label_map_iter_create
-#define HTAB_ITERATOR_IS_VALID ccase_label_map_iter_valid
-#define HTAB_ITERATOR_GET_VALUE ccase_label_map_iter_value
+#define HTAB_ITERATOR_TYPE c_case_label_map_iter
+#define HTAB_ITERATOR_GET_KEY c_case_label_map_iter_key
+#define HTAB_ITERATOR_ADVANCE c_case_label_map_iter_advance
+#define HTAB_ITERATOR_INIT c_case_label_map_iter_init
+#define HTAB_ITERATOR_CREATE c_case_label_map_iter_create
+#define HTAB_ITERATOR_IS_VALID c_case_label_map_iter_valid
+#define HTAB_ITERATOR_GET_VALUE c_case_label_map_iter_value
 
 #include "scc/scl/htab.h"
 
@@ -91,10 +91,10 @@
 #undef HTAB_ITERATOR_IS_VALID
 #undef HTAB_ITERATOR_GET_VALUE
 
-extern void csema_init(csema* self, ccontext* context, clogger* logger)
+extern void c_sema_init(c_sema* self, c_context* context, c_logger* logger)
 {
         self->ccontext = context;
-        self->context = cget_tree(context);
+        self->context = c_context_get_tree_context(context);
         self->module = NULL;
         self->globals = NULL;
         self->target = NULL;
@@ -103,15 +103,15 @@ extern void csema_init(csema* self, ccontext* context, clogger* logger)
         self->labels = NULL;
         self->scope = NULL;
         self->logger = logger;
-        cswitch_stack_init_alloc(&self->switch_stack, cget_alloc(self->ccontext));
+        c_switch_stack_init_alloc(&self->switch_stack, c_context_get_allocator(self->ccontext));
 }
 
-extern void csema_dispose(csema* self)
+extern void c_sema_dispose(c_sema* self)
 {
         // todo
 }
 
-extern void csema_enter_module(csema* self, tree_module* module)
+extern void c_sema_enter_module(c_sema* self, tree_module* module)
 {
         self->module = module;
         self->globals = tree_get_module_globals(module);
@@ -119,104 +119,104 @@ extern void csema_enter_module(csema* self, tree_module* module)
         self->locals = self->globals;
 }
 
-extern void csema_enter_scope(csema* self, tree_scope* scope)
+extern void c_sema_enter_scope(c_sema* self, tree_scope* scope)
 {
         S_ASSERT(tree_get_scope_parent(scope) == self->scope
                 && "scopes should be connected.");
         self->scope = scope;
-        csema_enter_decl_scope(self, tree_get_scope_decls(scope));
+        c_sema_enter_decl_scope(self, tree_get_scope_decls(scope));
 }
 
-extern void csema_exit_scope(csema* self)
+extern void c_sema_exit_scope(c_sema* self)
 {
         S_ASSERT(self->scope);
         self->scope = tree_get_scope_parent(self->scope);
-        csema_exit_decl_scope(self);
+        c_sema_exit_decl_scope(self);
 }
 
-extern void csema_enter_decl_scope(csema* self, tree_decl_scope* scope)
+extern void c_sema_enter_decl_scope(c_sema* self, tree_decl_scope* scope)
 {
         S_ASSERT(tree_get_decl_scope_parent(scope) == self->locals
                 && "scopes should be connected.");
         self->locals = scope;
 }
 
-extern void csema_exit_decl_scope(csema* self)
+extern void c_sema_exit_decl_scope(c_sema* self)
 {
         tree_decl_scope* parent = tree_get_decl_scope_parent(self->locals);
         S_ASSERT(parent);
         self->locals = parent;
 }
 
-extern void csema_enter_function(csema* self, tree_decl* func)
+extern void c_sema_enter_function(c_sema* self, tree_decl* func)
 {
         self->labels = tree_get_function_labels(func);
         self->function = func;
-        csema_enter_decl_scope(self, tree_get_function_params(func));
+        c_sema_enter_decl_scope(self, tree_get_function_params(func));
 }
 
-extern void csema_exit_function(csema* self)
+extern void c_sema_exit_function(c_sema* self)
 {
         self->labels = NULL;
         self->function = NULL;
-        csema_exit_decl_scope(self);
+        c_sema_exit_decl_scope(self);
 }
 
-extern void csema_push_scope(csema* self)
+extern void c_sema_push_scope(c_sema* self)
 {
-        csema_enter_decl_scope(self, tree_new_decl_scope(self->context, self->locals));
+        c_sema_enter_decl_scope(self, tree_new_decl_scope(self->context, self->locals));
 }
 
-extern void csema_push_switch_stmt_info(csema* self, tree_stmt* switch_stmt)
+extern void c_sema_push_switch_stmt_info(c_sema* self, tree_stmt* switch_stmt)
 {
-        cswitch_stmt_info info;
+        c_switch_stmt_info info;
         info.has_default_label = false;
         info.switch_stmt = switch_stmt;
-        ccase_label_map_init_alloc(&info.labels, cget_alloc(self->ccontext));
-        cswitch_stack_append(&self->switch_stack, info);
+        c_case_label_map_init_alloc(&info.labels, c_context_get_allocator(self->ccontext));
+        c_switch_stack_append(&self->switch_stack, info);
 }
 
-extern void csema_pop_switch_stmt_info(csema* self)
+extern void c_sema_pop_switch_stmt_info(c_sema* self)
 {
-        ssize size = cswitch_stack_size(&self->switch_stack);
+        ssize size = c_switch_stack_size(&self->switch_stack);
         S_ASSERT(size);
-        ccase_label_map_dispose(&csema_get_switch_stmt_info(self)->labels);
-        cswitch_stack_resize(&self->switch_stack, size - 1);
+        c_case_label_map_dispose(&c_sema_get_switch_stmt_info(self)->labels);
+        c_switch_stack_resize(&self->switch_stack, size - 1);
 }
 
-extern void csema_set_switch_stmt_has_default_label(csema* self)
+extern void c_sema_set_switch_stmt_has_default_label(c_sema* self)
 {
-        csema_get_switch_stmt_info(self)->has_default_label = true;
+        c_sema_get_switch_stmt_info(self)->has_default_label = true;
 }
 
-extern cswitch_stmt_info* csema_get_switch_stmt_info(const csema* self)
+extern c_switch_stmt_info* c_sema_get_switch_stmt_info(const c_sema* self)
 {
-        ssize size = cswitch_stack_size(&self->switch_stack);
+        ssize size = c_switch_stack_size(&self->switch_stack);
         S_ASSERT(size);
-        return cswitch_stack_begin(&self->switch_stack) + size - 1;
+        return c_switch_stack_begin(&self->switch_stack) + size - 1;
 }
 
-extern bool csema_in_switch_stmt(const csema* self)
+extern bool c_sema_in_switch_stmt(const c_sema* self)
 {
-        return cswitch_stack_size(&self->switch_stack) != 0;
+        return c_switch_stack_size(&self->switch_stack) != 0;
 }
 
-extern bool csema_switch_stmt_has_default_label(const csema* self)
+extern bool c_sema_switch_stmt_has_default_label(const c_sema* self)
 {
-        return csema_get_switch_stmt_info(self)->has_default_label;
+        return c_sema_get_switch_stmt_info(self)->has_default_label;
 }
 
-extern bool csema_switch_stmt_register_case_label(const csema* self, tree_stmt* label)
+extern bool c_sema_switch_stmt_register_case_label(const c_sema* self, tree_stmt* label)
 {
         const int_value* val = tree_get_case_cvalue(label);
         suint32 key = int_get_u32(val);
 
-        ccase_label_map* labels = &csema_get_switch_stmt_info(self)->labels;
+        c_case_label_map* labels = &c_sema_get_switch_stmt_info(self)->labels;
         for (suint32 i = 1; ; i++)
         {
-                ccase_label_map_iter res;
-                if (ccase_label_map_find(labels, key, &res)
-                        && int_cmp(val, tree_get_case_cvalue(*ccase_label_map_iter_value(&res))) == CR_EQ)
+                c_case_label_map_iter res;
+                if (c_case_label_map_find(labels, key, &res)
+                        && int_cmp(val, tree_get_case_cvalue(*c_case_label_map_iter_value(&res))) == CR_EQ)
                 {
                         return false;
                 }
@@ -225,16 +225,16 @@ extern bool csema_switch_stmt_register_case_label(const csema* self, tree_stmt* 
                 key += i;
         }
 
-        ccase_label_map_insert(labels, key, label);
+        c_case_label_map_insert(labels, key, label);
         return true;
 }
 
-extern bool csema_at_file_scope(const csema* self)
+extern bool c_sema_at_file_scope(const c_sema* self)
 {
         return self->locals == self->globals;
 }
 
-extern bool csema_at_block_scope(const csema* self)
+extern bool c_sema_at_block_scope(const c_sema* self)
 {
         return (bool)self->function;
 }

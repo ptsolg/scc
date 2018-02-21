@@ -2,7 +2,7 @@
 #include "scc/c/c-reswords.h"
 #include "scc/scl/char-info.h"
 
-extern void cget_unescaped_string(char* buffer, const char* string, ssize len)
+extern void c_get_unescaped_string(char* buffer, const char* string, ssize len)
 {
         for (ssize i = 0; i < len; i++)
         {
@@ -18,7 +18,7 @@ extern void cget_unescaped_string(char* buffer, const char* string, ssize len)
         *buffer++ = '\0';
 }
 
-extern ssize cget_escaped_string(char* buffer, const char* string, ssize len)
+extern ssize c_get_escaped_string(char* buffer, const char* string, ssize len)
 {
         char* begin = buffer;
         for (ssize i = 0; i < len; i++)
@@ -38,10 +38,10 @@ extern ssize cget_escaped_string(char* buffer, const char* string, ssize len)
 typedef struct
 {
         const char* string;
-} cbuiltin_type_info;
+} c_builtin_type_info;
 
 S_STATIC_ASSERT(12 == TBTK_SIZE, "cbuiltin_type_info_table needs update.");
-static const cbuiltin_type_info cbuiltin_type_info_table[TBTK_SIZE] =
+static const c_builtin_type_info c_builtin_type_info_table[TBTK_SIZE] =
 {
         { "" }, // TBTK_INVALID
         { "void" }, // TBTK_VOID
@@ -57,47 +57,47 @@ static const cbuiltin_type_info cbuiltin_type_info_table[TBTK_SIZE] =
         { "double" }, // TBTK_DOUBLE
 };
 
-static inline const cbuiltin_type_info* cget_builtin_type_info(tree_builtin_type_kind k)
+static inline const c_builtin_type_info* c_get_builtin_type_info(tree_builtin_type_kind k)
 {
         ASSERT_ENUM_RANGE(k, TBTK_SIZE);
-        return &cbuiltin_type_info_table[k];
+        return &c_builtin_type_info_table[k];
 }
 
-extern const char* cget_builtin_type_string(tree_builtin_type_kind k)
+extern const char* c_get_builtin_type_string(tree_builtin_type_kind k)
 {
-        return cget_builtin_type_info(k)->string;
+        return c_get_builtin_type_info(k)->string;
 }
 
-extern const char* cget_token_kind_string(ctoken_kind k)
+extern const char* c_get_token_kind_string(c_token_kind k)
 {
-        return ctoken_kind_to_string[k];
+        return c_token_kind_to_string[k];
 }
 
-extern const cresword_info* cget_token_info(const ctoken* t)
+extern const c_resword_info* c_get_token_info(const c_token* t)
 {
-        return cget_token_kind_info(ctoken_get_kind(t));
+        return c_get_token_kind_info(c_token_get_kind(t));
 }
 
-extern const cresword_info* cget_token_kind_info(ctoken_kind k)
+extern const c_resword_info* c_get_token_kind_info(c_token_kind k)
 {
-        return &_creswords[k];
+        return &_c_reswords[k];
 }
 
-extern int cget_operator_precedence(const ctoken* self)
+extern int c_get_operator_precedence(const c_token* self)
 {
-        return ctoken_is(self, CTK_QUESTION)
+        return c_token_is(self, CTK_QUESTION)
                 ? CPL_CONDITIONAL
-                : cget_binop_precedence(ctoken_to_binop(self));
+                : c_get_binop_precedence(c_token_to_binop(self));
 }
 
 typedef struct
 {
         int precedence;
         const char* string;
-} cbinop_info;
+} c_binop_info;
 
-S_STATIC_ASSERT(31 == TBK_SIZE, "cbinop_info_table needs update.");
-static const cbinop_info cbinop_info_table[TBK_SIZE] = 
+S_STATIC_ASSERT(31 == TBK_SIZE, "cbinop_info_table needs an update.");
+static const c_binop_info c_binop_info_table[TBK_SIZE] = 
 {
         { CPL_UNKNOWN, "" }, // TBK_UNKNOWN
         { CPL_MULTIPLICATIVE, "*" }, // TBK_MUL
@@ -132,29 +132,29 @@ static const cbinop_info cbinop_info_table[TBK_SIZE] =
         { CPL_COMMA, "," }, // TBK_COMMA
 };
 
-static inline const cbinop_info* cget_binop_info(tree_binop_kind k)
+static inline const c_binop_info* c_get_binop_info(tree_binop_kind k)
 {
         ASSERT_ENUM_RANGE(k, TBK_SIZE);
-        return &cbinop_info_table[k];
+        return &c_binop_info_table[k];
 }
 
-extern int cget_binop_precedence(tree_binop_kind k)
+extern int c_get_binop_precedence(tree_binop_kind k)
 {
-        return cget_binop_info(k)->precedence;
+        return c_get_binop_info(k)->precedence;
 }
 
-extern const char* cget_binop_string(tree_binop_kind k)
+extern const char* c_get_binop_string(tree_binop_kind k)
 {
-        return cget_binop_info(k)->string;
+        return c_get_binop_info(k)->string;
 }
 
 typedef struct
 {
         const char* string;
-} cunop_info;
+} c_unop_info;
 
 S_STATIC_ASSERT(11 == TUK_SIZE, "cunop_info_table needs update.");
-static const cunop_info cunop_info_table[TBK_SIZE] =
+static const c_unop_info c_unop_info_table[TBK_SIZE] =
 {
         { "" }, //TUK_UNKNOWN
         { "++" }, //TUK_POST_INC
@@ -169,18 +169,18 @@ static const cunop_info cunop_info_table[TBK_SIZE] =
         { "&" }, //TUK_ADDRESS
 };
 
-static inline const cunop_info* cget_unop_info(tree_unop_kind k)
+static inline const c_unop_info* c_get_unop_info(tree_unop_kind k)
 {
         ASSERT_ENUM_RANGE(k, TUK_SIZE);
-        return &cunop_info_table[k];
+        return &c_unop_info_table[k];
 }
 
-extern const char* cget_unop_string(tree_unop_kind k)
+extern const char* c_get_unop_string(tree_unop_kind k)
 {
-        return cget_unop_info(k)->string;
+        return c_get_unop_info(k)->string;
 }
 
-extern const char* cget_decl_storage_class_string(tree_decl_storage_class sc)
+extern const char* c_get_decl_storage_class_string(tree_decl_storage_class sc)
 {
         if (sc == TDSC_NONE || sc == TDSC_IMPL_EXTERN)
                 return "";
@@ -193,7 +193,7 @@ extern const char* cget_decl_storage_class_string(tree_decl_storage_class sc)
         return "";
 }
 
-extern void cqet_qual_string(tree_type_quals q, char* buf)
+extern void c_qet_qual_string(tree_type_quals q, char* buf)
 {
         *buf = '\0';
         if (q & TTQ_CONST)
@@ -207,9 +207,9 @@ extern void cqet_qual_string(tree_type_quals q, char* buf)
                 buf[strlen(buf) - 1] = '\0';
 }
 
-extern tree_binop_kind ctoken_to_binop(const ctoken* self)
+extern tree_binop_kind c_token_to_binop(const c_token* self)
 {
-        switch (ctoken_get_kind(self))
+        switch (c_token_get_kind(self))
         {
                 case CTK_STAR: return TBK_MUL;
                 case CTK_SLASH: return TBK_DIV;
@@ -245,9 +245,9 @@ extern tree_binop_kind ctoken_to_binop(const ctoken* self)
         }
 }
 
-extern tree_unop_kind ctoken_to_prefix_unary_operator(const ctoken* self)
+extern tree_unop_kind c_token_to_prefix_unary_operator(const c_token* self)
 {
-        switch (ctoken_get_kind(self))
+        switch (c_token_get_kind(self))
         {
                 case CTK_AMP: return TUK_ADDRESS;
                 case CTK_STAR: return TUK_DEREFERENCE;
@@ -261,9 +261,9 @@ extern tree_unop_kind ctoken_to_prefix_unary_operator(const ctoken* self)
         }
 }
 
-extern bool ctoken_is_builtin_type_specifier(const ctoken* self)
+extern bool c_token_is_builtin_type_specifier(const c_token* self)
 {
-        switch (ctoken_get_kind(self))
+        switch (c_token_get_kind(self))
         {
                 case CTK_VOID:
                 case CTK_CHAR:
@@ -281,18 +281,18 @@ extern bool ctoken_is_builtin_type_specifier(const ctoken* self)
         }
 }
 
-extern bool ctoken_is_type_specifier(const ctoken* self)
+extern bool c_token_is_type_specifier(const c_token* self)
 {
-        if (ctoken_is_builtin_type_specifier(self))
+        if (c_token_is_builtin_type_specifier(self))
                 return true;
 
-        ctoken_kind k = ctoken_get_kind(self);
+        c_token_kind k = c_token_get_kind(self);
         return k == CTK_STRUCT || k == CTK_UNION || k == CTK_ENUM || k == CTK_ID;
 }
 
-extern tree_type_quals ctoken_to_type_qualifier(const ctoken* self)
+extern tree_type_quals c_token_to_type_qualifier(const c_token* self)
 {
-        ctoken_kind k = ctoken_get_kind(self);
+        c_token_kind k = c_token_get_kind(self);
         if (k == CTK_CONST)
                 return TTQ_CONST;
         else if (k == CTK_RESTRICT)
@@ -303,14 +303,14 @@ extern tree_type_quals ctoken_to_type_qualifier(const ctoken* self)
         return TTQ_UNQUALIFIED;
 }
 
-extern bool ctoken_is_type_qualifier(const ctoken* self)
+extern bool c_token_is_type_qualifier(const c_token* self)
 {
-        return ctoken_to_type_qualifier(self) != TTQ_UNQUALIFIED;
+        return c_token_to_type_qualifier(self) != TTQ_UNQUALIFIED;
 }
 
-extern tree_decl_storage_class ctoken_to_decl_storage_class(const ctoken* self)
+extern tree_decl_storage_class c_token_to_decl_storage_class(const c_token* self)
 {
-        ctoken_kind k = ctoken_get_kind(self);
+        c_token_kind k = c_token_get_kind(self);
         if (k == CTK_EXTERN)
                 return TDSC_EXTERN;
         else if (k == CTK_STATIC)
@@ -321,18 +321,18 @@ extern tree_decl_storage_class ctoken_to_decl_storage_class(const ctoken* self)
         return TDSC_NONE;
 }
 
-extern bool ctoken_is_decl_storage_class(const ctoken* self)
+extern bool c_token_is_decl_storage_class(const c_token* self)
 {
-        return ctoken_to_decl_storage_class(self) != TDSC_NONE;
+        return c_token_to_decl_storage_class(self) != TDSC_NONE;
 }
 
-extern bool ctoken_starts_declarator(const ctoken* self)
+extern bool c_token_starts_declarator(const c_token* self)
 {
-        ctoken_kind k = ctoken_get_kind(self);
+        c_token_kind k = c_token_get_kind(self);
         return k == CTK_STAR || k == CTK_ID || k == CTK_LBRACKET;
 }
 
-extern int cget_type_rank(const tree_type* t)
+extern int c_get_type_rank(const tree_type* t)
 {
         t = tree_desugar_ctype(t);
         return tree_declared_type_is(t, TDK_ENUM)

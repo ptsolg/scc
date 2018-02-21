@@ -1,5 +1,5 @@
-#ifndef CPARSER_H
-#define CPARSER_H
+#ifndef C_PARSER_H
+#define C_PARSER_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -11,46 +11,46 @@ extern "C" {
 
 #include "c-lexer.h"
 
-typedef struct _clogger clogger;
-typedef struct _csema csema;
+typedef struct _c_logger c_logger;
+typedef struct _c_sema c_sema;
 typedef struct _tree_scope tree_scope;
 typedef struct _tree_decl_scope tree_decl_scope;
 typedef struct _tree_module tree_module;
 
-typedef struct _cparser
+typedef struct _c_parser
 {
         // prev, current and next
-        ctoken* buffer[3];
-        clexer* lexer;
-        csema* sema;
-        clogger* logger;
+        c_token* buffer[3];
+        c_lexer* lexer;
+        c_sema* sema;
+        c_logger* logger;
         int* on_error;
-} cparser;
+} c_parser;
 
-extern void cparser_init(cparser* self, clexer* lexer, csema* sema, clogger* logger);
+extern void c_parser_init(c_parser* self, c_lexer* lexer, c_sema* sema, c_logger* logger);
 
-extern void cparser_dispose(cparser* self);
-extern void cparser_set_on_error(cparser* self, int* b);
-extern void cparser_die(const cparser* self, int code);
+extern void c_parser_dispose(c_parser* self);
+extern void c_parser_set_on_error(c_parser* self, int* b);
+extern void c_parser_die(const c_parser* self, int code);
 
-extern void cparser_enter_token_stream(cparser* self);
+extern void c_parser_enter_token_stream(c_parser* self);
 
 // tries to resolve error, never returns NULL
-extern ctoken* cparser_handle_lex_error(const cparser* self);
+extern c_token* c_parser_handle_lex_error(const c_parser* self);
 
-extern ctoken* cparser_consume_token(cparser* self);
-extern ctoken* cparser_get_token(const cparser* self);
-extern ctoken* cparser_get_next(const cparser* self);
-extern ctoken* cparser_get_prev(const cparser* self);
-extern bool cparser_at(const cparser* self, ctoken_kind k);
-extern bool cparser_next_token_is(cparser* self, ctoken_kind k);
-extern bool cparser_require(cparser* self, ctoken_kind k);
-extern bool cparser_require_ex(cparser* self, ctoken_kind k, const ctoken_kind expected[]);
+extern c_token* c_parser_consume_token(c_parser* self);
+extern c_token* c_parser_get_token(const c_parser* self);
+extern c_token* c_parser_get_next(const c_parser* self);
+extern c_token* c_parser_get_prev(const c_parser* self);
+extern bool c_parser_at(const c_parser* self, c_token_kind k);
+extern bool c_parser_next_token_is(c_parser* self, c_token_kind k);
+extern bool c_parser_require(c_parser* self, c_token_kind k);
+extern bool c_parser_require_ex(c_parser* self, c_token_kind k, const c_token_kind expected[]);
 
-extern tree_location cparser_get_loc(const cparser* self);
+extern tree_location c_parser_get_loc(const c_parser* self);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // !CPARSER_H
+#endif

@@ -5,86 +5,86 @@
 #include "scc/c/c-info.h"
 #include "scc/scl/char-info.h"
 
-extern void creswords_init(creswords* self, ccontext* context)
+extern void c_reswords_init(c_reswords* self, c_context* context)
 {
-        strmap_init_alloc(&self->reswords, cget_alloc(context));
-        strmap_init_alloc(&self->pp_reswords, cget_alloc(context));
+        strmap_init_alloc(&self->reswords, c_context_get_allocator(context));
+        strmap_init_alloc(&self->pp_reswords, c_context_get_allocator(context));
 }
 
-extern void creswords_dispose(creswords* self)
+extern void c_reswords_dispose(c_reswords* self)
 {
         strmap_dispose(&self->reswords);
         strmap_dispose(&self->pp_reswords);
 }
 
-extern void creswords_add(creswords* self, const char* string, ctoken_kind k)
+extern void c_reswords_add(c_reswords* self, const char* string, int kind)
 {
         strref r = STRREF(string);
-        strmap_insert(&self->reswords, r, (void*)k);
+        strmap_insert(&self->reswords, r, (void*)kind);
 }
 
-extern void creswords_add_pp(creswords* self, const char* string, ctoken_kind k)
+extern void c_reswords_add_pp(c_reswords* self, const char* string, int kind)
 {
-        strmap_insert(&self->pp_reswords, STRREF(string), (void*)k);
+        strmap_insert(&self->pp_reswords, STRREF(string), (void*)kind);
 }
 
-extern ctoken_kind creswords_get(const creswords* self, const char* string, ssize len)
+extern int c_reswords_get(const c_reswords* self, const char* string, ssize len)
 {
-        return creswords_get_by_ref(self, STRREFL(string, len));
+        return c_reswords_get_by_ref(self, STRREFL(string, len));
 }
 
-extern ctoken_kind creswords_get_by_ref(const creswords* self, strref ref)
+extern int c_reswords_get_by_ref(const c_reswords* self, strref ref)
 {
         strmap_iter res;
         return strmap_find(&self->reswords, ref, &res)
-                ? (ctoken_kind)*strmap_iter_value(&res)
+                ? (int)*strmap_iter_value(&res)
                 : CTK_UNKNOWN;
 }
 
-extern ctoken_kind creswords_get_pp(const creswords* self, const char* string, ssize len)
+extern int c_reswords_get_pp(const c_reswords* self, const char* string, ssize len)
 {
-        return creswords_get_pp_by_ref(self, STRREFL(string, len));
+        return c_reswords_get_pp_by_ref(self, STRREFL(string, len));
 }
 
-extern ctoken_kind creswords_get_pp_by_ref(const creswords* self, strref ref)
+extern int c_reswords_get_pp_by_ref(const c_reswords* self, strref ref)
 {
         strmap_iter res;
         return strmap_find(&self->pp_reswords, ref, &res)
-                ? (ctoken_kind)*strmap_iter_value(&res)
+                ? (c_token_kind)*strmap_iter_value(&res)
                 : CTK_UNKNOWN;
 }
 
-static inline tree_location cpplexer_loc(const cpplexer* self)
+static inline tree_location c_pplexer_loc(const c_pplexer* self)
 {
         return self->loc;
 }
 
-static inline int cpplexer_get_prevc(const cpplexer* self)
+static inline int c_pplexer_get_prevc(const c_pplexer* self)
 {
         return self->chars[0];
 }
 
-static inline int cpplexer_getc(const cpplexer* self)
+static inline int c_pplexer_getc(const c_pplexer* self)
 {
         return self->chars[1];
 }
 
-static inline int cpplexer_get_nextc(const cpplexer* self)
+static inline int c_pplexer_get_nextc(const c_pplexer* self)
 {
         return self->chars[2];
 }
 
-static inline bool cpplexer_at_eof(const cpplexer* self)
+static inline bool c_pplexer_at_eof(const c_pplexer* self)
 {
-        return cpplexer_getc(self) == RB_ENDC;
+        return c_pplexer_getc(self) == RB_ENDC;
 }
 
-static inline bool cpplexer_at_start_of_line(const cpplexer* self)
+static inline bool c_pplexer_at_start_of_line(const c_pplexer* self)
 {
-        return cpplexer_get_prevc(self) == '\n';
+        return c_pplexer_get_prevc(self) == '\n';
 }
 
-static inline void cpplexer_shift_buf(cpplexer* self, int c)
+static inline void c_pplexer_shift_buf(c_pplexer* self, int c)
 {
         self->chars[0] = self->chars[1];
         self->chars[1] = self->chars[2];
@@ -92,28 +92,28 @@ static inline void cpplexer_shift_buf(cpplexer* self, int c)
         self->loc++;
 }
 
-static inline int cpplexer_readc(cpplexer* self)
+static inline int cpplexer_readc(c_pplexer* self)
 {
-        cpplexer_shift_buf(self, readbuf_readc(self->buf));
-        if (cpplexer_getc(self) == '\\' && char_is_newline(cpplexer_get_nextc(self)))
+        c_pplexer_shift_buf(self, readbuf_readc(self->buf));
+        if (c_pplexer_getc(self) == '\\' && char_is_newline(c_pplexer_get_nextc(self)))
         {
                 self->chars[1] = readbuf_readc(self->buf);
                 self->chars[2] = readbuf_readc(self->buf);
                 self->loc += 2;
         }
 
-        if (cpplexer_at_start_of_line(self))
-                csource_save_line_loc(self->source, cpplexer_loc(self));
+        if (c_pplexer_at_start_of_line(self))
+                c_source_save_line_loc(self->source, c_pplexer_loc(self));
 
-        return cpplexer_getc(self);
+        return c_pplexer_getc(self);
 }
 
-extern void cpplexer_init(
-        cpplexer* self,
-        const creswords* reswords,
-        csource_manager* source_manager,
-        clogger* logger,
-        ccontext* context)
+extern void c_pplexer_init(
+        c_pplexer* self,
+        const c_reswords* reswords,
+        c_source_manager* source_manager,
+        c_logger* logger,
+        c_context* context)
 {
         self->reswords = reswords;
         self->context = context;
@@ -129,25 +129,25 @@ extern void cpplexer_init(
         self->angle_string_expected = false;
 }
 
-extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source)
+extern serrcode c_pplexer_enter_source_file(c_pplexer* self, c_source* source)
 {
         if (!source)
                 return S_ERROR;
         
-        if (!(self->buf = csource_open(source)))
+        if (!(self->buf = c_source_open(source)))
         {
-                cerror_cannot_open_source_file(self->logger, 0, csource_get_name(source));
+                c_error_cannot_open_source_file(self->logger, 0, c_source_get_name(source));
                 return S_ERROR;
         }
 
         // save first line location
-        if (S_FAILED(csource_save_line_loc(source, csource_get_loc_begin(source))))
+        if (S_FAILED(c_source_save_line_loc(source, c_source_get_loc_begin(source))))
                 return S_ERROR;
 
         // fill buffer
         cpplexer_readc(self);
         cpplexer_readc(self);
-        self->loc = csource_get_loc_begin(source);
+        self->loc = c_source_get_loc_begin(source);
         self->source = source;
         return S_NO_ERROR;
 }
@@ -157,26 +157,26 @@ typedef struct
         // size of the sequence including trailing zero
         ssize size;
         tree_location loc;
-        char val[CMAX_LINE_LENGTH + 1];
-} csequence;
+        char val[C_MAX_LINE_LENGTH + 1];
+} c_sequence;
 
-static inline void csequence_finish(csequence* self)
+static inline void c_sequence_finish(c_sequence* self)
 {
         self->val[self->size++] = '\0';
 }
 
-static void csequence_init(csequence* self)
+static void c_sequence_init(c_sequence* self)
 {
         self->size = 0;
         self->loc = 0;
         self->val[0] = '\0';
 }
 
-static inline bool csequence_append(csequence* self, const cpplexer* lexer, int c)
+static inline bool c_sequence_append(c_sequence* self, const c_pplexer* lexer, int c)
 {
-        if (self->size == CMAX_LINE_LENGTH)
+        if (self->size == C_MAX_LINE_LENGTH)
         {
-                cerror_token_is_too_long(lexer->logger, self->loc);
+                c_error_token_is_too_long(lexer->logger, self->loc);
                 return false;
         }
 
@@ -184,48 +184,48 @@ static inline bool csequence_append(csequence* self, const cpplexer* lexer, int 
         return true;
 }
 
-static tree_id cpplexer_pool_seq(cpplexer* self, csequence* seq)
+static tree_id c_pplexer_pool_seq(c_pplexer* self, c_sequence* seq)
 {
-        tree_id id = tree_get_id_for_string(cget_tree(self->context), seq->val, seq->size);
+        tree_id id = tree_get_id_for_string(c_context_get_tree_context(self->context), seq->val, seq->size);
         S_ASSERT(id != TREE_INVALID_ID);
         return id;
 }
 
-static bool cpplex_word_seq(cpplexer* self, csequence* seq)
+static bool c_pplex_word_seq(c_pplexer* self, c_sequence* seq)
 {
-        seq->loc = cpplexer_loc(self);
-        int c = cpplexer_getc(self);
+        seq->loc = c_pplexer_loc(self);
+        int c = c_pplexer_getc(self);
         while (get_char_info(c) & (ACK_ALPHA | ACK_DIGIT))
         {
-                if (!csequence_append(seq, self, c))
+                if (!c_sequence_append(seq, self, c))
                         return false;
 
                 c = cpplexer_readc(self);
         }
-        csequence_finish(seq);
+        c_sequence_finish(seq);
         return true;
 }
 
-extern ctoken* cpplex_identifier(cpplexer* self)
+extern c_token* c_pplex_identifier(c_pplexer* self)
 {
-        csequence word;
-        csequence_init(&word);
-        if (!cpplex_word_seq(self, &word))
+        c_sequence word;
+        c_sequence_init(&word);
+        if (!c_pplex_word_seq(self, &word))
                 return NULL;
 
-        return ctoken_new_id(self->context, word.loc, cpplexer_pool_seq(self, &word));
+        return c_token_new_id(self->context, word.loc, c_pplexer_pool_seq(self, &word));
 }
 
-static bool cpplex_quoted_seq(cpplexer* self, csequence* seq, int quote)
+static bool c_pplex_quoted_seq(c_pplexer* self, c_sequence* seq, int quote)
 {
-        seq->loc = cpplexer_loc(self);
+        seq->loc = c_pplexer_loc(self);
         bool consume = false;
         while (1)
         {
                 int c = cpplexer_readc(self);
-                if (char_is_newline(c) || cpplexer_at_eof(self))
+                if (char_is_newline(c) || c_pplexer_at_eof(self))
                 {
-                        cerror_missing_closing_quote(self->logger, seq->loc);
+                        c_error_missing_closing_quote(self->logger, seq->loc);
                         return false;
                 }
                 else if (c == '\\')
@@ -238,94 +238,94 @@ static bool cpplex_quoted_seq(cpplexer* self, csequence* seq, int quote)
                 else
                         consume = false;
 
-                if (!csequence_append(seq, self, c))
+                if (!c_sequence_append(seq, self, c))
                         return false;
         }
-        csequence_finish(seq);
+        c_sequence_finish(seq);
         return true;
 }
 
-extern ctoken* cpplex_string_literal(cpplexer* self)
+extern c_token* c_pplex_string_literal(c_pplexer* self)
 {
-        csequence schar;
-        csequence_init(&schar);
-        if (!cpplex_quoted_seq(self, &schar, '"'))
+        c_sequence schar;
+        c_sequence_init(&schar);
+        if (!c_pplex_quoted_seq(self, &schar, '"'))
                 return NULL;
 
-        return ctoken_new_string(self->context, schar.loc, cpplexer_pool_seq(self, &schar));
+        return c_token_new_string(self->context, schar.loc, c_pplexer_pool_seq(self, &schar));
 }
 
-extern ctoken* cpplex_angle_string_literal(cpplexer* self)
+extern c_token* c_pplex_angle_string_literal(c_pplexer* self)
 {
-        csequence seq;
-        csequence_init(&seq);
-        if (!cpplex_quoted_seq(self, &seq, '>'))
+        c_sequence seq;
+        c_sequence_init(&seq);
+        if (!c_pplex_quoted_seq(self, &seq, '>'))
                 return NULL;
 
-        return ctoken_new_angle_string(self->context, seq.loc, cpplexer_pool_seq(self, &seq));
+        return c_token_new_angle_string(self->context, seq.loc, c_pplexer_pool_seq(self, &seq));
 }
 
-extern ctoken* cpplex_const_char(cpplexer* self)
+extern c_token* c_pplex_const_char(c_pplexer* self)
 {
-        csequence cchar;
-        csequence_init(&cchar);
-        if (!cpplex_quoted_seq(self, &cchar, '\''))
+        c_sequence cchar;
+        c_sequence_init(&cchar);
+        if (!c_pplex_quoted_seq(self, &cchar, '\''))
                 return NULL;
 
         bool escape = cchar.val[0] == '\\';
         if (cchar.size == 1)
         {
-                cerror_empty_character_constant(self->logger, cchar.loc);
+                c_error_empty_character_constant(self->logger, cchar.loc);
                 return NULL;
         }
         else if ((escape && cchar.size > 3) || (!escape && cchar.size > 2))
         {
-                cerror_invalid_character_constant(self->logger, cchar.loc);
+                c_error_invalid_character_constant(self->logger, cchar.loc);
                 return NULL;
         }
 
         int c = escape ? char_to_escape(cchar.val[1]) : cchar.val[0];
-        return ctoken_new_char(self->context, cchar.loc, c);
+        return c_token_new_char(self->context, cchar.loc, c);
 }
 
-static bool cpplex_num_seq(cpplexer* self, csequence* seq)
+static bool c_pplex_num_seq(c_pplexer* self, c_sequence* seq)
 {
-        seq->loc = cpplexer_loc(self);
-        int c = cpplexer_getc(self);
+        seq->loc = c_pplexer_loc(self);
+        int c = c_pplexer_getc(self);
         while(1)
         {
                 bool pp = (get_char_info(c) & (ACK_DIGIT | ACK_ALPHA))
                         || c == '.' || c == '+' || c == '-';
                 if (!pp)
                 {
-                        csequence_finish(seq);
+                        c_sequence_finish(seq);
                         return true;
                 }
 
-                if (!csequence_append(seq, self, c))
+                if (!c_sequence_append(seq, self, c))
                         return false;
 
                 c = cpplexer_readc(self);
         }
 }
 
-extern ctoken* cpplex_number(cpplexer* self)
+extern c_token* c_pplex_number(c_pplexer* self)
 {
-        csequence num;
-        csequence_init(&num);
-        if (!cpplex_num_seq(self, &num))
+        c_sequence num;
+        c_sequence_init(&num);
+        if (!c_pplex_num_seq(self, &num))
                 return NULL;
 
-        return ctoken_new_pp_num(self->context, num.loc, cpplexer_pool_seq(self, &num));
+        return ctoken_new_pp_num(self->context, num.loc, c_pplexer_pool_seq(self, &num));
 }
 
-static ctoken* cpplex_comment(cpplexer* self)
+static c_token* c_pplex_comment(c_pplexer* self)
 {
-        tree_location loc = cpplexer_loc(self);
+        tree_location loc = c_pplexer_loc(self);
         int c = cpplexer_readc(self); // '/'
         if (c == '/')
         {
-                while (!char_is_newline(c) && !cpplexer_at_eof(self))
+                while (!char_is_newline(c) && !c_pplexer_at_eof(self))
                         c = cpplexer_readc(self);
         }
         else
@@ -333,25 +333,25 @@ static ctoken* cpplex_comment(cpplexer* self)
                 while (1)
                 {
                         c = cpplexer_readc(self);
-                        if (c == '/' && cpplexer_get_prevc(self) == '*')
+                        if (c == '/' && c_pplexer_get_prevc(self) == '*')
                         {
                                 cpplexer_readc(self); // '/'
                                 break;
                         }
-                        else if (cpplexer_at_eof(self))
+                        else if (c_pplexer_at_eof(self))
                         {
-                                cerror_unclosed_comment(self->logger, loc);
+                                c_error_unclosed_comment(self->logger, loc);
                                 return NULL;
                         }
                 }
         }
 
-        return ctoken_new(self->context, CTK_COMMENT, loc);
+        return c_token_new(self->context, CTK_COMMENT, loc);
 }
 
-static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
+static inline c_token_kind _c_pplex_punctuator(c_pplexer* self)
 {
-        switch ((char)cpplexer_getc(self))
+        switch ((char)c_pplexer_getc(self))
         {
                 case '{': cpplexer_readc(self); return CTK_LBRACE;
                 case '}': cpplexer_readc(self); return CTK_RBRACE;
@@ -367,9 +367,9 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '.':
                         cpplexer_readc(self);
-                        if (cpplexer_getc(self) == '.')
+                        if (c_pplexer_getc(self) == '.')
                         {
-                                if (cpplexer_get_nextc(self) == '.')
+                                if (c_pplexer_get_nextc(self) == '.')
                                 {
                                         cpplexer_readc(self);
                                         cpplexer_readc(self);
@@ -380,7 +380,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '-':
                         cpplexer_readc(self);
-                        switch (cpplexer_getc(self))
+                        switch (c_pplexer_getc(self))
                         {
                                 case '>': cpplexer_readc(self); return CTK_ARROW;
                                 case '=': cpplexer_readc(self); return CTK_MINUS_EQ;
@@ -390,17 +390,17 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '<':
                         cpplexer_readc(self);
-                        if (cpplexer_getc(self) == '<')
+                        if (c_pplexer_getc(self) == '<')
                         {
                                 cpplexer_readc(self);
-                                if (cpplexer_getc(self) == '=')
+                                if (c_pplexer_getc(self) == '=')
                                 {
                                         cpplexer_readc(self);
                                         return CTK_LE2_EQ;
                                 }
                                 return CTK_LE2;
                         }
-                        else if (cpplexer_getc(self) == '=')
+                        else if (c_pplexer_getc(self) == '=')
                         {
                                 cpplexer_readc(self);
                                 return CTK_LEQ;
@@ -409,17 +409,17 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '>':
                         cpplexer_readc(self);
-                        if (cpplexer_getc(self) == '>')
+                        if (c_pplexer_getc(self) == '>')
                         {
                                 cpplexer_readc(self);
-                                if (cpplexer_getc(self) == '=')
+                                if (c_pplexer_getc(self) == '=')
                                 {
                                         cpplexer_readc(self);
                                         return CTK_GR2_EQ;
                                 }
                                 return CTK_GR2;
                         }
-                        else if (cpplexer_getc(self) == '=')
+                        else if (c_pplexer_getc(self) == '=')
                         {
                                 cpplexer_readc(self);
                                 return CTK_GREQ;
@@ -428,7 +428,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '!':
                         cpplexer_readc(self);
-                        if (cpplexer_getc(self) == '=')
+                        if (c_pplexer_getc(self) == '=')
                         {
                                 cpplexer_readc(self);
                                 return CTK_EXCLAIM_EQ;
@@ -437,7 +437,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '=':
                         cpplexer_readc(self);
-                        if (cpplexer_getc(self) == '=')
+                        if (c_pplexer_getc(self) == '=')
                         {
                                 cpplexer_readc(self);
                                 return CTK_EQ2;
@@ -446,7 +446,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '&':
                         cpplexer_readc(self);
-                        switch (cpplexer_getc(self))
+                        switch (c_pplexer_getc(self))
                         {
                                 case '&': cpplexer_readc(self); return CTK_AMP2;
                                 case '=': cpplexer_readc(self); return CTK_AMP_EQ;
@@ -455,7 +455,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '|':
                         cpplexer_readc(self);
-                        switch (cpplexer_getc(self))
+                        switch (c_pplexer_getc(self))
                         {
                                 case '|': cpplexer_readc(self); return CTK_VBAR2;
                                 case '=': cpplexer_readc(self); return CTK_VBAR_EQ;
@@ -464,7 +464,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '^':
                         cpplexer_readc(self);
-                        if (cpplexer_getc(self) == '=')
+                        if (c_pplexer_getc(self) == '=')
                         {
                                 cpplexer_readc(self);
                                 return CTK_CARET_EQ;
@@ -473,7 +473,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '+':
                         cpplexer_readc(self);
-                        switch (cpplexer_getc(self))
+                        switch (c_pplexer_getc(self))
                         {
                                 case '+': cpplexer_readc(self); return CTK_PLUS2;
                                 case '=': cpplexer_readc(self); return CTK_PLUS_EQ;
@@ -482,7 +482,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '*':
                         cpplexer_readc(self);
-                        if (cpplexer_getc(self) == '=')
+                        if (c_pplexer_getc(self) == '=')
                         {
                                 cpplexer_readc(self);
                                 return CTK_STAR_EQ;
@@ -491,7 +491,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '/':
                         cpplexer_readc(self);
-                        if (cpplexer_getc(self) == '=')
+                        if (c_pplexer_getc(self) == '=')
                         {
                                 cpplexer_readc(self);
                                 return CTK_SLASH_EQ;
@@ -500,7 +500,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '%':
                         cpplexer_readc(self);
-                        if (cpplexer_getc(self) == '=')
+                        if (c_pplexer_getc(self) == '=')
                         {
                                 cpplexer_readc(self);
                                 return CTK_PERCENT_EQ;
@@ -509,7 +509,7 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
 
                 case '#':
                         cpplexer_readc(self);
-                        if (cpplexer_getc(self) == '#')
+                        if (c_pplexer_getc(self) == '#')
                         {
                                 cpplexer_readc(self);
                                 return CTK_HASH2;
@@ -521,124 +521,124 @@ static inline ctoken_kind _cpplex_punctuator(cpplexer* self)
         }
 }
 
-static ctoken* cpplex_punctuator(cpplexer* self)
+static c_token* c_pplex_punctuator(c_pplexer* self)
 {
-        tree_location loc = cpplexer_loc(self);
-        ctoken_kind k = _cpplex_punctuator(self);
+        tree_location loc = c_pplexer_loc(self);
+        c_token_kind k = _c_pplex_punctuator(self);
         if (k == CTK_UNKNOWN)
         {
-                cerror_unknown_punctuator(self->logger, loc, cpplexer_getc(self));
+                c_error_unknown_punctuator(self->logger, loc, c_pplexer_getc(self));
                 return NULL;
         }
-        return ctoken_new(self->context, k, loc);
+        return c_token_new(self->context, k, loc);
 }
 
-static ctoken* cpplex_symbols(cpplexer* self)
+static c_token* c_pplex_symbols(c_pplexer* self)
 {
-        int c = cpplexer_getc(self);
+        int c = c_pplexer_getc(self);
         if (c == '\"')
-                return cpplex_string_literal(self);
+                return c_pplex_string_literal(self);
         else if (c == '\'')
-                return cpplex_const_char(self);
+                return c_pplex_const_char(self);
         else if (c == '<' && self->angle_string_expected)
-                return cpplex_angle_string_literal(self);
+                return c_pplex_angle_string_literal(self);
 
-        int next = cpplexer_get_nextc(self);
+        int next = c_pplexer_get_nextc(self);
         if (c == '.' && char_is_digit(next))
-                return cpplex_number(self);
+                return c_pplex_number(self);
         else if (c == '/' && (next == '/' || next == '*'))
-                return cpplex_comment(self);
+                return c_pplex_comment(self);
 
-        return cpplex_punctuator(self);
+        return c_pplex_punctuator(self);
 }
 
-static ctoken* cpplex_wspace(cpplexer* self)
+static c_token* c_pplex_wspace(c_pplexer* self)
 {
-        tree_location loc = cpplexer_loc(self);
+        tree_location loc = c_pplexer_loc(self);
         int spaces = 0;
-        int c = cpplexer_getc(self);
-        while (char_is_wspace(c) && !cpplexer_at_eof(self))
+        int c = c_pplexer_getc(self);
+        while (char_is_wspace(c) && !c_pplexer_at_eof(self))
         {
                 spaces += c == '\t' ? self->tab_to_space : 1;
                 c = cpplexer_readc(self);
         }
-        return ctoken_new_wspace(self->context, loc, spaces);
+        return c_token_new_wspace(self->context, loc, spaces);
 }
 
-extern ctoken* cpplex_token(cpplexer* self)
+extern c_token* c_pplex_token(c_pplexer* self)
 {
-        int c = cpplexer_getc(self);
+        int c = c_pplexer_getc(self);
         int i = get_char_info(c);
 
         if (i & ACK_ALPHA)
-                return cpplex_identifier(self);
+                return c_pplex_identifier(self);
         else if (i & ACK_SYMBOL)
-                return cpplex_symbols(self);
+                return c_pplex_symbols(self);
         else if (i & ACK_DIGIT)
-                return cpplex_number(self);
+                return c_pplex_number(self);
         else if (i & ACK_WSPACE)
-                return cpplex_wspace(self);
+                return c_pplex_wspace(self);
         else if (i & ACK_NEWLINE)
         {
-                tree_location loc = cpplexer_loc(self);
+                tree_location loc = c_pplexer_loc(self);
                 cpplexer_readc(self);
-                return ctoken_new(self->context, CTK_EOL, loc);
+                return c_token_new(self->context, CTK_EOL, loc);
 
         }
-        else if (cpplexer_at_eof(self))
+        else if (c_pplexer_at_eof(self))
         {
-                tree_location loc = cpplexer_loc(self);
+                tree_location loc = c_pplexer_loc(self);
                 cpplexer_readc(self);
-                return ctoken_new(self->context, CTK_EOF, loc);
+                return c_token_new(self->context, CTK_EOF, loc);
         }
 
-        cerror_unknown_symbol(self->logger, cpplexer_loc(self), c);
+        c_error_unknown_symbol(self->logger, c_pplexer_loc(self), c);
         return NULL;
 }
 
-extern void cpproc_init(
-        cpproc* self,
-        const creswords* reswords,
-        csource_manager* source_manager,
-        clogger* logger,
-        ccontext* context)
+extern void c_preprocessor_init(
+        c_preprocessor* self,
+        const c_reswords* reswords,
+        c_source_manager* source_manager,
+        c_logger* logger,
+        c_context* context)
 {
         self->reswords = reswords;
         self->state = self->files - 1;
         self->source_manager = source_manager;
         self->logger = logger;
         self->context = context;
-        dseq_init_alloc(&self->expansion, cget_alloc(context));
+        dseq_init_alloc(&self->expansion, c_context_get_allocator(context));
 }
 
-extern void cpproc_dispose(cpproc* self)
+extern void c_preprocessor_dispose(c_preprocessor* self)
 {
         while (self->state != self->files - 1)
         {
-                csource_close(self->state->source);
+                c_source_close(self->state->source);
                 self->state--;
         }
 }
 
-extern serrcode cpproc_enter_source_file(cpproc* self, csource* source)
+extern serrcode c_preprocessor_enter(c_preprocessor* self, c_source* source)
 {
         if (!source)
                 return S_ERROR;
-        if (self->state - self->files >= CMAX_INCLUDE_NESTING)
+        if (self->state - self->files >= C_MAX_INCLUDE_NESTING)
         {
-                cerror_too_deep_include_nesting(self->logger);
+                c_error_too_deep_include_nesting(self->logger);
                 return S_ERROR;
         }
 
-        cpproc_state* next = self->state + 1;
-        cpplexer* pplexer = &next->lexer;
-        cpplexer_init(
+        c_preprocessor_state* next = self->state + 1;
+        c_pplexer* pplexer = &next->lexer;
+        c_pplexer_init(
                 pplexer,
                 self->reswords,
                 self->source_manager,
                 self->logger, 
                 self->context);
-        if (S_FAILED(cpplexer_enter_source_file(pplexer, source)))
+        if (S_FAILED(c_pplexer_enter_source_file(pplexer, source)))
                 return S_ERROR;
 
         self->state = next;
@@ -649,28 +649,28 @@ extern serrcode cpproc_enter_source_file(cpproc* self, csource* source)
         return S_NO_ERROR;
 }
 
-extern void cpproc_exit_source_file(cpproc* self)
+extern void c_preprocessor_exit(c_preprocessor* self)
 {
         S_ASSERT(self->state != self->files);
-        csource_close(self->state->source);
+        c_source_close(self->state->source);
         self->state--;
 }
 
-static ctoken* cpproc_lex_wspace(cpproc* self, bool skip_eol)
+static c_token* c_preprocess_wspace(c_preprocessor* self, bool skip_eol)
 {
         while (1)
         {
-                ctoken* t = cpplex_token(&self->state->lexer);
+                c_token* t = c_pplex_token(&self->state->lexer);
                 if (!t)
                         return NULL;
 
-                ctoken_kind k = ctoken_get_kind(t);
+                c_token_kind k = c_token_get_kind(t);
                 if (k == CTK_WSPACE || k == CTK_COMMENT || (k == CTK_EOL && skip_eol))
                         continue;
                 else if (k == CTK_EOF && self->state != self->files)
                 {
                         // consume eof of included source file
-                        cpproc_exit_source_file(self);
+                        c_preprocessor_exit(self);
                         continue;
                 }
 
@@ -678,97 +678,97 @@ static ctoken* cpproc_lex_wspace(cpproc* self, bool skip_eol)
         }
 }
 
-static ctoken* cpproc_lex_directive(cpproc*);
+static c_token* c_preprocess_directive(c_preprocessor*);
 
-static ctoken* cpproc_lex_include(cpproc* self)
+static c_token* c_preprocess_include(c_preprocessor* self)
 {
         self->state->lexer.angle_string_expected = true;
-        ctoken* t = cpproc_lex_wspace(self, false);
+        c_token* t = c_preprocess_wspace(self, false);
         self->state->lexer.angle_string_expected = false;
         if (!t)
                 return NULL;
 
-        tree_location token_loc = ctoken_get_loc(t);
-        if (!ctoken_is(t, CTK_CONST_STRING) && !ctoken_is(t, CTK_ANGLE_STRING))
+        tree_location token_loc = c_token_get_loc(t);
+        if (!c_token_is(t, CTK_CONST_STRING) && !c_token_is(t, CTK_ANGLE_STRING))
         {
-                cerror_expected_file_name(self->logger, token_loc);
+                c_error_expected_file_name(self->logger, token_loc);
                 return NULL;
         }
 
-        tree_id ref = ctoken_get_string(t);
-        const char* filename = tree_get_id_string(cget_tree(self->context), ref);
+        tree_id ref = c_token_get_string(t);
+        const char* filename = tree_get_id_string(c_context_get_tree_context(self->context), ref);
         S_ASSERT(filename);
 
         if (!*filename)
         {
-                cerror_empty_file_name_in_include(self->logger, token_loc);
+                c_error_empty_file_name_in_include(self->logger, token_loc);
                 return NULL;
         }
 
-        csource* source = csource_find(self->source_manager, filename);
+        c_source* source = c_source_find(self->source_manager, filename);
         if (!source)
         {
-                cerror_cannot_open_source_file(self->logger, token_loc, filename);
+                c_error_cannot_open_source_file(self->logger, token_loc, filename);
                 return NULL;
         }
 
-        if (S_FAILED(cpproc_enter_source_file(self, source)))
+        if (S_FAILED(c_preprocessor_enter(self, source)))
                 return NULL;
 
-        return cpproc_lex_directive(self);
+        return c_preprocess_directive(self);
 }
 
-static ctoken* cpproc_lex_directive(cpproc* self)
+static c_token* c_preprocess_directive(c_preprocessor* self)
 {
-        ctoken* t = cpproc_lex_wspace(self, true);
-        if (!t || !ctoken_is(t, CTK_HASH))
+        c_token* t = c_preprocess_wspace(self, true);
+        if (!t || !c_token_is(t, CTK_HASH))
                 return t;
 
         if (!self->state->hash_expected)
         {
-                cerror_unexpected_hash(self->logger, ctoken_get_loc(t));
+                c_error_unexpected_hash(self->logger, c_token_get_loc(t));
                 return NULL;
         }
 
-        if (!(t = cpproc_lex_wspace(self, false)))
+        if (!(t = c_preprocess_wspace(self, false)))
                 return NULL;
 
-        ctoken_kind directive = CTK_UNKNOWN;
-        if (ctoken_is(t, CTK_ID))
-                directive = creswords_get_pp_by_ref(self->reswords, ctoken_get_string(t));
+        c_token_kind directive = CTK_UNKNOWN;
+        if (c_token_is(t, CTK_ID))
+                directive = c_reswords_get_pp_by_ref(self->reswords, c_token_get_string(t));
 
         if (directive == CTK_UNKNOWN)
         {
-                cerror_unknown_preprocessor_directive(self->logger, ctoken_get_loc(t));
+                c_error_unknown_preprocessor_directive(self->logger, c_token_get_loc(t));
                 return false;
         }
 
         self->state->in_directive = true;
         if (directive == CTK_PP_INCLUDE)
-                t = cpproc_lex_include(self);
+                t = c_preprocess_include(self);
         else
         {
                 t = NULL;
-                cerror_unsupported_preprocessor_directive(self->logger, ctoken_get_loc(t));
+                c_error_unsupported_preprocessor_directive(self->logger, c_token_get_loc(t));
         }
         self->state->in_directive = false;
         return t;
 }
 
-static ctoken* cpproc_lex_macro_id(cpproc* self)
+static c_token* c_preprocess_macro_id(c_preprocessor* self)
 {
         if (dseq_size(&self->expansion))
         {
-                ctoken* last = *(dseq_end(&self->expansion) - 1);
+                c_token* last = *(dseq_end(&self->expansion) - 1);
                 dseq_resize(&self->expansion, dseq_size(&self->expansion) - 1);
                 return last;
         }
 
-        ctoken* t = cpproc_lex_directive(self);
+        c_token* t = c_preprocess_directive(self);
         if (!t)
                 return NULL;
 
-        if (!ctoken_is(t, CTK_ID))
+        if (!c_token_is(t, CTK_ID))
                 return t;
 
         if (0) // token is macro id
@@ -780,22 +780,22 @@ static ctoken* cpproc_lex_macro_id(cpproc* self)
         return t;
 }
 
-static inline void cpproc_unget_macro_id(cpproc* self, ctoken* t)
+static inline void c_preprocessor_unget_macro_id(c_preprocessor* self, c_token* t)
 {
         dseq_append(&self->expansion, t);
 }
 
-static bool cpproc_collect_adjacent_strings(cpproc* self, dseq* result)
+static bool c_preprocessor_collect_adjacent_strings(c_preprocessor* self, dseq* result)
 {
         while (1)
         {
-                ctoken* t = cpproc_lex_macro_id(self);
+                c_token* t = c_preprocess_macro_id(self);
                 if (!t)
                         return false;
 
-                if (!ctoken_is(t, CTK_CONST_STRING))
+                if (!c_token_is(t, CTK_CONST_STRING))
                 {
-                        cpproc_unget_macro_id(self, t);
+                        c_preprocessor_unget_macro_id(self, t);
                         return true;
                 }
 
@@ -803,55 +803,55 @@ static bool cpproc_collect_adjacent_strings(cpproc* self, dseq* result)
         }
 }
 
-static ctoken* cpproc_concat_and_escape_strings(cpproc* self, dseq* strings)
+static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, dseq* strings)
 {
         S_ASSERT(dseq_size(strings));
 
         dseq_u8 concat;
-        dseq_u8_init_alloc(&concat, cget_alloc(self->context));
+        dseq_u8_init_alloc(&concat, c_context_get_allocator(self->context));
         for (ssize i = 0; i < dseq_size(strings); i++)
         {
-                ctoken* t = dseq_get(strings, i);
+                c_token* t = dseq_get(strings, i);
                 const char* string = tree_get_id_string(
-                        cget_tree(self->context), ctoken_get_string(t));
+                        c_context_get_tree_context(self->context), c_token_get_string(t));
 
-                char escaped[CMAX_LINE_LENGTH + 1];
-                ssize size = cget_escaped_string(escaped, string, strlen(string));
+                char escaped[C_MAX_LINE_LENGTH + 1];
+                ssize size = c_get_escaped_string(escaped, string, strlen(string));
                 for (ssize j = 0; j < size - 1; j++)
                         dseq_u8_append(&concat, escaped[j]);
         }
         dseq_u8_append(&concat, '\0');
 
         tree_id concat_ref = tree_get_id_for_string(
-                cget_tree(self->context), (char*)dseq_u8_begin(&concat), dseq_u8_size(&concat));
-        tree_location loc = ctoken_get_loc(dseq_get(strings, 0));
+                c_context_get_tree_context(self->context), (char*)dseq_u8_begin(&concat), dseq_u8_size(&concat));
+        tree_location loc = c_token_get_loc(dseq_get(strings, 0));
         dseq_u8_dispose(&concat);
 
-        return ctoken_new_string(self->context, loc, concat_ref);
+        return c_token_new_string(self->context, loc, concat_ref);
 }
 
-static ctoken* cpproc_lex_string(cpproc* self)
+static c_token* c_preprocess_string(c_preprocessor* self)
 {
-        ctoken* t = cpproc_lex_macro_id(self);
+        c_token* t = c_preprocess_macro_id(self);
         if (!t)
                 return NULL;
 
-        if (!ctoken_is(t, CTK_CONST_STRING))
+        if (!c_token_is(t, CTK_CONST_STRING))
                 return t;
 
         dseq adjacent_strings;
-        dseq_init_alloc(&adjacent_strings, cget_alloc(self->context));
+        dseq_init_alloc(&adjacent_strings, c_context_get_allocator(self->context));
         dseq_append(&adjacent_strings, t);
 
-        ctoken* result = cpproc_collect_adjacent_strings(self, &adjacent_strings)
-                ? cpproc_concat_and_escape_strings(self, &adjacent_strings)
+        c_token* result = c_preprocessor_collect_adjacent_strings(self, &adjacent_strings)
+                ? c_preprocessor_concat_and_escape_strings(self, &adjacent_strings)
                 : NULL;
 
         dseq_dispose(&adjacent_strings);
         return result;
 }
 
-extern ctoken* cpreprocess(cpproc* self)
+extern c_token* c_preprocess(c_preprocessor* self)
 {
-        return cpproc_lex_string(self);
+        return c_preprocess_string(self);
 }

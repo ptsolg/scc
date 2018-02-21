@@ -1,5 +1,5 @@
-#ifndef CERRCODE_H
-#define CERRCODE_H
+#ifndef C_ERROR_H
+#define C_ERROR_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -12,40 +12,40 @@ extern "C" {
 #include <stdio.h>
 #include "scc/tree/tree-common.h"
 
-typedef struct _csource_manager csource_manager;
+typedef struct _c_source_manager c_source_manager;
 typedef struct _tree_context tree_context;
 
-typedef struct _clogger
+typedef struct _c_logger
 {
         int errors;
         int warnings;
         bool errors_as_warnings;
         bool enabled;
-        const csource_manager* source_manager;
+        const c_source_manager* source_manager;
         const tree_context* tree;
         FILE* output;
-} clogger;
+} c_logger;
 
-extern void clogger_init(
-        clogger* self,
-        const csource_manager* source_manager,
+extern void c_logger_init(
+        c_logger* self,
+        const c_source_manager* source_manager,
         const tree_context* tree,
         FILE* log);
 
-extern void clogger_set_output(clogger* self, FILE* output);
-extern void clogger_set_enabled(clogger* self);
-extern void clogger_set_disabled(clogger* self);
+extern void c_logger_set_output(c_logger* self, FILE* output);
+extern void c_logger_set_enabled(c_logger* self);
+extern void c_logger_set_disabled(c_logger* self);
 
 typedef enum
 {
         CES_WARNING,
         CES_ERROR,
         CES_FATAL_ERROR,
-} cerror_severity;
+} c_error_severity;
 
-extern void cerror(
-        clogger* self,
-        cerror_severity severity,
+extern void c_error(
+        c_logger* self,
+        c_error_severity severity,
         tree_location location,
         const char* description,
         ...);
@@ -54,4 +54,4 @@ extern void cerror(
 }
 #endif
 
-#endif // !CERRCODE_H
+#endif

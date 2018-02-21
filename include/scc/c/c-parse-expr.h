@@ -1,5 +1,5 @@
-#ifndef CPARSE_EXPR_H
-#define CPARSE_EXPR_H
+#ifndef C_PARSE_EXPR_H
+#define C_PARSE_EXPR_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -15,7 +15,7 @@ typedef struct _tree_expr tree_expr;
 typedef struct _tree_decl tree_decl;
 typedef struct _tree_type tree_type;
 
-extern const ctoken_kind ctk_rbracket_or_comma[];
+extern const c_token_kind ctk_rbracket_or_comma[];
 
 // c99 6.5.1 primary-expression:
 //      identifier
@@ -25,8 +25,8 @@ extern const ctoken_kind ctk_rbracket_or_comma[];
 //
 // paren-expression:
 //      ( expression )
-extern tree_expr* cparse_paren_expr(cparser* self);
-extern tree_expr* cparse_primary_expr(cparser* self);
+extern tree_expr* c_parse_paren_expr(c_parser* self);
+extern tree_expr* c_parse_primary_expr(c_parser* self);
 
 // c99 6.5.2 postfix-expression:
 //       primary-expression
@@ -40,7 +40,7 @@ extern tree_expr* cparse_primary_expr(cparser* self);
 // argument-expression-list:
 //       assignment-expression
 //       argument-expression-list , assignment-expression
-extern tree_expr* cparse_postfix_expr(cparser* self);
+extern tree_expr* c_parse_postfix_expr(c_parser* self);
 
 // c99 6.5.3 unary-expression:
 //      postfix-expression
@@ -52,12 +52,12 @@ extern tree_expr* cparse_postfix_expr(cparser* self);
 //
 // unary-operator: one of
 //       & * + - ~ !
-extern tree_expr* cparse_unary_expr(cparser* self);
+extern tree_expr* c_parse_unary_expr(c_parser* self);
 
 // c99 6.5.4 cast-expression:
 //      unary-expression
 //      ( type-name ) cast-expression
-extern tree_expr* cparse_cast_expr(cparser* self);
+extern tree_expr* c_parse_cast_expr(c_parser* self);
 
 // c99 6.5.5 multiplicative-expression:
 //       cast-expression
@@ -117,17 +117,17 @@ extern tree_expr* cparse_cast_expr(cparser* self);
 //
 // asignment-operator: one of
 //      = *= /= %= += -= <<= >>= &= ^= |=
-extern tree_expr* cparse_assignment_expr(cparser* self);
+extern tree_expr* c_parse_assignment_expr(c_parser* self);
 
 // c99 6.5.17 expression:
 //      expression , assignment-expression
 //      assignment-expression
-extern tree_expr* cparse_expr(cparser* self);
-extern tree_expr* cparse_expr_ex(cparser* self, int min_prec);
+extern tree_expr* c_parse_expr(c_parser* self);
+extern tree_expr* c_parse_expr_ex(c_parser* self, int min_prec);
 
 // c99 6.6 constant-expression:
 //       conditional-expression
-extern tree_expr* cparse_const_expr(cparser* self);
+extern tree_expr* c_parse_const_expr(c_parser* self);
 
 // c99 6.7.8 initializer:
 //      assignment-expression
@@ -148,10 +148,10 @@ extern tree_expr* cparse_const_expr(cparser* self);
 // designator:
 //      [ constant-expression ]
 //      . identifier
-extern tree_expr* cparse_initializer(cparser* self, tree_type* initialized_type);
+extern tree_expr* c_parse_initializer(c_parser* self, tree_type* initialized_type);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // !CPARSE_EXPR_H
+#endif

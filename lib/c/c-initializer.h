@@ -1,12 +1,12 @@
-#ifndef CINITIALiZER_H
-#define CINITIALiZER_H
+#ifndef C_INITIALIZER_H
+#define C_INITIALIZER_H
 
 #include "scc/scl/list.h"
 
 typedef struct _tree_expr tree_expr;
 typedef struct _tree_type tree_type;
 typedef struct _tree_decl tree_decl;
-typedef struct _ccontext ccontext;
+typedef struct _c_context c_context;
 typedef struct _dseq dseq;
 
 typedef struct
@@ -14,9 +14,9 @@ typedef struct
         tree_expr** init;
         tree_expr** pos;
         tree_expr** end;
-} cinitializer;
+} c_initializer;
 
-extern void cinitializer_init(cinitializer* self, tree_expr** init);
+extern void c_initializer_init(c_initializer* self, tree_expr** init);
 
 typedef enum
 {
@@ -24,11 +24,11 @@ typedef enum
         CIOK_ARRAY,
         CIOK_STRUCT,
         CIOK_UNION,
-} cinitialized_object_kind;
+} c_initialized_object_kind;
 
-typedef struct _cinitialized_object
+typedef struct _c_initialized_object
 {
-        cinitialized_object_kind kind;
+        c_initialized_object_kind kind;
         tree_type* type;
         bool implicit;
         union
@@ -51,25 +51,25 @@ typedef struct _cinitialized_object
                         bool initialized;
                 } scalar;
         };
-        struct _cinitialized_object* semantical_parent;
-        struct _cinitialized_object* syntactical_parent;
-} cinitialized_object;
+        struct _c_initialized_object* semantical_parent;
+        struct _c_initialized_object* syntactical_parent;
+} c_initialized_object;
 
-extern void cinitialized_object_init(
-        cinitialized_object* self, tree_type* type, bool implicit, cinitialized_object* parent);
+extern void c_initialized_object_init(
+        c_initialized_object* self, tree_type* type, bool implicit, c_initialized_object* parent);
 
-extern cinitialized_object* cinitialized_object_new(
-        ccontext* context, tree_type* type, bool implicit, cinitialized_object* parent);
+extern c_initialized_object* c_initialized_object_new(
+        c_context* context, tree_type* type, bool implicit, c_initialized_object* parent);
 
-extern cinitialized_object* cinitialized_object_new_rec(
-        ccontext* context, tree_decl* record, tree_decl* field, bool implicit, cinitialized_object* parent);
+extern c_initialized_object* c_initialized_object_new_rec(
+        c_context* context, tree_decl* record, tree_decl* field, bool implicit, c_initialized_object* parent);
 
-extern void cinitialized_object_set_field(cinitialized_object* self, tree_decl* field);
-extern void cinitialized_object_set_index(cinitialized_object* self, uint index);
-extern void cinitialized_object_set_initialized(cinitialized_object* self);
+extern void c_initialized_object_set_field(c_initialized_object* self, tree_decl* field);
+extern void c_initialized_object_set_index(c_initialized_object* self, uint index);
+extern void c_initialized_object_set_initialized(c_initialized_object* self);
 
-extern bool cinitialized_object_valid(const cinitialized_object* self);
-extern void cinitialized_object_next_subobject(cinitialized_object* self);
-extern tree_type* cinitialized_object_get_subobject(const cinitialized_object* self);
+extern bool c_initialized_object_valid(const c_initialized_object* self);
+extern void c_initialized_object_next_subobject(c_initialized_object* self);
+extern tree_type* c_initialized_object_get_subobject(const c_initialized_object* self);
 
 #endif

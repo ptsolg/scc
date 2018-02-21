@@ -4,376 +4,376 @@
 #include "scc/c/c-sema-expr.h"
 #include "scc/c/c-errors.h"
 
-const ctoken_kind ctk_rbracket_or_comma[] =
+const c_token_kind ctk_rbracket_or_comma[] =
 {
         CTK_RBRACKET,
         CTK_COMMA,
         CTK_UNKNOWN
 };
 
-extern tree_expr* cparse_paren_expr(cparser* self)
+extern tree_expr* c_parse_paren_expr(c_parser* self)
 {
-        tree_location lbracket_loc = cparser_get_loc(self);
-        if (!cparser_require(self, CTK_LBRACKET))
+        tree_location lbracket_loc = c_parser_get_loc(self);
+        if (!c_parser_require(self, CTK_LBRACKET))
                 return NULL;
 
-        tree_expr* e = cparse_expr(self);
-        tree_location rbracket_loc = cparser_get_loc(self);
-        return e && cparser_require(self, CTK_RBRACKET)
-                ? csema_new_paren_expr(self->sema, lbracket_loc, e, rbracket_loc)
+        tree_expr* e = c_parse_expr(self);
+        tree_location rbracket_loc = c_parser_get_loc(self);
+        return e && c_parser_require(self, CTK_RBRACKET)
+                ? c_sema_new_paren_expr(self->sema, lbracket_loc, e, rbracket_loc)
                 : NULL;
 }
 
-extern tree_expr* cparse_primary_expr(cparser* self)
+extern tree_expr* c_parse_primary_expr(c_parser* self)
 {
-        ctoken* t = cparser_get_token(self);
-        ctoken_kind k = ctoken_get_kind(t);
+        c_token* t = c_parser_get_token(self);
+        c_token_kind k = c_token_get_kind(t);
         if (k == CTK_LBRACKET)
-                return cparse_paren_expr(self);
+                return c_parse_paren_expr(self);
 
-        tree_location loc = cparser_get_loc(self);
-        cparser_consume_token(self);
+        tree_location loc = c_parser_get_loc(self);
+        c_parser_consume_token(self);
         if (k == CTK_ID || k == CTK_CONST_STRING)
         {
-                tree_id id = ctoken_get_string(t);
+                tree_id id = c_token_get_string(t);
                 return k == CTK_ID
-                        ? csema_new_decl_expr(self->sema, id, loc)
-                        : csema_new_string_literal(self->sema, loc, id);
+                        ? c_sema_new_decl_expr(self->sema, id, loc)
+                        : c_sema_new_string_literal(self->sema, loc, id);
         }
         else if (k == CTK_CONST_CHAR)
-                return csema_new_character_literal(self->sema, loc, ctoken_get_char(t));
+                return c_sema_new_character_literal(self->sema, loc, c_token_get_char(t));
         else if (k == CTK_CONST_DOUBLE)
-                return csema_new_dp_floating_literal(self->sema, loc, ctoken_get_double(t));
+                return c_sema_new_dp_floating_literal(self->sema, loc, c_token_get_double(t));
         else if (k == CTK_CONST_FLOAT)
-                return csema_new_sp_floating_literal(self->sema, loc, ctoken_get_float(t));
+                return c_sema_new_sp_floating_literal(self->sema, loc, c_token_get_float(t));
         else if (k == CTK_CONST_INT)
         {
-                bool signed_ = ctoken_is_int_signed(t);
-                bool ext = ctoken_get_int_ls(t) == 2;
-                return csema_new_integer_literal(self->sema,
-                        loc, ctoken_get_int(t), signed_, ext);
+                bool signed_ = c_token_int_is_signed(t);
+                bool ext = c_token_get_int_ls(t) == 2;
+                return c_sema_new_integer_literal(self->sema,
+                        loc, c_token_get_int(t), signed_, ext);
         }
        
-        cerror_expected_expr(self->logger, loc);
+        c_error_expected_expr(self->logger, loc);
         return NULL;
 }
 
-static bool cparse_argument_expr_list_opt(cparser* self, tree_expr* call)
+static bool c_parse_argument_expr_list_opt(c_parser* self, tree_expr* call)
 {
-        if (cparser_at(self, CTK_RBRACKET))
+        if (c_parser_at(self, CTK_RBRACKET))
                 return true;
 
         tree_expr* arg;
-        while ((arg = cparse_assignment_expr(self)))
+        while ((arg = c_parse_assignment_expr(self)))
         {
-                csema_add_call_expr_arg(self->sema, call, arg);
+                c_sema_add_call_expr_arg(self->sema, call, arg);
 
-                if (cparser_at(self, CTK_RBRACKET))
+                if (c_parser_at(self, CTK_RBRACKET))
                         return true;
-                else if (!cparser_require_ex(self, CTK_COMMA, ctk_rbracket_or_comma))
+                else if (!c_parser_require_ex(self, CTK_COMMA, ctk_rbracket_or_comma))
                         return false;
         }
         return false;
 }
 
-static inline tree_id cparse_identifier(cparser* self)
+static inline tree_id c_parse_identifier(c_parser* self)
 {
-        return cparser_require(self, CTK_ID)
-                ? ctoken_get_string(cparser_get_prev(self))
+        return c_parser_require(self, CTK_ID)
+                ? c_token_get_string(c_parser_get_prev(self))
                 : TREE_INVALID_ID;
 }
 
-static tree_expr* cparse_rhs_of_postfix_expr(cparser* self, tree_expr* lhs)
+static tree_expr* c_parse_postfix_expr_suffix(c_parser* self, tree_expr* lhs)
 {
-        ctoken_kind k = ctoken_get_kind(cparser_get_token(self));
-        tree_location loc = cparser_get_loc(self);
+        c_token_kind k = c_token_get_kind(c_parser_get_token(self));
+        tree_location loc = c_parser_get_loc(self);
 
         if (k == CTK_LSBRACKET)
         {
-                cparser_consume_token(self);
-                tree_expr* rhs = cparse_expr(self);
-                return rhs && cparser_require(self, CTK_RSBRACKET)
-                        ? csema_new_subscript_expr(self->sema, loc, lhs, rhs)
+                c_parser_consume_token(self);
+                tree_expr* rhs = c_parse_expr(self);
+                return rhs && c_parser_require(self, CTK_RSBRACKET)
+                        ? c_sema_new_subscript_expr(self->sema, loc, lhs, rhs)
                         : NULL;
         }
         else if (k == CTK_LBRACKET)
         {
-                cparser_consume_token(self);
-                tree_expr* call = csema_new_call_expr(self->sema, loc, lhs);
+                c_parser_consume_token(self);
+                tree_expr* call = c_sema_new_call_expr(self->sema, loc, lhs);
                 if (!call)
                         return NULL;
-                if (!cparse_argument_expr_list_opt(self, call))
+                if (!c_parse_argument_expr_list_opt(self, call))
                         return NULL;
-                if (!cparser_require(self, CTK_RBRACKET))
+                if (!c_parser_require(self, CTK_RBRACKET))
                         return NULL;
-                return csema_check_call_expr_args(self->sema, call);
+                return c_sema_check_call_expr_args(self->sema, call);
         }
         else if (k == CTK_DOT || k == CTK_ARROW)
         {
-                cparser_consume_token(self);
-                tree_location id_loc = cparser_get_loc(self);
-                tree_id id = cparse_identifier(self);
+                c_parser_consume_token(self);
+                tree_location id_loc = c_parser_get_loc(self);
+                tree_id id = c_parse_identifier(self);
                 if (id == TREE_INVALID_ID)
                         return NULL;
 
-                return csema_new_member_expr(self->sema,
+                return c_sema_new_member_expr(self->sema,
                         loc, lhs, id, id_loc, k == CTK_ARROW);
         }
         else if (k == CTK_PLUS2)
         {
-                cparser_consume_token(self);
-                return csema_new_unary_expr(self->sema, loc, TUK_POST_INC, lhs);
+                c_parser_consume_token(self);
+                return c_sema_new_unary_expr(self->sema, loc, TUK_POST_INC, lhs);
         }
         else if (k == CTK_MINUS2)
         {
-                cparser_consume_token(self);
-                return csema_new_unary_expr(self->sema, loc, TUK_POST_DEC, lhs);
+                c_parser_consume_token(self);
+                return c_sema_new_unary_expr(self->sema, loc, TUK_POST_DEC, lhs);
         }
 
         return lhs;
 }
 
-extern tree_expr* cparse_postfix_expr(cparser* self)
+extern tree_expr* c_parse_postfix_expr(c_parser* self)
 {
-        tree_expr* lhs = cparse_primary_expr(self);
+        tree_expr* lhs = c_parse_primary_expr(self);
         while (1)
         {
-                tree_expr* rhs = cparse_rhs_of_postfix_expr(self, lhs);
+                tree_expr* rhs = c_parse_postfix_expr_suffix(self, lhs);
                 if (!rhs || rhs == lhs)
                         return rhs;
                 lhs = rhs;
         }
 }
 
-extern tree_expr* cparse_unary_expr(cparser* self)
+extern tree_expr* c_parse_unary_expr(c_parser* self)
 {
-        tree_location loc = cparser_get_loc(self);
-        if (cparser_at(self, CTK_SIZEOF))
+        tree_location loc = c_parser_get_loc(self);
+        if (c_parser_at(self, CTK_SIZEOF))
         {
-                cparser_consume_token(self);
+                c_parser_consume_token(self);
 
                 void* operand;
                 bool contains_type = false;
-                tree_location loc = cparser_get_loc(self);;
-                if (cparser_at(self, CTK_LBRACKET))
+                tree_location loc = c_parser_get_loc(self);;
+                if (c_parser_at(self, CTK_LBRACKET))
                 {
-                        cparser_consume_token(self);
-                        loc = cparser_get_loc(self);
-                        operand = cparse_type_name(self);
-                        if (!operand || !cparser_require(self, CTK_RBRACKET))
+                        c_parser_consume_token(self);
+                        loc = c_parser_get_loc(self);
+                        operand = c_parse_type_name(self);
+                        if (!operand || !c_parser_require(self, CTK_RBRACKET))
                                 return NULL;
                         contains_type = true;
                 }
-                else if (!(operand = cparse_unary_expr(self)))
+                else if (!(operand = c_parse_unary_expr(self)))
                         return NULL;
                 
-                return csema_new_sizeof_expr(self->sema, loc, operand, contains_type);
+                return c_sema_new_sizeof_expr(self->sema, loc, operand, contains_type);
         }
 
-        tree_unop_kind op = ctoken_to_prefix_unary_operator(cparser_get_token(self));
+        tree_unop_kind op = c_token_to_prefix_unary_operator(c_parser_get_token(self));
         if (op != TUK_UNKNOWN)
         {
-                cparser_consume_token(self);
+                c_parser_consume_token(self);
                 tree_expr* rhs = op == TUK_PRE_INC || op == TUK_PRE_DEC
-                        ? cparse_unary_expr(self)
-                        : cparse_cast_expr(self);
+                        ? c_parse_unary_expr(self)
+                        : c_parse_cast_expr(self);
 
-                return csema_new_unary_expr(self->sema, loc, op, rhs);
+                return c_sema_new_unary_expr(self->sema, loc, op, rhs);
         }
 
-        return cparse_postfix_expr(self);
+        return c_parse_postfix_expr(self);
 }
 
-extern tree_expr* cparse_cast_expr(cparser* self)
+extern tree_expr* c_parse_cast_expr(c_parser* self)
 {
-        if (cparser_at(self, CTK_LBRACKET) && cparser_next_token_starts_type_name(self))
+        if (c_parser_at(self, CTK_LBRACKET) && c_parser_next_token_starts_type_name(self))
         {
-                tree_location loc = cparser_get_loc(self);
-                tree_type* t = cparse_paren_type_name(self);
+                tree_location loc = c_parser_get_loc(self);
+                tree_type* t = c_parse_paren_type_name(self);
                 if (!t)
                         return NULL;
 
-                tree_expr* rhs = cparse_cast_expr(self);
+                tree_expr* rhs = c_parse_cast_expr(self);
                 if (!rhs)
                         return NULL;
 
-                return csema_new_cast_expr(self->sema, loc, t, rhs);
+                return c_sema_new_cast_expr(self->sema, loc, t, rhs);
         }
-        return cparse_unary_expr(self);
+        return c_parse_unary_expr(self);
 }
 
-static inline tree_expr* cparse_rhs_of_binary_expr(cparser* self, tree_expr* lhs, int min_prec)
+static inline tree_expr* c_parse_rhs_of_binary_expr(c_parser* self, tree_expr* lhs, int min_prec)
 {
         while (1)
         {
-                int this_prec = cget_operator_precedence(cparser_get_token(self));
+                int this_prec = c_get_operator_precedence(c_parser_get_token(self));
                 if (this_prec < min_prec)
                         return lhs;
 
-                const ctoken* optoken = cparser_get_token(self);
-                tree_location oploc = ctoken_get_loc(optoken);
-                cparser_consume_token(self);
+                const c_token* optoken = c_parser_get_token(self);
+                tree_location oploc = c_token_get_loc(optoken);
+                c_parser_consume_token(self);
                 
                 tree_expr* ternary_middle = NULL;
-                if (ctoken_is(optoken, CTK_QUESTION))
+                if (c_token_is(optoken, CTK_QUESTION))
                 {
-                        ternary_middle = cparse_expr(self);
-                        if (!ternary_middle || !cparser_require(self, CTK_COLON))
+                        ternary_middle = c_parse_expr(self);
+                        if (!ternary_middle || !c_parser_require(self, CTK_COLON))
                                 return NULL;
                 }
 
-                tree_expr* rhs = cparse_cast_expr(self);
+                tree_expr* rhs = c_parse_cast_expr(self);
                 if (!rhs)
                         return NULL;
 
-                int next_prec = cget_operator_precedence(cparser_get_token(self));
+                int next_prec = c_get_operator_precedence(c_parser_get_token(self));
                 bool next_right_assoc = this_prec == CPL_ASSIGN
                                      || this_prec == CPL_CONDITIONAL;
 
                 if ((next_prec > this_prec) || (next_right_assoc && next_prec == this_prec))
-                        rhs = cparse_rhs_of_binary_expr(self, rhs, next_prec);
+                        rhs = c_parse_rhs_of_binary_expr(self, rhs, next_prec);
 
-                lhs = ctoken_is(optoken, CTK_QUESTION)
-                        ? csema_new_conditional_expr(self->sema, oploc, lhs, ternary_middle, rhs)
-                        : csema_new_binary_expr(self->sema, oploc, ctoken_to_binop(optoken), lhs, rhs);
+                lhs = c_token_is(optoken, CTK_QUESTION)
+                        ? c_sema_new_conditional_expr(self->sema, oploc, lhs, ternary_middle, rhs)
+                        : c_sema_new_binary_expr(self->sema, oploc, c_token_to_binop(optoken), lhs, rhs);
                 if (!lhs)
                         return NULL;
         }
 }
 
-extern tree_expr* cparse_assignment_expr(cparser* self)
+extern tree_expr* c_parse_assignment_expr(c_parser* self)
 {
-        return cparse_expr_ex(self, CPL_ASSIGN);
+        return c_parse_expr_ex(self, CPL_ASSIGN);
 }
 
-extern tree_expr* cparse_expr(cparser* self)
+extern tree_expr* c_parse_expr(c_parser* self)
 {
-        return cparse_expr_ex(self, CPL_COMMA);
+        return c_parse_expr_ex(self, CPL_COMMA);
 }
 
-extern tree_expr* cparse_expr_ex(cparser* self, int min_prec)
+extern tree_expr* c_parse_expr_ex(c_parser* self, int min_prec)
 {
-        tree_expr* lhs = cparse_cast_expr(self);
+        tree_expr* lhs = c_parse_cast_expr(self);
         if (!lhs)
                 return NULL;
 
-        tree_expr* expr = cparse_rhs_of_binary_expr(self, lhs, min_prec);
+        tree_expr* expr = c_parse_rhs_of_binary_expr(self, lhs, min_prec);
         if (!expr)
                 return NULL;
 
-        return csema_finish_expr(self->sema, expr);
+        return c_sema_finish_expr(self->sema, expr);
 }
 
-extern tree_expr* cparse_const_expr(cparser* self)
+extern tree_expr* c_parse_const_expr(c_parser* self)
 {
-        return cparse_expr_ex(self, CPL_CONDITIONAL);
+        return c_parse_expr_ex(self, CPL_CONDITIONAL);
 }
 
-static tree_expr* cparse_designation(cparser* self)
+static tree_expr* c_parse_designation(c_parser* self)
 {
-        tree_expr* designation = csema_new_designation(self->sema);
+        tree_expr* designation = c_sema_new_designation(self->sema);
         while (1)
         {
                 tree_designator* designator = NULL;
-                ctoken_kind k = ctoken_get_kind(cparser_get_token(self));
-                tree_id loc = cparser_get_loc(self);
+                c_token_kind k = c_token_get_kind(c_parser_get_token(self));
+                tree_id loc = c_parser_get_loc(self);
 
                 if (k == CTK_DOT)
                 {
-                        cparser_consume_token(self);
-                        loc = cparser_get_loc(self);
-                        tree_id field = cparse_identifier(self);
+                        c_parser_consume_token(self);
+                        loc = c_parser_get_loc(self);
+                        tree_id field = c_parse_identifier(self);
                         if (field == TREE_INVALID_ID)
                                 return NULL;
 
-                        designator = csema_new_field_designator(self->sema, loc, field);
+                        designator = c_sema_new_field_designator(self->sema, loc, field);
 
                 }
                 else if (k == CTK_LSBRACKET)
                 {
-                        cparser_consume_token(self);
-                        tree_expr* index = cparse_const_expr(self);
-                        if (!index || !cparser_require(self, CTK_RSBRACKET))
+                        c_parser_consume_token(self);
+                        tree_expr* index = c_parse_const_expr(self);
+                        if (!index || !c_parser_require(self, CTK_RSBRACKET))
                                 return NULL;
 
-                        designator = csema_new_array_designator(self->sema, loc, index);
+                        designator = c_sema_new_array_designator(self->sema, loc, index);
                 }
-                else if (cparser_require(self, CTK_EQ))
+                else if (c_parser_require(self, CTK_EQ))
                         return designation;
                 else
                         return NULL;
 
                 if (!designator)
                         return NULL;
-                if (!csema_add_designation_designator(self->sema, designation, designator))
+                if (!c_sema_add_designation_designator(self->sema, designation, designator))
                         return NULL;
         }
 }
 
-static tree_expr* _cparse_initializer(cparser*);
+static tree_expr* _c_parse_initializer(c_parser*);
 
-static tree_expr* cparse_initializer_list(cparser* self, tree_location lbrace_loc)
+static tree_expr* c_parse_initializer_list(c_parser* self, tree_location lbrace_loc)
 {
-        if (cparser_at(self, CTK_RBRACE))
+        if (c_parser_at(self, CTK_RBRACE))
         {
-                cerror_empty_initializer(self->logger, cparser_get_loc(self));
+                c_error_empty_initializer(self->logger, c_parser_get_loc(self));
                 return NULL;
         }
 
-        tree_expr* list = csema_new_initializer_list(self->sema, lbrace_loc);
+        tree_expr* list = c_sema_new_initializer_list(self->sema, lbrace_loc);
         while (1)
         {
                 tree_expr* designation = NULL;
-                if (cparser_at(self, CTK_DOT) || cparser_at(self, CTK_LSBRACKET))
-                        if (!(designation = cparse_designation(self)))
+                if (c_parser_at(self, CTK_DOT) || c_parser_at(self, CTK_LSBRACKET))
+                        if (!(designation = c_parse_designation(self)))
                                 return NULL;
 
-                tree_expr* init = _cparse_initializer(self);
+                tree_expr* init = _c_parse_initializer(self);
                 if (!init)
                         return NULL;
 
                 if (designation)
                 {
-                        if (!csema_set_designation_initializer(self->sema, designation, init))
+                        if (!c_sema_set_designation_initializer(self->sema, designation, init))
                                 return NULL;
-                        if (!csema_add_initializer_list_expr(self->sema, list, designation))
+                        if (!c_sema_add_initializer_list_expr(self->sema, list, designation))
                                 return NULL;
                 }
-                else if (!csema_add_initializer_list_expr(self->sema, list, init))
+                else if (!c_sema_add_initializer_list_expr(self->sema, list, init))
                         return NULL;
 
-                if (cparser_at(self, CTK_COMMA))
-                        cparser_consume_token(self);
-                if (cparser_at(self, CTK_RBRACE))
+                if (c_parser_at(self, CTK_COMMA))
+                        c_parser_consume_token(self);
+                if (c_parser_at(self, CTK_RBRACE))
                 {
                         tree_set_init_list_has_trailing_comma(
-                                list, ctoken_is(cparser_get_prev(self), CTK_COMMA));
+                                list, c_token_is(c_parser_get_prev(self), CTK_COMMA));
                         return list;
                 }
         }
 }
 
-static tree_expr* _cparse_initializer(cparser* self)
+static tree_expr* _c_parse_initializer(c_parser* self)
 {
         tree_expr* init;
-        tree_location loc = cparser_get_loc(self);
+        tree_location loc = c_parser_get_loc(self);
 
-        if (!cparser_at(self, CTK_LBRACE))
+        if (!c_parser_at(self, CTK_LBRACE))
         {
-                if (!(init = cparse_assignment_expr(self)))
+                if (!(init = c_parse_assignment_expr(self)))
                         return NULL;
                 return init;
         }
 
-        cparser_consume_token(self); // {
-        if (!(init = cparse_initializer_list(self, loc)))
+        c_parser_consume_token(self); // {
+        if (!(init = c_parse_initializer_list(self, loc)))
                 return NULL;
 
-        return cparser_require(self, CTK_RBRACE) ? init : NULL;
+        return c_parser_require(self, CTK_RBRACE) ? init : NULL;
 }
 
-extern tree_expr* cparse_initializer(cparser* self, tree_type* initialized_type)
+extern tree_expr* c_parse_initializer(c_parser* self, tree_type* initialized_type)
 {
-        tree_expr* init = _cparse_initializer(self);
-        return init ? csema_check_initializer(self->sema, initialized_type, init) : NULL;
+        tree_expr* init = _c_parse_initializer(self);
+        return init ? c_sema_check_initializer(self->sema, initialized_type, init) : NULL;
 }

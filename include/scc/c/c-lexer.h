@@ -1,5 +1,5 @@
-#ifndef CLEX_H
-#define CLEX_H
+#ifndef C_LEXER_H
+#define C_LEXER_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -12,26 +12,26 @@ extern "C" {
 #include "c-preprocessor.h"
 #include "c-token.h"
 
-typedef struct _clexer
+typedef struct _c_lexer
 {
-        cpproc pp;
-        creswords reswords;
-} clexer;
+        c_preprocessor pp;
+        c_reswords reswords;
+} c_lexer;
 
-extern void clexer_init(
-        clexer* self,
-        csource_manager* source_manager,
-        clogger* logger,
-        ccontext* context);
+extern void c_lexer_init(
+        c_lexer* self,
+        c_source_manager* source_manager,
+        c_logger* logger,
+        c_context* context);
 
-extern serrcode clexer_enter_source_file(clexer* self, csource* source);
-extern void clexer_init_reswords(clexer* self);
-extern void clexer_dispose(clexer* self);
+extern serrcode c_lexer_enter_source_file(c_lexer* self, c_source* source);
+extern void c_lexer_init_reswords(c_lexer* self);
+extern void c_lexer_dispose(c_lexer* self);
 
-extern ctoken* clex(clexer* self);
+extern c_token* c_lex(c_lexer* self);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // !CLEX_H
+#endif

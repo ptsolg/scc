@@ -1,5 +1,5 @@
-#ifndef CPRINTER_H
-#define CPRINTER_H
+#ifndef C_PRINTER_H
+#define C_PRINTER_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -13,9 +13,9 @@ extern "C" {
 #include "scc/scl/read-write.h"
 #include "scc/scl/dseq-instance.h"
 
-typedef struct _ctoken ctoken;
-typedef struct _ccontext ccontext;
-typedef struct _csource_manager csource_manager;
+typedef struct _c_token c_token;
+typedef struct _c_context c_context;
+typedef struct _c_source_manager c_source_manager;
 typedef struct _tree_expr tree_expr;
 typedef struct _tree_type tree_type;
 typedef struct _tree_decl tree_decl;
@@ -35,29 +35,29 @@ typedef struct
         bool force_brackets;
         int float_precision;
         int double_precision;
-} cprinter_opts;
+} c_printer_opts;
 
-extern void cprinter_opts_init(cprinter_opts* self);
+extern void c_printer_opts_init(c_printer_opts* self);
 
-typedef struct _cprinter
+typedef struct _c_printer
 {
         writebuf buf;
         tree_context* context;
-        const ccontext* ccontext;
+        const c_context* ccontext;
         // used when we need to print constant expression result
         const tree_target_info* target;
-        const csource_manager* source_manager;
-        cprinter_opts opts;
+        const c_source_manager* source_manager;
+        c_printer_opts opts;
         int indent_level;
-} cprinter;
+} c_printer;
 
-extern void cprinter_init(
-        cprinter* self,
+extern void c_printer_init(
+        c_printer* self,
         write_cb* write,
-        const ccontext* context,
-        const csource_manager* source_manager);
+        const c_context* context,
+        const c_source_manager* source_manager);
 
-extern void cprinter_dispose(cprinter* self);
+extern void c_printer_dispose(c_printer* self);
 
 typedef struct
 {
@@ -65,14 +65,14 @@ typedef struct
         int max_col;
         int max_kind_len;
         int max_file_len;
-} ctoken_print_info;
+} c_token_print_info;
 
-extern void ctoken_print_info_init(ctoken_print_info* self);
+extern void c_token_print_info_init(c_token_print_info* self);
 
-extern void cprint_token(cprinter* self, const ctoken* token, const ctoken_print_info* info);
-extern void cprint_tokens(cprinter* self, const dseq* tokens);
+extern void c_print_token(c_printer* self, const c_token* token, const c_token_print_info* info);
+extern void c_print_tokens(c_printer* self, const dseq* tokens);
 
-extern void cprint_expr(cprinter* self, const tree_expr* expr);
+extern void c_print_expr(c_printer* self, const tree_expr* expr);
 
 enum
 {
@@ -93,13 +93,13 @@ enum
         CPRINTER_IGNORE_DECL_ENDING = 32,
 };
 
-extern void cprint_type_name(cprinter* self, const tree_type* type, int opts);
-extern void cprint_decl(cprinter* self, const tree_decl* d, int opts);
-extern void cprint_stmt(cprinter* self, const tree_stmt* s);
-extern void cprint_module(cprinter* self, const tree_module* module);
+extern void c_print_type_name(c_printer* self, const tree_type* type, int opts);
+extern void c_print_decl(c_printer* self, const tree_decl* d, int opts);
+extern void c_print_stmt(c_printer* self, const tree_stmt* s);
+extern void c_print_module(c_printer* self, const tree_module* module);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // !CPRINTER_H
+#endif

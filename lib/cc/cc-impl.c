@@ -22,7 +22,7 @@ typedef struct
 {
         tree_target_info target;
         tree_context tree;
-        ccontext c;
+        c_context c;
         ssa_context ssa;
 } cc_context;
 
@@ -31,14 +31,14 @@ static void cc_context_init(cc_context* self, cc_instance* cc, jmp_buf on_fatal_
         tree_init_target_info(&self->target,
                 cc->opts.target == CTK_X86_32 ? TTAK_X86_32 : TTAK_X86_64);
         tree_init(&self->tree, &self->target);
-        cinit(&self->c, &self->tree, on_fatal_error);
+        c_context_init(&self->c, &self->tree, on_fatal_error);
         ssa_init(&self->ssa, &self->tree, on_fatal_error);
 }
 
 static void cc_context_dispose(cc_context* self)
 {
         ssa_dispose(&self->ssa);
-        cdispose(&self->c);
+        c_context_dispose(&self->c);
         tree_dispose(&self->tree);
 }
 
@@ -99,7 +99,7 @@ static bool cc_check_single_input(cc_instance* self)
         return true;
 }
 
-static void cc_set_cprinter_opts(cc_instance* self, cprinter* printer)
+static void cc_set_cprinter_opts(cc_instance* self, c_printer* printer)
 {
         printer->opts.print_eval_result = self->opts.cprint.print_eval_result;
         printer->opts.print_expr_type = self->opts.cprint.print_expr_type;
@@ -111,17 +111,17 @@ static void cc_set_cprinter_opts(cc_instance* self, cprinter* printer)
 static void cc_print_tokens(
         cc_instance* self,
         cc_context* context,
-        csource_manager* source_manager,
+        c_source_manager* source_manager,
         FILE* output,
         const dseq* tokens)
 {
         fwrite_cb write;
         fwrite_cb_init(&write, output);
-        cprinter printer;
-        cprinter_init(&printer, fwrite_cb_base(&write), &context->c, source_manager);
+        c_printer printer;
+        c_printer_init(&printer, fwrite_cb_base(&write), &context->c, source_manager);
         cc_set_cprinter_opts(self, &printer);
-        cprint_tokens(&printer, tokens);
-        cprinter_dispose(&printer);
+        c_print_tokens(&printer, tokens);
+        c_printer_dispose(&printer);
 }
 
 extern serrcode cc_dump_tokens(cc_instance* self)
@@ -132,16 +132,16 @@ extern serrcode cc_dump_tokens(cc_instance* self)
         serrcode result = S_ERROR;
         jmp_buf fatal;
         cc_context context;
-        cenv env;
+        c_env env;
         dseq tokens;
 
         cc_context_init(&context, self, fatal);
-        cenv_init(&env, &context.c, &self->input.source_lookup, self->output.message);
+        c_env_init(&env, &context.c, &self->input.source_lookup, self->output.message);
         dseq_init_alloc(&tokens, self->alloc);
 
         if (setjmp(fatal))
                 goto cleanup;
-        if (S_FAILED(cenv_lex_source(&env, *cc_sources_begin(self), &tokens)))
+        if (S_FAILED(c_env_lex_source(&env, *cc_sources_begin(self), &tokens)))
         {
                 goto cleanup;
         }
@@ -153,7 +153,7 @@ extern serrcode cc_dump_tokens(cc_instance* self)
 
 cleanup:
         dseq_dispose(&tokens);
-        cenv_dispose(&env);
+        c_env_dispose(&env);
         cc_context_dispose(&context);
         return result;
 }
@@ -163,16 +163,16 @@ static void cc_print_tree_module(cc_instance* self,
 {
         fwrite_cb write;
         fwrite_cb_init(&write, output);
-        cprinter printer;
-        cprinter_init(&printer, fwrite_cb_base(&write), &context->c, NULL);
+        c_printer printer;
+        c_printer_init(&printer, fwrite_cb_base(&write), &context->c, NULL);
         cc_set_cprinter_opts(self, &printer);
-        cprint_module(&printer, module);
-        cprinter_dispose(&printer);
+        c_print_module(&printer, module);
+        c_printer_dispose(&printer);
 }
 
 static tree_module* cc_parse_file(cc_instance* self, cc_context* context, file_entry* file)
 {
-        return cparse_source(&context->c,
+        return c_parse_source(&context->c,
                 &self->input.source_lookup, file, self->output.message);
 }
 
@@ -216,7 +216,7 @@ extern serrcode cc_perform_syntax_analysis(cc_instance* self)
 
         serrcode result = S_NO_ERROR;
         CC_FOREACH_SOURCE(self, it, end)
-                if (!cparse_source(&context.c,
+                if (!c_parse_source(&context.c,
                         &self->input.source_lookup, *it, self->output.message))
                 {
                         result = S_ERROR;

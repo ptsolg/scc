@@ -1,13 +1,13 @@
-#ifndef CERRORS_H
-#define CERRORS_H
+#ifndef C_ERRORS_H
+#define C_ERRORS_H
 
 #include "scc/tree/tree-common.h"
 #include "scc/c/c-token.h"
 
-typedef struct _clogger clogger;
-typedef struct _ctoken ctoken;
-typedef struct _cdecl_specs cdecl_specs;
-typedef struct _cdeclarator cdeclarator;
+typedef struct _c_logger c_logger;
+typedef struct _c_token c_token;
+typedef struct _c_decl_specs c_decl_specs;
+typedef struct _c_declarator c_declarator;
 typedef struct _tree_context tree_context;
 typedef struct _tree_decl tree_decl;
 typedef struct _tree_expr tree_expr;
@@ -15,138 +15,136 @@ typedef struct _tree_stmt tree_stmt;
 typedef struct _tree_designator tree_designator;
 
 // preprocessing lexer
-extern void cerror_cannot_open_source_file(clogger* self, tree_location loc, const char* file);
-extern void cerror_token_is_too_long(clogger* self, tree_location loc);
-extern void cerror_missing_closing_quote(clogger* self, tree_location loc);
-extern void cerror_empty_character_constant(clogger* self, tree_location loc);
-extern void cerror_invalid_character_constant(clogger* self, tree_location loc);
-extern void cerror_unclosed_comment(clogger* self, tree_location loc);
-extern void cerror_unknown_punctuator(clogger* self, tree_location loc, int c);
-extern void cerror_unknown_symbol(clogger* self, tree_location loc, int c);
+extern void c_error_cannot_open_source_file(c_logger* self, tree_location loc, const char* file);
+extern void c_error_token_is_too_long(c_logger* self, tree_location loc);
+extern void c_error_missing_closing_quote(c_logger* self, tree_location loc);
+extern void c_error_empty_character_constant(c_logger* self, tree_location loc);
+extern void c_error_invalid_character_constant(c_logger* self, tree_location loc);
+extern void c_error_unclosed_comment(c_logger* self, tree_location loc);
+extern void c_error_unknown_punctuator(c_logger* self, tree_location loc, int c);
+extern void c_error_unknown_symbol(c_logger* self, tree_location loc, int c);
 
 // preprocessor
-extern void cerror_too_deep_include_nesting(clogger* self);
-extern void cerror_expected_file_name(clogger* self, tree_location loc);
-extern void cerror_empty_file_name_in_include(clogger* self, tree_location loc);
-extern void cerror_cannot_open_source_file(clogger* self, tree_location loc, const char* file);
-extern void cerror_unexpected_hash(clogger* self, tree_location loc);
-extern void cerror_unknown_preprocessor_directive(clogger* self, tree_location loc);
-extern void cerror_unsupported_preprocessor_directive(clogger* self, tree_location loc);
+extern void c_error_too_deep_include_nesting(c_logger* self);
+extern void c_error_expected_file_name(c_logger* self, tree_location loc);
+extern void c_error_empty_file_name_in_include(c_logger* self, tree_location loc);
+extern void c_error_unexpected_hash(c_logger* self, tree_location loc);
+extern void c_error_unknown_preprocessor_directive(c_logger* self, tree_location loc);
+extern void c_error_unsupported_preprocessor_directive(c_logger* self, tree_location loc);
 
 // lexer
-extern void cerror_invalid_integer_literal(clogger* self, tree_location loc, const char* num);
-extern void cerror_invalid_floating_literal(clogger* self, tree_location loc, const char* num);
+extern void c_error_invalid_integer_literal(c_logger* self, tree_location loc, const char* num);
+extern void c_error_invalid_floating_literal(c_logger* self, tree_location loc, const char* num);
 
 // parser
-extern void cerror_expected_a_before_b(
-        clogger* self, tree_location loc, ctoken_kind a, ctoken_kind b);
+extern void c_error_expected_a_before_b(
+        c_logger* self, tree_location loc, c_token_kind a, c_token_kind b);
 
-extern void cerror_expected_a_or_b_before_c(
-        clogger* self, tree_location loc, ctoken_kind a, ctoken_kind b, ctoken_kind c);
+extern void c_error_expected_a_or_b_before_c(
+        c_logger* self, tree_location loc, c_token_kind a, c_token_kind b, c_token_kind c);
 
-extern void cerror_expected_one_of(
-        clogger* self, tree_location loc, ctoken_kind* v, ssize n, ctoken_kind end);
+extern void c_error_expected_one_of(
+        c_logger* self, tree_location loc, c_token_kind* v, ssize n, c_token_kind end);
 
-extern void cerror_unknown_type_name(clogger* self, const ctoken* id);
-extern void cerror_expected_type_specifier(clogger* self, tree_location loc);
-extern void cerror_invalid_type_specifier(clogger* self, tree_location loc);
-extern void cerror_empty_struct(clogger* self, tree_location loc);
-extern void cerror_empty_enum(clogger* self, tree_location loc);
-extern void cerror_expected_expr(clogger* self, tree_location loc);
-extern void cerror_empty_initializer(clogger* self, tree_location loc);
-extern void cerror_too_many_initializer_values(clogger* self, tree_location loc);
+extern void c_error_unknown_type_name(c_logger* self, const c_token* id);
+extern void c_error_expected_type_specifier(c_logger* self, tree_location loc);
+extern void c_error_invalid_type_specifier(c_logger* self, tree_location loc);
+extern void c_error_empty_struct(c_logger* self, tree_location loc);
+extern void c_error_empty_enum(c_logger* self, tree_location loc);
+extern void c_error_expected_expr(c_logger* self, tree_location loc);
+extern void c_error_empty_initializer(c_logger* self, tree_location loc);
+extern void c_error_too_many_initializer_values(c_logger* self, tree_location loc);
 
 // sema
-extern void cerror_undeclared_identifier(clogger* self, tree_location loc, tree_id name);
-extern void cerror_multiple_storage_classes(clogger* self, const cdecl_specs* ds);
-extern void cerror_inline_allowed_on_functions_only(clogger* self, tree_location loc);
-extern void cerror_invalid_parameter_storage_class(clogger* self, const cdeclarator* d);
+extern void c_error_undeclared_identifier(c_logger* self, tree_location loc, tree_id name);
+extern void c_error_multiple_storage_classes(c_logger* self, const c_decl_specs* ds);
+extern void c_error_inline_allowed_on_functions_only(c_logger* self, tree_location loc);
+extern void c_error_invalid_parameter_storage_class(c_logger* self, const c_declarator* d);
 
-extern void cerror_function_initialized_like_a_variable(clogger* self, const tree_decl* func);
-extern void cerror_invalid_initializer(clogger* self, const tree_expr* init);
-extern void cerror_initialization_discards_qualifer(clogger* self, const tree_expr* init, int quals);
-extern void cerror_initialization_from_incompatible_pointer_types(clogger* self, const tree_expr* init);
-extern void cerror_braces_around_scalar_initializer(clogger* self, tree_location loc);
-extern void cerror_field_name_not_in_record_initializer(clogger* self, const tree_designator* d);
-extern void cerror_array_index_in_non_array_intializer(clogger* self, const tree_designator* d);
-extern void cerror_array_index_in_initializer_not_of_integer_type(clogger* self, const tree_expr* index);
-extern void cerror_nonconstant_array_index_in_initializer(clogger* self, const tree_expr* index);
-extern void cerror_array_index_in_initializer_exceeds_array_bounds(clogger* self, const tree_expr* index);
-extern void cerror_initializer_element_isnt_constant(clogger* self, const tree_expr* init);
+extern void c_error_function_initialized_like_a_variable(c_logger* self, const tree_decl* func);
+extern void c_error_invalid_initializer(c_logger* self, const tree_expr* init);
+extern void c_error_initialization_discards_qualifer(c_logger* self, const tree_expr* init, int quals);
+extern void c_error_initialization_from_incompatible_pointer_types(c_logger* self, const tree_expr* init);
+extern void c_error_braces_around_scalar_initializer(c_logger* self, tree_location loc);
+extern void c_error_field_name_not_in_record_initializer(c_logger* self, const tree_designator* d);
+extern void c_error_array_index_in_non_array_intializer(c_logger* self, const tree_designator* d);
+extern void c_error_array_index_in_initializer_not_of_integer_type(c_logger* self, const tree_expr* index);
+extern void c_error_nonconstant_array_index_in_initializer(c_logger* self, const tree_expr* index);
+extern void c_error_array_index_in_initializer_exceeds_array_bounds(c_logger* self, const tree_expr* index);
+extern void c_error_initializer_element_isnt_constant(c_logger* self, const tree_expr* init);
 
-extern void cerror_named_argument_before_ellipsis_required(clogger* self, tree_location loc);
-extern void cerror_redefinition(clogger* self, tree_location loc, tree_id id);
-extern void cerror_decl_redefinition(clogger* self, const tree_decl* decl);
-extern void cerror_enumerator_value_isnt_constant(
-        clogger* self, tree_location loc, tree_id name);
+extern void c_error_named_argument_before_ellipsis_required(c_logger* self, tree_location loc);
+extern void c_error_redefinition(c_logger* self, tree_location loc, tree_id id);
+extern void c_error_decl_redefinition(c_logger* self, const tree_decl* decl);
+extern void c_error_enumerator_value_isnt_constant(c_logger* self, tree_location loc, tree_id name);
 
-extern void cerror_wrong_king_of_tag(clogger* self, tree_location loc, tree_id name);
-extern void cerror_field_function(clogger* self, const tree_decl* field);
-extern void cerror_invalid_bitfield_type(clogger* self, const tree_decl* field);
-extern void cerror_bitfield_width_isnt_constant(clogger* self, const tree_decl* field);
-extern void cerror_bitfield_width_is_zero(clogger* self, const tree_decl* field);
-extern void cerror_negative_bitfield_width(clogger* self, const tree_decl* field);
-extern void cerror_bitfield_width_exceeds_type(clogger* self, const tree_decl* field);
-extern void cerror_invalid_storage_class(clogger* self, const tree_decl* decl);
-extern void cerror_different_kind_of_symbol(clogger* self, const tree_decl* decl);
-extern void cerror_different_storage_class(clogger* self, const tree_decl* decl);
-extern void cerror_conflicting_types(clogger* self, const tree_decl* decl);
-extern void cerror_parameter_name_omitted(clogger* self, const tree_decl* param);
-extern void cerror_function_isnt_allowed_here(clogger* self, const tree_decl* func);
+extern void c_error_wrong_king_of_tag(c_logger* self, tree_location loc, tree_id name);
+extern void c_error_field_function(c_logger* self, const tree_decl* field);
+extern void c_error_invalid_bitfield_type(c_logger* self, const tree_decl* field);
+extern void c_error_bitfield_width_isnt_constant(c_logger* self, const tree_decl* field);
+extern void c_error_bitfield_width_is_zero(c_logger* self, const tree_decl* field);
+extern void c_error_negative_bitfield_width(c_logger* self, const tree_decl* field);
+extern void c_error_bitfield_width_exceeds_type(c_logger* self, const tree_decl* field);
+extern void c_error_invalid_storage_class(c_logger* self, const tree_decl* decl);
+extern void c_error_different_kind_of_symbol(c_logger* self, const tree_decl* decl);
+extern void c_error_different_storage_class(c_logger* self, const tree_decl* decl);
+extern void c_error_conflicting_types(c_logger* self, const tree_decl* decl);
+extern void c_error_parameter_name_omitted(c_logger* self, const tree_decl* param);
+extern void c_error_function_isnt_allowed_here(c_logger* self, const tree_decl* func);
 
-extern void cerror_expr_must_have_pointer_to_object_type(clogger* self, tree_location loc);
-extern void cerror_expr_must_have_pointer_to_function_type(clogger* self, tree_location loc);
-extern void cerror_expr_must_have_integral_type(clogger* self, tree_location loc);
-extern void cerror_expr_must_have_real_type(clogger* self, tree_location loc);
-extern void cerror_expr_must_have_record_type(clogger* self, tree_location loc);
-extern void cerror_expr_must_have_array_type(clogger* self, tree_location loc);
-extern void cerror_expr_must_have_scalar_type(clogger* self, tree_location loc);
-extern void cerror_expr_must_have_arithmetic_type(clogger* self, tree_location loc);
-extern void cerror_expr_must_have_real_or_pointer_to_object_type(clogger* self, tree_location loc);
-extern void cerror_expr_must_be_lvalue_or_function_designator(clogger* self, const tree_expr* e);
-extern void cerror_expr_must_be_modifiable_lvalue(clogger* self, const tree_expr* e);
-extern void cerror_types_are_not_compatible(clogger* self, tree_location loc);
-extern void cerror_subscripted_value_isnt_array(clogger* self, tree_location loc);
-extern void cerror_incompatible_type_for_argument(clogger* self, tree_location loc, unsigned pos);
-extern void cerror_passing_argument_discards_qualifer(
-        clogger* self, tree_location loc, unsigned pos, int quals);
+extern void c_error_expr_must_have_pointer_to_object_type(c_logger* self, tree_location loc);
+extern void c_error_expr_must_have_pointer_to_function_type(c_logger* self, tree_location loc);
+extern void c_error_expr_must_have_integral_type(c_logger* self, tree_location loc);
+extern void c_error_expr_must_have_real_type(c_logger* self, tree_location loc);
+extern void c_error_expr_must_have_record_type(c_logger* self, tree_location loc);
+extern void c_error_expr_must_have_array_type(c_logger* self, tree_location loc);
+extern void c_error_expr_must_have_scalar_type(c_logger* self, tree_location loc);
+extern void c_error_expr_must_have_arithmetic_type(c_logger* self, tree_location loc);
+extern void c_error_expr_must_have_real_or_pointer_to_object_type(c_logger* self, tree_location loc);
+extern void c_error_expr_must_be_lvalue_or_function_designator(c_logger* self, const tree_expr* e);
+extern void c_error_expr_must_be_modifiable_lvalue(c_logger* self, const tree_expr* e);
+extern void c_error_types_are_not_compatible(c_logger* self, tree_location loc);
+extern void c_error_subscripted_value_isnt_array(c_logger* self, tree_location loc);
+extern void c_error_incompatible_type_for_argument(c_logger* self, tree_location loc, unsigned pos);
+extern void c_error_passing_argument_discards_qualifer(
+        c_logger* self, tree_location loc, unsigned pos, int quals);
 
-extern void cerror_passing_argument_from_incompatible_pointer_type(
-        clogger* self, tree_location loc, unsigned pos);
+extern void c_error_passing_argument_from_incompatible_pointer_type(
+        c_logger* self, tree_location loc, unsigned pos);
 
-extern void cerror_to_many_arguments(clogger* self, const tree_expr* call);
-extern void cerror_to_few_arguments(clogger* self, const tree_expr* call);
-extern void cerror_operand_of_sizeof_is_function(clogger* self, tree_location loc);
-extern void cerror_operand_of_sizeof_is_bitfield(clogger* self, tree_location loc);
-extern void cerror_invalid_binop_operands(clogger* self, tree_location loc, int opcode);
-extern void cerror_cmp_of_distinct_pointers(clogger* self, tree_location loc);
-extern void cerror_assignment_discards_quals(clogger* self, tree_location loc, int quals);
-extern void cerror_assignment_from_incompatible_pointer_type(clogger* self, tree_location loc);
-extern void cerror_pointer_type_mismatch(clogger* self, tree_location loc);
-extern void cerror_type_mismatch(clogger* self, tree_location loc);
+extern void c_error_to_many_arguments(c_logger* self, const tree_expr* call);
+extern void c_error_too_few_arguments(c_logger* self, const tree_expr* call);
+extern void c_error_operand_of_sizeof_is_function(c_logger* self, tree_location loc);
+extern void c_error_operand_of_sizeof_is_bitfield(c_logger* self, tree_location loc);
+extern void c_error_invalid_binop_operands(c_logger* self, tree_location loc, int opcode);
+extern void c_error_cmp_of_distinct_pointers(c_logger* self, tree_location loc);
+extern void c_error_assignment_discards_quals(c_logger* self, tree_location loc, int quals);
+extern void c_error_assignment_from_incompatible_pointer_type(c_logger* self, tree_location loc);
+extern void c_error_pointer_type_mismatch(c_logger* self, tree_location loc);
+extern void c_error_type_mismatch(c_logger* self, tree_location loc);
 
-extern void cerror_case_stmt_outside_switch(clogger* self, tree_location loc);
-extern void cerror_case_stmt_isnt_constant(clogger* self, tree_location loc);
-extern void cerror_case_stmt_duplication(clogger* self, tree_location loc);
-extern void cerror_default_stmt_outside_switch(clogger* self, tree_location loc);
-extern void cerror_default_stmt_duplication(clogger* self, tree_location loc);
-extern void cerror_non_variable_decl_in_for_loop(clogger* self, const tree_decl* decl);
-extern void cerror_invalid_storage_class_for_loop_decl(clogger* self, const tree_decl* decl);
-extern void cerror_return_non_void(clogger* self, const tree_expr* expr);
-extern void cerror_return_type_doesnt_match(clogger* self, const tree_expr* expr);
-extern void cerror_return_discards_quals(clogger* self, tree_location loc, int quals);
-extern void cerror_return_from_incompatible_pointer_type(clogger* self, tree_location loc);
-extern void cerror_break_stmt_outside_loop_or_switch(clogger* self, const tree_stmt* stmt);
-extern void cerror_continue_stmt_outside_loop(clogger* self, const tree_stmt* stmt);
-extern void cerror_decl_stmt_outside_block(clogger* self, const tree_stmt* stmt);
-extern void cerror_undefined_label(clogger* self, const tree_decl* label);
+extern void c_error_case_stmt_outside_switch(c_logger* self, tree_location loc);
+extern void c_error_case_stmt_isnt_constant(c_logger* self, tree_location loc);
+extern void c_error_case_stmt_duplication(c_logger* self, tree_location loc);
+extern void c_error_default_stmt_outside_switch(c_logger* self, tree_location loc);
+extern void c_error_default_stmt_duplication(c_logger* self, tree_location loc);
+extern void c_error_non_variable_decl_in_for_loop(c_logger* self, const tree_decl* decl);
+extern void c_error_invalid_storage_class_for_loop_decl(c_logger* self, const tree_decl* decl);
+extern void c_error_return_non_void(c_logger* self, const tree_expr* expr);
+extern void c_error_return_type_doesnt_match(c_logger* self, const tree_expr* expr);
+extern void c_error_return_discards_quals(c_logger* self, tree_location loc, int quals);
+extern void c_error_return_from_incompatible_pointer_type(c_logger* self, tree_location loc);
+extern void c_error_break_stmt_outside_loop_or_switch(c_logger* self, const tree_stmt* stmt);
+extern void c_error_continue_stmt_outside_loop(c_logger* self, const tree_stmt* stmt);
+extern void c_error_decl_stmt_outside_block(c_logger* self, const tree_stmt* stmt);
+extern void c_error_undefined_label(c_logger* self, const tree_decl* label);
 
-extern void cerror_incomplete_type(clogger* self, tree_location loc);
-extern void cerror_array_of_functions(clogger* self, tree_location loc);
-extern void cerror_array_size_isnt_integer(clogger* self, tree_location loc);
-extern void cerror_array_must_be_greater_than_zero(clogger* self, tree_location loc);
-extern void cerror_function_returning_array(clogger* self, tree_location loc);
-extern void cerror_function_returning_function(clogger* self, tree_location loc);
-extern void cerror_invalid_use_of_restrict(clogger* self, tree_location loc);
+extern void c_error_incomplete_type(c_logger* self, tree_location loc);
+extern void c_error_array_of_functions(c_logger* self, tree_location loc);
+extern void c_error_array_size_isnt_integer(c_logger* self, tree_location loc);
+extern void c_error_array_must_be_greater_than_zero(c_logger* self, tree_location loc);
+extern void c_error_function_returning_array(c_logger* self, tree_location loc);
+extern void c_error_function_returning_function(c_logger* self, tree_location loc);
+extern void c_error_invalid_use_of_restrict(c_logger* self, tree_location loc);
 
 #endif

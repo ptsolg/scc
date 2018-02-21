@@ -1,5 +1,5 @@
-#ifndef CENV_H
-#define CENV_H
+#ifndef C_ENV_H
+#define C_ENV_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -14,37 +14,37 @@ extern "C" {
 #include "scc/c/c-sema.h"
 #include "scc/c/c-parser.h"
 
-extern serrcode clex_source(
-        ccontext* context,
+extern serrcode c_lex_source(
+        c_context* context,
         file_lookup* source_lookup,
         file_entry* source,
         FILE* error,
         dseq* result);
 
-extern tree_module* cparse_source(
-        ccontext* context,
+extern tree_module* c_parse_source(
+        c_context* context,
         file_lookup* source_lookup,
         file_entry* source,
         FILE* error);
 
-typedef struct _cenv
+typedef struct _c_env
 {
-        csource_manager source_manager;
-        clogger logger;
-        clexer lexer;
-        csema sema;
-        cparser parser;
-        ccontext* context;
-} cenv;
+        c_source_manager source_manager;
+        c_logger logger;
+        c_lexer lexer;
+        c_sema sema;
+        c_parser parser;
+        c_context* context;
+} c_env;
 
-extern void cenv_init(cenv* self, ccontext* context, file_lookup* source_lookup, FILE* err);
-extern void cenv_dispose(cenv* self);
+extern void c_env_init(c_env* self, c_context* context, file_lookup* source_lookup, FILE* err);
+extern void c_env_dispose(c_env* self);
 
-extern serrcode cenv_lex_source(cenv* self, file_entry* source, dseq* result);
-extern tree_module* cenv_parse_source(cenv* self, file_entry* source);
+extern serrcode c_env_lex_source(c_env* self, file_entry* source, dseq* result);
+extern tree_module* c_env_parse_source(c_env* self, file_entry* source);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // !CENV_H
+#endif

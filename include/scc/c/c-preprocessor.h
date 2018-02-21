@@ -1,5 +1,5 @@
-#ifndef CPREPROCESSOR_H
-#define CPREPROCESSOR_H
+#ifndef C_PREPROCESSOR_H
+#define C_PREPROCESSOR_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -12,49 +12,47 @@ extern "C" {
 #include "c-limits.h"
 #include "c-source.h"
 
-typedef enum _ctoken_kind ctoken_kind;
+typedef struct _c_logger c_logger;
+typedef struct _c_token c_token;
 
-typedef struct _creswords
+typedef struct _c_reswords
 {
         strmap reswords;
         strmap pp_reswords;
-} creswords;
+} c_reswords;
 
-extern void creswords_init(creswords* self, ccontext* context);
-extern void creswords_dispose(creswords* self);
-extern void creswords_add(creswords* self, const char* string, ctoken_kind k);
-extern void creswords_add_pp(creswords* self, const char* string, ctoken_kind k);
-extern ctoken_kind creswords_get(const creswords* self, const char* string, ssize len);
-extern ctoken_kind creswords_get_by_ref(const creswords* self, strref h);
-extern ctoken_kind creswords_get_pp(const creswords* self, const char* string, ssize len);
-extern ctoken_kind creswords_get_pp_by_ref(const creswords* self, strref h);
+extern void c_reswords_init(c_reswords* self, c_context* context);
+extern void c_reswords_dispose(c_reswords* self);
+extern void c_reswords_add(c_reswords* self, const char* string, int kind);
+extern void c_reswords_add_pp(c_reswords* self, const char* string, int kind);
+extern int c_reswords_get(const c_reswords* self, const char* string, ssize len);
+extern int c_reswords_get_by_ref(const c_reswords* self, strref h);
+extern int c_reswords_get_pp(const c_reswords* self, const char* string, ssize len);
+extern int c_reswords_get_pp_by_ref(const c_reswords* self, strref h);
 
-typedef struct _clogger clogger;
-typedef struct _ctoken ctoken;
-
-typedef struct _cpplexer
+typedef struct _c_pplexer
 {
         // prev, current and next
         int chars[3];
         readbuf* buf;
         bool angle_string_expected;
-        const creswords* reswords;
-        csource* source;
-        csource_manager* source_manager;
-        clogger* logger;
-        ccontext* context;
+        const c_reswords* reswords;
+        c_source* source;
+        c_source_manager* source_manager;
+        c_logger* logger;
+        c_context* context;
         tree_location loc;
         int tab_to_space;
-} cpplexer;
+} c_pplexer;
 
-extern void cpplexer_init(
-        cpplexer* self,
-        const creswords* reswords,
-        csource_manager* source_manager,
-        clogger* logger,
-        ccontext* context);
+extern void c_pplexer_init(
+        c_pplexer* self,
+        const c_reswords* reswords,
+        c_source_manager* source_manager,
+        c_logger* logger,
+        c_context* context);
 
-extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source);
+extern serrcode c_pplexer_enter_source_file(c_pplexer* self, c_source* source);
 
 // c99 6.4 preprocessing-token:
 // identifier
@@ -66,7 +64,7 @@ extern serrcode cpplexer_enter_source_file(cpplexer* self, csource* source);
 // we also add:
 // white-space
 // comments
-extern ctoken* cpplex_token(cpplexer* self);
+extern c_token* c_pplex_token(c_pplexer* self);
 
 // c99 6.4.2 identifier:
 // identifier-nondigit
@@ -85,7 +83,7 @@ extern ctoken* cpplex_token(cpplexer* self);
 //
 // digit: one of
 // 0 1 2 3 4 5 6 7 8 9
-extern ctoken* cpplex_identifier(cpplexer* self);
+extern c_token* c_pplex_identifier(c_pplexer* self);
 
 // c99 6.4.5 string-literal:
 // " s-char-sequence-opt "
@@ -98,8 +96,8 @@ extern ctoken* cpplex_identifier(cpplexer* self);
 // any member of the source character set except
 // the double-quote ", backslash \, or new-line character
 // escape-sequence
-extern ctoken* cpplex_string_literal(cpplexer* self);
-extern ctoken* cpplex_angle_string_literal(cpplexer* self);
+extern c_token* c_pplex_string_literal(c_pplexer* self);
+extern c_token* c_pplex_angle_string_literal(c_pplexer* self);
 
 // c99 6.4.4.4 character-constant:
 // ' c-char-sequence '
@@ -119,7 +117,7 @@ extern ctoken* cpplex_angle_string_literal(cpplexer* self);
 // simple-escape-sequence: one of
 // \' \" \? \\
 // \a \b \f \n \r \t \v
-extern ctoken* cpplex_const_char(cpplexer* self);
+extern c_token* c_pplex_const_char(c_pplexer* self);
 
 // c99 6.4.8 pp-number:
 // digit
@@ -131,7 +129,7 @@ extern ctoken* cpplex_const_char(cpplexer* self);
 // pp-number p sign
 // pp-number P sign
 // pp-number .
-extern ctoken* cpplex_number(cpplexer* self);
+extern c_token* c_pplex_number(c_pplexer* self);
 
 // 6.4.6 punctuator: one of
 // [ ] ( ) { } . ->
@@ -140,66 +138,42 @@ extern ctoken* cpplex_number(cpplexer* self);
 // ? : ; ...
 // = *= /= %= += -= <<= >>= &= ^= |=
 // , # ##
-static ctoken* cpplex_punctuator(cpplexer* self);
-
-typedef struct _cmacro
-{
-        tree_id name;
-        list_head params;
-        list_head expansion;
-        bool function_like;
-} cmacro;
-
-extern cmacro* cmacro_new(ccontext* context, tree_id name, bool function_like);
-
-extern void cmacro_add_param(cmacro* self, ccontext* context, const ctoken* t);
-extern void cmacro_add_expansion(cmacro* self, ccontext* context, const ctoken* t);
-extern ctoken* cmacro_find_param(const cmacro* self, tree_id name);
-
-static inline bool cmacro_is_function_like(const cmacro* self)
-{
-        return self->function_like;
-}
-
-static inline tree_id cmacro_get_name(const cmacro* self)
-{
-        return self->name;
-}
+static c_token* c_pplex_punctuator(c_pplexer* self);
 
 typedef struct
 {
-        cpplexer lexer;
-        csource* source;
+        c_pplexer lexer;
+        c_source* source;
         int nhash;
         bool hash_expected;
         bool in_directive;
-} cpproc_state;
+} c_preprocessor_state;
 
-typedef struct _cpproc
+typedef struct _c_preprocessor
 {
         dseq expansion;
-        cpproc_state* state;
-        cpproc_state files[CMAX_INCLUDE_NESTING];
-        const creswords* reswords;
-        csource_manager* source_manager;
-        clogger* logger;
-        ccontext* context;
-} cpproc;
+        c_preprocessor_state* state;
+        c_preprocessor_state files[C_MAX_INCLUDE_NESTING];
+        const c_reswords* reswords;
+        c_source_manager* source_manager;
+        c_logger* logger;
+        c_context* context;
+} c_preprocessor;
 
-extern void cpproc_init(
-        cpproc* self,
-        const creswords* reswords,
-        csource_manager* source_manager,
-        clogger* logger,
-        ccontext* context);
+extern void c_preprocessor_init(
+        c_preprocessor* self,
+        const c_reswords* reswords,
+        c_source_manager* source_manager,
+        c_logger* logger,
+        c_context* context);
 
-extern void cpproc_dispose(cpproc* self);
-extern serrcode cpproc_enter_source_file(cpproc* self, csource* source);
-extern void cpproc_exit_source_file(cpproc* self);
-extern ctoken* cpreprocess(cpproc* self);
+extern void c_preprocessor_dispose(c_preprocessor* self);
+extern serrcode c_preprocessor_enter(c_preprocessor* self, c_source* source);
+extern void c_preprocessor_exit(c_preprocessor* self);
+extern c_token* c_preprocess(c_preprocessor* self);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // !CPREPROCESSOR_H
+#endif

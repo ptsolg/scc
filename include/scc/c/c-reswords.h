@@ -1,5 +1,5 @@
-#ifndef CRESWORDS_H
-#define CRESWORDS_H
+#ifndef C_RESWORDS_H
+#define C_RESWORDS_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -14,140 +14,140 @@ extern "C" {
 
 S_STATIC_ASSERT(CTK_TOTAL_SIZE == 108, "Should update creswords table.");
 
-typedef struct _cresword_info
+typedef struct _c_resword_info
 {
         const char* string;
         const char* desription;
         const char* kind;
-} cresword_info;
+} c_resword_info;
 
-#define CRESWORD(s, d, k) {s, d, k}
+#define C_RESWORD(s, d, k) {s, d, k}
 #define CRK_TOKEN "token"
 #define CRK_LITERAL "literal"
 #define CRK_EMPTY ""
 
-static const cresword_info _creswords[CTK_TOTAL_SIZE] =
+static const c_resword_info _c_reswords[CTK_TOTAL_SIZE] =
 {
-        CRESWORD("", "unknown", CRK_TOKEN), // CTK_UNKNOWN
-        CRESWORD("", "end of file", CRK_EMPTY), // CTK_EOF
-        CRESWORD("", "end of line", CRK_EMPTY), // CTK_EOL
-        CRESWORD("", "white space", CRK_EMPTY), // CTK_WSPACE
-        CRESWORD("", "commetary", CRK_EMPTY), // CTK_COMMENT
+        C_RESWORD("", "unknown", CRK_TOKEN), // CTK_UNKNOWN
+        C_RESWORD("", "end of file", CRK_EMPTY), // CTK_EOF
+        C_RESWORD("", "end of line", CRK_EMPTY), // CTK_EOL
+        C_RESWORD("", "white space", CRK_EMPTY), // CTK_WSPACE
+        C_RESWORD("", "commetary", CRK_EMPTY), // CTK_COMMENT
 
-        CRESWORD("char", "'char'", CRK_TOKEN),
-        CRESWORD("short", "'short'", CRK_TOKEN),
-        CRESWORD("int", "'int'", CRK_TOKEN),
-        CRESWORD("long", "'long'", CRK_TOKEN),
-        CRESWORD("float", "'float'", CRK_TOKEN),
-        CRESWORD("double", "'double'", CRK_TOKEN),
-        CRESWORD("signed", "'signed'", CRK_TOKEN),
-        CRESWORD("unsigned", "'unsigned'", CRK_TOKEN),
-        CRESWORD("void", "'void'", CRK_TOKEN),
+        C_RESWORD("char", "'char'", CRK_TOKEN),
+        C_RESWORD("short", "'short'", CRK_TOKEN),
+        C_RESWORD("int", "'int'", CRK_TOKEN),
+        C_RESWORD("long", "'long'", CRK_TOKEN),
+        C_RESWORD("float", "'float'", CRK_TOKEN),
+        C_RESWORD("double", "'double'", CRK_TOKEN),
+        C_RESWORD("signed", "'signed'", CRK_TOKEN),
+        C_RESWORD("unsigned", "'unsigned'", CRK_TOKEN),
+        C_RESWORD("void", "'void'", CRK_TOKEN),
 
-        CRESWORD("struct", "'struct'", CRK_TOKEN),
-        CRESWORD("union", "'union'", CRK_TOKEN),
-        CRESWORD("enum", "'enum'", CRK_TOKEN),
+        C_RESWORD("struct", "'struct'", CRK_TOKEN),
+        C_RESWORD("union", "'union'", CRK_TOKEN),
+        C_RESWORD("enum", "'enum'", CRK_TOKEN),
 
-        CRESWORD("if", "'if'", CRK_TOKEN),
-        CRESWORD("else", "'else'", CRK_TOKEN),
-        CRESWORD("while", "'while'", CRK_TOKEN),
-        CRESWORD("for", "'for'", CRK_TOKEN),
-        CRESWORD("do", "'do'", CRK_TOKEN),
-        CRESWORD("break", "'break'", CRK_TOKEN),
-        CRESWORD("continue", "'continue'", CRK_TOKEN),
-        CRESWORD("return", "'return'", CRK_TOKEN),
-        CRESWORD("goto", "'goto'", CRK_TOKEN),
-        CRESWORD("switch", "'switch'", CRK_TOKEN),
-        CRESWORD("default", "'default'", CRK_TOKEN),
-        CRESWORD("case", "'case'", CRK_TOKEN),
+        C_RESWORD("if", "'if'", CRK_TOKEN),
+        C_RESWORD("else", "'else'", CRK_TOKEN),
+        C_RESWORD("while", "'while'", CRK_TOKEN),
+        C_RESWORD("for", "'for'", CRK_TOKEN),
+        C_RESWORD("do", "'do'", CRK_TOKEN),
+        C_RESWORD("break", "'break'", CRK_TOKEN),
+        C_RESWORD("continue", "'continue'", CRK_TOKEN),
+        C_RESWORD("return", "'return'", CRK_TOKEN),
+        C_RESWORD("goto", "'goto'", CRK_TOKEN),
+        C_RESWORD("switch", "'switch'", CRK_TOKEN),
+        C_RESWORD("default", "'default'", CRK_TOKEN),
+        C_RESWORD("case", "'case'", CRK_TOKEN),
 
-        CRESWORD("auto", "'auto'", CRK_TOKEN),
-        CRESWORD("register", "'register'", CRK_TOKEN),
-        CRESWORD("static", "'static'", CRK_TOKEN),
-        CRESWORD("extern", "'extern'", CRK_TOKEN),
-        CRESWORD("inline", "'inline'", CRK_TOKEN),
-        CRESWORD("const", "'const'", CRK_TOKEN),
-        CRESWORD("volatile", "'volatile'", CRK_TOKEN),
-        CRESWORD("restrict", "'restrict'", CRK_TOKEN),
+        C_RESWORD("auto", "'auto'", CRK_TOKEN),
+        C_RESWORD("register", "'register'", CRK_TOKEN),
+        C_RESWORD("static", "'static'", CRK_TOKEN),
+        C_RESWORD("extern", "'extern'", CRK_TOKEN),
+        C_RESWORD("inline", "'inline'", CRK_TOKEN),
+        C_RESWORD("const", "'const'", CRK_TOKEN),
+        C_RESWORD("volatile", "'volatile'", CRK_TOKEN),
+        C_RESWORD("restrict", "'restrict'", CRK_TOKEN),
 
-        CRESWORD("sizeof", "'sizeof'", CRK_TOKEN),
-        CRESWORD("typedef", "'typedef'", CRK_TOKEN),
-        CRESWORD("", "identifier", CRK_EMPTY), // CTK_ID
+        C_RESWORD("sizeof", "'sizeof'", CRK_TOKEN),
+        C_RESWORD("typedef", "'typedef'", CRK_TOKEN),
+        C_RESWORD("", "identifier", CRK_EMPTY), // CTK_ID
 
-        CRESWORD("{", "'{'", CRK_TOKEN),
-        CRESWORD("}", "'}'", CRK_TOKEN),
-        CRESWORD("[", "'['", CRK_TOKEN),
-        CRESWORD("]", "']'", CRK_TOKEN),
-        CRESWORD("(", "'('", CRK_TOKEN),
-        CRESWORD(")", "')'", CRK_TOKEN),
-        CRESWORD(".", "'.'", CRK_TOKEN),
-        CRESWORD("->", "'->'", CRK_TOKEN),
-        CRESWORD("<", "'<'", CRK_TOKEN),
-        CRESWORD(">", "'>'", CRK_TOKEN),
-        CRESWORD(">=", "'>='", CRK_TOKEN),
-        CRESWORD("<=", "'<='", CRK_TOKEN),
-        CRESWORD("==", "'=='", CRK_TOKEN),
-        CRESWORD("!=", "'!='", CRK_TOKEN),
-        CRESWORD("&&", "'&&'", CRK_TOKEN),
-        CRESWORD("||", "'||'", CRK_TOKEN),
-        CRESWORD("!", "'!'", CRK_TOKEN),
-        CRESWORD("~", "'~'", CRK_TOKEN),
-        CRESWORD("^", "'^'", CRK_TOKEN),
-        CRESWORD("&", "'&'", CRK_TOKEN),
-        CRESWORD("|", "'|'", CRK_TOKEN),
-        CRESWORD("+", "'+'", CRK_TOKEN),
-        CRESWORD("-", "'-'", CRK_TOKEN),
-        CRESWORD("*", "'*'", CRK_TOKEN),
-        CRESWORD("/", "'/'", CRK_TOKEN),
-        CRESWORD("%", "'%'", CRK_TOKEN),
-        CRESWORD("--", "'--'", CRK_TOKEN),
-        CRESWORD("++", "'++'", CRK_TOKEN),
-        CRESWORD("<<", "'<<'", CRK_TOKEN),
-        CRESWORD(">>", "'>>'", CRK_TOKEN),
-        CRESWORD("=", "'='", CRK_TOKEN),
-        CRESWORD("^=", "'^='", CRK_TOKEN),
-        CRESWORD("&=", "'&='", CRK_TOKEN),
-        CRESWORD("|=", "'|='", CRK_TOKEN),
-        CRESWORD("+=", "'+='", CRK_TOKEN),
-        CRESWORD("-=", "'-='", CRK_TOKEN),
-        CRESWORD("*=", "'*='", CRK_TOKEN),
-        CRESWORD("/=", "'/='", CRK_TOKEN),
-        CRESWORD("%=", "'%='", CRK_TOKEN),
-        CRESWORD("<<=", "'<<='", CRK_TOKEN),
-        CRESWORD(">>=", "'>>='", CRK_TOKEN),
-        CRESWORD(":", "':'", CRK_TOKEN),
-        CRESWORD(",", "','", CRK_TOKEN),
-        CRESWORD("?", "'?'", CRK_TOKEN),
-        CRESWORD(";", "';'", CRK_TOKEN),
-        CRESWORD("...", "'...'", CRK_TOKEN),
-        CRESWORD("#", "'#'", CRK_TOKEN),
-        CRESWORD("##", "'##'", CRK_TOKEN),
+        C_RESWORD("{", "'{'", CRK_TOKEN),
+        C_RESWORD("}", "'}'", CRK_TOKEN),
+        C_RESWORD("[", "'['", CRK_TOKEN),
+        C_RESWORD("]", "']'", CRK_TOKEN),
+        C_RESWORD("(", "'('", CRK_TOKEN),
+        C_RESWORD(")", "')'", CRK_TOKEN),
+        C_RESWORD(".", "'.'", CRK_TOKEN),
+        C_RESWORD("->", "'->'", CRK_TOKEN),
+        C_RESWORD("<", "'<'", CRK_TOKEN),
+        C_RESWORD(">", "'>'", CRK_TOKEN),
+        C_RESWORD(">=", "'>='", CRK_TOKEN),
+        C_RESWORD("<=", "'<='", CRK_TOKEN),
+        C_RESWORD("==", "'=='", CRK_TOKEN),
+        C_RESWORD("!=", "'!='", CRK_TOKEN),
+        C_RESWORD("&&", "'&&'", CRK_TOKEN),
+        C_RESWORD("||", "'||'", CRK_TOKEN),
+        C_RESWORD("!", "'!'", CRK_TOKEN),
+        C_RESWORD("~", "'~'", CRK_TOKEN),
+        C_RESWORD("^", "'^'", CRK_TOKEN),
+        C_RESWORD("&", "'&'", CRK_TOKEN),
+        C_RESWORD("|", "'|'", CRK_TOKEN),
+        C_RESWORD("+", "'+'", CRK_TOKEN),
+        C_RESWORD("-", "'-'", CRK_TOKEN),
+        C_RESWORD("*", "'*'", CRK_TOKEN),
+        C_RESWORD("/", "'/'", CRK_TOKEN),
+        C_RESWORD("%", "'%'", CRK_TOKEN),
+        C_RESWORD("--", "'--'", CRK_TOKEN),
+        C_RESWORD("++", "'++'", CRK_TOKEN),
+        C_RESWORD("<<", "'<<'", CRK_TOKEN),
+        C_RESWORD(">>", "'>>'", CRK_TOKEN),
+        C_RESWORD("=", "'='", CRK_TOKEN),
+        C_RESWORD("^=", "'^='", CRK_TOKEN),
+        C_RESWORD("&=", "'&='", CRK_TOKEN),
+        C_RESWORD("|=", "'|='", CRK_TOKEN),
+        C_RESWORD("+=", "'+='", CRK_TOKEN),
+        C_RESWORD("-=", "'-='", CRK_TOKEN),
+        C_RESWORD("*=", "'*='", CRK_TOKEN),
+        C_RESWORD("/=", "'/='", CRK_TOKEN),
+        C_RESWORD("%=", "'%='", CRK_TOKEN),
+        C_RESWORD("<<=", "'<<='", CRK_TOKEN),
+        C_RESWORD(">>=", "'>>='", CRK_TOKEN),
+        C_RESWORD(":", "':'", CRK_TOKEN),
+        C_RESWORD(",", "','", CRK_TOKEN),
+        C_RESWORD("?", "'?'", CRK_TOKEN),
+        C_RESWORD(";", "';'", CRK_TOKEN),
+        C_RESWORD("...", "'...'", CRK_TOKEN),
+        C_RESWORD("#", "'#'", CRK_TOKEN),
+        C_RESWORD("##", "'##'", CRK_TOKEN),
 
-        CRESWORD("", "integer", CRK_LITERAL), // CTK_CONST_INT
-        CRESWORD("", "float", CRK_LITERAL), // CTK_CONST_FLOAT
-        CRESWORD("", "double", CRK_LITERAL), // CTK_CONST_DOUBLE
-        CRESWORD("", "character", CRK_LITERAL), // CTK_CONST_CHAR
-        CRESWORD("", "string", CRK_EMPTY), // CTK_CONST_STRING
-        CRESWORD("", "angle string", CRK_EMPTY), // CTK_ANGLE_STRING
+        C_RESWORD("", "integer", CRK_LITERAL), // CTK_CONST_INT
+        C_RESWORD("", "float", CRK_LITERAL), // CTK_CONST_FLOAT
+        C_RESWORD("", "double", CRK_LITERAL), // CTK_CONST_DOUBLE
+        C_RESWORD("", "character", CRK_LITERAL), // CTK_CONST_CHAR
+        C_RESWORD("", "string", CRK_EMPTY), // CTK_CONST_STRING
+        C_RESWORD("", "angle string", CRK_EMPTY), // CTK_ANGLE_STRING
 
-        CRESWORD("", "pp-number", CRK_EMPTY), // CTK_PP_NUM
-        CRESWORD("if", "#if", CRK_TOKEN),
-        CRESWORD("ifdef", "#ifdef", CRK_TOKEN),
-        CRESWORD("ifndef", "#ifndef", CRK_TOKEN),
-        CRESWORD("elif", "#elif", CRK_TOKEN),
-        CRESWORD("else", "#else", CRK_TOKEN),
-        CRESWORD("endif", "#endif", CRK_TOKEN),
-        CRESWORD("defined", "#define", CRK_TOKEN),
+        C_RESWORD("", "pp-number", CRK_EMPTY), // CTK_PP_NUM
+        C_RESWORD("if", "#if", CRK_TOKEN),
+        C_RESWORD("ifdef", "#ifdef", CRK_TOKEN),
+        C_RESWORD("ifndef", "#ifndef", CRK_TOKEN),
+        C_RESWORD("elif", "#elif", CRK_TOKEN),
+        C_RESWORD("else", "#else", CRK_TOKEN),
+        C_RESWORD("endif", "#endif", CRK_TOKEN),
+        C_RESWORD("defined", "#define", CRK_TOKEN),
 
-        CRESWORD("include", "#include", CRK_TOKEN),
-        CRESWORD("pragma", "#pragma", CRK_TOKEN),
-        CRESWORD("define", "#define", CRK_TOKEN),
-        CRESWORD("undef", "#undef", CRK_TOKEN),
-        CRESWORD("line", "#line", CRK_TOKEN),
-        CRESWORD("error", "#error", CRK_TOKEN),
+        C_RESWORD("include", "#include", CRK_TOKEN),
+        C_RESWORD("pragma", "#pragma", CRK_TOKEN),
+        C_RESWORD("define", "#define", CRK_TOKEN),
+        C_RESWORD("undef", "#undef", CRK_TOKEN),
+        C_RESWORD("line", "#line", CRK_TOKEN),
+        C_RESWORD("error", "#error", CRK_TOKEN),
 };
 
-#undef CRESWORD
+#undef C_RESWORD
 #undef CRK_TOKEN
 #undef CRK_LITERAL
 #undef CRK_EMPTY
@@ -156,4 +156,4 @@ static const cresword_info _creswords[CTK_TOTAL_SIZE] =
 }
 #endif
 
-#endif // !CRESWORDS_H
+#endif

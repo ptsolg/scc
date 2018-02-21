@@ -1,5 +1,5 @@
-#ifndef CSEMA_CONVERSIONS_H
-#define CSEMA_CONVERSIONS_H
+#ifndef C_SEMA_CONVERSIONS_H
+#define C_SEMA_CONVERSIONS_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -11,17 +11,17 @@ extern "C" {
 
 #include "c-sema.h"
 
-extern tree_expr* csema_new_impl_cast(csema* self, tree_expr* e, tree_type* t);
-extern tree_type* csema_lvalue_conversion(csema* self, tree_expr** e);
-extern tree_type* csema_array_to_pointer_conversion(csema* self, tree_expr** e);
-extern tree_type* csema_function_to_pointer_conversion(csema* self, tree_expr** e);
-extern tree_type* csema_integer_promotion(csema* self, tree_expr** e);
-extern tree_type* csema_array_function_to_pointer_conversion(csema* self, tree_expr** e);
-extern tree_type* csema_unary_conversion(csema* self, tree_expr** e);
-extern tree_type* csema_usual_arithmetic_conversion(
-        csema* self, tree_expr** lhs, tree_expr** rhs, bool convert_lhs);
+extern tree_expr* c_sema_new_impl_cast(c_sema* self, tree_expr* e, tree_type* t);
+extern tree_type* c_sema_lvalue_conversion(c_sema* self, tree_expr** e);
+extern tree_type* c_sema_array_to_pointer_conversion(c_sema* self, tree_expr** e);
+extern tree_type* c_sema_function_to_pointer_conversion(c_sema* self, tree_expr** e);
+extern tree_type* c_sema_integer_promotion(c_sema* self, tree_expr** e);
+extern tree_type* c_sema_array_function_to_pointer_conversion(c_sema* self, tree_expr** e);
+extern tree_type* c_sema_unary_conversion(c_sema* self, tree_expr** e);
+extern tree_type* c_sema_usual_arithmetic_conversion(
+        c_sema* self, tree_expr** lhs, tree_expr** rhs, bool convert_lhs);
 
-extern tree_type* csema_default_argument_promotion(csema* self, tree_expr** e);
+extern tree_type* c_sema_default_argument_promotion(c_sema* self, tree_expr** e);
 
 typedef enum
 {
@@ -32,19 +32,19 @@ typedef enum
         CACRK_INCOMPATIBLE_RECORDS,
         CACRK_QUAL_DISCARTION,
         CACRK_INCOMPATIBLE_POINTERS,
-} cassign_conv_result_kind;
+} c_assignment_conversion_result_kind;
 
 typedef struct
 {
-        cassign_conv_result_kind kind;
+        c_assignment_conversion_result_kind kind;
         tree_type_quals discarded_quals;
-} cassign_conv_result;
+} c_assignment_conversion_result;
 
-extern tree_type* csema_assignment_conversion(
-        csema* self, tree_type* lt, tree_expr** rhs, cassign_conv_result* r);
+extern tree_type* c_sema_assignment_conversion(
+        c_sema* self, tree_type* lt, tree_expr** rhs, c_assignment_conversion_result* r);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // !CSEMA_CONVERSIONS_H
+#endif

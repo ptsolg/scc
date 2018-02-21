@@ -2,7 +2,7 @@
 #include "scc/c/c-context.h"
 #include "scc/tree/tree-expr.h"
 
-extern void cinitializer_init(cinitializer* self, tree_expr** init)
+extern void c_initializer_init(c_initializer* self, tree_expr** init)
 {
         self->init = init;
         if (tree_expr_is(*init, TEK_INIT_LIST))
@@ -17,7 +17,7 @@ extern void cinitializer_init(cinitializer* self, tree_expr** init)
         }
 }
 
-static void cinitialized_object_skip_non_field_decls(cinitialized_object* self)
+static void c_initialized_object_skip_non_field_decls(c_initialized_object* self)
 {
         tree_decl* end = tree_get_record_fields_end(self->record.decl);
         if (self->record.field == end)
@@ -32,10 +32,10 @@ static void cinitialized_object_skip_non_field_decls(cinitialized_object* self)
         }
 }
 
-static void cinitialized_object_set_parent(cinitialized_object* self, cinitialized_object* parent)
+static void c_initialized_object_set_parent(c_initialized_object* self, c_initialized_object* parent)
 {
-        cinitialized_object* semantical_parent = NULL;
-        cinitialized_object* syntactical_parent = NULL;
+        c_initialized_object* semantical_parent = NULL;
+        c_initialized_object* syntactical_parent = NULL;
         if (parent)
         {
                 semantical_parent = parent;
@@ -48,13 +48,13 @@ static void cinitialized_object_set_parent(cinitialized_object* self, cinitializ
         self->syntactical_parent = syntactical_parent;
 }
 
-extern void cinitialized_object_init(
-        cinitialized_object* self, tree_type* type, bool implicit, cinitialized_object* parent)
+extern void c_initialized_object_init(
+        c_initialized_object* self, tree_type* type, bool implicit, c_initialized_object* parent)
 {
         type = tree_desugar_type(type);
         self->implicit = implicit;
         self->type = type;
-        cinitialized_object_set_parent(self, parent);
+        c_initialized_object_set_parent(self, parent);
 
         if (tree_type_is_record(type))
         {
@@ -62,7 +62,7 @@ extern void cinitialized_object_init(
                 self->kind = tree_record_is_union(self->record.decl) ? CIOK_UNION : CIOK_STRUCT;
                 self->record.field = tree_get_record_fields_begin(self->record.decl);
                 self->record.union_field_initialized = false;
-                cinitialized_object_skip_non_field_decls(self);
+                c_initialized_object_skip_non_field_decls(self);
         }
         else if (tree_type_is_array(type))
         {
@@ -79,41 +79,41 @@ extern void cinitialized_object_init(
         }
 }
 
-extern cinitialized_object* cinitialized_object_new(
-        ccontext* context, tree_type* type, bool implicit, cinitialized_object* parent)
+extern c_initialized_object* c_initialized_object_new(
+        c_context* context, tree_type* type, bool implicit, c_initialized_object* parent)
 {
-        cinitialized_object* obj = callocate(context, sizeof(cinitialized_object));
-        cinitialized_object_init(obj, type, implicit, parent);
+        c_initialized_object* obj = c_context_allocate_node(context, sizeof(c_initialized_object));
+        c_initialized_object_init(obj, type, implicit, parent);
         return obj;
 }
 
-extern cinitialized_object* cinitialized_object_new_rec(
-        ccontext* context, tree_decl* record, tree_decl* field, bool implicit, cinitialized_object* parent)
+extern c_initialized_object* c_initialized_object_new_rec(
+        c_context* context, tree_decl* record, tree_decl* field, bool implicit, c_initialized_object* parent)
 {
-        cinitialized_object* obj = callocate(context, sizeof(cinitialized_object));
+        c_initialized_object* obj = c_context_allocate_node(context, sizeof(c_initialized_object));
         obj->kind = tree_record_is_union(record) ? CIOK_UNION : CIOK_STRUCT;
         obj->implicit = implicit;
         obj->record.decl = record;
         obj->record.field = field;
         obj->record.union_field_initialized = false;
-        cinitialized_object_set_parent(obj, parent);
+        c_initialized_object_set_parent(obj, parent);
         return obj;
 }
 
-extern void cinitialized_object_set_field(cinitialized_object* self, tree_decl* field)
+extern void c_initialized_object_set_field(c_initialized_object* self, tree_decl* field)
 {
         S_ASSERT(self->kind == CIOK_STRUCT || self->kind == CIOK_UNION);
         S_ASSERT(tree_get_field_record(field) == self->record.decl);
         self->record.field = field;
 }
 
-extern void cinitialized_object_set_index(cinitialized_object* self, uint index)
+extern void c_initialized_object_set_index(c_initialized_object* self, uint index)
 {
         S_ASSERT(self->kind == CIOK_ARRAY);
         self->array.index = index;
 }
 
-extern void cinitialized_object_set_initialized(cinitialized_object* self)
+extern void c_initialized_object_set_initialized(c_initialized_object* self)
 {
         if (self->kind == CIOK_SCALAR)
                 self->scalar.initialized = true;
@@ -126,7 +126,7 @@ extern void cinitialized_object_set_initialized(cinitialized_object* self)
         }
 }
 
-extern bool cinitialized_object_valid(const cinitialized_object* self)
+extern bool c_initialized_object_valid(const c_initialized_object* self)
 {
         if (self->kind == CIOK_SCALAR)
                 return !self->scalar.initialized;
@@ -145,9 +145,9 @@ extern bool cinitialized_object_valid(const cinitialized_object* self)
         return false;
 }
 
-extern void cinitialized_object_next_subobject(cinitialized_object* self)
+extern void c_initialized_object_next_subobject(c_initialized_object* self)
 {
-        S_ASSERT(cinitialized_object_valid(self));
+        S_ASSERT(c_initialized_object_valid(self));
 
         if (self->kind == CIOK_SCALAR)
                 self->scalar.initialized = true;
@@ -157,11 +157,11 @@ extern void cinitialized_object_next_subobject(cinitialized_object* self)
         {
                 self->record.field = tree_get_next_decl(self->record.field);
                 self->record.union_field_initialized = true;
-                cinitialized_object_skip_non_field_decls(self);
+                c_initialized_object_skip_non_field_decls(self);
         }
 }
 
-extern tree_type* cinitialized_object_get_subobject(const cinitialized_object* self)
+extern tree_type* c_initialized_object_get_subobject(const c_initialized_object* self)
 {
         if (self->kind == CIOK_SCALAR)
                 return self->type;

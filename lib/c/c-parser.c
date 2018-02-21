@@ -4,7 +4,7 @@
 #include "scc/c/c-reswords.h"
 #include <setjmp.h>
 
-extern void cparser_init(cparser* self, clexer* lexer, csema* sema, clogger* logger)
+extern void c_parser_init(c_parser* self, c_lexer* lexer, c_sema* sema, c_logger* logger)
 {
         self->lexer = lexer;
         self->sema = sema;
@@ -15,81 +15,81 @@ extern void cparser_init(cparser* self, clexer* lexer, csema* sema, clogger* log
         self->buffer[2] = NULL;
 }
 
-extern void cparser_set_on_error(cparser* self, int* b)
+extern void c_parser_set_on_error(c_parser* self, int* b)
 {
         self->on_error = b;
 }
 
-extern void cparser_dispose(cparser* self)
+extern void c_parser_dispose(c_parser* self)
 {
         // todo
 }
 
-extern void cparser_die(const cparser* self, int code)
+extern void c_parser_die(const c_parser* self, int code)
 {
         longjmp(self->on_error, code);
 }
 
-extern void cparser_enter_token_stream(cparser* self)
+extern void c_parser_enter_token_stream(c_parser* self)
 {
-        cparser_consume_token(self);
-        cparser_consume_token(self);
+        c_parser_consume_token(self);
+        c_parser_consume_token(self);
 }
 
-extern ctoken* cparser_handle_lex_error(const cparser* self)
+extern c_token* c_parser_handle_lex_error(const c_parser* self)
 {
-        cparser_die(self, S_ERROR);
+        c_parser_die(self, S_ERROR);
         // todo
         return NULL;
 }
 
-extern ctoken* cparser_consume_token(cparser* self)
+extern c_token* c_parser_consume_token(c_parser* self)
 {
-        ctoken* t = clex(self->lexer);
+        c_token* t = c_lex(self->lexer);
         if (!t)
-                return cparser_handle_lex_error(self);
+                return c_parser_handle_lex_error(self);
         S_ASSERT(t);
 
         self->buffer[0] = self->buffer[1];
         self->buffer[1] = self->buffer[2];
         self->buffer[2] = t;
-        return cparser_get_token(self);
+        return c_parser_get_token(self);
 }
 
-extern ctoken* cparser_get_token(const cparser* self)
+extern c_token* c_parser_get_token(const c_parser* self)
 {
         return self->buffer[1];
 }
 
-extern ctoken* cparser_get_next(const cparser* self)
+extern c_token* c_parser_get_next(const c_parser* self)
 {
         return self->buffer[2];
 }
 
-extern bool cparser_at(const cparser* self, ctoken_kind k)
+extern bool c_parser_at(const c_parser* self, c_token_kind k)
 {
-        return ctoken_is(cparser_get_token(self), k);
+        return c_token_is(c_parser_get_token(self), k);
 }
 
-extern ctoken* cparser_get_prev(const cparser* self)
+extern c_token* c_parser_get_prev(const c_parser* self)
 {
         return self->buffer[0];
 }
 
-extern bool cparser_next_token_is(cparser* self, ctoken_kind k)
+extern bool c_parser_next_token_is(c_parser* self, c_token_kind k)
 {
-        return ctoken_is(cparser_get_next(self), k);
+        return c_token_is(c_parser_get_next(self), k);
 }
 
-extern bool cparser_require(cparser* self, ctoken_kind k)
+extern bool c_parser_require(c_parser* self, c_token_kind k)
 {
-        return cparser_require_ex(self, k, NULL);
+        return c_parser_require_ex(self, k, NULL);
 }
 
-static void cparser_print_expected(const cparser* self, ctoken_kind k, const ctoken_kind expected_ex[])
+static void c_parser_print_expected(const c_parser* self, c_token_kind k, const c_token_kind expected_ex[])
 {
-        ctoken_kind expected[128];
-        ctoken_kind* it = expected;
+        c_token_kind expected[128];
+        c_token_kind* it = expected;
         if(k != CTK_UNKNOWN)
                 *it++ = k;
         while (expected_ex && *expected_ex != CTK_UNKNOWN)
@@ -101,32 +101,32 @@ static void cparser_print_expected(const cparser* self, ctoken_kind k, const cto
         }
 
         ssize size = it - expected;
-        tree_location loc = cparser_get_loc(self);
-        ctoken_kind current = ctoken_get_kind(cparser_get_token(self));
+        tree_location loc = c_parser_get_loc(self);
+        c_token_kind current = c_token_get_kind(c_parser_get_token(self));
 
         if (size == 0)
                 S_UNREACHABLE();
         else if (size == 1)
-                cerror_expected_a_before_b(self->logger, loc, expected[0], current);
+                c_error_expected_a_before_b(self->logger, loc, expected[0], current);
         else if (size == 2)
-                cerror_expected_a_or_b_before_c(self->logger,
+                c_error_expected_a_or_b_before_c(self->logger,
                         loc, expected[0], expected[1], current);
         else
-                cerror_expected_one_of(self->logger, loc, expected, size, current);
+                c_error_expected_one_of(self->logger, loc, expected, size, current);
 }
 
-extern bool cparser_require_ex(cparser* self, ctoken_kind k, const ctoken_kind expected[])
+extern bool c_parser_require_ex(c_parser* self, c_token_kind k, const c_token_kind expected[])
 {
-        if (!cparser_at(self, k))
+        if (!c_parser_at(self, k))
         {
-                cparser_print_expected(self, k, expected);
+                c_parser_print_expected(self, k, expected);
                 return false;
         }
-        cparser_consume_token(self);
+        c_parser_consume_token(self);
         return true;
 }
 
-extern tree_location cparser_get_loc(const cparser* self)
+extern tree_location c_parser_get_loc(const c_parser* self)
 {
-        return ctoken_get_loc(cparser_get_token(self));
+        return c_token_get_loc(c_parser_get_token(self));
 }

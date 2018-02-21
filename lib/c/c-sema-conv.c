@@ -2,11 +2,11 @@
 #include "scc/c/c-sema-type.h"
 #include "scc/c/c-info.h"
 
-extern tree_expr* csema_new_impl_cast(csema* self, tree_expr* e, tree_type* t)
+extern tree_expr* c_sema_new_impl_cast(c_sema* self, tree_expr* e, tree_type* t)
 {
         tree_type* et = tree_desugar_type(tree_get_expr_type(e));
 
-        if (csema_types_are_same(self, tree_get_unqualified_type(et),
+        if (c_sema_types_are_same(self, tree_get_unqualified_type(et),
                                        tree_get_unqualified_type(t)))
         {
                 return e;
@@ -16,44 +16,44 @@ extern tree_expr* csema_new_impl_cast(csema* self, tree_expr* e, tree_type* t)
                 tree_get_expr_value_kind(e), tree_get_expr_loc(e), t, e, true);
 }
 
-extern tree_type* csema_lvalue_conversion(csema* self, tree_expr** e)
+extern tree_type* c_sema_lvalue_conversion(c_sema* self, tree_expr** e)
 {
         tree_type* t = tree_desugar_type(tree_get_expr_type(*e));
         if (tree_expr_is_lvalue(*e) && tree_get_type_kind(t) != TTK_ARRAY)
         {
                 t = tree_new_qual_type(self->context, TTQ_UNQUALIFIED, t);
-                *e = csema_new_impl_cast(self, *e, t);
+                *e = c_sema_new_impl_cast(self, *e, t);
                 tree_set_expr_value_kind(*e, TVK_RVALUE);
         }
         return t;
 }
 
-extern tree_type* csema_array_to_pointer_conversion(csema* self, tree_expr** e)
+extern tree_type* c_sema_array_to_pointer_conversion(c_sema* self, tree_expr** e)
 {
         tree_type* t = tree_desugar_type(tree_get_expr_type(*e));
         if (tree_expr_is_lvalue(*e) && tree_type_is(t, TTK_ARRAY))
         {
                 tree_type* eltype = tree_get_array_eltype(t);
-                t = csema_new_pointer(self, TTQ_UNQUALIFIED, eltype);
-                *e = csema_new_impl_cast(self, *e, t);
+                t = c_sema_new_pointer_type(self, TTQ_UNQUALIFIED, eltype);
+                *e = c_sema_new_impl_cast(self, *e, t);
                 tree_set_expr_value_kind(*e, TVK_RVALUE);
         }
         return t;
 }
 
-extern tree_type* csema_function_to_pointer_conversion(csema* self, tree_expr** e)
+extern tree_type* c_sema_function_to_pointer_conversion(c_sema* self, tree_expr** e)
 {
         tree_type* t = tree_desugar_type(tree_get_expr_type(*e));
         if (tree_type_is(t, TTK_FUNCTION))
         {
-                t = csema_new_pointer(self, TTQ_UNQUALIFIED, t);
-                *e = csema_new_impl_cast(self, *e, t);
+                t = c_sema_new_pointer_type(self, TTQ_UNQUALIFIED, t);
+                *e = c_sema_new_impl_cast(self, *e, t);
                 tree_set_expr_value_kind(*e, TVK_RVALUE);
         }
         return t;
 }
 
-static tree_type* csema_get_type_for_integer_promotion(csema* self, tree_type* type)
+static tree_type* c_sema_get_type_for_integer_promotion(c_sema* self, tree_type* type)
 {
         tree_type* t = tree_desugar_type(type);
         tree_type_kind tk = tree_get_type_kind(t);
@@ -64,40 +64,40 @@ static tree_type* csema_get_type_for_integer_promotion(csema* self, tree_type* t
         tree_type_quals quals = tree_get_type_quals(t);
 
         if (btk == TBTK_INT8 || btk == TBTK_INT16)
-                return csema_new_builtin_type(self, quals, TBTK_INT32);
+                return c_sema_get_builtin_type(self, quals, TBTK_INT32);
         else if (btk == TBTK_UINT8 || btk == TBTK_UINT16)
-                return  csema_new_builtin_type(self, quals, TBTK_UINT32);
+                return  c_sema_get_builtin_type(self, quals, TBTK_UINT32);
         return t;
 }
 
-extern tree_type* csema_integer_promotion(csema* self, tree_expr** e)
+extern tree_type* c_sema_integer_promotion(c_sema* self, tree_expr** e)
 {
         tree_type* expr_type = tree_desugar_type(tree_get_expr_type(*e));
-        tree_type* promoted_type = csema_get_type_for_integer_promotion(self, expr_type);
+        tree_type* promoted_type = c_sema_get_type_for_integer_promotion(self, expr_type);
         if (expr_type == promoted_type)
                 return expr_type;
 
-        *e = csema_new_impl_cast(self, *e, promoted_type);
+        *e = c_sema_new_impl_cast(self, *e, promoted_type);
         return promoted_type;
 }
 
-extern tree_type* csema_array_function_to_pointer_conversion(csema* self, tree_expr** e)
+extern tree_type* c_sema_array_function_to_pointer_conversion(c_sema* self, tree_expr** e)
 {
-        csema_function_to_pointer_conversion(self, e);
-        return csema_array_to_pointer_conversion(self, e);
+        c_sema_function_to_pointer_conversion(self, e);
+        return c_sema_array_to_pointer_conversion(self, e);
 }
 
-extern tree_type* csema_unary_conversion(csema* self, tree_expr** e)
+extern tree_type* c_sema_unary_conversion(c_sema* self, tree_expr** e)
 {
-        csema_array_function_to_pointer_conversion(self, e);
-        return csema_lvalue_conversion(self, e);
+        c_sema_array_function_to_pointer_conversion(self, e);
+        return c_sema_lvalue_conversion(self, e);
 }
 
-static tree_type* csema_get_type_for_usual_arithmetic_conversion(
-        csema* self, tree_type* lhs, tree_type* rhs)
+static tree_type* c_sema_get_type_for_usual_arithmetic_conversion(
+        c_sema* self, tree_type* lhs, tree_type* rhs)
 {
         // make rhs greater type
-        if (cget_type_rank(lhs) > cget_type_rank(rhs))
+        if (c_get_type_rank(lhs) > c_get_type_rank(rhs))
         {
                 tree_type* tmp = rhs;
                 rhs = lhs;
@@ -122,55 +122,55 @@ static tree_type* csema_get_type_for_usual_arithmetic_conversion(
                 return rhs;
 
         if (tree_type_is_signed_integer(rhs))
-                return csema_new_builtin_type(self,
+                return c_sema_get_builtin_type(self,
                         TTQ_UNQUALIFIED, tree_get_integer_counterpart(rhs));
 
         return rhs;
 }
 
-extern tree_type* csema_usual_arithmetic_conversion(
-        csema* self, tree_expr** lhs, tree_expr** rhs, bool convert_lhs)
+extern tree_type* c_sema_usual_arithmetic_conversion(
+        c_sema* self, tree_expr** lhs, tree_expr** rhs, bool convert_lhs)
 {
         tree_type* lt = convert_lhs 
-                ? csema_integer_promotion(self, lhs)
-                : csema_get_type_for_integer_promotion(self, tree_get_expr_type(*lhs));
-        tree_type* rt = csema_integer_promotion(self, rhs);
+                ? c_sema_integer_promotion(self, lhs)
+                : c_sema_get_type_for_integer_promotion(self, tree_get_expr_type(*lhs));
+        tree_type* rt = c_sema_integer_promotion(self, rhs);
 
         S_ASSERT(tree_type_is_arithmetic(lt));
         S_ASSERT(tree_type_is_arithmetic(rt)); 
-        if (csema_types_are_same(self, lt, rt))
+        if (c_sema_types_are_same(self, lt, rt))
                 return lt;
 
-        tree_type* result = csema_get_type_for_usual_arithmetic_conversion(self, lt, rt);
+        tree_type* result = c_sema_get_type_for_usual_arithmetic_conversion(self, lt, rt);
         if (convert_lhs)
-                *lhs = csema_new_impl_cast(self, *lhs, result);
-        *rhs = csema_new_impl_cast(self, *rhs, result);
+                *lhs = c_sema_new_impl_cast(self, *lhs, result);
+        *rhs = c_sema_new_impl_cast(self, *rhs, result);
         return result;
 }
 
-extern tree_type* csema_default_argument_promotion(csema* self, tree_expr** e)
+extern tree_type* c_sema_default_argument_promotion(c_sema* self, tree_expr** e)
 {
         tree_type* t = tree_desugar_type(tree_get_expr_type(*e));
         if (!tree_type_is(t, TTK_BUILTIN))
                 return t;
 
         if (tree_type_is_integer(t))
-                return csema_integer_promotion(self, e);
+                return c_sema_integer_promotion(self, e);
 
         if (tree_builtin_type_is(t, TBTK_FLOAT))
         {
-                tree_type* double_type = csema_new_builtin_type(self,
+                tree_type* double_type = c_sema_get_builtin_type(self,
                         TTQ_UNQUALIFIED, TBTK_DOUBLE);
 
-                *e = csema_new_impl_cast(self, *e, double_type);
+                *e = c_sema_new_impl_cast(self, *e, double_type);
                 return double_type;
         }
 
         return t;
 }
 
-static bool csema_check_pointer_qualifier_discartion(
-        csema* self, tree_type* lt, tree_type* rt, cassign_conv_result* r)
+static bool c_sema_check_pointer_qualifier_discartion(
+        c_sema* self, tree_type* lt, tree_type* rt, c_assignment_conversion_result* r)
 {
         lt = tree_get_pointer_target(lt);
         rt = tree_get_pointer_target(rt);
@@ -197,9 +197,9 @@ static bool csema_check_pointer_qualifier_discartion(
         return false;
 }
 
-static bool csema_pointer_operands_are_compatible(csema* self, tree_type* lt, tree_type* rt)
+static bool c_sema_pointer_operands_are_compatible(c_sema* self, tree_type* lt, tree_type* rt)
 {
-        if (csema_types_are_same(self, lt, rt))
+        if (c_sema_types_are_same(self, lt, rt))
                 return true;
 
         if ((tree_type_is_incomplete(lt) || tree_type_is_object(lt)) && tree_type_is_void(rt))
@@ -208,45 +208,45 @@ static bool csema_pointer_operands_are_compatible(csema* self, tree_type* lt, tr
         return (tree_type_is_incomplete(rt) || tree_type_is_object(rt)) && tree_type_is_void(lt);
 }
 
-static bool csema_check_assignment_pointer_types(
-        csema* self, tree_type* lt, tree_type* rt, cassign_conv_result* r)
+static bool c_sema_check_assignment_pointer_types(
+        c_sema* self, tree_type* lt, tree_type* rt, c_assignment_conversion_result* r)
 {
         S_ASSERT(tree_type_is_pointer(lt) && tree_type_is_pointer(rt));
 
         tree_type* ltarget = tree_get_unqualified_type(tree_get_pointer_target(lt));
         tree_type* rtarget = tree_get_unqualified_type(tree_get_pointer_target(rt));
 
-        if (csema_pointer_operands_are_compatible(self, ltarget, rtarget))
-                return csema_check_pointer_qualifier_discartion(self, lt, rt, r);
+        if (c_sema_pointer_operands_are_compatible(self, ltarget, rtarget))
+                return c_sema_check_pointer_qualifier_discartion(self, lt, rt, r);
 
         r->kind = CACRK_INCOMPATIBLE_POINTERS;
         return false;
 }
 
-static inline tree_type* cassign_conv_error(
-        cassign_conv_result_kind k, cassign_conv_result* r)
+static inline tree_type* c_assignment_conversion_error(
+        c_assignment_conversion_result* r, c_assignment_conversion_result_kind k)
 {
         r->kind = k;
         return NULL;
 }
 
-extern tree_type* csema_assignment_conversion(
-        csema* self, tree_type* lt, tree_expr** rhs, cassign_conv_result* r)
+extern tree_type* c_sema_assignment_conversion(
+        c_sema* self, tree_type* lt, tree_expr** rhs, c_assignment_conversion_result* r)
 {
         S_ASSERT(r);
 
-        tree_type* rt = csema_unary_conversion(self, rhs);
+        tree_type* rt = c_sema_unary_conversion(self, rhs);
         if (tree_type_is_arithmetic(lt))
         {
                 if (!tree_type_is_arithmetic(rt))
-                        return cassign_conv_error(CACRK_RHS_NOT_AN_ARITHMETIC, r);
+                        return c_assignment_conversion_error(r, CACRK_RHS_NOT_AN_ARITHMETIC);
         }
         else if (tree_type_is_record(lt))
         {
                 if (!tree_type_is_record(rt))
-                        return cassign_conv_error(CACRK_RHS_NOT_A_RECORD, r);
-                if (!csema_types_are_same(self, lt, rt))
-                        return cassign_conv_error(CACRK_INCOMPATIBLE_RECORDS, r);
+                        return c_assignment_conversion_error(r, CACRK_RHS_NOT_A_RECORD);
+                if (!c_sema_types_are_same(self, lt, rt))
+                        return c_assignment_conversion_error(r, CACRK_INCOMPATIBLE_RECORDS);
         }
         else if (tree_type_is_object_pointer(lt)
                 && tree_expr_is_null_pointer_constant(self->context, *rhs))
@@ -255,13 +255,13 @@ extern tree_type* csema_assignment_conversion(
         }
         else if (tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt))
         {
-                if (!csema_check_assignment_pointer_types(self, lt, rt, r))
+                if (!c_sema_check_assignment_pointer_types(self, lt, rt, r))
                         return NULL;
         }
         else 
-                return cassign_conv_error(CACRK_INCOMPATIBLE, r);
+                return c_assignment_conversion_error(r, CACRK_INCOMPATIBLE);
 
-        *rhs = csema_new_impl_cast(self, *rhs, lt);
+        *rhs = c_sema_new_impl_cast(self, *rhs, lt);
         r->kind = CACRK_COMPATIBLE;
         return lt;
 }

@@ -6,51 +6,51 @@
 #include <stdlib.h> // strtoll, strtod, ...
 #include <ctype.h> // toupper
 
-extern void clexer_init(
-        clexer* self,
-        csource_manager* source_manager,
-        clogger* logger,
-        ccontext* context)
+extern void c_lexer_init(
+        c_lexer* self,
+        c_source_manager* source_manager,
+        c_logger* logger,
+        c_context* context)
 {
-        creswords_init(&self->reswords, context);
-        cpproc_init(&self->pp, &self->reswords, source_manager, logger, context);
+        c_reswords_init(&self->reswords, context);
+        c_preprocessor_init(&self->pp, &self->reswords, source_manager, logger, context);
 }
 
-extern serrcode clexer_enter_source_file(clexer* self, csource* source)
+extern serrcode c_lexer_enter_source_file(c_lexer* self, c_source* source)
 {
-        return cpproc_enter_source_file(&self->pp, source);
+        return c_preprocessor_enter(&self->pp, source);
 }
 
 S_STATIC_ASSERT(CTK_TOTAL_SIZE == 108, "lexer reswords initialization needs an update");
 
-extern void clexer_init_reswords(clexer* self)
+extern void c_lexer_init_reswords(c_lexer* self)
 {
-        for (ctoken_kind i = CTK_CHAR; i < CTK_CONST_INT; i++)
+        for (c_token_kind i = CTK_CHAR; i < CTK_CONST_INT; i++)
         {
-                const cresword_info* info = cget_token_kind_info(i);
-                creswords_add(&self->reswords, info->string, i);
+                const c_resword_info* info = c_get_token_kind_info(i);
+                c_reswords_add(&self->reswords, info->string, i);
         }
-        for (ctoken_kind i = CTK_PP_IF; i < CTK_TOTAL_SIZE; i++)
+        for (c_token_kind i = CTK_PP_IF; i < CTK_TOTAL_SIZE; i++)
         {
-                const cresword_info* info = cget_token_kind_info(i);
-                creswords_add_pp(&self->reswords, info->string, i);
+                const c_resword_info* info = c_get_token_kind_info(i);
+                c_reswords_add_pp(&self->reswords, info->string, i);
         }
 }
 
-extern void clexer_dispose(clexer* self)
+extern void c_lexer_dispose(c_lexer* self)
 {
-        creswords_dispose(&self->reswords);
-        cpproc_dispose(&self->pp);
+        c_reswords_dispose(&self->reswords);
+        c_preprocessor_dispose(&self->pp);
 }
 
-static inline const char* clexer_get_string(clexer* self, tree_id ref)
+static inline const char* c_lexer_get_string(c_lexer* self, tree_id ref)
 {
-        return tree_get_id_string(cget_tree(self->pp.context), ref);
+        return tree_get_id_string(c_context_get_tree_context(self->pp.context), ref);
 }
 
-static inline bool clexer_pp_num_is_floating_constant(clexer* self, const ctoken* pp)
+static inline bool c_lexer_pp_num_is_floating_constant(c_lexer* self, const c_token* pp_num)
 {
-        const char* num = clexer_get_string(self, ctoken_get_string(pp));
+        const char* num = c_lexer_get_string(self, c_token_get_string(pp_num));
         bool can_be_hex = false;
 
         while (*num)
@@ -69,7 +69,7 @@ static inline bool clexer_pp_num_is_floating_constant(clexer* self, const ctoken
         return false;
 }
 
-static bool clex_integer_suffix(clexer* self, const char* suffix, bool* is_signed, int* ls)
+static bool c_lex_integer_suffix(c_lexer* self, const char* suffix, bool* is_signed, int* ls)
 {
         int lc = 0;
         int uc = 0;
@@ -95,9 +95,9 @@ static bool clex_integer_suffix(clexer* self, const char* suffix, bool* is_signe
         return true;
 }
 
-static inline ctoken* clex_integer_constant(clexer* self, ctoken* pp)
+static inline c_token* c_lex_integer_constant(c_lexer* self, c_token* pp)
 {
-        const char* num = clexer_get_string(self, ctoken_get_string(pp));
+        const char* num = c_lexer_get_string(self, c_token_get_string(pp));
         int base = num[0] == '0'
                 ? toupper(num[1]) == 'X' ? 16 : 8
                 : 10;
@@ -107,22 +107,22 @@ static inline ctoken* clex_integer_constant(clexer* self, ctoken* pp)
 
         bool is_signed = true;
         int ls = 0;
-        if (!clex_integer_suffix(self, suffix, &is_signed, &ls))
+        if (!c_lex_integer_suffix(self, suffix, &is_signed, &ls))
         {
-                cerror_invalid_integer_literal(self->pp.logger, ctoken_get_loc(pp), num);
+                c_error_invalid_integer_literal(self->pp.logger, c_token_get_loc(pp), num);
                 return NULL;
         }
 
-        ctoken_set_kind(pp, CTK_CONST_INT);
-        ctoken_set_int(pp, val);
-        ctoken_set_int_signed(pp, is_signed);
-        ctoken_set_int_ls(pp, ls);
+        c_token_set_kind(pp, CTK_CONST_INT);
+        c_token_set_int(pp, val);
+        c_token_set_int_signed(pp, is_signed);
+        c_token_set_int_ls(pp, ls);
         return pp;
 }
 
-static inline ctoken* clex_floating_constant(clexer* self, ctoken* pp)
+static inline c_token* c_lex_floating_constant(c_lexer* self, c_token* pp)
 {
-        const char* num = clexer_get_string(self, ctoken_get_string(pp));
+        const char* num = c_lexer_get_string(self, c_token_get_string(pp));
         ssize len = strlen(num);
         char* suffix = NULL;
 
@@ -137,52 +137,52 @@ static inline ctoken* clex_floating_constant(clexer* self, ctoken* pp)
         ssize suffix_len = strlen(suffix);
         if ((is_float && suffix_len > 1) || (!is_float && suffix_len))
         {
-                cerror_invalid_floating_literal(self->pp.logger, ctoken_get_loc(pp), num);
+                c_error_invalid_floating_literal(self->pp.logger, c_token_get_loc(pp), num);
                 return NULL;
         }
                 
         if (is_float)
         {
-                ctoken_set_kind(pp, CTK_CONST_FLOAT);
-                ctoken_set_float(pp, f);
+                c_token_set_kind(pp, CTK_CONST_FLOAT);
+                c_token_set_float(pp, f);
         }
         else
         {
-                ctoken_set_kind(pp, CTK_CONST_DOUBLE);
-                ctoken_set_double(pp, d);
+                c_token_set_kind(pp, CTK_CONST_DOUBLE);
+                c_token_set_double(pp, d);
         }
         return pp;
 }
 
 // converts pp-number to floating or integer constant
-static ctoken* clex_pp_num(clexer* self, ctoken* num)
+static c_token* c_lex_pp_num(c_lexer* self, c_token* num)
 {
-        return clexer_pp_num_is_floating_constant(self, num)
-                ? clex_floating_constant(self, num)
-                : clex_integer_constant(self, num);
+        return c_lexer_pp_num_is_floating_constant(self, num)
+                ? c_lex_floating_constant(self, num)
+                : c_lex_integer_constant(self, num);
 }
 
 // converts identifier to keyword
-static ctoken* clex_identifier(clexer* self, ctoken* t)
+static c_token* c_lex_identifier(c_lexer* self, c_token* t)
 {
-        ctoken_kind k = creswords_get_by_ref(&self->reswords, ctoken_get_string(t));
+        c_token_kind k = c_reswords_get_by_ref(&self->reswords, c_token_get_string(t));
         if (k != CTK_UNKNOWN)
-                ctoken_set_kind(t, k);
+                c_token_set_kind(t, k);
 
         return t;
 }
 
-extern ctoken* clex(clexer* self)
+extern c_token* c_lex(c_lexer* self)
 {
-        ctoken* t = cpreprocess(&self->pp);
+        c_token* t = c_preprocess(&self->pp);
         if (!t)
                 return NULL;
 
-        ctoken_kind k = ctoken_get_kind(t);
+        c_token_kind k = c_token_get_kind(t);
         if (k == CTK_ID)
-                return clex_identifier(self, t);
+                return c_lex_identifier(self, t);
         else if (k == CTK_PP_NUM)
-                return clex_pp_num(self, t);
+                return c_lex_pp_num(self, t);
 
         return t;
 }

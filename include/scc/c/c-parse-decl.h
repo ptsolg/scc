@@ -1,5 +1,5 @@
-#ifndef CPARSE_DECL_H
-#define CPARSE_DECL_H
+#ifndef C_PARSE_DECL_H
+#define C_PARSE_DECL_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -11,8 +11,8 @@ extern "C" {
 
 #include "c-parser.h"
 
-typedef struct _cdeclarator cdeclarator;
-typedef struct _cdecl_specs cdecl_specs;
+typedef struct _c_declarator c_declarator;
+typedef struct _c_decl_specs c_decl_specs;
 typedef struct _tree_type tree_type;
 typedef struct _tree_decl tree_decl;
 
@@ -37,7 +37,7 @@ typedef struct _tree_decl tree_decl;
 // init-declarator:
 //      declarator
 //      declarator = initializer
-extern tree_decl* cparse_decl(cparser* self);
+extern tree_decl* c_parse_decl(c_parser* self);
 //extern bool cparse_decl_ex(cparser* self, tree_decl** pfirst, tree_decl** plast);
 
 //c99 6.7 declaration-specifiers:
@@ -55,8 +55,8 @@ extern tree_decl* cparse_decl(cparser* self);
 //      static
 //      auto
 //      register
-extern bool cparser_at_declaration(cparser* self);
-extern bool cparse_decl_specs(cparser* self, cdecl_specs* result);
+extern bool c_parser_at_declaration(c_parser* self);
+extern bool c_parse_decl_specs(c_parser* self, c_decl_specs* result);
 
 // c99 6.7.2 type-specifier:
 //      void
@@ -73,7 +73,7 @@ extern bool cparse_decl_specs(cparser* self, cdecl_specs* result);
 //      struct-or-union specifier
 //      enum-specifier
 //      typedef-name
-extern tree_type* cparse_type_specifier(cparser* self);
+extern tree_type* c_parse_type_specifier(c_parser* self);
 
 // c99 6.7.3 type-qualifier:
 //      const
@@ -83,12 +83,12 @@ extern tree_type* cparse_type_specifier(cparser* self);
 // type-qualifier-list:
 //      type-qualifier
 //      type-qualifier-list type-qualifier
-extern int cparse_type_qualifier_list_opt(cparser* self);
+extern int c_parse_type_qualifier_list_opt(c_parser* self);
 
 // c99 6.7.2.1 specifier-qualifier-list:
 //      type-specifier specifier-qualifier-list-opt
 //      type-qualifier specifier-qualifier-list-opt
-extern tree_type* cparse_specifier_qualifier_list(cparser* self);
+extern tree_type* c_parse_specifier_qualifier_list(c_parser* self);
 
 // c99 6.7.2.1 struct-or-union specifier
 //      struct-or-union identifier-opt { struct-declaration-list }
@@ -112,7 +112,7 @@ extern tree_type* cparse_specifier_qualifier_list(cparser* self);
 // struct-declarator:
 //      declarator
 //      declarator : constant-expression
-extern tree_decl* cparse_struct_or_union_specifier(cparser* self, bool* referenced);
+extern tree_decl* c_parse_struct_or_union_specifier(c_parser* self, bool* referenced);
 
 // c99 6.7.2.2 enum-specifier:
 //      enum identifier-opt { enumerator-list }
@@ -126,7 +126,7 @@ extern tree_decl* cparse_struct_or_union_specifier(cparser* self, bool* referenc
 // enumerator:
 //      enumeration-constant
 //      enumeration-constant = constant-expression
-extern tree_decl* cparse_enum_specifier(cparser* self, bool* referenced);
+extern tree_decl* c_parse_enum_specifier(c_parser* self, bool* referenced);
 
 // c99 6.7.5 declarator:
 //      pointer-opt direct-declarator
@@ -148,22 +148,22 @@ extern tree_decl* cparse_enum_specifier(cparser* self, bool* referenced);
 //
 // parameter-declaration:
 //      declaration-specifiers declarator-opt
-extern bool cparse_declarator(cparser* self, cdeclarator* result);
+extern bool c_parse_declarator(c_parser* self, c_declarator* result);
 
 // we diverge from c99 grammar when parsing type-name.
 // c99 6.7.6 type-name:
 //      specifier-qualifier-list declarator
-extern tree_type* cparse_type_name(cparser* self);
-extern tree_type* cparse_paren_type_name(cparser* self);
-extern bool cparser_token_starts_type_name(const cparser* self, const ctoken* t);
-extern bool cparser_next_token_starts_type_name(const cparser* self);
+extern tree_type* c_parse_type_name(c_parser* self);
+extern tree_type* c_parse_paren_type_name(c_parser* self);
+extern bool c_parser_token_starts_type_name(const c_parser* self, const c_token* t);
+extern bool c_parser_next_token_starts_type_name(const c_parser* self);
 
 // c99 6.7.7 typedef-name:
 //      identifier
-extern tree_type* cparse_typedef_name(cparser* self);
+extern tree_type* c_parse_typedef_name(c_parser* self);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // !CPARSE_DECL_H
+#endif

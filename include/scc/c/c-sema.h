@@ -1,5 +1,5 @@
-#ifndef CSEMA_H
-#define CSEMA_H
+#ifndef C_SEMA_H
+#define C_SEMA_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -13,62 +13,62 @@ extern "C" {
 #include "c-context.h"
 #include "scc/scl/dseq-common.h"
 
-typedef struct _htab ccase_label_map;
+typedef struct _htab c_case_label_map;
 
 typedef struct
 {
         tree_stmt* switch_stmt;
-        ccase_label_map labels;
+        c_case_label_map labels;
         bool has_default_label;
-} cswitch_stmt_info;
+} c_switch_stmt_info;
 
-typedef struct _dseq cswitch_stack;
+typedef struct _dseq c_switch_stack;
 
 // The structure, used for semantic analysis and building AST
-typedef struct _csema
+typedef struct _c_sema
 {
         tree_context* context;
-        ccontext* ccontext;
-        clogger* logger;
+        c_context* ccontext;
+        c_logger* logger;
         tree_decl* function;
         tree_decl_scope* globals;
         tree_decl_scope* labels;
         tree_decl_scope* locals;
-        cswitch_stack switch_stack;
+        c_switch_stack switch_stack;
         tree_scope* scope;
         tree_module* module;
         tree_target_info* target;
-} csema;
+} c_sema;
 
-extern void csema_init(csema* self, ccontext* context, clogger* logger);
-extern void csema_dispose(csema* self);
+extern void c_sema_init(c_sema* self, c_context* context, c_logger* logger);
+extern void c_sema_dispose(c_sema* self);
 
-extern void csema_enter_module(csema* self, tree_module* module);
-extern void csema_enter_scope(csema* self, tree_scope* scope);
-extern void csema_exit_scope(csema* self);
-extern void csema_enter_decl_scope(csema* self, tree_decl_scope* scope);
-extern void csema_exit_decl_scope(csema* self);
-extern void csema_enter_function(csema* self, tree_decl* func);
-extern void csema_exit_function(csema* self);
+extern void c_sema_enter_module(c_sema* self, tree_module* module);
+extern void c_sema_enter_scope(c_sema* self, tree_scope* scope);
+extern void c_sema_exit_scope(c_sema* self);
+extern void c_sema_enter_decl_scope(c_sema* self, tree_decl_scope* scope);
+extern void c_sema_exit_decl_scope(c_sema* self);
+extern void c_sema_enter_function(c_sema* self, tree_decl* func);
+extern void c_sema_exit_function(c_sema* self);
 
 // creates new decl scope, and enters it
 // this is used when we need to create implicit decl scope.
 // e.g: to hide for-loop variables from using them outside loop scope
-extern void csema_push_scope(csema* self);
+extern void c_sema_push_scope(c_sema* self);
 
-extern void csema_push_switch_stmt_info(csema* self, tree_stmt* switch_stmt);
-extern void csema_pop_switch_stmt_info(csema* self);
-extern void csema_set_switch_stmt_has_default_label(csema* self);
-extern cswitch_stmt_info* csema_get_switch_stmt_info(const csema* self);
-extern bool csema_in_switch_stmt(const csema* self);
-extern bool csema_switch_stmt_has_default_label(const csema* self);
-extern bool csema_switch_stmt_register_case_label(const csema* self, tree_stmt* label);
+extern void c_sema_push_switch_stmt_info(c_sema* self, tree_stmt* switch_stmt);
+extern void c_sema_pop_switch_stmt_info(c_sema* self);
+extern void c_sema_set_switch_stmt_has_default_label(c_sema* self);
+extern c_switch_stmt_info* c_sema_get_switch_stmt_info(const c_sema* self);
+extern bool c_sema_in_switch_stmt(const c_sema* self);
+extern bool c_sema_switch_stmt_has_default_label(const c_sema* self);
+extern bool c_sema_switch_stmt_register_case_label(const c_sema* self, tree_stmt* label);
 
-extern bool csema_at_file_scope(const csema* self);
-extern bool csema_at_block_scope(const csema* self);
+extern bool c_sema_at_file_scope(const c_sema* self);
+extern bool c_sema_at_block_scope(const c_sema* self);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // !CSEMA_H
+#endif
