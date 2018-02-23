@@ -228,7 +228,7 @@ static HTAB_INLINE suint8* HTAB_FIND_IMPL(const HTAB_TYPE* self, HTAB_KEY_TYPE c
         const ssize size = self->_num_buckets;
 
         ssize i = 1;
-        ssize start = key & (size - 1);
+        ssize start = ((ssize)key) & (size - 1);
         ssize bucket_no = start;
 
         while (1)

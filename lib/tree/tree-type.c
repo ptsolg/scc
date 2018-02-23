@@ -164,6 +164,20 @@ extern const tree_type* tree_desugar_ctype(const tree_type* self)
         return tree_ignore_ctypedefs(tree_ignore_paren_ctypes(self));
 }
 
+extern tree_type* tree_ignore_chain_types(tree_type* self)
+{
+        while (1)
+        {
+                self = tree_desugar_type(self);
+                tree_type_kind k = tree_get_type_kind(self);
+                if (k == TTK_POINTER || k == TTK_ARRAY || k == TTK_FUNCTION)
+                        self = tree_get_chain_type_next(self);
+                else
+                        break;
+        }
+        return self;
+}
+
 extern bool tree_builtin_type_is(const tree_type* self, tree_builtin_type_kind k)
 {
         if (tree_get_type_kind(self) != TTK_BUILTIN)

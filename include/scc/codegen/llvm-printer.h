@@ -14,17 +14,20 @@ typedef struct _ssa_instr ssa_instr;
 typedef struct _tree_type tree_type;
 typedef struct _ssa_context ssa_context;
 typedef struct _tree_context tree_context;
+typedef struct _htab record_info_map;
 
 typedef struct _llvm_printer
 {
         writebuf buf;
-        const ssa_context* ssa;
+        ssa_context* ssa;
         const tree_context* tree;
         ssa_id tmp_uid;
         int indent_lvl;
+        uint record_uid;
+        record_info_map recs_info;
 } llvm_printer;
 
-extern void llvm_printer_init(llvm_printer* self, write_cb* write, const ssa_context* ssa);
+extern void llvm_printer_init(llvm_printer* self, write_cb* write, ssa_context* ssa);
 extern void llvm_printer_dispose(llvm_printer* self);
 
 extern void llvm_printer_emit_type(llvm_printer* self, const tree_type* type);
@@ -34,6 +37,7 @@ extern void llvm_printer_emit_instr(llvm_printer* self, const ssa_instr* instr);
 extern void llvm_printer_emit_block(llvm_printer* self, const ssa_block* block);
 extern void llvm_printer_emit_decl(llvm_printer* self, const tree_decl* decl);
 extern void llvm_printer_emit_function_decl(llvm_printer* self, const ssa_function* func);
+extern void llvm_printer_emit_record_decls(llvm_printer* self, const ssa_module* sm);
 
 extern void llvm_printer_emit_module(
         llvm_printer* self, const ssa_module* sm, const tree_module* tm);

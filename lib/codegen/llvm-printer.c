@@ -3,15 +3,75 @@
 #include "scc/tree/tree-type.h"
 #include "scc/tree/tree-module.h"
 #include "scc/scl/char-info.h"
+#include "scc/scl/dseq-instance.h"
 #include <stdarg.h>
 #include <stdio.h>
 
-extern void llvm_printer_init(llvm_printer* self, write_cb* write, const ssa_context* ssa)
+typedef struct
+{
+        uint id : 31;
+        bool declared : 1;
+} record_info;
+
+#define HTAB_TYPE record_info_map
+#define HTAB_IMPL_FN_GENERATOR(NAME) _record_info_map_##NAME
+#define HTAB_KEY_TYPE const void*
+#define HTAB_DELETED_KEY ((const void*)0)
+#define HTAB_EMPTY_KEY ((const void*)1)
+#define HTAB_VALUE_TYPE record_info
+#define HTAB_INIT record_info_map_init
+#define HTAB_INIT_ALLOC record_info_map_init_alloc
+#define HTAB_DISPOSE record_info_map_dispose
+#define HTAB_GET_SIZE record_info_map_size
+#define HTAB_GET_ALLOCATOR record_info_map_alloc
+#define HTAB_RESERVE record_info_map_reserve
+#define HTAB_CLEAR record_info_map_clear
+#define HTAB_GROW record_info_map_grow
+#define HTAB_INSERT record_info_map_insert
+#define HTAB_FIND record_info_map_find
+
+#define HTAB_ITERATOR_TYPE record_info_map_iter
+#define HTAB_ITERATOR_GET_KEY record_info_map_iter_key
+#define HTAB_ITERATOR_ADVANCE record_info_map_iter_advance
+#define HTAB_ITERATOR_INIT record_info_map_iter_init
+#define HTAB_ITERATOR_CREATE record_info_map_iter_create
+#define HTAB_ITERATOR_IS_VALID record_info_map_iter_valid
+#define HTAB_ITERATOR_GET_VALUE record_info_map_iter_value
+
+#include "scc/scl/htab.h"
+
+#undef HTAB_TYPE
+#undef HTAB_IMPL_FN_GENERATOR
+#undef HTAB_KEY_TYPE 
+#undef HTAB_DELETED_KEY
+#undef HTAB_EMPTY_KEY
+#undef HTAB_VALUE_TYPE
+#undef HTAB_INIT
+#undef HTAB_INIT_ALLOC
+#undef HTAB_DISPOSE
+#undef HTAB_GET_SIZE
+#undef HTAB_GET_ALLOCATOR
+#undef HTAB_RESERVE
+#undef HTAB_CLEAR
+#undef HTAB_GROW
+#undef HTAB_INSERT
+#undef HTAB_FIND
+#undef HTAB_ITERATOR_TYPE
+#undef HTAB_ITERATOR_GET_KEY
+#undef HTAB_ITERATOR_ADVANCE
+#undef HTAB_ITERATOR_INIT
+#undef HTAB_ITERATOR_CREATE
+#undef HTAB_ITERATOR_IS_VALID
+#undef HTAB_ITERATOR_GET_VALUE
+
+extern void llvm_printer_init(llvm_printer* self, write_cb* write, ssa_context* ssa)
 {
         self->ssa = ssa;
         self->tree = ssa_get_tree(ssa);
         self->tmp_uid = 0;
         self->indent_lvl = 0;
+        self->record_uid = 0;
+        record_info_map_init_alloc(&self->recs_info, ssa_get_alloc(ssa));
         writebuf_init(&self->buf, write);
 }
 
@@ -124,6 +184,26 @@ static void llvm_printer_emit_array_type(llvm_printer* self, const tree_type* ty
         llvm_printc(self, ']');
 }
 
+static void llvm_printer_emit_record_type(llvm_printer* self, const tree_type* type, bool declared)
+{
+        uint id;
+        record_info_map_iter it;
+        if (!record_info_map_find(&self->recs_info, type, &it))
+        {
+                id = self->record_uid++;
+                record_info info = { id, declared };
+                record_info_map_insert(&self->recs_info, type, info);
+        }
+        else
+        {
+                record_info* info = record_info_map_iter_value(&it);
+                id = info->id;
+                info->declared = declared;
+        }
+
+        llvm_printf(self, "%%record.%d", id);
+}
+
 extern void llvm_printer_emit_type(llvm_printer* self, const tree_type* type)
 {
         type = tree_desugar_ctype(type);
@@ -137,6 +217,9 @@ extern void llvm_printer_emit_type(llvm_printer* self, const tree_type* type)
                 llvm_printer_emit_pointer_type(self, type);
         else if (k == TTK_ARRAY)
                 llvm_printer_emit_array_type(self, type);
+        else if (tree_declared_type_is(type, TDK_RECORD))
+                llvm_printer_emit_record_type(self, type, false);
+        
 }
 
 static void llvm_printer_emit_value_type(llvm_printer* self, const ssa_value* value)
@@ -407,6 +490,13 @@ static void llvm_printer_emit_store_instr(llvm_printer* self, const ssa_instr* i
 
 static void llvm_printer_emit_getfieldaddr_instr(llvm_printer* self, const ssa_instr* instr)
 {
+        llvm_printer_emit_value(self, ssa_get_instr_cvar(instr), false);
+        llvm_prints(self, " = getelementptr inbounds ");
+        ssa_value* rec = ssa_get_instr_operand_value(instr, 0);
+        llvm_printer_emit_type(self, tree_get_pointer_target(ssa_get_value_type(rec)));
+        llvm_prints(self, ", ");
+        llvm_printer_emit_value(self, rec, true);
+        llvm_printf(self, ", i32 0, i32 %u", ssa_get_getfieldaddr_index(instr));
 }
 
 static void llvm_printer_emit_call_instr(llvm_printer* self, const ssa_instr* instr)
@@ -600,6 +690,107 @@ extern void llvm_printer_emit_function_decl(llvm_printer* self, const ssa_functi
         llvm_print_endl(self);
 }
 
+static void llvm_printer_emit_struct_fields(llvm_printer* self, tree_type* type, dseq* recs_to_print)
+{
+        tree_decl_scope* fields = tree_get_record_fields(tree_get_decl_type_entity(type));
+        bool first = true;
+        TREE_FOREACH_DECL_IN_SCOPE(fields, field)
+        {
+                if (!tree_decl_is(field, TDK_FIELD))
+                        continue;
+
+                if (!first)
+                        llvm_prints(self, ", ");
+                first = false;
+
+                tree_type* field_type = tree_get_decl_type(field);
+                tree_type* unchained = tree_ignore_chain_types(field_type);
+
+                if (tree_declared_type_is(unchained, TDK_RECORD))
+                        dseq_append(recs_to_print, unchained);
+
+                llvm_printer_emit_type(self, field_type);
+        }
+}
+
+static void llvm_printer_emit_union_fields(llvm_printer* self, tree_type* type, dseq* recs_to_print)
+{
+        tree_decl_scope* fields = tree_get_record_fields(tree_get_decl_type_entity(type));
+        tree_type* largest_type = NULL;
+        TREE_FOREACH_DECL_IN_SCOPE(fields, field)
+        {
+                if (!tree_decl_is(field, TDK_FIELD))
+                        continue;
+
+                tree_type* field_type = tree_get_decl_type(field);
+                tree_type* unchained = tree_ignore_chain_types(field_type);
+                if (tree_declared_type_is(unchained, TDK_RECORD))
+                        dseq_append(recs_to_print, unchained);
+
+                if (!largest_type || tree_get_sizeof(self->tree->target, field_type)
+                        > tree_get_sizeof(self->tree->target, largest_type))
+                {
+                        largest_type = field_type;
+                }
+        }
+
+        llvm_printer_emit_type(self, largest_type);
+}
+
+static void llvm_printer_emit_record_fields(llvm_printer* self, tree_type* type, dseq* recs_to_print)
+{
+        llvm_prints(self, "<{ ");
+        if (tree_record_is_union(tree_get_decl_type_entity(type)))
+                llvm_printer_emit_union_fields(self, type, recs_to_print);
+        else
+                llvm_printer_emit_struct_fields(self, type, recs_to_print);
+        llvm_prints(self, " }>");
+}
+
+static void llvm_printer_emit_record_decl(llvm_printer* self, tree_type* record, dseq* recs_to_print)
+{
+        record_info_map_iter it;
+        if (record_info_map_find(&self->recs_info, record, &it))
+        {
+                record_info* ii = record_info_map_iter_value(&it);
+                if (record_info_map_iter_value(&it)->declared)
+                        return;
+        }
+
+        llvm_print_endl(self);
+        llvm_printer_emit_record_type(self, record, true);
+        llvm_prints(self, " = type ");
+        llvm_printer_emit_record_fields(self, record, recs_to_print);
+}
+
+extern void llvm_printer_emit_record_decls(llvm_printer* self, const ssa_module* sm)
+{
+        // alloca(local vars) cast foo_param global_vars
+        dseq recs_to_print;
+        dseq_init_alloc(&recs_to_print, ssa_get_alloc(self->ssa));
+
+        SSA_FOREACH_MODULE_DEF(sm, func)
+        {
+                SSA_FOREACH_FUNCTION_BLOCK(func, block)
+                {
+                        SSA_FOREACH_BLOCK_INSTR(block, instr)
+                        {
+                                if (ssa_get_instr_kind(instr) != SIK_ALLOCA)
+                                        continue;
+
+                                tree_type* t = tree_ignore_chain_types(ssa_get_allocated_type(instr));
+                                if (!tree_declared_type_is(t, TDK_RECORD))
+                                        continue;
+
+                                llvm_printer_emit_record_decl(self, t, &recs_to_print);
+                        }
+                }
+        }
+
+        for (ssize i = 0; i < dseq_size(&recs_to_print); i++)
+                llvm_printer_emit_record_decl(self, dseq_get(&recs_to_print, i), &recs_to_print);
+}
+
 static void llvm_printer_emit_global(llvm_printer* self, ssa_value* global)
 {
         llvm_print_endl(self);
@@ -629,6 +820,8 @@ extern void llvm_printer_emit_module(
 {
         SSA_FOREACH_MODULE_GLOBAL(sm, it, end)
                 llvm_printer_emit_global(self, *it);
+
+        llvm_printer_emit_record_decls(self, sm);
 
         const tree_decl_scope* globals = tree_get_module_cglobals(tm);
         TREE_FOREACH_DECL_IN_SCOPE(globals, decl)

@@ -148,7 +148,7 @@ extern serrcode cc_dump_tokens(cc_instance* self)
 
         result = S_NO_ERROR;
         if (self->output.file)
-                cc_print_tokens(self, &context, &env.source_manager, 
+                cc_print_tokens(self, &context, &env.source_manager,
                         self->output.file, &tokens);
 
 cleanup:
