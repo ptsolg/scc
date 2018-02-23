@@ -39,14 +39,14 @@ extern serrcode c_preprocessor_enter(c_preprocessor* self, c_source* source)
         }
 
         c_preprocessor_state* next = self->state + 1;
-        c_pplexer* pplexer = &next->lexer;
-        c_pplexer_init(
+        c_preprocessor_lexer* pplexer = &next->lexer;
+        c_preprocessor_lexer_init(
                 pplexer,
                 self->reswords,
                 self->source_manager,
                 self->logger, 
                 self->context);
-        if (S_FAILED(c_pplexer_enter_source_file(pplexer, source)))
+        if (S_FAILED(c_preprocessor_lexer_enter(pplexer, source)))
                 return S_ERROR;
 
         self->state = next;
@@ -68,7 +68,7 @@ static c_token* c_preprocess_wspace(c_preprocessor* self, bool skip_eol)
 {
         while (1)
         {
-                c_token* t = c_pplex_token(&self->state->lexer);
+                c_token* t = c_preprocessor_lexer_lex_token(&self->state->lexer);
                 if (!t)
                         return NULL;
 

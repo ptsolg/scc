@@ -13,7 +13,7 @@ extern "C" {
 
 typedef struct
 {
-        c_pplexer lexer;
+        c_preprocessor_lexer lexer;
         c_source* source;
         int nhash;
         bool hash_expected;

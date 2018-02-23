@@ -30,7 +30,7 @@ extern int c_reswords_get_by_ref(const c_reswords* self, strref h);
 extern int c_reswords_get_pp(const c_reswords* self, const char* string, ssize len);
 extern int c_reswords_get_pp_by_ref(const c_reswords* self, strref h);
 
-typedef struct _c_pplexer
+typedef struct _c_preprocessor_lexer
 {
         // prev, current and next
         int chars[3];
@@ -43,16 +43,16 @@ typedef struct _c_pplexer
         c_context* context;
         tree_location loc;
         int tab_to_space;
-} c_pplexer;
+} c_preprocessor_lexer;
 
-extern void c_pplexer_init(
-        c_pplexer* self,
+extern void c_preprocessor_lexer_init(
+        c_preprocessor_lexer* self,
         const c_reswords* reswords,
         c_source_manager* source_manager,
         c_logger* logger,
         c_context* context);
 
-extern serrcode c_pplexer_enter_source_file(c_pplexer* self, c_source* source);
+extern serrcode c_preprocessor_lexer_enter(c_preprocessor_lexer* self, c_source* source);
 
 // c99 6.4 preprocessing-token:
 // identifier
@@ -64,7 +64,7 @@ extern serrcode c_pplexer_enter_source_file(c_pplexer* self, c_source* source);
 // we also add:
 // white-space
 // comments
-extern c_token* c_pplex_token(c_pplexer* self);
+extern c_token* c_preprocessor_lexer_lex_token(c_preprocessor_lexer* self);
 
 // c99 6.4.2 identifier:
 // identifier-nondigit
@@ -83,7 +83,7 @@ extern c_token* c_pplex_token(c_pplexer* self);
 //
 // digit: one of
 // 0 1 2 3 4 5 6 7 8 9
-extern c_token* c_pplex_identifier(c_pplexer* self);
+extern c_token* c_preprocessor_lexer_lex_identifier(c_preprocessor_lexer* self);
 
 // c99 6.4.5 string-literal:
 // " s-char-sequence-opt "
@@ -96,8 +96,8 @@ extern c_token* c_pplex_identifier(c_pplexer* self);
 // any member of the source character set except
 // the double-quote ", backslash \, or new-line character
 // escape-sequence
-extern c_token* c_pplex_string_literal(c_pplexer* self);
-extern c_token* c_pplex_angle_string_literal(c_pplexer* self);
+extern c_token* c_preprocessor_lexer_lex_string_literal(c_preprocessor_lexer* self);
+extern c_token* c_preprocessor_lexer_lex_angle_string_literal(c_preprocessor_lexer* self);
 
 // c99 6.4.4.4 character-constant:
 // ' c-char-sequence '
@@ -117,7 +117,7 @@ extern c_token* c_pplex_angle_string_literal(c_pplexer* self);
 // simple-escape-sequence: one of
 // \' \" \? \\
 // \a \b \f \n \r \t \v
-extern c_token* c_pplex_const_char(c_pplexer* self);
+extern c_token* c_preprocessor_lexer_lex_character_constant(c_preprocessor_lexer* self);
 
 // c99 6.4.8 pp-number:
 // digit
@@ -129,7 +129,7 @@ extern c_token* c_pplex_const_char(c_pplexer* self);
 // pp-number p sign
 // pp-number P sign
 // pp-number .
-extern c_token* c_pplex_number(c_pplexer* self);
+extern c_token* c_preprocessor_lexer_lex_number(c_preprocessor_lexer* self);
 
 // 6.4.6 punctuator: one of
 // [ ] ( ) { } . ->
@@ -138,7 +138,7 @@ extern c_token* c_pplex_number(c_pplexer* self);
 // ? : ; ...
 // = *= /= %= += -= <<= >>= &= ^= |=
 // , # ##
-static c_token* c_pplex_punctuator(c_pplexer* self);
+static c_token* c_preprocessor_lexer_lex_punctuator(c_preprocessor_lexer* self);
 
 #ifdef __cplusplus
 }
