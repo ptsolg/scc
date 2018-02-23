@@ -18,6 +18,7 @@ add_scc_lib(c
 	c-sema-stmt.c
 	c-info.c
 	c-preprocessor.c
+	c-preprocessor-lexer.c
 	c-printer.c
 	c-env.c
 	c-builtin-type.h
