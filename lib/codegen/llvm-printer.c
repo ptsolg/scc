@@ -26,6 +26,7 @@ typedef struct
 #define HTAB_GET_ALLOCATOR record_info_map_alloc
 #define HTAB_RESERVE record_info_map_reserve
 #define HTAB_CLEAR record_info_map_clear
+#define HTAB_ERASE record_info_map_erase
 #define HTAB_GROW record_info_map_grow
 #define HTAB_INSERT record_info_map_insert
 #define HTAB_FIND record_info_map_find
@@ -53,6 +54,7 @@ typedef struct
 #undef HTAB_GET_ALLOCATOR
 #undef HTAB_RESERVE
 #undef HTAB_CLEAR
+#undef HTAB_ERASE
 #undef HTAB_GROW
 #undef HTAB_INSERT
 #undef HTAB_FIND

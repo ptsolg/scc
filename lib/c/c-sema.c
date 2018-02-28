@@ -53,6 +53,7 @@
 #define HTAB_GET_ALLOCATOR c_case_label_map_alloc
 #define HTAB_RESERVE c_case_label_map_reserve
 #define HTAB_CLEAR c_case_label_map_clear
+#define HTAB_ERASE c_case_label_map_erase
 #define HTAB_GROW c_case_label_map_grow
 #define HTAB_INSERT c_case_label_map_insert
 #define HTAB_FIND c_case_label_map_find
@@ -80,6 +81,7 @@
 #undef HTAB_GET_ALLOCATOR
 #undef HTAB_RESERVE
 #undef HTAB_CLEAR
+#undef HTAB_ERASE
 #undef HTAB_GROW
 #undef HTAB_INSERT
 #undef HTAB_FIND

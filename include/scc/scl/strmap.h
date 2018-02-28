@@ -44,6 +44,7 @@ typedef suint32 strref;
 #define HTAB_GET_ALLOCATOR strmap_alloc
 #define HTAB_RESERVE strmap_reserve
 #define HTAB_CLEAR strmap_clear
+#define HTAB_ERASE strmap_erase
 #define HTAB_GROW strmap_grow
 #define HTAB_INSERT strmap_insert
 #define HTAB_FIND strmap_find
@@ -71,6 +72,7 @@ typedef suint32 strref;
 #undef HTAB_GET_ALLOCATOR
 #undef HTAB_RESERVE
 #undef HTAB_CLEAR
+#undef HTAB_ERASE
 #undef HTAB_GROW
 #undef HTAB_INSERT
 #undef HTAB_FIND

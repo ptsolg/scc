@@ -81,6 +81,10 @@
 #error HTAB_CLEAR is undefined
 #endif
 
+#ifndef HTAB_ERASE
+#error HTAB_ERASE is undefined
+#endif
+
 #ifndef HTAB_GROW
 #error HTAB_GROW is undefined
 #endif
@@ -220,7 +224,8 @@ static HTAB_INLINE serrcode HTAB_RESERVE(HTAB_TYPE* self, const ssize at_least)
         return HTAB_RESIZE_IMPL(self, new_size);
 }
 
-static HTAB_INLINE suint8* HTAB_FIND_IMPL(const HTAB_TYPE* self, HTAB_KEY_TYPE const key)
+static HTAB_INLINE suint8* HTAB_FIND_IMPL(
+        const HTAB_TYPE* self, HTAB_KEY_TYPE const key, const bool skip_deleted)
 {
         if (!self->_buckets)
                 return NULL;
@@ -237,7 +242,7 @@ static HTAB_INLINE suint8* HTAB_FIND_IMPL(const HTAB_TYPE* self, HTAB_KEY_TYPE c
 
                 HTAB_KEY_TYPE k = *(HTAB_KEY_TYPE*)bucket;
 
-                if (k == key || k == HTAB_EMPTY_KEY)
+                if (k == key || k == HTAB_EMPTY_KEY || (k == HTAB_DELETED_KEY && !skip_deleted))
                         return bucket;
 
                 bucket_no += i++;
@@ -270,7 +275,7 @@ static HTAB_INLINE serrcode HTAB_INSERT(
                         return S_ERROR;
         }
 
-        suint8* bucket = HTAB_FIND_IMPL(self, key);
+        suint8* bucket = HTAB_FIND_IMPL(self, key, false);
         if (!bucket)
                 return S_ERROR;
 
@@ -285,7 +290,7 @@ static HTAB_INLINE serrcode HTAB_INSERT(
 static HTAB_INLINE bool HTAB_FIND(
         const HTAB_TYPE* self, HTAB_KEY_TYPE const key, HTAB_ITERATOR_TYPE* result)
 {
-        suint8* bucket = HTAB_FIND_IMPL(self, key);
+        suint8* bucket = HTAB_FIND_IMPL(self, key, true);
         if (!bucket || *(HTAB_KEY_TYPE*)bucket != key)
         {
                 result->_bucket = NULL;
@@ -296,6 +301,17 @@ static HTAB_INLINE bool HTAB_FIND(
         HTAB_ITERATOR_INIT(result, self);
         result->_bucket = bucket;
 
+        return true;
+}
+
+static HTAB_INLINE bool HTAB_ERASE(HTAB_TYPE* self, HTAB_KEY_TYPE const key)
+{
+        HTAB_ITERATOR_TYPE it;
+        if (!HTAB_FIND(self, key, &it))
+                return false;
+
+        *(HTAB_KEY_TYPE*)it._bucket = HTAB_DELETED_KEY;
+        self->_size--;
         return true;
 }
 
