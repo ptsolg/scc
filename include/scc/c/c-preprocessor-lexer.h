@@ -52,7 +52,12 @@ extern void c_preprocessor_lexer_init(
         c_logger* logger,
         c_context* context);
 
+extern void c_preprocessor_lexer_enter_char_stream(
+        c_preprocessor_lexer* self, readbuf* buf, tree_location start_loc);
+
 extern serrcode c_preprocessor_lexer_enter(c_preprocessor_lexer* self, c_source* source);
+
+extern bool c_preprocessor_lexer_at_eof(const c_preprocessor_lexer* self);
 
 // c99 6.4 preprocessing-token:
 // identifier

@@ -100,7 +100,34 @@ extern c_token* c_token_new_wspace(c_context* context, tree_location loc, int co
         return t;
 }
 
-extern c_token* ctoken_new_pp_num(c_context* context, tree_location loc, tree_id ref)
+extern c_token* c_token_new_pp_num(c_context* context, tree_location loc, tree_id ref)
 {
         return c_token_new_string_ex(context, CTK_PP_NUM, loc, ref, sizeof(c_token));
+}
+
+extern c_token* c_token_copy(c_context* context, c_token* token)
+{
+        tree_location loc = c_token_get_loc(token);
+        c_token_kind k = c_token_get_kind(token);
+        if (k == CTK_ID)
+                return c_token_new_id(context, loc, c_token_get_string(token));
+        else if (k == CTK_CONST_STRING)
+                return c_token_new_string(context, loc, c_token_get_string(token));
+        else if (k == CTK_ANGLE_STRING)
+                return c_token_new_angle_string(context, loc, c_token_get_string(token));
+        else if (k == CTK_CONST_FLOAT)
+                return c_token_new_float(context, loc, c_token_get_float(token));
+        else if (k == CTK_CONST_DOUBLE)
+                return c_token_new_double(context, loc, c_token_get_double(token));
+        else if (k == CTK_CONST_INT)
+                return c_token_new_int(context, loc, c_token_get_int(token),
+                        c_token_int_is_signed(token), c_token_get_int_ls(token));
+        else if (k == CTK_CONST_CHAR)
+                return c_token_new_char(context, loc, c_token_get_char(token));
+        else if (k == CTK_WSPACE)
+                return c_token_new_wspace(context, loc, c_token_get_spaces(token));
+        else if (k == CTK_PP_NUM)
+                return c_token_new_pp_num(context, loc, c_token_get_string(token));
+
+        return c_token_new(context, k, loc);
 }

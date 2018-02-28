@@ -74,7 +74,7 @@ static inline int c_preprocessor_lexer_get_nextc(const c_preprocessor_lexer* sel
         return self->chars[2];
 }
 
-static inline bool c_preprocessor_lexer_at_eof(const c_preprocessor_lexer* self)
+extern bool c_preprocessor_lexer_at_eof(const c_preprocessor_lexer* self)
 {
         return c_preprocessor_lexer_getc(self) == RB_ENDC;
 }
@@ -103,7 +103,7 @@ static inline int c_preprocessor_lexer_readc(c_preprocessor_lexer* self)
                 self->loc += 2;
         }
 
-        if (c_preprocessor_lexer_at_start_of_line(self))
+        if (c_preprocessor_lexer_at_start_of_line(self) && self->source)
                 c_source_save_line_loc(self->source, c_preprocessor_lexer_get_loc(self));
 
         return c_preprocessor_lexer_getc(self);
@@ -130,12 +130,23 @@ extern void c_preprocessor_lexer_init(
         self->angle_string_expected = false;
 }
 
+extern void c_preprocessor_lexer_enter_char_stream(
+        c_preprocessor_lexer* self, readbuf* buf, tree_location start_loc)
+{
+        self->buf = buf;
+        // fill buffer
+        c_preprocessor_lexer_readc(self);
+        c_preprocessor_lexer_readc(self);
+        self->loc = start_loc;
+}
+
 extern serrcode c_preprocessor_lexer_enter(c_preprocessor_lexer* self, c_source* source)
 {
         if (!source)
                 return S_ERROR;
 
-        if (!(self->buf = c_source_open(source)))
+        readbuf* buf = c_source_open(source);
+        if (!buf)
         {
                 c_error_cannot_open_source_file(self->logger, 0, c_source_get_name(source));
                 return S_ERROR;
@@ -145,11 +156,8 @@ extern serrcode c_preprocessor_lexer_enter(c_preprocessor_lexer* self, c_source*
         if (S_FAILED(c_source_save_line_loc(source, c_source_get_loc_begin(source))))
                 return S_ERROR;
 
-        // fill buffer
-        c_preprocessor_lexer_readc(self);
-        c_preprocessor_lexer_readc(self);
-        self->loc = c_source_get_loc_begin(source);
         self->source = source;
+        c_preprocessor_lexer_enter_char_stream(self, buf, c_source_get_loc_begin(source));
         return S_NO_ERROR;
 }
 
@@ -322,7 +330,7 @@ extern c_token* c_preprocessor_lexer_lex_number(c_preprocessor_lexer* self)
         if (!c_preprocessor_lexer_read_number_sequence(self, &num))
                 return NULL;
 
-        return ctoken_new_pp_num(self->context,
+        return c_token_new_pp_num(self->context,
                 num.loc, c_preprocessor_lexer_get_sequence_id(self, &num));
 }
 
@@ -593,11 +601,7 @@ extern c_token* c_preprocessor_lexer_lex_token(c_preprocessor_lexer* self)
 
         }
         else if (c_preprocessor_lexer_at_eof(self))
-        {
-                tree_location loc = c_preprocessor_lexer_get_loc(self);
-                c_preprocessor_lexer_readc(self);
-                return c_token_new(self->context, CTK_EOF, loc);
-        }
+                return c_token_new(self->context, CTK_EOF, c_preprocessor_lexer_get_loc(self));
 
         c_error_unknown_symbol(self->logger, c_preprocessor_lexer_get_loc(self), c);
         return NULL;

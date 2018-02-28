@@ -31,6 +31,15 @@ extern void c_error_empty_file_name_in_include(c_logger* self, tree_location loc
 extern void c_error_unexpected_hash(c_logger* self, tree_location loc);
 extern void c_error_unknown_preprocessor_directive(c_logger* self, tree_location loc);
 extern void c_error_unsupported_preprocessor_directive(c_logger* self, tree_location loc);
+extern void c_error_no_macro_name_given_in_define(c_logger* self, tree_location loc);
+extern void c_error_macro_names_must_be_identifiers(c_logger* self, tree_location loc);
+extern void c_error_macro_redefenition(c_logger* self, tree_id name, tree_location loc);
+extern void c_error_expected_identifier(c_logger* self, tree_location loc);
+extern void c_error_missing_closing_bracket_in_macro_parameter_list(c_logger* self, tree_location loc);
+extern void c_error_macro_parameters_must_be_comma_separated(c_logger* self, tree_location loc);
+extern void c_error_hash2_cannot_appear_at_either_end_of_macro_expansion(c_logger* self, tree_location loc);
+extern void c_error_whitespace_after_macro_name_required(c_logger* self, tree_location loc);
+extern void c_error_invalid_pasting(c_logger* self, c_token* a, c_token* b, tree_location loc);
 
 // lexer
 extern void c_error_invalid_integer_literal(c_logger* self, tree_location loc, const char* num);

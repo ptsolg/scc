@@ -137,14 +137,14 @@ static const c_resword_info _c_reswords[CTK_TOTAL_SIZE] =
         C_RESWORD("elif", "#elif", CRK_TOKEN),
         C_RESWORD("else", "#else", CRK_TOKEN),
         C_RESWORD("endif", "#endif", CRK_TOKEN),
-        C_RESWORD("defined", "#define", CRK_TOKEN),
+        C_RESWORD("defined", "defined", CRK_TOKEN),
 
         C_RESWORD("include", "#include", CRK_TOKEN),
-        C_RESWORD("pragma", "#pragma", CRK_TOKEN),
         C_RESWORD("define", "#define", CRK_TOKEN),
         C_RESWORD("undef", "#undef", CRK_TOKEN),
         C_RESWORD("line", "#line", CRK_TOKEN),
         C_RESWORD("error", "#error", CRK_TOKEN),
+        C_RESWORD("pragma", "#pragma", CRK_TOKEN),
 };
 
 #undef C_RESWORD

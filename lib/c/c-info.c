@@ -1,6 +1,8 @@
 #include "scc/c/c-info.h"
 #include "scc/c/c-reswords.h"
+#include "scc/tree/tree-context.h"
 #include "scc/scl/char-info.h"
+#include <stdio.h>
 
 extern void c_get_unescaped_string(char* buffer, const char* string, ssize len)
 {
@@ -81,6 +83,25 @@ extern const c_resword_info* c_get_token_info(const c_token* t)
 extern const c_resword_info* c_get_token_kind_info(c_token_kind k)
 {
         return &_c_reswords[k];
+}
+
+extern int c_token_to_string(const tree_context* context, const c_token* tok, char* buf, ssize n)
+{
+        c_token_kind k = c_token_get_kind(tok);
+        const c_resword_info* info = c_get_token_kind_info(k);
+        switch (k)
+        {
+                case CTK_ID:
+                case CTK_CONST_STRING:
+                case CTK_ANGLE_STRING:
+                case CTK_PP_NUM:
+                        return snprintf(buf, n, "%s",
+                                tree_get_id_string(context, c_token_get_string(tok)));
+                case CTK_CONST_CHAR:
+                        return snprintf(buf, n, "'%c'", c_token_get_char(tok));
+                default:
+                        return snprintf(buf, n, "%s", info->string);
+        }
 }
 
 extern int c_get_operator_precedence(const c_token* self)

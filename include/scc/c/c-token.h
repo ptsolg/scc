@@ -148,7 +148,8 @@ typedef struct _c_token
 } c_token;
 
 // allocates token with a size sufficient for converting it to float/double/int token
-extern c_token* ctoken_new_pp_num(c_context* context, tree_location loc, tree_id ref);
+extern c_token* c_token_new_pp_num(c_context* context, tree_location loc, tree_id ref);
+extern c_token* c_token_copy(c_context* context, c_token* token);
 
 #define CTOKEN_ASSERT(P, K) S_ASSERT((P) && c_token_is((P), (K)))
 

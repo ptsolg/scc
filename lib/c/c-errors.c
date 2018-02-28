@@ -11,7 +11,7 @@
 
 extern void c_error_cannot_open_source_file(c_logger* self, tree_location loc, const char* file)
 {
-        c_error(self, CES_ERROR, loc, "cannot open source file \"%s\"", file);
+        c_error(self, CES_ERROR, loc, "cannot open source file '%s'", file);
 }
 
 extern void c_error_token_is_too_long(c_logger* self, tree_location loc)
@@ -78,6 +78,56 @@ extern void c_error_unknown_preprocessor_directive(c_logger* self, tree_location
 extern void c_error_unsupported_preprocessor_directive(c_logger* self, tree_location loc)
 {
         c_error(self, CES_ERROR, loc, "unsupported preprocessor directive");
+}
+
+extern void c_error_no_macro_name_given_in_define(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "no macro name given in #define directive");
+}
+
+extern void c_error_macro_names_must_be_identifiers(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "macro names must be identifiers");
+}
+
+extern void c_error_macro_redefenition(c_logger* self, tree_id name, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "'%s' redefenition", tree_get_id_string(self->tree, name));
+}
+
+extern void c_error_expected_identifier(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "expected identifier");
+}
+
+extern void c_error_missing_closing_bracket_in_macro_parameter_list(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "missing ')' in macro parameter list");
+}
+
+extern void c_error_macro_parameters_must_be_comma_separated(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "macro parameters must be comma-separated");
+}
+
+extern void c_error_hash2_cannot_appear_at_either_end_of_macro_expansion(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "'##' cannot appear at either end of macro expansion");
+}
+
+extern void c_error_whitespace_after_macro_name_required(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "ISO C requires whitespaces after the macro name");
+}
+
+extern void c_error_invalid_pasting(c_logger* self, c_token* a, c_token* b, tree_location loc)
+{
+        char a_str[30];
+        c_token_to_string(self->tree, a, a_str, 30);
+        char b_str[30];
+        c_token_to_string(self->tree, b, b_str, 30);
+        c_error(self, CES_ERROR, loc,
+                "pasting '%s' and '%s' does not give a valid preprocessing token", a_str, b_str);
 }
 
 extern void c_error_invalid_integer_literal(c_logger* self, tree_location loc, const char* num)

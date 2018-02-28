@@ -24,6 +24,7 @@ extern const char* c_get_builtin_type_string(tree_builtin_type_kind k);
 extern const char* c_get_token_kind_string(c_token_kind k);
 extern const c_resword_info* c_get_token_info(const c_token* t);
 extern const c_resword_info* c_get_token_kind_info(c_token_kind k);
+extern int c_token_to_string(const tree_context* context, const c_token* tok, char* buf, ssize n);
 
 typedef enum
 {
