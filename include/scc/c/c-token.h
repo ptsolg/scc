@@ -48,6 +48,7 @@ extern c_token* c_token_new_string_ex(
 extern c_token* c_token_new_string(c_context* context, tree_location loc, tree_id ref);
 extern c_token* c_token_new_angle_string(c_context* context, tree_location loc, tree_id ref);
 extern c_token* c_token_new_id(c_context* context, tree_location loc, tree_id id);
+extern c_token* c_token_new_end_of_macro(c_context* context, tree_location loc, tree_id macro);
 
 static inline struct _c_string_token* _c_string_token(c_token* self);
 static inline const struct _c_string_token* _c_string_token_c(const c_token* self);
@@ -150,8 +151,9 @@ typedef struct _c_token
 // allocates token with a size sufficient for converting it to float/double/int token
 extern c_token* c_token_new_pp_num(c_context* context, tree_location loc, tree_id ref);
 extern c_token* c_token_copy(c_context* context, c_token* token);
+extern c_token* c_token_copy_with_new_loc(c_context* context, c_token* token, tree_location new_loc);
 
-#define CTOKEN_ASSERT(P, K) S_ASSERT((P) && c_token_is((P), (K)))
+#define C_TOKEN_ASSERT(P, K) S_ASSERT((P) && c_token_is((P), (K)))
 
 static inline struct _c_token_base* _c_token_base(c_token* self)
 {
@@ -190,19 +192,23 @@ static inline void c_token_set_loc(c_token* self, tree_location l)
         _c_token_base(self)->loc = l;
 }
 
-#define CSTRING_TOKEN_ASSERT(P, K) \
-        S_ASSERT((P) && (K) == CTK_ID || (K) == CTK_CONST_STRING || (K) == CTK_PP_NUM \
-                || (K) == CTK_ANGLE_STRING)
+#define C_STRING_TOKEN_ASSERT(P, K) \
+        S_ASSERT((P) \
+                && ((K) == CTK_ID \
+                || (K) == CTK_CONST_STRING \
+                || (K) == CTK_PP_NUM \
+                || (K) == CTK_ANGLE_STRING\
+                || (K) == CTK_EOM))
 
 static inline struct _c_string_token* _c_string_token(c_token* self)
 {
-        CSTRING_TOKEN_ASSERT(self, self->base.kind);
+        C_STRING_TOKEN_ASSERT(self, self->base.kind);
         return (struct _c_string_token*)self;
 }
 
 static inline const struct _c_string_token* _c_string_token_c(const c_token* self)
 {
-        CSTRING_TOKEN_ASSERT(self, self->base.kind);
+        C_STRING_TOKEN_ASSERT(self, self->base.kind);
         return (const struct _c_string_token*)self;
 }
 
@@ -218,13 +224,13 @@ static inline void c_token_set_string(c_token* self, tree_id s)
 
 static inline struct _c_float_token* _c_float_token(c_token* self)
 {
-        CTOKEN_ASSERT(self, CTK_CONST_FLOAT);
+        C_TOKEN_ASSERT(self, CTK_CONST_FLOAT);
         return (struct _c_float_token*)self;
 }
 
 static inline const struct _c_float_token* _c_float_token_c(const c_token* self)
 {
-        CTOKEN_ASSERT(self, CTK_CONST_FLOAT);
+        C_TOKEN_ASSERT(self, CTK_CONST_FLOAT);
         return (const struct _c_float_token*)self;
 }
 
@@ -240,13 +246,13 @@ static inline void c_token_set_float(c_token* self, float v)
 
 static inline struct _c_double_token* _c_double_token(c_token* self)
 {
-        CTOKEN_ASSERT(self, CTK_CONST_DOUBLE);
+        C_TOKEN_ASSERT(self, CTK_CONST_DOUBLE);
         return (struct _c_double_token*)self;
 }
 
 static inline const struct _c_double_token* _c_double_token_c(const c_token* self)
 {
-        CTOKEN_ASSERT(self, CTK_CONST_DOUBLE);
+        C_TOKEN_ASSERT(self, CTK_CONST_DOUBLE);
         return (const struct _c_double_token*)self;
 }
 
@@ -262,13 +268,13 @@ static inline void c_token_set_double(c_token* self, ldouble v)
 
 static inline struct _c_int_token* _c_int_token(c_token* self)
 {
-        CTOKEN_ASSERT(self, CTK_CONST_INT);
+        C_TOKEN_ASSERT(self, CTK_CONST_INT);
         return (struct _c_int_token*)self;
 }
 
 static inline const struct _c_int_token* _c_int_token_c(const c_token* self)
 {
-        CTOKEN_ASSERT(self, CTK_CONST_INT);
+        C_TOKEN_ASSERT(self, CTK_CONST_INT);
         return (const struct _c_int_token*)self;
 }
 
@@ -305,13 +311,13 @@ static inline void c_token_set_int_ls(c_token* self, int n)
 
 static inline struct _c_char_token* _c_char_token(c_token* self)
 {
-        CTOKEN_ASSERT(self, CTK_CONST_CHAR);
+        C_TOKEN_ASSERT(self, CTK_CONST_CHAR);
         return (struct _c_char_token*)self;
 }
 
 static inline const struct _c_char_token* _c_char_token_c(const c_token* self)
 {
-        CTOKEN_ASSERT(self, CTK_CONST_CHAR);
+        C_TOKEN_ASSERT(self, CTK_CONST_CHAR);
         return (const struct _c_char_token*)self;
 }
 
@@ -327,13 +333,13 @@ static inline void c_token_set_char(c_token* self, int v)
 
 static inline struct _c_wspace_token* _cwspace_token_get(c_token* self)
 {
-        CTOKEN_ASSERT(self, CTK_WSPACE);
+        C_TOKEN_ASSERT(self, CTK_WSPACE);
         return (struct _c_wspace_token*)self;
 }
 
 static inline const struct _c_wspace_token* _cwspace_token_get_c(const c_token* self)
 {
-        CTOKEN_ASSERT(self, CTK_WSPACE);
+        C_TOKEN_ASSERT(self, CTK_WSPACE);
         return (const struct _c_wspace_token*)self;
 }
 

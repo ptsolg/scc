@@ -38,13 +38,17 @@ extern c_token* c_token_new_string(c_context* context, tree_location loc, tree_i
 
 extern c_token* c_token_new_angle_string(c_context* context, tree_location loc, tree_id ref)
 {
-        return c_token_new_string_ex(context, CTK_ANGLE_STRING, loc, ref,
-                sizeof(struct _c_string_token));
+        return c_token_new_string_ex(context, CTK_ANGLE_STRING, loc, ref, sizeof(struct _c_string_token));
 }
 
 extern c_token* c_token_new_id(c_context* context, tree_location loc, tree_id id)
 {
         return c_token_new_string_ex(context, CTK_ID, loc, id, sizeof(struct _c_string_token));
+}
+
+extern c_token* c_token_new_end_of_macro(c_context* context, tree_location loc, tree_id macro)
+{
+        return c_token_new_string_ex(context, CTK_EOM, loc, macro, sizeof(struct _c_string_token));
 }
 
 extern c_token* c_token_new_float(c_context* context, tree_location loc, float val)
@@ -130,4 +134,12 @@ extern c_token* c_token_copy(c_context* context, c_token* token)
                 return c_token_new_pp_num(context, loc, c_token_get_string(token));
 
         return c_token_new(context, k, loc);
+}
+
+extern c_token* c_token_copy_with_new_loc(c_context* context, c_token* token, tree_location new_loc)
+{
+        c_token* copy = c_token_copy(context, token);
+        if (copy)
+                c_token_set_loc(copy, new_loc);
+        return copy;
 }
