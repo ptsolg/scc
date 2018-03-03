@@ -48,6 +48,16 @@ static inline void* c_context_allocate_node(c_context* self, ssize bytes)
         return obstack_allocate(&self->nodes, bytes);
 }
 
+static inline void* c_context_allocate(c_context* self, ssize bytes)
+{
+        return mempool_allocate(&self->memory, bytes);
+}
+
+static inline void c_context_deallocate(c_context* self, void* block)
+{
+        mempool_deallocate(&self->memory, block);
+}
+
 #ifdef __cplusplus
 }
 #endif
