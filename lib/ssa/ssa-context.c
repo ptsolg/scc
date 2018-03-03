@@ -11,7 +11,7 @@ extern void ssa_init(ssa_context* self,
 extern void ssa_init_ex(ssa_context* self,
         tree_context* context, jmp_buf on_out_of_mem, allocator* alloc)
 {
-         S_ASSERT(on_out_of_mem && context);
+         assert(on_out_of_mem && context);
 
          self->alloc = alloc;
          self->target = context->target;

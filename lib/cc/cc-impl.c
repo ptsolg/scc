@@ -9,9 +9,9 @@
 
 #define LL_EXT "ll"
 #define SSA_EXT "ssa"
-#if S_WIN
+#if OS_WIN
 #define OBJ_EXT "obj"
-#elif S_OSX
+#elif OS_OSX
 #define OBJ_EXT "o"
 #else
 #error
@@ -127,9 +127,9 @@ static void cc_print_tokens(
 extern errcode cc_dump_tokens(cc_instance* self)
 {
         if (!cc_check_single_input(self))
-                return S_ERROR;
+                return EC_ERROR;
 
-        errcode result = S_ERROR;
+        errcode result = EC_ERROR;
         jmp_buf fatal;
         cc_context context;
         c_env env;
@@ -141,12 +141,12 @@ extern errcode cc_dump_tokens(cc_instance* self)
 
         if (setjmp(fatal))
                 goto cleanup;
-        if (S_FAILED(c_env_lex_source(&env, *cc_sources_begin(self), &tokens)))
+        if (EC_FAILED(c_env_lex_source(&env, *cc_sources_begin(self), &tokens)))
         {
                 goto cleanup;
         }
 
-        result = S_NO_ERROR;
+        result = EC_NO_ERROR;
         if (self->output.file)
                 cc_print_tokens(self, &context, &env.source_manager,
                         self->output.file, &tokens);
@@ -179,9 +179,9 @@ static tree_module* cc_parse_file(cc_instance* self, cc_context* context, file_e
 extern errcode cc_dump_tree(cc_instance* self)
 {
         if (!cc_check_single_input(self))
-                return S_ERROR;
+                return EC_ERROR;
 
-        errcode result = S_ERROR;
+        errcode result = EC_ERROR;
         jmp_buf fatal;
         cc_context context;
         cc_context_init(&context, self, fatal);
@@ -193,7 +193,7 @@ extern errcode cc_dump_tree(cc_instance* self)
         if (!module)
                 goto cleanup;
 
-        result = S_NO_ERROR;
+        result = EC_NO_ERROR;
         if (self->output.file)
                 cc_print_tree_module(self, &context, self->output.file, module);
 
@@ -211,15 +211,15 @@ extern errcode cc_perform_syntax_analysis(cc_instance* self)
         if (setjmp(fatal))
         {
                 cc_context_dispose(&context);
-                return S_ERROR;
+                return EC_ERROR;
         }
 
-        errcode result = S_NO_ERROR;
+        errcode result = EC_NO_ERROR;
         CC_FOREACH_SOURCE(self, it, end)
                 if (!c_parse_source(&context.c,
                         &self->input.source_lookup, *it, self->output.message))
                 {
-                        result = S_ERROR;
+                        result = EC_ERROR;
                         break;
                 }
 
@@ -236,7 +236,7 @@ static void cc_set_ssa_optimizer_opts(cc_instance* self, ssa_optimizer_opts* opt
 static errcode cc_codegen_file_ex(cc_instance* self,
         codegen_output_kind kind, file_entry* file, FILE* output)
 {
-        errcode result = S_ERROR;
+        errcode result = EC_ERROR;
         jmp_buf fatal;
         cc_context context;
 
@@ -268,7 +268,7 @@ cleanup:
 
 static errcode get_file_as(char* buffer, const file_entry* file, const char* ext)
 {
-        strncpy(buffer, file_get_path(file), S_MAX_PATH_LEN);
+        strncpy(buffer, file_get_path(file), MAX_PATH_LEN);
         return path_change_ext(buffer, ext);
 }
 
@@ -276,13 +276,13 @@ static errcode cc_codegen_file(cc_instance* self,
         codegen_output_kind kind, file_entry* file)
 {
         const char* ext = kind == CGOK_SSA ? SSA_EXT : LL_EXT;
-        char out[S_MAX_PATH_LEN + 1];
-        if (S_FAILED(get_file_as(out, file, ext)))
-                return S_ERROR;
+        char out[MAX_PATH_LEN + 1];
+        if (EC_FAILED(get_file_as(out, file, ext)))
+                return EC_ERROR;
 
         FILE* fout = fopen(out, "w");
         if (!fout)
-                return S_ERROR;
+                return EC_ERROR;
 
         errcode result = cc_codegen_file_ex(self, kind, file, fout);
         fclose(fout);
@@ -294,8 +294,8 @@ static void cc_cleanup_codegen(cc_instance* self, codegen_output_kind kind)
         CC_FOREACH_SOURCE(self, it, end)
         {
                 const char* ext = kind == CGOK_SSA ? SSA_EXT : LL_EXT;
-                char file[S_MAX_PATH_LEN + 1];
-                if (S_FAILED(get_file_as(file, *it, ext)))
+                char file[MAX_PATH_LEN + 1];
+                if (EC_FAILED(get_file_as(file, *it, ext)))
                         return;
 
                 path_delete_file(file);
@@ -305,12 +305,12 @@ static void cc_cleanup_codegen(cc_instance* self, codegen_output_kind kind)
 static errcode cc_codegen(cc_instance* self, codegen_output_kind kind)
 {
         CC_FOREACH_SOURCE(self, it, end)
-                if (S_FAILED(cc_codegen_file(self, kind, *it)))
+                if (EC_FAILED(cc_codegen_file(self, kind, *it)))
                 {
                         cc_cleanup_codegen(self, kind);
-                        return S_ERROR;
+                        return EC_ERROR;
                 }
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 static errcode cc_check_return_code(cc_instance* self, const char* tool, int code)
@@ -318,20 +318,20 @@ static errcode cc_check_return_code(cc_instance* self, const char* tool, int cod
         if (code)
         {
                 cc_error(self, "%s returned %d", tool, code);
-                return S_ERROR;
+                return EC_ERROR;
         }
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 static errcode cc_compile_file(cc_instance* self,
         file_entry* file, llvm_compiler_output_kind output_kind, const char* output)
 {
-        if (S_FAILED(cc_codegen_file(self, CGOK_LLVM, file)))
-                return S_ERROR;
+        if (EC_FAILED(cc_codegen_file(self, CGOK_LLVM, file)))
+                return EC_ERROR;
 
-        char ll_file[S_MAX_PATH_LEN + 1];
-        if (S_FAILED(get_file_as(ll_file, file, LL_EXT)))
-                return S_ERROR;
+        char ll_file[MAX_PATH_LEN + 1];
+        if (EC_FAILED(get_file_as(ll_file, file, LL_EXT)))
+                return EC_ERROR;
 
         int exit_code;
         llvm_compiler llc;
@@ -342,10 +342,10 @@ static errcode cc_compile_file(cc_instance* self,
         llc.arch = self->opts.target == CTK_X86_32 ? LCAK_X86 : LCAK_X86_64;
         llc.output = output;
 
-        bool failed = S_FAILED(llvm_compile(&llc, &exit_code));
+        bool failed = EC_FAILED(llvm_compile(&llc, &exit_code));
         path_delete_file(ll_file);
         if (failed)
-                return S_ERROR;
+                return EC_ERROR;
 
         return cc_check_return_code(self, "llc", exit_code);
 }
@@ -355,9 +355,9 @@ static void cc_cleanup_compilation(cc_instance* self, llvm_compiler_output_kind 
         const char* ext = output_kind == LCOK_ASM ? ASM_EXT : OBJ_EXT;
         CC_FOREACH_SOURCE(self, it, end)
         {
-                char file[S_MAX_PATH_LEN + 1];
-                strncpy(file, file_get_path(*it), S_MAX_PATH_LEN);
-                if (S_FAILED(path_change_ext(file, ext)))
+                char file[MAX_PATH_LEN + 1];
+                strncpy(file, file_get_path(*it), MAX_PATH_LEN);
+                if (EC_FAILED(path_change_ext(file, ext)))
                         continue;
 
                 path_delete_file(file);
@@ -367,12 +367,12 @@ static void cc_cleanup_compilation(cc_instance* self, llvm_compiler_output_kind 
 static errcode cc_compile(cc_instance* self, llvm_compiler_output_kind output_kind)
 {
         CC_FOREACH_SOURCE(self, it, end)
-                if (S_FAILED(cc_compile_file(self, *it, output_kind, NULL)))
+                if (EC_FAILED(cc_compile_file(self, *it, output_kind, NULL)))
                 {
                         cc_cleanup_compilation(self, output_kind);
-                        return S_ERROR;
+                        return EC_ERROR;
                 }
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 static void cc_close_output_stream(cc_instance* self)
@@ -389,7 +389,7 @@ extern errcode cc_generate_obj(cc_instance* self)
         if (self->output.file)
         {
                 if (!cc_check_single_input(self))
-                        return S_ERROR;
+                        return EC_ERROR;
 
                 cc_close_output_stream(self);
                 return cc_compile_file(self,
@@ -404,7 +404,7 @@ extern errcode cc_generate_asm(cc_instance* self)
         if (self->output.file)
         {
                 if (!cc_check_single_input(self))
-                        return S_ERROR;
+                        return EC_ERROR;
 
                 cc_close_output_stream(self);
                 return cc_compile_file(self,
@@ -419,7 +419,7 @@ extern errcode cc_generate_ssa(cc_instance* self)
         if (self->output.file)
         {
                 if (!cc_check_single_input(self))
-                        return S_ERROR;
+                        return EC_ERROR;
 
                 return cc_codegen_file_ex(self,
                         CGOK_SSA, *cc_sources_begin(self), self->output.file);
@@ -433,7 +433,7 @@ extern errcode cc_generate_llvm_ir(cc_instance* self)
         if (self->output.file)
         {
                 if (!cc_check_single_input(self))
-                        return S_ERROR;
+                        return EC_ERROR;
 
                 return cc_codegen_file_ex(self,
                         CGOK_LLVM, *cc_sources_begin(self), self->output.file);
@@ -444,26 +444,26 @@ extern errcode cc_generate_llvm_ir(cc_instance* self)
 
 static errcode cc_link(cc_instance* self, llvm_linker* lld)
 {
-        char obj_file[S_MAX_PATH_LEN + 1];
+        char obj_file[MAX_PATH_LEN + 1];
         CC_FOREACH_SOURCE(self, it, end)
         {
-                if (S_FAILED(get_file_as(obj_file, *it, OBJ_EXT)))
-                        return S_ERROR;
-                if (S_FAILED(llvm_linker_add_file(lld, obj_file)))
-                        return S_ERROR;
+                if (EC_FAILED(get_file_as(obj_file, *it, OBJ_EXT)))
+                        return EC_ERROR;
+                if (EC_FAILED(llvm_linker_add_file(lld, obj_file)))
+                        return EC_ERROR;
         }
 
         CC_FOREACH_LIB(self, it, end)
-                if (S_FAILED(llvm_linker_add_file(lld, file_get_path(*it))))
-                        return S_ERROR;
+                if (EC_FAILED(llvm_linker_add_file(lld, file_get_path(*it))))
+                        return EC_ERROR;
 
         FLOOKUP_FOREACH_DIR(&self->input.lib_lookup, it, end)
-                if (S_FAILED(llvm_linker_add_dir(lld, *it)))
-                        return S_ERROR;
+                if (EC_FAILED(llvm_linker_add_dir(lld, *it)))
+                        return EC_ERROR;
 
         int code;
-        if (S_FAILED(llvm_link(lld, &code)))
-                return S_ERROR;
+        if (EC_FAILED(llvm_link(lld, &code)))
+                return EC_ERROR;
 
         return cc_check_return_code(self, "lld", code);
 }
@@ -471,8 +471,8 @@ static errcode cc_link(cc_instance* self, llvm_linker* lld)
 extern errcode cc_generate_exec(cc_instance* self)
 {
         cc_close_output_stream(self);
-        if (S_FAILED(cc_compile(self, LCOK_OBJ)))
-                return S_ERROR;
+        if (EC_FAILED(cc_compile(self, LCOK_OBJ)))
+                return EC_ERROR;
 
         llvm_linker lld;
         llvm_linker_init(&lld, self->input.lld_path);

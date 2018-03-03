@@ -63,10 +63,10 @@ extern errcode aparser_get_int(aparser* self, int* pint)
 {
         const char* num = aparser_get_string(self);
         if (!num)
-                return S_ERROR;
+                return EC_ERROR;
 
         *pint = atoi(num);
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 typedef struct
@@ -88,7 +88,7 @@ static void cmd_data_init(cmd_data* self, char* buffer, size_t buffer_size)
 static void cmd_data_append(cmd_data* self, int c)
 {
         int rem = self->max_len - self->actual_len;
-        S_ASSERT(rem >= 0);
+        assert(rem >= 0);
 
         self->total_len++;
 
@@ -103,7 +103,7 @@ static void cmd_data_append(cmd_data* self, int c)
 
 static void _arg_to_cmd(cmd_data* cmd, const char* arg)
 {
-#if S_WIN
+#if OS_WIN
 
         const char* quote_pos = strchr(arg, '"');
         const char* space_pos = strchr(arg, ' ');
@@ -117,7 +117,7 @@ static void _arg_to_cmd(cmd_data* cmd, const char* arg)
         if (has_spaces)
                 cmd_data_append(cmd, '"');
 
-#elif S_OSX
+#elif OS_OSX
         while (*arg)
         {
                 int c = *arg++;
@@ -143,7 +143,7 @@ extern int arg_to_cmd(char* buffer, size_t buffer_size, const char* arg)
 
 static int _argv_to_cmd(cmd_data* cmd, const char* first, int argc, const char** argv)
 {
-#if S_WIN
+#if OS_WIN
         cmd_data_append(cmd, '"');
 #endif
 
@@ -161,7 +161,7 @@ static int _argv_to_cmd(cmd_data* cmd, const char* first, int argc, const char**
                         cmd_data_append(cmd, ' ');
         }
 
-#if S_WIN
+#if OS_WIN
         cmd_data_append(cmd, '"');
 #endif
 
@@ -183,11 +183,11 @@ extern errcode execute(const char* path, int* code, int argc, const char** argv)
         cmd_data_init(&data, cmd, MAX_CMD_SIZE);
 
         if (_argv_to_cmd(&data, path, argc, argv) > MAX_CMD_SIZE)
-                return S_ERROR;
+                return EC_ERROR;
 
         int exit_code = system(cmd);
         if (code)
                 *code = exit_code;
 
-        return S_NO_ERROR;       
+        return EC_NO_ERROR;       
 }

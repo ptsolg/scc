@@ -18,7 +18,7 @@ extern void ssa_dispose_builder(ssa_builder* self)
 
 static ssa_value* ssa_build_instr(ssa_builder* self, ssa_instr* i)
 {
-        S_ASSERT(i && self->pos);
+        assert(i && self->pos);
 
         if (self->insert_after)
                 ssa_add_instr_after(i, self->pos);
@@ -42,11 +42,11 @@ static ssa_value* ssa_build_binop(ssa_builder* self,
 static inline ssa_value* ssa_build_arith_binop(
         ssa_builder* self, ssa_binop_kind opcode, ssa_value* lhs, ssa_value* rhs)
 {
-        S_ASSERT(lhs && rhs);
+        assert(lhs && rhs);
         tree_type* lt = ssa_get_value_type(lhs);
         tree_type* rt = ssa_get_value_type(rhs);
-        S_ASSERT(lt && rt);
-        S_ASSERT(tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt));
+        assert(lt && rt);
+        assert(tree_type_is_arithmetic(lt) && tree_type_is_arithmetic(rt));
 
         return ssa_build_binop(self, opcode, lt, lhs, rhs);
 }
@@ -81,7 +81,7 @@ extern ssa_value* ssa_build_ptradd(ssa_builder* self, ssa_value* lhs, ssa_value*
                 offset = lhs;
         }
 
-        S_ASSERT(tree_type_is_pointer(ssa_get_value_type(pointer))
+        assert(tree_type_is_pointer(ssa_get_value_type(pointer))
                 && tree_type_is_integer(ssa_get_value_type(offset)));
         return ssa_build_binop(self, SBIK_PTRADD, ssa_get_value_type(pointer), pointer, offset);
 }
@@ -94,11 +94,11 @@ extern ssa_value* ssa_build_sub(ssa_builder* self, ssa_value* lhs, ssa_value* rh
 static inline ssa_value* ssa_build_bitwise_binop(
         ssa_builder* self, ssa_binop_kind opcode, ssa_value* lhs, ssa_value* rhs)
 {
-        S_ASSERT(lhs && rhs);
+        assert(lhs && rhs);
         tree_type* lt = ssa_get_value_type(lhs);
         tree_type* rt = ssa_get_value_type(rhs);
-        S_ASSERT(lt && rt);
-        S_ASSERT(tree_type_is_integer(lt) && tree_type_is_integer(rt));
+        assert(lt && rt);
+        assert(tree_type_is_integer(lt) && tree_type_is_integer(rt));
 
         return ssa_build_binop(self, opcode, lt, lhs, rhs);
 }
@@ -131,11 +131,11 @@ extern ssa_value* ssa_build_xor(ssa_builder* self, ssa_value* lhs, ssa_value* rh
 static inline ssa_value* ssa_build_cmp_binop(
         ssa_builder* self, ssa_binop_kind opcode, ssa_value* lhs, ssa_value* rhs)
 {
-        S_ASSERT(lhs && rhs);
+        assert(lhs && rhs);
         tree_type* lt = ssa_get_value_type(lhs);
         tree_type* rt = ssa_get_value_type(rhs);
-        S_ASSERT(lt && rt);
-        S_ASSERT(tree_type_is_scalar(lt) && tree_type_is_scalar(rt));
+        assert(lt && rt);
+        assert(tree_type_is_scalar(lt) && tree_type_is_scalar(rt));
 
         return ssa_build_binop(self, opcode,
                 tree_new_builtin_type(ssa_get_tree(self->context), TBTK_INT32), lhs, rhs);
@@ -173,7 +173,7 @@ extern ssa_value* ssa_build_neq(ssa_builder* self, ssa_value* lhs, ssa_value* rh
 
 extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* to, ssa_value* operand)
 {
-        S_ASSERT(to && tree_type_is_scalar(to));
+        assert(to && tree_type_is_scalar(to));
         to = tree_desugar_type(to);
         tree_type* from = tree_desugar_type(ssa_get_value_type(operand));
         
@@ -195,10 +195,10 @@ extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* to, ssa_value* op
 
 extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const ssa_array* args)
 {
-        S_ASSERT(func && args);
+        assert(func && args);
         tree_type* func_type = tree_desugar_type(
                 tree_get_pointer_target(ssa_get_value_type(func)));
-        S_ASSERT(tree_type_is(func_type, TTK_FUNCTION));
+        assert(tree_type_is(func_type, TTK_FUNCTION));
 
         ssa_instr* call = ssa_new_call(self->context,
                 ssa_builder_gen_uid(self), tree_get_function_type_result(func_type), func);
@@ -227,7 +227,7 @@ extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type)
 extern ssa_value* ssa_build_load(ssa_builder* self, ssa_value* what)
 {
         tree_type* what_type = ssa_get_value_type(what);
-        S_ASSERT(what_type && tree_type_is_object_pointer(what_type));
+        assert(what_type && tree_type_is_object_pointer(what_type));
 
         tree_type* pointee = tree_get_pointer_target(what_type);
         ssa_instr* i = ssa_new_load(self->context, ssa_builder_gen_uid(self), pointee, what);
@@ -241,8 +241,8 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
 {
         tree_type* what_type = ssa_get_value_type(what);
         tree_type* where_type = ssa_get_value_type(where);
-        S_ASSERT(what_type && where_type);
-        S_ASSERT(tree_type_is_object_pointer(where_type));
+        assert(what_type && where_type);
+        assert(tree_type_is_object_pointer(where_type));
 
         ssa_instr* i = ssa_new_store(self->context, what, where);
         if (!i)
@@ -254,8 +254,8 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
 extern ssa_value* ssa_build_getfieldaddr(
         ssa_builder* self, ssa_value* record, tree_decl* field)
 {
-        S_ASSERT(tree_type_is(ssa_get_value_type(record), TTK_POINTER));
-        S_ASSERT(tree_get_field_record(field) == 
+        assert(tree_type_is(ssa_get_value_type(record), TTK_POINTER));
+        assert(tree_get_field_record(field) == 
                 tree_get_decl_type_entity(tree_get_pointer_target(ssa_get_value_type(record))));
 
         tree_type* field_ptr = tree_new_pointer_type(
@@ -280,7 +280,7 @@ extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id i
 
 extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, uint64_t val)
 {
-        S_ASSERT(tree_type_is_integer(type) || tree_type_is_pointer(type));
+        assert(tree_type_is_integer(type) || tree_type_is_pointer(type));
         uint bits = (uint)tree_get_sizeof(ssa_get_target(self->context), type) * 8;
 
         avalue v;
@@ -301,7 +301,7 @@ extern ssa_value* ssa_build_size_t_constant(ssa_builder* self, size_t val)
 extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, float val)
 {
         type = tree_desugar_type(type);
-        S_ASSERT(tree_builtin_type_is(type, TBTK_FLOAT));
+        assert(tree_builtin_type_is(type, TBTK_FLOAT));
 
         avalue v;
         avalue_init_sp(&v, val);
@@ -312,7 +312,7 @@ extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, floa
 extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, double val)
 {
         type = tree_desugar_type(type);
-        S_ASSERT(tree_builtin_type_is(type, TBTK_DOUBLE));
+        assert(tree_builtin_type_is(type, TBTK_DOUBLE));
 
         avalue v;
         avalue_init_dp(&v, val);
@@ -322,7 +322,7 @@ extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, doub
 
 extern ssa_value* ssa_build_zero(ssa_builder* self, tree_type* type)
 {
-        S_ASSERT(tree_type_is_scalar(type));
+        assert(tree_type_is_scalar(type));
         if (tree_builtin_type_is(type, TBTK_FLOAT))
                 return ssa_build_sp_constant(self, type, 0.0f);
         else if (tree_builtin_type_is(type, TBTK_DOUBLE))
@@ -332,7 +332,7 @@ extern ssa_value* ssa_build_zero(ssa_builder* self, tree_type* type)
 
 extern ssa_value* ssa_build_one(ssa_builder* self, tree_type* type)
 {
-        S_ASSERT(tree_type_is_arithmetic(type));
+        assert(tree_type_is_arithmetic(type));
         if (tree_builtin_type_is(type, TBTK_FLOAT))
                 return ssa_build_sp_constant(self, type, 1.0f);
         else if (tree_builtin_type_is(type, TBTK_DOUBLE))
@@ -343,7 +343,7 @@ extern ssa_value* ssa_build_one(ssa_builder* self, tree_type* type)
 extern ssa_value* ssa_build_not(ssa_builder* self, ssa_value* operand)
 {
         tree_type* t = ssa_get_value_type(operand);
-        S_ASSERT(t && tree_type_is_integer(t));
+        assert(t && tree_type_is_integer(t));
       
         uint64_t bits = 8ULL * tree_get_sizeof(ssa_get_target(self->context), t);
         ssa_value* ones = ssa_build_int_constant(self, t, (1ULL << bits) - 1);
@@ -374,7 +374,7 @@ extern ssa_value* ssa_build_neg(ssa_builder* self, ssa_value* operand)
 extern ssa_value* ssa_build_neq_zero(ssa_builder* self, ssa_value* operand)
 {
         tree_type* type = ssa_get_value_type(operand);
-        S_ASSERT(tree_type_is_scalar(type));
+        assert(tree_type_is_scalar(type));
 
         ssa_value* zero = ssa_build_zero(self, type);
         if (!zero)

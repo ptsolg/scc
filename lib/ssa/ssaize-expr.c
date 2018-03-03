@@ -127,9 +127,9 @@ static inline ssa_value* _ssaize_binary_expr(
 
                 case TBK_LOG_AND:
                 case TBK_LOG_OR:
-                        S_ASSERT(0 && "Logical operations are not handled here");
+                        assert(0 && "Logical operations are not handled here");
                 default:
-                        S_ASSERT(0 && "Invalid binop kind");
+                        assert(0 && "Invalid binop kind");
                         return NULL;
         }
 }
@@ -164,7 +164,7 @@ static ssa_block* ssa_br_expr_info_get_exit(ssa_br_expr_info* self)
 static void ssa_br_expr_info_add_phi_var(
         ssa_br_expr_info* self, ssa_value* var, ssa_block* block)
 {
-        S_ASSERT(block);
+        assert(block);
         if (!self->phi)
         {
                 ssa_instr* prev_pos = self->builder->pos;
@@ -187,7 +187,7 @@ static inline ssa_value* ssaize_log_expr_lhs(
                 return ssaize_expr_as_condition(self, expr);
 
         tree_binop_kind kind = tree_get_binop_kind(expr);
-        S_ASSERT(kind == TBK_LOG_AND || kind == TBK_LOG_OR);
+        assert(kind == TBK_LOG_AND || kind == TBK_LOG_OR);
 
         ssa_value* lhs_cond = ssaize_log_expr_lhs(self, info, tree_get_binop_lhs(expr));
         ssa_block* lhs_cond_block = self->block;
@@ -315,7 +315,7 @@ extern ssa_value* ssaize_unary_expr(ssaizer* self, const tree_expr* expr)
                         return operand;
 
                 default:
-                        S_ASSERT(0 && "Invalid unary operator");
+                        assert(0 && "Invalid unary operator");
                         return NULL;
         }
 }
@@ -532,7 +532,7 @@ extern ssa_value* ssaize_init_expr(ssaizer* self, const tree_expr* expr)
 
 extern ssa_value* ssaize_expr(ssaizer* self, const tree_expr* expr)
 {
-        S_ASSERT(expr);
+        assert(expr);
         switch (tree_get_expr_kind(expr))
         {
                 case TEK_BINARY:            return ssaize_binary_expr(self, expr);
@@ -553,9 +553,9 @@ extern ssa_value* ssaize_expr(ssaizer* self, const tree_expr* expr)
                 case TEK_IMPL_INIT:         return ssaize_expr(self, tree_get_impl_init_expr(expr));
 
                 case TEK_DESIGNATION:
-                        S_ASSERT(0 && "todo");
+                        assert(0 && "todo");
                 default:
-                        S_ASSERT(0 && "Invalid expr");
+                        assert(0 && "Invalid expr");
                         return NULL;
         }
 }

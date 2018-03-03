@@ -12,9 +12,9 @@ extern FILE* scc_open_file(scc_env* self, const char* file, const char* mode)
         if (f)
                 return f;
 
-        char path[S_MAX_PATH_LEN + 1];
-        if (S_FAILED(path_get_cd(path)
-                || S_FAILED(path_join(path, file))) || !(f = fopen(path, mode)))
+        char path[MAX_PATH_LEN + 1];
+        if (EC_FAILED(path_get_cd(path)
+                || EC_FAILED(path_join(path, file))) || !(f = fopen(path, mode)))
         {
                 return NULL;
         }
@@ -259,6 +259,6 @@ extern errcode scc_parse_opts(scc_env* self, int argc, const char** argv)
 
         aparser parser;
         aparser_init(&parser, argc, argv);
-        aparse(&parser, handlers, S_ARRAY_SIZE(handlers), &source);
-        return S_NO_ERROR;
+        aparse(&parser, handlers, ARRAY_SIZE(handlers), &source);
+        return EC_NO_ERROR;
 }

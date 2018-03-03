@@ -19,8 +19,8 @@ typedef struct
 {
         cc_instance cc;
         bool link_stdlib;
-        char llc_path[S_MAX_PATH_LEN];
-        char lld_path[S_MAX_PATH_LEN];
+        char llc_path[MAX_PATH_LEN];
+        char lld_path[MAX_PATH_LEN];
         scc_run_mode mode;
 } scc_env;
 

@@ -117,7 +117,7 @@ static tree_type* c_sema_get_type_for_usual_arithmetic_conversion(
         if (rsize > lsize)
                 return rhs;
 
-        S_ASSERT(lsize == rsize);
+        assert(lsize == rsize);
         if (tree_type_is_unsigned_integer(lhs) == tree_type_is_unsigned_integer(rhs))
                 return rhs;
 
@@ -136,8 +136,8 @@ extern tree_type* c_sema_usual_arithmetic_conversion(
                 : c_sema_get_type_for_integer_promotion(self, tree_get_expr_type(*lhs));
         tree_type* rt = c_sema_integer_promotion(self, rhs);
 
-        S_ASSERT(tree_type_is_arithmetic(lt));
-        S_ASSERT(tree_type_is_arithmetic(rt)); 
+        assert(tree_type_is_arithmetic(lt));
+        assert(tree_type_is_arithmetic(rt)); 
         if (c_sema_types_are_same(self, lt, rt))
                 return lt;
 
@@ -211,7 +211,7 @@ static bool c_sema_pointer_operands_are_compatible(c_sema* self, tree_type* lt, 
 static bool c_sema_check_assignment_pointer_types(
         c_sema* self, tree_type* lt, tree_type* rt, c_assignment_conversion_result* r)
 {
-        S_ASSERT(tree_type_is_pointer(lt) && tree_type_is_pointer(rt));
+        assert(tree_type_is_pointer(lt) && tree_type_is_pointer(rt));
 
         tree_type* ltarget = tree_get_unqualified_type(tree_get_pointer_target(lt));
         tree_type* rtarget = tree_get_unqualified_type(tree_get_pointer_target(rt));
@@ -233,7 +233,7 @@ static inline tree_type* c_assignment_conversion_error(
 extern tree_type* c_sema_assignment_conversion(
         c_sema* self, tree_type* lt, tree_expr** rhs, c_assignment_conversion_result* r)
 {
-        S_ASSERT(r);
+        assert(r);
 
         tree_type* rt = c_sema_unary_conversion(self, rhs);
         if (tree_type_is_arithmetic(lt))

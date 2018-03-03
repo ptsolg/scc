@@ -88,14 +88,14 @@ extern ssa_block* ssaizer_new_block(ssaizer* self)
 
 extern bool ssaizer_current_block_is_terminated(const ssaizer* self)
 {
-        S_ASSERT(self->block);
+        assert(self->block);
         ssa_instr* terminator = ssa_get_block_terminator(self->block);
         return terminator && ssa_get_instr_kind(terminator) == SIK_TERMINATOR;
 }
 
 static inline strmap* ssaizer_get_last_scope(const ssaizer* self)
 {
-        S_ASSERT(dseq_size(&self->defs));
+        assert(dseq_size(&self->defs));
         return strmap_stack_end(&self->defs) - 1;
 }
 
@@ -113,12 +113,12 @@ extern void ssaizer_pop_scope(ssaizer* self)
 
 extern void ssaizer_set_def(ssaizer* self, const tree_decl* var, ssa_value* def)
 {
-        S_ASSERT(def);
+        assert(def);
         strmap_iter it;
         strmap* last = ssaizer_get_last_scope(self);
         tree_id id = tree_get_decl_name(var);
 
-        S_ASSERT(!strmap_find(last, id, &it));
+        assert(!strmap_find(last, id, &it));
         strmap_insert(last, id, def);
 }
 
@@ -140,7 +140,7 @@ extern ssa_value* ssaizer_get_def(ssaizer* self, const tree_decl* var)
 
 extern void ssaizer_set_global_decl(ssaizer* self, const tree_decl* var, ssa_value* decl)
 {
-        S_ASSERT(decl);
+        assert(decl);
         strmap_insert(&self->globals, tree_get_decl_name(var), decl);
 }
 
@@ -182,21 +182,21 @@ extern void ssaizer_push_switch_instr(ssaizer* self, ssa_instr* switch_instr)
 extern void ssaizer_pop_continue_dest(ssaizer* self)
 {
         size_t size = dseq_size(&self->continue_stack);
-        S_ASSERT(size);
+        assert(size);
         dseq_resize(&self->continue_stack, size - 1);
 }
 
 extern void ssaizer_pop_break_dest(ssaizer* self)
 {
         size_t size = dseq_size(&self->break_stack);
-        S_ASSERT(size);
+        assert(size);
         dseq_resize(&self->break_stack, size - 1);
 }
 
 extern void ssaizer_pop_switch_instr(ssaizer* self)
 {
         size_t size = dseq_size(&self->switch_stack);
-        S_ASSERT(size);
+        assert(size);
         dseq_resize(&self->switch_stack, size - 1);
 }
 

@@ -278,7 +278,7 @@ static bool c_sema_check_call_argument(
                                 self->logger, loc, pos);
                         break;
                 default:
-                        S_UNREACHABLE();
+                        UNREACHABLE();
         }
         return false;
 }
@@ -308,13 +308,13 @@ extern tree_expr* c_sema_new_call_expr(
 
 extern void c_sema_add_call_expr_arg(c_sema* self, tree_expr* call, tree_expr* arg)
 {
-        S_ASSERT(call && arg);
+        assert(call && arg);
         tree_add_call_arg(call, self->context, arg);
 }
 
 extern tree_expr* c_sema_check_call_expr_args(c_sema* self, tree_expr* call)
 {
-        S_ASSERT(call);
+        assert(call);
 
         tree_expr* lhs = tree_get_call_lhs(call);
         tree_type* ft = tree_desugar_type(tree_get_pointer_target(tree_get_expr_type(lhs)));
@@ -507,7 +507,7 @@ extern tree_expr* c_sema_new_unary_expr(
 
                 default:
                         // unknown unop
-                        S_UNREACHABLE();
+                        UNREACHABLE();
         }
         if (!t)
                 return NULL;
@@ -932,7 +932,7 @@ static inline tree_type* c_sema_check_binop(
                         c_sema_unary_conversion(self, lhs);
                         return c_sema_unary_conversion(self, rhs);
                 default:
-                        S_ASSERT(0 && "Invalid binop kind");
+                        assert(0 && "Invalid binop kind");
                         return NULL;
 
         }
@@ -1044,7 +1044,7 @@ extern tree_expr* c_sema_new_conditional_expr(
                 return NULL;
         }
 
-        S_ASSERT(t);
+        assert(t);
         return tree_new_conditional_expr(self->context, TVK_RVALUE, t, loc, condition, lhs, rhs);
 }
 
@@ -1065,7 +1065,7 @@ extern tree_expr* c_sema_new_initializer_list(c_sema* self, tree_location loc)
 extern tree_expr* c_sema_add_initializer_list_expr(
         c_sema* self, tree_expr* list, tree_expr* expr)
 {
-        S_ASSERT(expr);
+        assert(expr);
         tree_add_init_list_expr(list, self->context, expr);
         return list;
 }
@@ -1140,9 +1140,9 @@ static c_initialized_object* c_sema_check_array_designator(
 static c_initialized_object* c_sema_check_designation(
         c_sema* self, c_initializer* it, c_initialized_object* parent)
 {
-        S_ASSERT(it->pos != it->end);
+        assert(it->pos != it->end);
         tree_expr* designation = *it->pos;
-        S_ASSERT(tree_expr_is(designation, TEK_DESIGNATION));
+        assert(tree_expr_is(designation, TEK_DESIGNATION));
 
         c_initialized_object* result = parent;
         TREE_FOREACH_DESIGNATION_DESIGNATOR(designation, pdesignator, end)
@@ -1218,7 +1218,7 @@ static bool c_sema_check_array_or_record_initializer(
 static bool c_sema_check_scalar_initializer(
         c_sema* self, tree_type* type, c_initializer* it, bool top_level)
 {
-        S_ASSERT(tree_type_is_scalar(type));
+        assert(tree_type_is_scalar(type));
         if (top_level && tree_expr_is(*it->init, TEK_INIT_LIST))
         {
                 if (tree_get_init_list_exprs_size(*it->init) > 1)
@@ -1266,7 +1266,7 @@ static bool c_sema_check_scalar_initializer(
                         c_error_initialization_from_incompatible_pointer_types(self->logger, *init);
                         return false;
                 default:
-                        S_UNREACHABLE();
+                        UNREACHABLE();
                         return false;
         }
 
@@ -1283,7 +1283,7 @@ static bool c_sema_check_scalar_initializer(
 static bool _c_sema_check_initializer(
         c_sema* self, tree_type* type, c_initializer* it, c_initialized_object* parent)
 {
-        S_ASSERT(it->pos != it->end);
+        assert(it->pos != it->end);
         bool top_level = parent == NULL;
         if (tree_type_is_array(type) || tree_type_is_record(type))
         {
@@ -1324,7 +1324,7 @@ extern tree_expr* c_sema_add_designation_designator(
 
 extern tree_expr* c_sema_set_designation_initializer(c_sema* self, tree_expr* designation, tree_expr* init)
 {
-        S_ASSERT(designation);
+        assert(designation);
         tree_set_designation_init(designation, init);
         return designation;
 }

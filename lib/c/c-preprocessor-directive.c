@@ -77,7 +77,7 @@ extern bool c_preprocessor_handle_endif_directive(c_preprocessor* self)
 
 extern bool c_preprocessor_handle_include_directive(c_preprocessor* self)
 {
-        S_ASSERT(self->lexer->kind == CPLK_TOKEN);
+        assert(self->lexer->kind == CPLK_TOKEN);
         self->lexer->token_lexer.angle_string_expected = true;
         c_token* t = c_preprocess_wspace(self, false);
         self->lexer->token_lexer.angle_string_expected = false;
@@ -93,7 +93,7 @@ extern bool c_preprocessor_handle_include_directive(c_preprocessor* self)
 
         const char* filename = tree_get_id_string(
                 c_context_get_tree_context(self->context), c_token_get_string(t));
-        S_ASSERT(filename);
+        assert(filename);
 
         if (!*filename)
         {
@@ -108,7 +108,7 @@ extern bool c_preprocessor_handle_include_directive(c_preprocessor* self)
                 return false;
         }
 
-        return S_SUCCEEDED(c_preprocessor_enter_source(self, source));
+        return EC_SUCCEEDED(c_preprocessor_enter_source(self, source));
 }
 
 static bool c_preprocessor_read_macro_body(c_preprocessor* self, c_macro* macro)

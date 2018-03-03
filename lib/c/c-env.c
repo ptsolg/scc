@@ -51,26 +51,26 @@ extern void c_env_dispose(c_env* self)
 extern errcode c_env_lex_source(c_env* self, file_entry* source, dseq* result)
 {
         c_source* s = c_source_get_from_file(&self->source_manager, source);
-        if (!source || S_FAILED(c_lexer_enter_source_file(&self->lexer, s)))
-                return S_ERROR;
+        if (!source || EC_FAILED(c_lexer_enter_source_file(&self->lexer, s)))
+                return EC_ERROR;
 
         while (1)
         {
                 c_token* t = c_lex(&self->lexer);
-                if (!t || S_FAILED(dseq_append(result, t)))
-                        return S_ERROR;
+                if (!t || EC_FAILED(dseq_append(result, t)))
+                        return EC_ERROR;
 
                 if (c_token_is(t, CTK_EOF))
                         break;
         }
 
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 extern tree_module* c_env_parse_source(c_env* self, file_entry* source)
 {
         c_source* s = c_source_get_from_file(&self->source_manager, source);
-        if (!source || S_FAILED(c_lexer_enter_source_file(&self->lexer, s)))
+        if (!source || EC_FAILED(c_lexer_enter_source_file(&self->lexer, s)))
                 return NULL;
 
         jmp_buf on_parser_error;

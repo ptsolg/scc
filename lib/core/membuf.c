@@ -38,16 +38,16 @@ extern errcode membuf_resize_ex(membuf* self, size_t mul, size_t cst)
 
         uchar* new_buf = allocate(self->_alloc, new_size);
         if (!new_buf)
-                return S_ERROR;
+                return EC_ERROR;
 
-        size_t cpy_size = S_MIN(old_size, new_size);
+        size_t cpy_size = MIN(old_size, new_size);
         memcpy(new_buf, self->_begin, cpy_size);
         deallocate(self->_alloc, self->_begin);
 
         self->_begin = new_buf;
         self->_end = new_buf + new_size;
 
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 extern void membuf_move(membuf* to, membuf* from)

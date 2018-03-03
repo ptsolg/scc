@@ -33,7 +33,7 @@ typedef enum
         SIK_SIZE,
 } ssa_instr_kind;
 
-#define SSA_ASSERT_INSTR_KIND(K) S_ASSERT((K) > SIK_INVALID && (K) < SIK_SIZE)
+#define SSA_ASSERT_INSTR_KIND(K) assert((K) > SIK_INVALID && (K) < SIK_SIZE)
 
 struct _ssa_instr_base
 {
@@ -301,13 +301,13 @@ typedef struct _ssa_instr
 
 static inline struct _ssa_instr_base* _ssa_instr_base(ssa_instr* self)
 {
-        S_ASSERT(self);
+        assert(self);
         return (struct _ssa_instr_base*)self;
 }
 
 static inline const struct _ssa_instr_base* _ssa_instr_cbase(const ssa_instr* self)
 {
-        S_ASSERT(self);
+        assert(self);
         return (const struct _ssa_instr_base*)self;
 }
 
@@ -352,7 +352,7 @@ static inline void ssa_set_instr_kind(ssa_instr* self, ssa_instr_kind kind)
         _ssa_instr_base(self)->_kind = kind;
 }
 
-#define SSA_ASSERT_INSTR(P, K) S_ASSERT((P) && ssa_get_instr_kind(P) == (K))
+#define SSA_ASSERT_INSTR(P, K) assert((P) && ssa_get_instr_kind(P) == (K))
 
 static inline struct _ssa_binop* _ssa_binop(ssa_instr* self)
 {
@@ -405,13 +405,13 @@ static inline ssa_value* ssa_get_called_func(const ssa_instr* self)
 
 static inline struct _ssa_terminator_instr* _ssa_terminator_instr(ssa_instr* self)
 {
-        S_ASSERT(self);
+        assert(self);
         return (struct _ssa_terminator_instr*)self;
 }
 
 static inline const struct _ssa_terminator_instr* _ssa_terminator_cinstr(const ssa_instr* self)
 {
-        S_ASSERT(self);
+        assert(self);
         return (const struct _ssa_terminator_instr*)self;
 }
 

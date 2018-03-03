@@ -8,7 +8,7 @@ extern void write_cb_init(write_cb* self, void* write_fn)
 
 extern void writebuf_init(writebuf* self, write_cb* cb)
 {
-        S_ASSERT(cb && cb->_write);
+        assert(cb && cb->_write);
         self->_cb = cb;
         self->_written = 0;
         self->_pos = self->_data;
@@ -39,7 +39,7 @@ extern size_t writebuf_flush(writebuf* self)
 static inline void writebuf_fill(writebuf* self, const void* b, size_t len)
 {
         size_t free = WB_SIZE - (self->_pos - self->_data);
-        S_ASSERT(len <= free);
+        assert(len <= free);
 
         memcpy(self->_pos, b, len);
         self->_pos += len;
@@ -87,7 +87,7 @@ extern size_t writebuf_writec(writebuf* self, int c)
 static size_t snwrite_cb_write(snwrite_cb* self, const void* data, size_t bytes)
 {
         size_t written = self->_pos - self->_begin;
-        S_ASSERT(written <= self->_n);
+        assert(written <= self->_n);
 
         size_t available = self->_n - written;
 
@@ -119,7 +119,7 @@ extern void read_cb_init(read_cb* self, void* read_fn)
 
 extern void readbuf_init(readbuf* self, read_cb* cb)
 {
-        S_ASSERT(cb && cb->_read);
+        assert(cb && cb->_read);
         self->_cb = cb;
         self->_end = self->_data;
         self->_pos = self->_end;
@@ -170,7 +170,7 @@ static inline void readbuf_flush(readbuf* self, void* buf, size_t len)
 
         memcpy(buf, self->_pos, len);
         self->_pos += len;
-        S_ASSERT(self->_pos <= self->_end);
+        assert(self->_pos <= self->_end);
 }
 
 extern size_t readbuf_read_bytes(readbuf* self, void* buf, size_t len)

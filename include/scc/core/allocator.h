@@ -41,19 +41,19 @@ static void allocator_init(allocator* self, void* allocate, void* deallocate)
 
 static inline void* allocate(allocator* self, size_t bytes)
 {
-        S_ASSERT(self && self->_allocate);
+        assert(self && self->_allocate);
         return self->_allocate(self, bytes);
 }
 
 static inline void* allocate_aligned(allocator* self, size_t bytes, size_t alignment)
 {
-        S_ASSERT(self && self->_allocate_aligned && alignment);
+        assert(self && self->_allocate_aligned && alignment);
         return self->_allocate_aligned(self, bytes, alignment);
 }
 
 static inline void deallocate(allocator* self, void* block)
 {
-        S_ASSERT(self && self->_deallocate);
+        assert(self && self->_deallocate);
         self->_deallocate(self, block);
 }
 

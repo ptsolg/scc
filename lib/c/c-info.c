@@ -35,14 +35,14 @@ extern size_t c_get_escaped_string(char* buffer, const char* string, size_t len)
         return buffer - begin;
 }
 
-#define ASSERT_ENUM_RANGE(V, MAX) S_ASSERT((V) > -1 && (V) < (MAX))
+#define ASSERT_ENUM_RANGE(V, MAX) assert((V) > -1 && (V) < (MAX))
 
 typedef struct
 {
         const char* string;
 } c_builtin_type_info;
 
-S_STATIC_ASSERT(12 == TBTK_SIZE, "cbuiltin_type_info_table needs update.");
+static_assert(12 == TBTK_SIZE, "cbuiltin_type_info_table needs update.");
 static const c_builtin_type_info c_builtin_type_info_table[TBTK_SIZE] =
 {
         { "" }, // TBTK_INVALID
@@ -124,7 +124,7 @@ typedef struct
         const char* string;
 } c_binop_info;
 
-S_STATIC_ASSERT(31 == TBK_SIZE, "cbinop_info_table needs an update.");
+static_assert(31 == TBK_SIZE, "cbinop_info_table needs an update.");
 static const c_binop_info c_binop_info_table[TBK_SIZE] = 
 {
         { CPL_UNKNOWN, "" }, // TBK_UNKNOWN
@@ -181,7 +181,7 @@ typedef struct
         const char* string;
 } c_unop_info;
 
-S_STATIC_ASSERT(11 == TUK_SIZE, "cunop_info_table needs update.");
+static_assert(11 == TUK_SIZE, "cunop_info_table needs update.");
 static const c_unop_info c_unop_info_table[TBK_SIZE] =
 {
         { "" }, //TUK_UNKNOWN

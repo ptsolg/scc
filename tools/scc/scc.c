@@ -31,88 +31,88 @@ extern void scc_error(scc_env* self, const char* format, ...)
 
 static errcode scc_env_add_cd_dir(scc_env* self)
 {
-        char cd[S_MAX_PATH_LEN + 1];
-        if (S_FAILED(path_get_cd(cd)))
-                return S_ERROR;
+        char cd[MAX_PATH_LEN + 1];
+        if (EC_FAILED(path_get_cd(cd)))
+                return EC_ERROR;
         return cc_add_source_dir(&self->cc, cd);
 }
 
 static errcode scc_env_add_stdlibc_dir(scc_env* self, const char* argv0)
 {
-        char dir[S_MAX_PATH_LEN];
-        strncpy(dir, argv0, S_MAX_PATH_LEN);
+        char dir[MAX_PATH_LEN];
+        strncpy(dir, argv0, MAX_PATH_LEN);
         path_goto_parent_dir(dir);
-        if (S_FAILED(path_join(dir, "libstdc")))
-                return S_ERROR;
+        if (EC_FAILED(path_join(dir, "libstdc")))
+                return EC_ERROR;
 
         return cc_add_source_dir(&self->cc, dir);
 }
 
 static errcode scc_env_add_stdlibc_libs(scc_env* self, const char* argv0)
 {
-        char dir[S_MAX_PATH_LEN];
-        strncpy(dir, argv0, S_MAX_PATH_LEN);
+        char dir[MAX_PATH_LEN];
+        strncpy(dir, argv0, MAX_PATH_LEN);
         path_strip_file(dir);
 
-#if S_WIN
-        if (S_FAILED(path_join(dir,
+#if OS_WIN
+        if (EC_FAILED(path_join(dir,
                 self->cc.opts.target == CTK_X86_32 ? "win\\x86" : "win\\x64")))
         {
-                return S_ERROR;
+                return EC_ERROR;
         }
-        if (S_FAILED(cc_add_lib_dir(&self->cc, dir)))
-                return S_ERROR;
-        if (S_FAILED(cc_add_lib(&self->cc, "msvcrt.lib")))
-                return S_ERROR;
-        if (S_FAILED(cc_add_lib(&self->cc, "legacy_stdio_definitions.lib")))
-                return S_ERROR;
+        if (EC_FAILED(cc_add_lib_dir(&self->cc, dir)))
+                return EC_ERROR;
+        if (EC_FAILED(cc_add_lib(&self->cc, "msvcrt.lib")))
+                return EC_ERROR;
+        if (EC_FAILED(cc_add_lib(&self->cc, "legacy_stdio_definitions.lib")))
+                return EC_ERROR;
 #else
         // todo
 #endif
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 static errcode scc_env_setup_llc_lld(scc_env* self, const char* argv0)
 {
-        char dir[S_MAX_PATH_LEN];
-        strncpy(dir, argv0, S_MAX_PATH_LEN);
+        char dir[MAX_PATH_LEN];
+        strncpy(dir, argv0, MAX_PATH_LEN);
         path_strip_file(dir);
         strcpy(self->llc_path, dir);
         strcpy(self->lld_path, dir);
 
-#if S_WIN
-        if (S_FAILED(path_join(self->llc_path, "win\\llc.exe")))
-                return S_ERROR;
-        if (S_FAILED(path_join(self->lld_path, "win\\lld-link.exe")))
-                return S_ERROR;
+#if OS_WIN
+        if (EC_FAILED(path_join(self->llc_path, "win\\llc.exe")))
+                return EC_ERROR;
+        if (EC_FAILED(path_join(self->lld_path, "win\\lld-link.exe")))
+                return EC_ERROR;
 #else
         if (S_FAILED(path_join(self->llc_path, "osx/llc")))
                 return S_ERROR;
         if (S_FAILED(path_join(self->lld_path, "osx/ld")))
                 return S_ERROR;
 #endif
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 extern errcode scc_env_setup(scc_env* self, int argc, const char** argv)
 {
         extern errcode scc_parse_opts(scc_env*, int, const char**);
-        if (S_FAILED(scc_parse_opts(self, argc, argv)))
-                return S_ERROR;
+        if (EC_FAILED(scc_parse_opts(self, argc, argv)))
+                return EC_ERROR;
 
         if (self->mode != SRM_COMPILE && self->mode != SRM_LINK)
                 self->link_stdlib = false;
 
-#if S_WIN
+#if OS_WIN
         self->cc.input.entry = self->link_stdlib ? NULL : "main";
-#elif S_OSX
+#elif OS_OSX
         self->cc.input.entry = "_main";
 #else
 #error
 #endif
-        return S_FAILED(scc_env_add_cd_dir(self))
-                || S_FAILED(scc_env_add_stdlibc_dir(self, argv[0]))
-                || (self->link_stdlib && S_FAILED(scc_env_add_stdlibc_libs(self, argv[0])))
-                || S_FAILED(scc_env_setup_llc_lld(self, argv[0]))
-                ? S_ERROR : S_NO_ERROR;
+        return EC_FAILED(scc_env_add_cd_dir(self))
+                || EC_FAILED(scc_env_add_stdlibc_dir(self, argv[0]))
+                || (self->link_stdlib && EC_FAILED(scc_env_add_stdlibc_libs(self, argv[0])))
+                || EC_FAILED(scc_env_setup_llc_lld(self, argv[0]))
+                ? EC_ERROR : EC_NO_ERROR;
 }

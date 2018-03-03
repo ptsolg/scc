@@ -188,10 +188,10 @@ static HTAB_INLINE void HTAB_CLEAR(HTAB_TYPE* self)
 static HTAB_INLINE errcode HTAB_INSERT(HTAB_TYPE*, HTAB_KEY_TYPE const, HTAB_VALUE_TYPE const);
 static HTAB_INLINE errcode HTAB_RESIZE_IMPL(HTAB_TYPE* self, const size_t new_size)
 {
-        S_ASSERT(IS_POWEROF2(new_size));
+        assert(IS_POWEROF2(new_size));
         uint8_t* new_buckets = allocate(HTAB_GET_ALLOCATOR(self), new_size * HTAB_BUCKET_SIZE);
         if (!new_buckets)
-                return S_ERROR;
+                return EC_ERROR;
 
         HTAB_TYPE new_tab;
         new_tab._buckets = new_buckets;
@@ -210,13 +210,13 @@ static HTAB_INLINE errcode HTAB_RESIZE_IMPL(HTAB_TYPE* self, const size_t new_si
         HTAB_DISPOSE(self);
         *self = new_tab;
 
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 static HTAB_INLINE errcode HTAB_RESERVE(HTAB_TYPE* self, const size_t at_least)
 {
         if (at_least <= self->_num_buckets - self->_size)
-                return S_NO_ERROR;
+                return EC_NO_ERROR;
 
         size_t new_size = self->_num_buckets;
         while (at_least > new_size - self->_size)
@@ -264,27 +264,27 @@ static HTAB_INLINE errcode HTAB_GROW(HTAB_TYPE* self)
 static HTAB_INLINE errcode HTAB_INSERT(
         HTAB_TYPE* self, HTAB_KEY_TYPE const key, HTAB_VALUE_TYPE const value)
 {
-        S_ASSERT(key != HTAB_DELETED_KEY && key != HTAB_EMPTY_KEY
+        assert(key != HTAB_DELETED_KEY && key != HTAB_EMPTY_KEY
                 && "Deleted/Empty keys should not be used.");
 
         size_t critical = self->_num_buckets >> 1;
         if (self->_size >= critical)
         {
                 bool has_free_buckets = self->_size != self->_num_buckets;
-                if (S_FAILED(HTAB_GROW(self)) && !has_free_buckets)
-                        return S_ERROR;
+                if (EC_FAILED(HTAB_GROW(self)) && !has_free_buckets)
+                        return EC_ERROR;
         }
 
         uint8_t* bucket = HTAB_FIND_IMPL(self, key, false);
         if (!bucket)
-                return S_ERROR;
+                return EC_ERROR;
 
         if (*(HTAB_KEY_TYPE*)bucket == HTAB_EMPTY_KEY)
                 self->_size++;
 
         *(HTAB_KEY_TYPE*)bucket = key;
         *(HTAB_VALUE_TYPE*)(bucket + sizeof(HTAB_KEY_TYPE)) = value;
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 static HTAB_INLINE bool HTAB_FIND(

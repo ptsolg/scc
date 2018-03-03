@@ -59,11 +59,11 @@ extern errcode cc_set_output_file(cc_instance* self, const char* file)
         if (!(self->output.file = fopen(file, "w")))
         {
                 cc_unable_to_open(self, file);
-                return S_ERROR;
+                return EC_ERROR;
         }
 
         self->output.file_path = file;
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 extern errcode cc_add_lib_dir(cc_instance* self, const char* dir)
@@ -77,11 +77,11 @@ extern errcode cc_add_lib(cc_instance* self, const char* lib)
         if (!file)
         {
                 cc_file_doesnt_exit(self, lib);
-                return S_ERROR;
+                return EC_ERROR;
         }
 
         dseq_append(&self->input.libs, file);
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 extern errcode cc_add_source_dir(cc_instance* self, const char* dir)
@@ -95,11 +95,11 @@ extern errcode cc_add_source_file(cc_instance* self, const char* file)
         if (!source)
         {
                 cc_file_doesnt_exit(self, file);
-                return S_ERROR;
+                return EC_ERROR;
         }
 
         dseq_append(&self->input.sources, source);
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 extern errcode cc_emulate_source_file(
@@ -107,10 +107,10 @@ extern errcode cc_emulate_source_file(
 {
         file_entry* source = file_emulate(&self->input.source_lookup, file, content);
         if (!source)
-                return S_ERROR;
+                return EC_ERROR;
 
          dseq_append(&self->input.sources, source);
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 extern errcode cc_run(cc_instance* self)
@@ -118,7 +118,7 @@ extern errcode cc_run(cc_instance* self)
         if (!dseq_size(&self->input.sources))
         {
                 cc_error(self, "no input files");
-                return S_ERROR;
+                return EC_ERROR;
         }
 
         switch (self->output.kind)
@@ -132,5 +132,5 @@ extern errcode cc_run(cc_instance* self)
                 case COK_ASM: return cc_generate_asm(self);
                 case COK_LLVM_IR: return cc_generate_llvm_ir(self);
         }
-        return S_ERROR;
+        return EC_ERROR;
 }

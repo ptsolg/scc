@@ -69,7 +69,7 @@ extern strref strpool_insert(strpool* self, const void* data, size_t size)
 
         copy->size = size;
         memcpy(copy->data, data, size);
-        if (S_FAILED(strmap_insert(&self->_map, ref, copy)))
+        if (EC_FAILED(strmap_insert(&self->_map, ref, copy)))
                 return STRREF_INVALID;
 
         return ref;

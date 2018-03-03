@@ -102,14 +102,14 @@ extern c_initialized_object* c_initialized_object_new_rec(
 
 extern void c_initialized_object_set_field(c_initialized_object* self, tree_decl* field)
 {
-        S_ASSERT(self->kind == CIOK_STRUCT || self->kind == CIOK_UNION);
-        S_ASSERT(tree_get_field_record(field) == self->record.decl);
+        assert(self->kind == CIOK_STRUCT || self->kind == CIOK_UNION);
+        assert(tree_get_field_record(field) == self->record.decl);
         self->record.field = field;
 }
 
 extern void c_initialized_object_set_index(c_initialized_object* self, uint index)
 {
-        S_ASSERT(self->kind == CIOK_ARRAY);
+        assert(self->kind == CIOK_ARRAY);
         self->array.index = index;
 }
 
@@ -141,13 +141,13 @@ extern bool c_initialized_object_valid(const c_initialized_object* self)
         else if (self->kind == CIOK_UNION)
                 return !self->record.union_field_initialized;
 
-        S_UNREACHABLE();
+        UNREACHABLE();
         return false;
 }
 
 extern void c_initialized_object_next_subobject(c_initialized_object* self)
 {
-        S_ASSERT(c_initialized_object_valid(self));
+        assert(c_initialized_object_valid(self));
 
         if (self->kind == CIOK_SCALAR)
                 self->scalar.initialized = true;
@@ -170,6 +170,6 @@ extern tree_type* c_initialized_object_get_subobject(const c_initialized_object*
         else if (self->kind == CIOK_STRUCT || self->kind == CIOK_UNION)
                 return tree_get_decl_type(self->record.field);
 
-        S_UNREACHABLE();
+        UNREACHABLE();
         return NULL;
 }

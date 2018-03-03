@@ -137,7 +137,7 @@ static const char* llvm_builtin_type_table[] =
         "double",
 };
 
-S_STATIC_ASSERT(S_ARRAY_SIZE(llvm_builtin_type_table) == TBTK_SIZE,
+static_assert(ARRAY_SIZE(llvm_builtin_type_table) == TBTK_SIZE,
         "llvm_builtin_type_table needs an update");
 
 static void llvm_printer_emit_builtin_type(llvm_printer* self, const tree_type* type)
@@ -248,9 +248,9 @@ static void llvm_printer_emit_constant(llvm_printer* self, const ssa_value* valu
 
         char num[128];
         if (avalue_is_float(val))
-                avalue_print_as_hex(val, num, S_ARRAY_SIZE(num));
+                avalue_print_as_hex(val, num, ARRAY_SIZE(num));
         else
-                avalue_print(val, num, S_ARRAY_SIZE(num), 0);
+                avalue_print(val, num, ARRAY_SIZE(num), 0);
         llvm_prints(self, num);
 }
 
@@ -464,7 +464,7 @@ static void llvm_printer_emit_cmp_instr(llvm_printer* self, const ssa_instr* ins
 
         const ssa_value* var = ssa_get_instr_cvar(instr);
         llvm_printer_emit_value(self, var, false);
-        S_ASSERT(tree_builtin_type_is(ssa_get_value_type(var), TBTK_INT32));
+        assert(tree_builtin_type_is(ssa_get_value_type(var), TBTK_INT32));
         llvm_printf(self, " = zext i1 %s to i32", tmp);
 }
 
@@ -556,7 +556,7 @@ static void llvm_printer_emit_conditional_jump(llvm_printer* self, const ssa_ins
         llvm_printer_generate_tmp_var(self, tmp);
 
         ssa_value* cond = ssa_get_instr_operand_value(instr, 0);
-        S_ASSERT(tree_builtin_type_is(ssa_get_value_type(cond), TBTK_INT32));
+        assert(tree_builtin_type_is(ssa_get_value_type(cond), TBTK_INT32));
         llvm_printf(self, "%s = trunc ", tmp);
         llvm_printer_emit_value(self, cond, true);
         llvm_prints(self, " to i1");
@@ -797,7 +797,7 @@ static void llvm_printer_emit_global(llvm_printer* self, ssa_value* global)
 {
         llvm_print_endl(self);
         if (ssa_get_value_kind(global) != SVK_STRING)
-                S_UNREACHABLE();
+                UNREACHABLE();
 
         llvm_printer_emit_value(self, global, false);
         llvm_prints(self, " = private constant ");

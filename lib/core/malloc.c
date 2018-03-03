@@ -1,11 +1,11 @@
 #include "scc/core/malloc.h"
 #include <stdlib.h>
 
-malloc_fn smalloc = &malloc;
-free_fn sfree = &free;
+malloc_fn core_malloc = &malloc;
+free_fn core_free = &free;
 
 extern void scl_override_malloc(malloc_fn malloc, free_fn free)
 {
-        smalloc = malloc;
-        sfree = free;
+        core_malloc = malloc;
+        core_free = free;
 }

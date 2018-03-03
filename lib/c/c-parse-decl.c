@@ -571,7 +571,7 @@ static bool c_parse_parameter_type_list_opt(c_parser* self, c_declarator* result
                 else if (!c_parser_require_ex(self, CTK_COMMA, ctk_rbracket_or_comma))
                         return false;
         }
-        S_UNREACHABLE();
+        UNREACHABLE();
         return false;
 }
 

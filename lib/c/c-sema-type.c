@@ -62,7 +62,7 @@ extern tree_type* c_sema_get_type_for_string_literal(c_sema* self, tree_id id)
 {
         strentry entry;
         bool found = tree_get_id_strentry(self->context, id, &entry);
-        S_ASSERT(found);
+        assert(found);
 
         int_value size;
         int_init(&size, 32, false, entry.size);
@@ -157,7 +157,7 @@ extern bool c_sema_typedef_name_exists(c_sema* self, tree_id name)
 
 extern bool c_sema_check_array_type(const c_sema* self, const tree_type* t, tree_location l)
 {
-        S_ASSERT(tree_type_is(t, TTK_ARRAY));
+        assert(tree_type_is(t, TTK_ARRAY));
 
         tree_type* el = tree_get_array_eltype(t);
         if (!el)
@@ -197,7 +197,7 @@ extern bool c_sema_check_array_type(const c_sema* self, const tree_type* t, tree
 
 extern bool c_sema_check_function_type(const c_sema* self, const tree_type* t, tree_location l)
 {
-        S_ASSERT(tree_type_is(t, TTK_FUNCTION));
+        assert(tree_type_is(t, TTK_FUNCTION));
 
         tree_type* r = tree_desugar_type(tree_get_function_type_result(t));
         if (tree_type_is(r, TTK_ARRAY))
@@ -226,7 +226,7 @@ extern bool c_sema_check_type_quals(const c_sema* self, const tree_type* t, tree
 
 extern bool c_sema_check_pointer_type(const c_sema* self, const tree_type* t, tree_location l)
 {
-        S_ASSERT(tree_type_is(t, TTK_POINTER));
+        assert(tree_type_is(t, TTK_POINTER));
         return c_sema_check_type_quals(self, t, l);
 }
 

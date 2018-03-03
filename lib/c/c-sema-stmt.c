@@ -8,7 +8,7 @@
 
 extern tree_stmt* c_sema_add_stmt(c_sema* self, tree_stmt* s)
 {
-        S_ASSERT(s);
+        assert(s);
         tree_add_stmt_to_scope(self->scope, s);
         return s;
 }

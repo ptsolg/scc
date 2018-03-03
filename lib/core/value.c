@@ -468,7 +468,7 @@ extern double int_get_dp(const int_value* val)
 
 extern void int_resize(int_value* val, uint bits)
 {
-        S_ASSERT(bits && bits <= 64);
+        assert(bits && bits <= 64);
         val->_bits = bits;
         val->_val = mod2(val->_val, bits);
 }
@@ -762,13 +762,13 @@ extern double avalue_get_dp(const avalue* val)
 
 extern int_value avalue_get_int(const avalue* val)
 {
-        S_ASSERT(avalue_is_int(val));
+        assert(avalue_is_int(val));
         return val->_int;
 }
 
 extern float_value avalue_get_float(const avalue* val)
 {
-        S_ASSERT(avalue_is_float(val));
+        assert(avalue_is_float(val));
         return val->_float;
 }
 

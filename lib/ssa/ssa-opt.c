@@ -32,7 +32,7 @@ static op_result ssa_eval_binop(ssa_binop_kind opcode, avalue *l, avalue* r)
                 case SBIK_NEQ: return ssa_eval_cmp(CR_LE, CR_GR, l, r);
 
                 default:
-                        S_ASSERT(0 && "Invalid binary instruction");
+                        assert(0 && "Invalid binary instruction");
                         return OR_INVALID;
         }
 }

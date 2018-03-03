@@ -4,12 +4,12 @@
 
 static void* mallocate(void* self, size_t bytes)
 {
-        return smalloc(bytes);
+        return core_malloc(bytes);
 }
 
 static void mdeallocate(void* self, void* block)
 {
-        sfree(block);
+        core_free(block);
 }
 
 extern allocator* _get_stdalloc()
@@ -57,13 +57,13 @@ extern errcode obstack_grow(obstack* self, size_t at_least)
 
         size_t data_size = at_least + self->_chunk.size;
         if (!(chunk = allocate(self->_alloc, sizeof(*chunk) + data_size)))
-                return S_ERROR;
+                return EC_ERROR;
 
         self->_chunk.pos = chunk->data;
         self->_chunk.end = self->_chunk.pos + data_size;
         self->_chunk.size = data_size;
         list_push_back(&self->_chunks, &chunk->node);
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 extern void objpool_init(objpool* self, size_t obsize)
@@ -92,7 +92,7 @@ extern void mempool_init(
 extern void mempool_init_ex(
         mempool* self, mempool_bad_alloc_handler handler, jmp_buf on_bad_alloc, allocator* alloc)
 {
-        S_ASSERT(on_bad_alloc);
+        assert(on_bad_alloc);
         self->_alloc = alloc;
         self->_handler = handler;
         self->_on_bad_alloc = on_bad_alloc;

@@ -43,7 +43,6 @@ extern errcode aparser_get_int(aparser* self, int* pint);
 extern int arg_to_cmd(char* buffer, size_t buffer_size, const char* arg);
 extern int argv_to_cmd(char* buffer, size_t buffer_size, int argc, const char** argv);
 
-#define MAX_CMD_SIZE 4096
 extern errcode execute(const char* path, int* code, int argc, const char** argv);
 
 #ifdef __cplusplus

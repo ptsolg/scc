@@ -1,7 +1,7 @@
 #include "scc/core/heap-debug.h"
 #include "scc/core/malloc.h"
 
-#if S_WIN
+#if OS_WIN
 #include <Windows.h>
 #include <math.h>
 #define PAGE_SIZE 4096

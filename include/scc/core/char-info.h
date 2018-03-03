@@ -34,7 +34,7 @@ static inline bool is_ascii(ascii_char c)
 
 static inline const int get_char_info(ascii_char c)
 {
-        S_ASSERT(is_ascii(c));
+        assert(is_ascii(c));
         return _ascii_char_info[c];
 }
 

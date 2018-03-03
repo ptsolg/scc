@@ -32,7 +32,7 @@ static TREE_INLINE tree_decl* _tree_decl_scope_lookup(
                         ? *strmap_iter_value(&res) : NULL;
 
 
-        S_ASSERT(lookup_kind == TLK_ANY);
+        assert(lookup_kind == TLK_ANY);
 
         if (self->lookup[TLK_DECL] && strmap_find(self->lookup[TLK_DECL], id, &res))
                 return *strmap_iter_value(&res);
@@ -63,7 +63,7 @@ extern tree_decl* tree_decl_scope_lookup(
 
 extern errcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context* context, tree_decl* decl)
 {
-        S_ASSERT(decl && tree_get_decl_scope(decl) == self);
+        assert(decl && tree_get_decl_scope(decl) == self);
 
         strmap** p = tree_decl_is_tag(decl)
                 ? self->lookup + TLK_TAG
@@ -71,7 +71,7 @@ extern errcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context
         if (!*p)
         {
                 if (!(*p = tree_allocate_node(context, sizeof(strmap))))
-                        return S_ERROR;
+                        return EC_ERROR;
                 strmap_init_alloc(*p, context->alloc);
         }
 
@@ -80,15 +80,15 @@ extern errcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context
 
 extern errcode tree_decl_scope_add_decl(tree_decl_scope* self, tree_context* context, tree_decl* decl)
 {
-        if (!tree_decl_is_anon(decl) && S_FAILED(tree_decl_scope_update_lookup(self, context, decl)))
-                return S_ERROR;
+        if (!tree_decl_is_anon(decl) && EC_FAILED(tree_decl_scope_update_lookup(self, context, decl)))
+                return EC_ERROR;
         tree_decl_scope_add_hidden_decl(self, decl);
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 extern void tree_decl_scope_add_hidden_decl(tree_decl_scope* self, tree_decl* decl)
 {
-        S_ASSERT(decl && tree_get_decl_scope(decl) == self);
+        assert(decl && tree_get_decl_scope(decl) == self);
 
         list_push_back(&self->decls, &decl->base.node);
 }
@@ -362,8 +362,8 @@ extern tree_decl* tree_new_decl_group(
 
 extern errcode tree_add_decl_in_group(tree_decl* self, tree_context* context, tree_decl* decl)
 {
-        S_ASSERT(decl);
-        S_ASSERT(tree_get_decl_kind(decl) != TDK_GROUP
+        assert(decl);
+        assert(tree_get_decl_kind(decl) != TDK_GROUP
                 && "Decl group cannot contain other decl group");
 
         return tree_array_append_ptr(context, &self->group.decls, decl);

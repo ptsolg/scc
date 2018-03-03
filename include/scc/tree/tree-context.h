@@ -74,14 +74,14 @@ static TREE_INLINE errcode tree_resize_array(
 {
         uint8_t* new_data = tree_allocate(self, object_size * new_size);
         if (!new_data)
-                return S_ERROR;
+                return EC_ERROR;
 
-        size_t num_objects = S_MIN(new_size, array->size);
+        size_t num_objects = MIN(new_size, array->size);
         memcpy(new_data, array->data, array->size * object_size);
         tree_deallocate(self, array->data);
         array->data = new_data;
         array->size = new_size;
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 static TREE_INLINE errcode tree_array_append_ptr(
@@ -89,11 +89,11 @@ static TREE_INLINE errcode tree_array_append_ptr(
         tree_array* array,
         void* object)
 {
-        if (S_FAILED(tree_resize_array(self, array, sizeof(void*), array->size + 1)))
-                return S_ERROR;
+        if (EC_FAILED(tree_resize_array(self, array, sizeof(void*), array->size + 1)))
+                return EC_ERROR;
 
         *((void**)array->data + array->size - 1) = object;
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 #ifdef __cplusplus

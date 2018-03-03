@@ -30,7 +30,7 @@ typedef enum _tree_type_kind
         TTK_SIZE,
 } tree_type_kind;
 
-#define TREE_ASSERT_TYPE_KIND(K) S_ASSERT((K) > TTK_UNKNOWN && (K) < TTK_SIZE)
+#define TREE_ASSERT_TYPE_KIND(K) assert((K) > TTK_UNKNOWN && (K) < TTK_SIZE)
 
 struct _tree_type_base
 {
@@ -319,7 +319,7 @@ typedef enum
 
 extern tree_type_equal_kind tree_compare_types(const tree_type* a, const tree_type* b);
 
-#define TREE_ASSERT_TYPE(T) S_ASSERT(T)
+#define TREE_ASSERT_TYPE(T) assert(T)
 
 static TREE_INLINE struct _tree_type_base* _tree_type_base(tree_type* self)
 {
@@ -366,7 +366,7 @@ static TREE_INLINE void tree_set_chain_type_next(tree_type* self, tree_type* nex
 }
 
 #undef TREE_ASSERT_TYPE
-#define TREE_ASSERT_TYPE(T, K) S_ASSERT((T) && tree_get_type_kind(T) == (K))
+#define TREE_ASSERT_TYPE(T, K) assert((T) && tree_get_type_kind(T) == (K))
 
 static TREE_INLINE struct _tree_builtin_type* _tree_builtin_type(tree_type* self)
 {
@@ -445,19 +445,19 @@ static TREE_INLINE void tree_set_function_type_vararg(tree_type* self, bool vara
 
 static TREE_INLINE struct _tree_array_type* _tree_array_type(tree_type* self)
 {
-        S_ASSERT(tree_type_is(self, TTK_ARRAY));
+        assert(tree_type_is(self, TTK_ARRAY));
         return (struct _tree_array_type*)tree_get_unqualified_type(self);
 }
 
 static TREE_INLINE const struct _tree_array_type* _tree_array_ctype(const tree_type* self)
 {
-        S_ASSERT(tree_type_is(self, TTK_ARRAY));
+        assert(tree_type_is(self, TTK_ARRAY));
         return (const struct _tree_array_type*)tree_get_unqualified_ctype(self);
 }
 
 static TREE_INLINE tree_type* tree_get_array_eltype(const tree_type* self)
 {
-        S_ASSERT(tree_type_is(self, TTK_ARRAY));
+        assert(tree_type_is(self, TTK_ARRAY));
         return tree_get_chain_type_next(self);
 }
 
@@ -473,7 +473,7 @@ static TREE_INLINE bool tree_array_is(const tree_type* self, tree_array_kind kin
 
 static TREE_INLINE void tree_set_array_eltype(tree_type* self, tree_type* eltype)
 {
-        S_ASSERT(tree_type_is(self, TTK_ARRAY));
+        assert(tree_type_is(self, TTK_ARRAY));
         tree_set_chain_type_next(self, eltype);
 }
 
@@ -483,7 +483,7 @@ static TREE_INLINE void tree_set_array_kind(tree_type* self, tree_array_kind kin
 }
 
 #define TREE_ASSERT_ARRAY(P, K) \
-        S_ASSERT(tree_type_is((P), TTK_ARRAY) && tree_array_is((P), (K)))
+        assert(tree_type_is((P), TTK_ARRAY) && tree_array_is((P), (K)))
 
 static TREE_INLINE struct _tree_constant_array_type* _tree_constant_array_type(tree_type* self)
 {
@@ -587,17 +587,17 @@ static TREE_INLINE void tree_set_paren_type(tree_type* self, tree_type* next)
 
 static TREE_INLINE struct _tree_qualified_type* _tree_qualified_type(tree_type* self)
 {
-        S_ASSERT(tree_type_is_qualified(self));
+        assert(tree_type_is_qualified(self));
         self = (tree_type*)((size_t)self & _TREE_UNQUAL_MASK);
-        S_ASSERT(self);
+        assert(self);
         return (struct _tree_qualified_type*)self;
 }
 
 static TREE_INLINE const struct _tree_qualified_type* _tree_qualified_ctype(const tree_type* self)
 {
-        S_ASSERT(tree_type_is_qualified(self));
+        assert(tree_type_is_qualified(self));
         self = (const tree_type*)((const size_t)self & _TREE_UNQUAL_MASK);
-        S_ASSERT(self);
+        assert(self);
         return (const struct _tree_qualified_type*)self;
 }
 

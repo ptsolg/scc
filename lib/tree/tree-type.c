@@ -384,7 +384,7 @@ extern tree_type* tree_get_type_next(const tree_type* self)
 extern tree_type* tree_new_qual_type(
         tree_context* context, tree_type_quals quals, tree_type* type)
 {
-        S_ASSERT(type);
+        assert(type);
         if (tree_type_is_qualified(type))
                 type = tree_get_unqualified_type(type);
         
@@ -452,7 +452,7 @@ extern tree_builtin_type_kind tree_get_integer_counterpart(const tree_type* t)
                 case TBTK_UINT64: return TBTK_INT64;
 
                 default:
-                        S_UNREACHABLE();
+                        UNREACHABLE();
                         return TBTK_INVALID;
         }
 }
@@ -478,7 +478,7 @@ static bool tree_decl_types_are_same(const tree_type* a, const tree_type* b)
         if (dk != tree_get_decl_kind(db))
                 return false;
 
-        S_ASSERT(dk == TDK_RECORD || dk == TDK_ENUM);
+        assert(dk == TDK_RECORD || dk == TDK_ENUM);
         return dk == TDK_RECORD
                 ? tree_records_are_same(da, db)
                 : tree_enums_are_same(da, db);
@@ -572,7 +572,7 @@ extern tree_type_equal_kind tree_compare_types(const tree_type* a, const tree_ty
                                 return same_quals ? TTEK_EQ : TTEK_DIFFERENT_QUALS;
 
                         default:
-                                S_ASSERT(0 && "Invalid type");
+                                assert(0 && "Invalid type");
                                 return TTEK_NEQ;
                 }
         }

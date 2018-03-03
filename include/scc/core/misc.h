@@ -12,8 +12,11 @@ extern "C" {
 #include "common.h"
 #include <math.h>
 
-#define S_MIN(a, b) ((a) < (b) ? (a) : (b))
-#define S_MAX(a, b) ((a) > (b) ? (a) : (b))
+#undef MIN
+#undef MAX
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 #define MEM_FOREACH(PFIRST, PLAST, ITTYPE, ITNAME) \
         for (ITTYPE ITNAME = (ITTYPE)(PFIRST); \
@@ -58,7 +61,7 @@ static inline int ndigits(int n)
 
 static inline uint64_t mod2(uint64_t x, uint pow)
 {
-        S_ASSERT(pow <= 64);
+        assert(pow <= 64);
         if (pow == 64)
                 return x;
 
@@ -73,9 +76,9 @@ typedef enum
         CR_GR,
 } cmp_result;
 
-#define SSORT_MAX_OBJECT_SIZE 1024
+#define SORT_MAX_OBJECT_SIZE 1024
 
-extern void ssort(void* data, size_t n, size_t obsize,
+extern void sort(void* data, size_t n, size_t obsize,
         cmp_result(*const cmp_fn)(void*, const void*, const void*), void* ex_data);
 
 #ifdef __cplusplus

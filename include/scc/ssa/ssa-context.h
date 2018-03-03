@@ -61,19 +61,19 @@ static inline errcode ssa_resize_array(
 {
         uint8_t* new_data = mempool_allocate(&self->memory, object_size * new_size);
         if (!new_data)
-                return S_ERROR;
+                return EC_ERROR;
 
-        size_t num_objects = S_MIN(new_size, array->size);
+        size_t num_objects = MIN(new_size, array->size);
         memcpy(new_data, array->data, num_objects * object_size);
         mempool_deallocate(&self->memory, array->data);
         array->data = new_data;
         array->size = new_size;
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 static inline void* ssa_reserve_object(ssa_context* self, ssa_array* array, const size_t object_size)
 {
-        if (S_FAILED(ssa_resize_array(self, array, object_size, array->size + 1)))
+        if (EC_FAILED(ssa_resize_array(self, array, object_size, array->size + 1)))
                 return NULL;
         return array->data + (array->size - 1) * object_size;
 }

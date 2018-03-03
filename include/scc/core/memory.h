@@ -20,7 +20,7 @@ extern allocator* _get_stdalloc();
 
 extern void mallocator_init(allocator* self);
 
-#if S_X64
+#if TARGET_X64
 #define STDALIGNMENT 8
 #else
 #define STDALIGNMENT 4
@@ -51,7 +51,7 @@ static inline void* obstack_allocate_aligned(obstack* self, size_t bytes, size_t
         size_t adjustment = pointer_adjustment(self->_chunk.pos, alignment);
         if (self->_chunk.pos + bytes + adjustment >= self->_chunk.end)
         {
-                if (S_FAILED(obstack_grow(self, bytes + alignment)))
+                if (EC_FAILED(obstack_grow(self, bytes + alignment)))
                         return NULL;
 
                 adjustment = pointer_adjustment(self->_chunk.pos, alignment);
@@ -141,7 +141,7 @@ static inline void* mempool_allocate(mempool* self, size_t bytes)
                 if (self->_handler)
                         block = self->_handler(self, bytes);
                 if (!block)
-                        longjmp(self->_on_bad_alloc, S_ERROR);
+                        longjmp(self->_on_bad_alloc, EC_ERROR);
         }
 
         list_node_init(block);

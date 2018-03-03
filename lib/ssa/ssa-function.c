@@ -17,13 +17,13 @@ extern ssa_function* ssa_new_function(ssa_context* context, tree_decl* func)
 
 extern void ssa_add_function_block(ssa_function* self, ssa_block* block)
 {
-        S_ASSERT(block);
+        assert(block);
         list_push_back(&self->_blocks, &block->_node);
 }
 
 extern void ssa_add_function_param(ssa_function* self, ssa_context* context, ssa_value* param)
 {
-        S_ASSERT(param);
+        assert(param);
         ssa_value** obj = ssa_reserve_object(context, &self->_params, sizeof(ssa_value*));
         *obj = param;
 }

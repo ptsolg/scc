@@ -135,12 +135,12 @@ extern errcode c_source_find_loc(const c_source_manager* self, c_location* res, 
                         res->file = c_source_get_name(s);
                         res->line = c_source_get_line(s, loc);
                         res->column = c_source_get_col(s, loc);
-                        return S_NO_ERROR;
+                        return EC_NO_ERROR;
                 }
         }
 
         res->file = "";
         res->line = 0;
         res->column = 0;
-        return S_ERROR;
+        return EC_ERROR;
 }

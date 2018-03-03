@@ -177,13 +177,13 @@ static inline ssa_value_use* ssa_get_next_value_use(const ssa_value_use* self)
 
 static inline struct _ssa_value_base* _ssa_value_base(ssa_value* self)
 {
-        S_ASSERT(self);
+        assert(self);
         return (struct _ssa_value_base*)self;
 }
 
 static inline const struct _ssa_value_base* _ssa_value_cbase(const ssa_value* self)
 {
-        S_ASSERT(self);
+        assert(self);
         return (const struct _ssa_value_base*)self;
 }
 
@@ -239,7 +239,7 @@ static inline void ssa_set_value_id(ssa_value* self, ssa_id id)
         _ssa_value_base(self)->_id = id;
 }
 
-#define SSA_ASSERT_VALUE(P, K) S_ASSERT((P) && ssa_get_value_kind(P) == (K))
+#define SSA_ASSERT_VALUE(P, K) assert((P) && ssa_get_value_kind(P) == (K))
 
 static inline struct _ssa_constant* _ssa_constant(ssa_value* self)
 {

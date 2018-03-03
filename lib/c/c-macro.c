@@ -23,7 +23,7 @@ extern void c_macro_delete(c_context* context, c_macro* macro)
 
 extern void c_macro_add_param(c_macro* self, c_context* context, tree_id param)
 {
-        S_ASSERT(self->function_like);
+        assert(self->function_like);
         dseq_u32_append(&self->params, param);
 }
 
@@ -109,7 +109,7 @@ extern void c_macro_args_set_empty(c_macro_args* self, tree_id arg)
 {
         strmap_iter it;
         bool already_set = strmap_find(&self->args, arg, &it);
-        S_ASSERT(already_set == false);
+        assert(already_set == false);
         dseq* tokens = c_context_allocate(self->context, sizeof(dseq));
         dseq_init_alloc(tokens, c_context_get_allocator(self->context));
         strmap_insert(&self->args, arg, tokens);

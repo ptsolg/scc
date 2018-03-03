@@ -122,7 +122,7 @@ extern tree_location c_declarator_get_name_loc_or_begin(const c_declarator* self
 // returns declarator type
 static tree_type* c_sema_add_declarator_type(c_sema* self, c_declarator* d, tree_type* t)
 {
-        S_ASSERT(t);
+        assert(t);
         if (!d->type.head)
         {
                 d->type.head = t;
@@ -142,7 +142,7 @@ static tree_type* c_sema_add_declarator_type(c_sema* self, c_declarator* d, tree
         else if (k == TTK_PAREN)
                 tree_set_paren_type(tail, t);
         else
-                S_UNREACHABLE();
+                UNREACHABLE();
 
         d->type.tail = t;
         return d->type.head;
@@ -168,9 +168,9 @@ extern bool c_sema_add_direct_declarator_parens(c_sema* self, c_declarator* d)
 
 extern void c_sema_add_declarator_param(c_sema* self, c_declarator* d, c_param* p)
 {
-        S_ASSERT(p);
+        assert(p);
         tree_type* t = d->type.tail;
-        S_ASSERT(t && tree_get_type_kind(t) == TTK_FUNCTION);
+        assert(t && tree_get_type_kind(t) == TTK_FUNCTION);
 
         tree_add_function_type_param(t, self->context, c_param_get_type(p));
         if (!d->params_initialized)
@@ -182,7 +182,7 @@ extern void c_sema_add_declarator_param(c_sema* self, c_declarator* d, c_param* 
 extern bool c_sema_set_declarator_has_vararg(c_sema* self, c_declarator* d, tree_location ellipsis_loc)
 {
         tree_type* t = d->type.tail;
-        S_ASSERT(t && tree_get_type_kind(t) == TTK_FUNCTION);
+        assert(t && tree_get_type_kind(t) == TTK_FUNCTION);
 
         if (dseq_size(&d->params) == 0)
         {
@@ -739,7 +739,7 @@ extern bool csema_require_variable_decl_kind(const c_sema* self, const tree_decl
         if (k == TDK_FUNCTION)
                 c_error_function_initialized_like_a_variable(self->logger, decl);
         else
-                S_UNREACHABLE(); // todo
+                UNREACHABLE(); // todo
         
         return false;
 }
@@ -912,7 +912,7 @@ extern tree_decl* c_sema_declare_external_decl(c_sema* self, c_decl_specs* ds, c
 
 extern tree_decl* c_sema_define_var_decl(c_sema* self, tree_decl* var, tree_expr* init)
 {
-        S_ASSERT(init && tree_get_decl_kind(var) == TDK_VAR);
+        assert(init && tree_get_decl_kind(var) == TDK_VAR);
         tree_decl* orig = c_sema_local_lookup(self, tree_get_decl_name(var), false);
         if (orig && tree_get_var_init(orig))
         {
@@ -927,7 +927,7 @@ extern tree_decl* c_sema_define_var_decl(c_sema* self, tree_decl* var, tree_expr
 
 extern tree_decl* c_sema_define_func_decl(c_sema* self, tree_decl* func, tree_stmt* body)
 {
-        S_ASSERT(body && tree_get_decl_kind(func) == TDK_FUNCTION);
+        assert(body && tree_get_decl_kind(func) == TDK_FUNCTION);
 
         tree_decl* orig = c_sema_global_lookup(self, tree_get_decl_name(func), false);
         if (orig && tree_get_function_body(orig))

@@ -72,14 +72,14 @@ static void ssa_remove_value_use(ssa_value_use* self)
 
 static void ssa_add_value_use(ssa_value* value, ssa_value_use* use)
 {
-        S_ASSERT(use->_value == NULL);
+        assert(use->_value == NULL);
         use->_value = value;
         list_push_back(&_ssa_value_base(value)->_use_list, &use->_node);
 }
 
 extern ssa_value_use* ssa_add_instr_operand(ssa_instr* self, ssa_context* context, ssa_value* value)
 {
-        S_ASSERT(value);
+        assert(value);
         ssa_array* ops = &_ssa_instr_base(self)->_operands;
         ssa_array new_ops;
         ssa_init_array(&new_ops);
@@ -125,7 +125,7 @@ extern ssa_value* ssa_get_instr_operand_value(const ssa_instr* self, size_t i)
 extern ssa_value_use* ssa_get_instr_operand(const ssa_instr* self, size_t i)
 {
         const ssa_array* ops = &_ssa_instr_cbase(self)->_operands;
-        S_ASSERT(i < ops->size);
+        assert(i < ops->size);
         return (ssa_value_use*)ops->data + i;
 }
 
@@ -157,7 +157,7 @@ extern void ssa_add_instr_before(ssa_instr* self, ssa_instr* pos)
 extern void ssa_remove_instr(ssa_instr* self)
 {
         if (ssa_instr_has_var(self))
-                S_ASSERT(!ssa_value_is_used(ssa_get_instr_cvar(self))
+                assert(!ssa_value_is_used(ssa_get_instr_cvar(self))
                         && "Cannot remove used instruction");
 
         SSA_FOREACH_INSTR_OPERAND(self, it, end)
@@ -292,7 +292,7 @@ extern ssa_value_use* ssa_get_terminator_instr_successors_begin(const ssa_instr*
                         return ssa_get_instr_operands_end(self);
 
                 default:
-                        S_UNREACHABLE();
+                        UNREACHABLE();
                         return NULL;
         }
 }

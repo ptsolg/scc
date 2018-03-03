@@ -153,17 +153,17 @@ extern c_token* c_token_new_pp_num(c_context* context, tree_location loc, tree_i
 extern c_token* c_token_copy(c_context* context, c_token* token);
 extern c_token* c_token_copy_with_new_loc(c_context* context, c_token* token, tree_location new_loc);
 
-#define C_TOKEN_ASSERT(P, K) S_ASSERT((P) && c_token_is((P), (K)))
+#define C_TOKEN_ASSERT(P, K) assert((P) && c_token_is((P), (K)))
 
 static inline struct _c_token_base* _c_token_base(c_token* self)
 {
-        S_ASSERT(self);
+        assert(self);
         return (struct _c_token_base*)self;
 }
 
 static inline const struct _c_token_base* _c_token_base_c(const c_token* self)
 {
-        S_ASSERT(self);
+        assert(self);
         return (const struct _c_token_base*)self;
 }
 
@@ -193,7 +193,7 @@ static inline void c_token_set_loc(c_token* self, tree_location l)
 }
 
 #define C_STRING_TOKEN_ASSERT(P, K) \
-        S_ASSERT((P) \
+        assert((P) \
                 && ((K) == CTK_ID \
                 || (K) == CTK_CONST_STRING \
                 || (K) == CTK_PP_NUM \
@@ -305,7 +305,7 @@ static inline void c_token_set_int_signed(c_token* self, bool s)
 
 static inline void c_token_set_int_ls(c_token* self, int n)
 {
-        S_ASSERT(n >= 0 && n < 3 && "integer suffix can have maximum 2 L's");
+        assert(n >= 0 && n < 3 && "integer suffix can have maximum 2 L's");
         _c_int_token(self)->ls = n;
 }
 

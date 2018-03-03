@@ -34,7 +34,7 @@ extern c_token* c_preprocessor_lexer_lex_token(c_preprocessor_lexer* self)
                         return c_macro_lexer_lex_token(&self->macro_lexer);
 
                 default:
-                        S_UNREACHABLE();
+                        UNREACHABLE();
                         return NULL;
         }
 }
@@ -86,7 +86,7 @@ extern void c_preprocessor_lexer_stack_dispose(c_preprocessor_lexer_stack* self)
 extern void c_preprocessor_lexer_stack_pop_lexer(c_preprocessor_lexer_stack* self)
 {
         size_t size = c_pp_lexer_stack_size(&self->lexers);
-        S_ASSERT(size);
+        assert(size);
         c_pp_lexer_stack_resize(&self->lexers, size - 1);
 }
 
@@ -98,7 +98,7 @@ extern size_t c_preprocessor_lexer_stack_size(const c_preprocessor_lexer_stack* 
 extern c_preprocessor_lexer* c_preprocessor_lexer_stack_top(const c_preprocessor_lexer_stack* self)
 {
         size_t size = c_preprocessor_lexer_stack_size(self);
-        S_ASSERT(size);
+        assert(size);
         return c_pp_lexer_stack_begin(&self->lexers) + size - 1;
 }
 

@@ -18,14 +18,14 @@ extern ssa_module* ssa_new_module(ssa_context* context)
 extern void ssa_module_add_func_def(ssa_module* self, ssa_function* func)
 {
         tree_decl* entity = ssa_get_function_entity(func);
-        S_ASSERT(entity);
+        assert(entity);
         strmap_insert(&self->lookup, tree_get_decl_name(entity), func);
         list_push_back(&self->defs, &func->_node);
 }
 
 extern void ssa_module_add_global_value(ssa_module* self, ssa_value* global)
 {
-        S_ASSERT(ssa_get_value_kind(global) == SVK_STRING);
+        assert(ssa_get_value_kind(global) == SVK_STRING);
         dseq_append(&self->globals, global);
 }
 

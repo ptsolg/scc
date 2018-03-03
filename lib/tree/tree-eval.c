@@ -84,7 +84,7 @@ static bool tree_eval_binop(tree_context* context, const tree_expr* expr, tree_e
                         return true;
 
                 default:
-                        S_ASSERT(0 && "Invalid expression");
+                        assert(0 && "Invalid expression");
                 case TBK_COMMA:
                 case TBK_UNKNOWN:
                 case TBK_ASSIGN:
@@ -145,7 +145,7 @@ static bool tree_eval_unop(
                         return true;
    
                 default:
-                        S_ASSERT(0 && "Invalid expression");
+                        assert(0 && "Invalid expression");
                 case TUK_UNKNOWN:
                 case TUK_POST_INC:
                 case TUK_POST_DEC:
@@ -242,7 +242,7 @@ static bool tree_eval_cast(
         }
         else
         {
-                S_ASSERT(tree_type_is_integer(cast_type));
+                assert(tree_type_is_integer(cast_type));
 
                 result->kind = TERK_INTEGER;
                 uint bits = 8 * tree_get_builtin_type_size(context->target, builtin);
@@ -326,7 +326,7 @@ static bool tree_eval_subscript(
 static bool _tree_eval_expr(
         tree_context* context, const tree_expr* expr, tree_eval_result* result, bool addressof_operand)
 {
-        S_ASSERT(result);
+        assert(result);
 
         result->kind = TERK_INVALID;
         result->error = expr;
@@ -371,7 +371,7 @@ static bool _tree_eval_expr(
                         return tree_eval_subscript(context, expr, result, addressof_operand);
 
                 default:
-                        S_ASSERT(0 && "Invalid expression");
+                        assert(0 && "Invalid expression");
                 case TEK_UNKNOWN:
                 case TEK_CALL:
                 case TEK_DESIGNATION:

@@ -59,7 +59,7 @@ static c_token* _c_macro_lexer_concat(c_macro_lexer* self, c_token* l, c_token* 
 static c_token* c_macro_lexer_concat(c_macro_lexer* self, const dseq* tokens, tree_location loc)
 {
         size_t size = dseq_size(tokens);
-        S_ASSERT(size >= 2);
+        assert(size >= 2);
 
         c_token* concat = _c_macro_lexer_concat(self,
                 dseq_get(tokens, 0),
@@ -132,13 +132,13 @@ extern errcode c_macro_lexer_substitute_macro_args(c_macro_lexer* self, c_macro_
                 
                 if (c_token_is(t, CTK_HASH) && self->macro->function_like)
                         if (!(t = c_macro_lexer_stringify_macro_arg(self, args, ++it, c_token_get_loc(t))))
-                                return S_ERROR;
+                                return EC_ERROR;
 
                 dseq_append(&self->tokens, t);
         }
 
         self->pos = (c_token**)dseq_begin(&self->tokens);
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 extern c_token* c_macro_lexer_lex_token(c_macro_lexer* self)

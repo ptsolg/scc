@@ -369,7 +369,7 @@ extern bool ssaize_stmt(ssaizer* self, const tree_stmt* stmt)
 
                 case TSK_UNKNOWN:
                 default:
-                        S_ASSERT(0 && "Invalid stmt");
+                        assert(0 && "Invalid stmt");
                         return false;
         }
 }

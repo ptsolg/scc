@@ -25,7 +25,7 @@ extern void tree_dispose(tree_context* self)
 
 extern tree_type* tree_get_builtin_type(tree_context* self, tree_builtin_type_kind k)
 {
-        S_ASSERT(k >= TBTK_INVALID && k < TBTK_SIZE);
+        assert(k >= TBTK_INVALID && k < TBTK_SIZE);
         return self->builtin_types + k;
 }
 

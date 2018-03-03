@@ -48,7 +48,7 @@ extern void tree_init_target_info(tree_target_info* self, tree_target_architectu
                 self->_builtin_align[TBTK_DOUBLE] = 8;
         }
         else
-                S_UNREACHABLE();
+                UNREACHABLE();
 }
 
 extern tree_target_architecture_kind tree_get_target_kind(const tree_target_info* self)
@@ -105,7 +105,7 @@ extern size_t tree_get_sizeof_record(const tree_target_info* info, const tree_de
 
 extern size_t tree_get_sizeof(const tree_target_info* info, const tree_type* t)
 {
-        S_ASSERT(t);
+        assert(t);
         t = tree_desugar_ctype(t);
 
         if (tree_type_is_pointer(t))
@@ -148,7 +148,7 @@ extern size_t tree_get_alignof_record(const tree_target_info* info, const tree_d
 
 extern size_t tree_get_alignof(const tree_target_info* info, const tree_type* t)
 {
-        S_ASSERT(t);
+        assert(t);
         t = tree_desugar_ctype(t);
 
         if (tree_type_is_pointer(t))

@@ -16,7 +16,7 @@ extern errcode codegen_module(
         ssa_module* sm = ssaize_module(&sr, module);
         ssaizer_dispose(&sr);
         if (!sm)
-                return S_ERROR;
+                return EC_ERROR;
 
         ssa_optimize(context, sm, opts);
         if (output == CGOK_SSA)
@@ -34,7 +34,7 @@ extern errcode codegen_module(
                 llvm_printer_dispose(&printer);
         }
         else
-                return S_ERROR;
+                return EC_ERROR;
 
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }

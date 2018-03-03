@@ -122,7 +122,7 @@ extern void c_sema_enter_module(c_sema* self, tree_module* module)
 
 extern void c_sema_enter_scope(c_sema* self, tree_scope* scope)
 {
-        S_ASSERT(tree_get_scope_parent(scope) == self->scope
+        assert(tree_get_scope_parent(scope) == self->scope
                 && "scopes should be connected.");
         self->scope = scope;
         c_sema_enter_decl_scope(self, tree_get_scope_decls(scope));
@@ -130,14 +130,14 @@ extern void c_sema_enter_scope(c_sema* self, tree_scope* scope)
 
 extern void c_sema_exit_scope(c_sema* self)
 {
-        S_ASSERT(self->scope);
+        assert(self->scope);
         self->scope = tree_get_scope_parent(self->scope);
         c_sema_exit_decl_scope(self);
 }
 
 extern void c_sema_enter_decl_scope(c_sema* self, tree_decl_scope* scope)
 {
-        S_ASSERT(tree_get_decl_scope_parent(scope) == self->locals
+        assert(tree_get_decl_scope_parent(scope) == self->locals
                 && "scopes should be connected.");
         self->locals = scope;
 }
@@ -145,7 +145,7 @@ extern void c_sema_enter_decl_scope(c_sema* self, tree_decl_scope* scope)
 extern void c_sema_exit_decl_scope(c_sema* self)
 {
         tree_decl_scope* parent = tree_get_decl_scope_parent(self->locals);
-        S_ASSERT(parent);
+        assert(parent);
         self->locals = parent;
 }
 
@@ -180,7 +180,7 @@ extern void c_sema_push_switch_stmt_info(c_sema* self, tree_stmt* switch_stmt)
 extern void c_sema_pop_switch_stmt_info(c_sema* self)
 {
         size_t size = c_switch_stack_size(&self->switch_stack);
-        S_ASSERT(size);
+        assert(size);
         c_case_label_map_dispose(&c_sema_get_switch_stmt_info(self)->labels);
         c_switch_stack_resize(&self->switch_stack, size - 1);
 }
@@ -193,7 +193,7 @@ extern void c_sema_set_switch_stmt_has_default_label(c_sema* self)
 extern c_switch_stmt_info* c_sema_get_switch_stmt_info(const c_sema* self)
 {
         size_t size = c_switch_stack_size(&self->switch_stack);
-        S_ASSERT(size);
+        assert(size);
         return c_switch_stack_begin(&self->switch_stack) + size - 1;
 }
 

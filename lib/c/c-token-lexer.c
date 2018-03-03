@@ -101,22 +101,22 @@ extern void c_token_lexer_enter_char_stream(
 extern errcode c_token_lexer_enter(c_token_lexer* self, c_source* source)
 {
         if (!source)
-                return S_ERROR;
+                return EC_ERROR;
 
         readbuf* buf = c_source_open(source);
         if (!buf)
         {
                 c_error_cannot_open_source_file(self->logger, 0, c_source_get_name(source));
-                return S_ERROR;
+                return EC_ERROR;
         }
 
         // save first line location
-        if (S_FAILED(c_source_save_line_loc(source, c_source_get_loc_begin(source))))
-                return S_ERROR;
+        if (EC_FAILED(c_source_save_line_loc(source, c_source_get_loc_begin(source))))
+                return EC_ERROR;
 
         self->source = source;
         c_token_lexer_enter_char_stream(self, buf, c_source_get_loc_begin(source));
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 typedef struct
@@ -155,7 +155,7 @@ static tree_id c_token_lexer_get_sequence_id(c_token_lexer* self, c_sequence* se
 {
         tree_id id = tree_get_id_for_string(
                 c_context_get_tree_context(self->context), seq->val, seq->size);
-        S_ASSERT(id != TREE_INVALID_ID);
+        assert(id != TREE_INVALID_ID);
         return id;
 }
 

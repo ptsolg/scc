@@ -136,7 +136,7 @@ static const char* ssa_binary_instr_table[] =
         "cmp neq",
 };
 
-S_STATIC_ASSERT(S_ARRAY_SIZE(ssa_binary_instr_table) == SBIK_SIZE,
+static_assert(ARRAY_SIZE(ssa_binary_instr_table) == SBIK_SIZE,
         "ssa_binary_instr_table needs an update");
 
 static const char* ssa_terminator_instr_table[] =
@@ -148,7 +148,7 @@ static const char* ssa_terminator_instr_table[] =
         "ret"
 };
 
-S_STATIC_ASSERT(S_ARRAY_SIZE(ssa_terminator_instr_table) == STIK_SIZE,
+static_assert(ARRAY_SIZE(ssa_terminator_instr_table) == STIK_SIZE,
         "ssa_terminator_instr_table needs an update");
 
 static const char* ssa_instr_table[] =
@@ -165,7 +165,7 @@ static const char* ssa_instr_table[] =
         "",
 };
 
-S_STATIC_ASSERT(S_ARRAY_SIZE(ssa_instr_table) == SIK_SIZE,
+static_assert(ARRAY_SIZE(ssa_instr_table) == SIK_SIZE,
         "ssa_instr_table needs an update");
 
 static void ssa_print_alloca_operand(ssa_printer* self, const ssa_instr* instr)

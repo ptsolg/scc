@@ -123,7 +123,7 @@ static inline void c_printer_add_indent(c_printer* self)
 
 static inline void c_printer_sub_indent(c_printer* self)
 {
-        S_ASSERT(self->indent_level);
+        assert(self->indent_level);
         self->indent_level--;
 }
 
@@ -192,12 +192,12 @@ extern void c_print_token(c_printer* self, const c_token* token, const c_token_p
         c_location loc;
         c_source_find_loc(self->source_manager, &loc, c_token_get_loc(token));
 
-        char file[S_MAX_PATH_LEN];
+        char file[MAX_PATH_LEN];
         file[0] = '\0';
 
         if (false) // todo: -print-token-file
         {
-                strncpy(file, path_get_cfile(loc.file), S_MAX_PATH_LEN);
+                strncpy(file, path_get_cfile(loc.file), MAX_PATH_LEN);
                 strfill(strend(file), ' ', 1 + info->max_file_len - strlen(file));
         }
 
@@ -385,7 +385,7 @@ static void c_print_floating_literal(c_printer* self, const tree_expr* expr)
 
 static void c_print_integer(c_printer* self, const tree_type* t, uint64_t v)
 {
-        S_ASSERT(tree_type_is_integer(t));
+        assert(tree_type_is_integer(t));
         bool sign = !tree_type_is_unsigned_integer(t);
         bool ext = tree_builtin_type_is(t, TBTK_UINT64)
                 || tree_builtin_type_is(t, TBTK_INT64);

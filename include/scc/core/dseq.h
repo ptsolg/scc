@@ -121,11 +121,11 @@ static DSEQ_INLINE size_t DSEQ_GET_CAPACITY(const DSEQ_TYPE* self)
 static DSEQ_INLINE errcode DSEQ_RESERVE(DSEQ_TYPE* self, const size_t new_capacity)
 {
         if (DSEQ_GET_CAPACITY(self) >= new_capacity)
-                return S_NO_ERROR;
+                return EC_NO_ERROR;
 
         uint8_t* new_elems = allocate(DSEQ_GET_ALLOCATOR(self), sizeof(DSEQ_VALUE_TYPE) * new_capacity);
         if (!new_elems)
-                return S_ERROR;
+                return EC_ERROR;
 
         memcpy(new_elems, self->_elems, sizeof(DSEQ_VALUE_TYPE) * DSEQ_GET_SIZE(self));
         deallocate(DSEQ_GET_ALLOCATOR(self), self->_elems);
@@ -133,7 +133,7 @@ static DSEQ_INLINE errcode DSEQ_RESERVE(DSEQ_TYPE* self, const size_t new_capaci
         self->_elems = new_elems;
         self->_capacity = new_capacity;
 
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 static DSEQ_INLINE errcode DSEQ_RESIZE(DSEQ_TYPE* self, const size_t new_size)
@@ -141,14 +141,14 @@ static DSEQ_INLINE errcode DSEQ_RESIZE(DSEQ_TYPE* self, const size_t new_size)
         if (DSEQ_GET_CAPACITY(self) >= new_size)
         {
                 self->_size = new_size;
-                return S_NO_ERROR;
+                return EC_NO_ERROR;
         }
 
         uint8_t* new_elems = allocate(DSEQ_GET_ALLOCATOR(self), sizeof(DSEQ_VALUE_TYPE) * new_size);
         if (!new_elems)
-                return S_ERROR;
+                return EC_ERROR;
 
-        size_t num_elems = S_MIN(DSEQ_GET_SIZE(self), new_size);
+        size_t num_elems = MIN(DSEQ_GET_SIZE(self), new_size);
         memcpy(new_elems, self->_elems, sizeof(DSEQ_VALUE_TYPE) * num_elems);
         deallocate(DSEQ_GET_ALLOCATOR(self), self->_elems);
 
@@ -156,7 +156,7 @@ static DSEQ_INLINE errcode DSEQ_RESIZE(DSEQ_TYPE* self, const size_t new_size)
         self->_capacity = 0;
         self->_size = new_size;
 
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 static DSEQ_INLINE DSEQ_VALUE_TYPE* DSEQ_GET_BEGIN(const DSEQ_TYPE* self)
@@ -171,14 +171,14 @@ static DSEQ_INLINE DSEQ_VALUE_TYPE* DSEQ_GET_END(const DSEQ_TYPE* self)
 
 static DSEQ_INLINE DSEQ_VALUE_TYPE DSEQ_GET(const DSEQ_TYPE* self, const size_t index)
 {
-        S_ASSERT(index < DSEQ_GET_SIZE(self) && "Index is out of range.");
+        assert(index < DSEQ_GET_SIZE(self) && "Index is out of range.");
         return DSEQ_GET_BEGIN(self)[index];
 }
 
 static DSEQ_INLINE void DSEQ_SET(
         const DSEQ_TYPE* self, DSEQ_VALUE_TYPE const value, const size_t index)
 {
-        S_ASSERT(index < DSEQ_GET_SIZE(self) && "Index is out of range.");
+        assert(index < DSEQ_GET_SIZE(self) && "Index is out of range.");
         DSEQ_GET_BEGIN(self)[index] = value;
 }
 
@@ -187,12 +187,12 @@ static DSEQ_INLINE errcode DSEQ_APPEND(DSEQ_TYPE* self, DSEQ_VALUE_TYPE const va
         if (DSEQ_GET_SIZE(self) == DSEQ_GET_CAPACITY(self))
         {
                 size_t new_capacity = DSEQ_GET_SIZE(self) * DSEQ_SIZE_MULTIPLIER + DSEQ_SIZE_ADDITION;
-                if (S_FAILED(DSEQ_RESERVE(self, new_capacity)))
-                        return S_ERROR;
+                if (EC_FAILED(DSEQ_RESERVE(self, new_capacity)))
+                        return EC_ERROR;
         }
 
         DSEQ_SET(self, value, self->_size++);
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 #undef DSEQ_INLINE

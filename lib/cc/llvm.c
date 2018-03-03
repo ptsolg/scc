@@ -45,16 +45,16 @@ extern errcode llvm_compile(llvm_compiler* self, int* exit_code)
         arg_append(&args, self->file);
 
         char opt[8];
-        snprintf(opt, S_ARRAY_SIZE(opt), "-O=%u", self->opt_level);
+        snprintf(opt, ARRAY_SIZE(opt), "-O=%u", self->opt_level);
         arg_append(&args, opt);
 
         char filetype[64];
-        snprintf(filetype, S_ARRAY_SIZE(filetype), "-filetype=%s",
+        snprintf(filetype, ARRAY_SIZE(filetype), "-filetype=%s",
                 (self->output_kind == LCOK_OBJ ? "obj" : "asm"));
         arg_append(&args, filetype);
 
         char arch[64];
-        snprintf(arch, S_ARRAY_SIZE(arch), "-march=%s",
+        snprintf(arch, ARRAY_SIZE(arch), "-march=%s",
                 (self->arch == LCAK_X86 ? "x86" : "x86-64"));
         arg_append(&args, arch);
 
@@ -72,20 +72,20 @@ extern errcode llvm_compile(llvm_compiler* self, int* exit_code)
 
 extern errcode llvm_linker_add_dir(llvm_linker* self, const char* dir)
 {
-#if S_WIN
+#if OS_WIN
         size_t len = strlen(dir) + sizeof("/LIBPATH:\"\"");
         char* copy = allocate(self->alloc, len + 1);
         if (!copy)
-                return S_ERROR;
+                return EC_ERROR;
 
         snprintf(copy, len, "/LIBPATH:\"%s\"", dir);
-        if (S_FAILED(dseq_append(&self->dirs, copy)))
+        if (EC_FAILED(dseq_append(&self->dirs, copy)))
         {
                 deallocate(self->alloc, copy);
-                return S_ERROR;
+                return EC_ERROR;
         }
-        return S_NO_ERROR;
-#elif S_OSX
+        return EC_NO_ERROR;
+#elif OS_OSX
         char* copy = allocate(self->alloc, strlen(dir) + 1);
         if (!copy)
                 return S_ERROR;
@@ -105,15 +105,15 @@ extern errcode llvm_linker_add_file(llvm_linker* self, const char* file)
 {
         char* copy = allocate(self->alloc, strlen(file) + 1);
         if (!copy)
-                return S_ERROR;
+                return EC_ERROR;
 
         strcpy(copy, file);
-        if (S_FAILED(dseq_append(&self->files, copy)))
+        if (EC_FAILED(dseq_append(&self->files, copy)))
         {
                 deallocate(self->alloc, copy);
-                return S_ERROR;
+                return EC_ERROR;
         }
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 }
 
 extern void llvm_linker_init(llvm_linker* self, const char* path)
@@ -161,21 +161,21 @@ extern errcode llvm_link(llvm_linker* self, int* exit_code)
                 arg_append(&args, *it);
         }
 
-#if S_WIN
-        char output[S_MAX_PATH_LEN + sizeof("/OUT:\"\"")];
+#if OS_WIN
+        char output[MAX_PATH_LEN + sizeof("/OUT:\"\"")];
         if (self->output)
         {
-                snprintf(output, S_ARRAY_SIZE(output), "/OUT:\"%s\"", self->output);
+                snprintf(output, ARRAY_SIZE(output), "/OUT:\"%s\"", self->output);
                 arg_append(&args, output);
         }
 
         char entry[128];
         if (self->entry)
         {
-                snprintf(entry, S_ARRAY_SIZE(entry), "/ENTRY:%s", self->entry);
+                snprintf(entry, ARRAY_SIZE(entry), "/ENTRY:%s", self->entry);
                 arg_append(&args, entry);
         }
-#elif S_OSX
+#elif OS_OSX
         if (self->output)
         {
                 arg_append(&args, "-o");

@@ -38,7 +38,7 @@ extern void c_parser_enter_token_stream(c_parser* self)
 
 extern c_token* c_parser_handle_lex_error(const c_parser* self)
 {
-        c_parser_die(self, S_ERROR);
+        c_parser_die(self, EC_ERROR);
         // todo
         return NULL;
 }
@@ -48,7 +48,7 @@ extern c_token* c_parser_consume_token(c_parser* self)
         c_token* t = c_lex(self->lexer);
         if (!t)
                 return c_parser_handle_lex_error(self);
-        S_ASSERT(t);
+        assert(t);
 
         self->buffer[0] = self->buffer[1];
         self->buffer[1] = self->buffer[2];
@@ -105,7 +105,7 @@ static void c_parser_print_expected(const c_parser* self, c_token_kind k, const 
         c_token_kind current = c_token_get_kind(c_parser_get_token(self));
 
         if (size == 0)
-                S_UNREACHABLE();
+                UNREACHABLE();
         else if (size == 1)
                 c_error_expected_a_before_b(self->logger, loc, expected[0], current);
         else if (size == 2)

@@ -11,7 +11,7 @@ extern tree_expr* tree_new_expr(
         tree_location loc,
         size_t size)
 {
-        S_ASSERT(size >= sizeof(struct _tree_expr_base));
+        assert(size >= sizeof(struct _tree_expr_base));
         tree_expr* e = tree_allocate_node(context, size);
         if (!e)
                 return NULL;
@@ -98,7 +98,7 @@ extern tree_expr* tree_new_call_expr(
 
 extern errcode tree_add_call_arg(tree_expr* self, tree_context* context, tree_expr* arg)
 {
-        S_ASSERT(arg);
+        assert(arg);
         return tree_array_append_ptr(context, &self->call.args, arg);
 }
 
@@ -305,7 +305,7 @@ extern tree_expr* tree_new_designation(tree_context* context, tree_expr* init)
 extern errcode tree_add_designation_designator(
         tree_expr* self, tree_context* context, tree_designator* d)
 {
-        S_ASSERT(d);
+        assert(d);
         return tree_array_append_ptr(context, &self->designation.designators, d);
 }
 
@@ -323,7 +323,7 @@ extern tree_expr* tree_new_init_list_expr(tree_context* context, tree_location l
 
 extern errcode tree_add_init_list_expr(tree_expr* self, tree_context* context, tree_expr* expr)
 {
-        S_ASSERT(expr);
+        assert(expr);
         return tree_array_append_ptr(context, &self->init_list.exprs, expr);
 }
 

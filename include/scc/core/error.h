@@ -13,11 +13,11 @@ extern "C" {
 
 typedef int errcode;
 
-#define S_NO_ERROR ((errcode)0)
-#define S_ERROR ((errcode)1)
+#define EC_NO_ERROR ((errcode)0)
+#define EC_ERROR ((errcode)1)
 
-#define S_SUCCEEDED(E) (((errcode)(E)) == S_NO_ERROR)
-#define S_FAILED(E) (!S_SUCCEEDED(E))
+#define EC_SUCCEEDED(E) (((errcode)(E)) == EC_NO_ERROR)
+#define EC_FAILED(E) (!EC_SUCCEEDED(E))
 
 #ifdef __cplusplus
 }

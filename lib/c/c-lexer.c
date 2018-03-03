@@ -21,7 +21,7 @@ extern errcode c_lexer_enter_source_file(c_lexer* self, c_source* source)
         return c_preprocessor_enter_source(&self->pp, source);
 }
 
-S_STATIC_ASSERT(CTK_TOTAL_SIZE == 109, "lexer reswords initialization needs an update");
+static_assert(CTK_TOTAL_SIZE == 109, "lexer reswords initialization needs an update");
 
 extern void c_lexer_init_reswords(c_lexer* self)
 {

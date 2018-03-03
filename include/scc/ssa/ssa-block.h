@@ -93,7 +93,7 @@ static inline ssa_block* ssa_get_prev_block(const ssa_block* self)
 
 static inline void ssa_remove_block(ssa_block* self)
 {
-        S_ASSERT(!ssa_value_is_used(ssa_get_block_clabel(self))
+        assert(!ssa_value_is_used(ssa_get_block_clabel(self))
                 && "Cannot remove used block.");
 
         list_node_remove(&self->_node);

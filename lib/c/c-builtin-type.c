@@ -35,7 +35,7 @@ extern bool c_builtin_type_set_kind(c_builtin_type* self, tree_builtin_type_kind
                         return false;
         }
         else
-                S_UNREACHABLE(); // invalid kind
+                UNREACHABLE(); // invalid kind
 
         self->kind = kind;
         return true;
@@ -67,7 +67,7 @@ extern tree_builtin_type_kind c_builtin_type_get_kind(const c_builtin_type* self
                 return self->num_unsigned ? TBTK_UINT32 : TBTK_INT32;
         }
 
-        S_UNREACHABLE();
+        UNREACHABLE();
         return TBTK_INVALID;
 }
 

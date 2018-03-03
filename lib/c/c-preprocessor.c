@@ -37,7 +37,7 @@ extern void c_preprocessor_dispose(c_preprocessor* self)
 
 extern errcode c_preprocessor_enter_source(c_preprocessor* self, c_source* source)
 {
-        S_ASSERT(source);
+        assert(source);
 
         self->lexer = c_preprocessor_lexer_stack_push_token_lexer(
                 &self->lexer_stack, self->reswords, self->source_manager, self->logger, self->context);
@@ -48,7 +48,7 @@ extern errcode c_preprocessor_enter_source(c_preprocessor* self, c_source* sourc
 static void c_preprocessor_enter_macro(
         c_preprocessor* self, c_macro* macro, tree_location loc)
 {
-        S_ASSERT(macro);
+        assert(macro);
         macro->used = true;
         self->lexer = c_preprocessor_lexer_stack_push_macro_lexer(
                 &self->lexer_stack, self->context, self->reswords, macro, self->logger, loc);
@@ -61,7 +61,7 @@ extern void c_preprocessor_exit(c_preprocessor* self)
         else if (self->lexer->kind == CPLK_MACRO)
                 self->lexer->macro_lexer.macro->used = false;
         else
-                S_UNREACHABLE();
+                UNREACHABLE();
         c_preprocessor_lexer_stack_pop_lexer(&self->lexer_stack);
         self->lexer = c_preprocessor_lexer_stack_top(&self->lexer_stack);
 }
@@ -311,7 +311,7 @@ extern c_token* c_preprocess_macro(c_preprocessor* self)
                 }
 
                 c_preprocessor_enter_macro(self, macro, loc);
-                bool failed = S_FAILED(c_macro_lexer_substitute_macro_args(
+                bool failed = EC_FAILED(c_macro_lexer_substitute_macro_args(
                         &self->lexer->macro_lexer, &args));
                 c_macro_args_dispose(&args);
                 if (failed)
@@ -339,7 +339,7 @@ static bool c_preprocessor_collect_adjacent_strings(c_preprocessor* self, dseq* 
 
 static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, dseq* strings)
 {
-        S_ASSERT(dseq_size(strings));
+        assert(dseq_size(strings));
 
         dseq_u8 concat;
         dseq_u8_init_alloc(&concat, c_context_get_allocator(self->context));
