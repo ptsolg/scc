@@ -2,8 +2,9 @@
 #include "scc/c/c-error.h"
 #include "scc/c/c-limits.h"
 #include "scc/c/c-token.h"
+#include "scc/c/c-macro.h"
 #include "scc/c/c-info.h"
-#include "scc/c/c-reswords.h"
+#include "scc/c/c-reswords-info.h"
 #include "scc/c/c-sema-decl.h"
 #include "scc/tree/tree-context.h"
 #include "scc/tree/tree-decl.h"
@@ -128,6 +129,31 @@ extern void c_error_invalid_pasting(c_logger* self, c_token* a, c_token* b, tree
         c_token_to_string(self->tree, b, b_str, 30);
         c_error(self, CES_ERROR, loc,
                 "pasting '%s' and '%s' does not give a valid preprocessing token", a_str, b_str);
+}
+
+extern void c_error_unterminated_macro_argument_list(c_logger* self, c_macro* macro, tree_location loc)
+{
+        const char* macro_name = tree_get_id_string(self->tree, macro->name);
+        c_error(self, CES_ERROR, loc, "unterminated argument list invoking macro '%s'", macro_name);
+}
+
+extern void c_error_macro_argument_list_underflow(c_logger* self, c_macro* macro, ssize args_given, tree_location loc)
+{
+        const char* macro_name = tree_get_id_string(self->tree, macro->name);
+        c_error(self, CES_ERROR, loc, "macro '%s' requires %u arguments, but only %u given",
+                macro_name, (uint)c_macro_get_params_size(macro), (uint)args_given);
+}
+
+extern void c_error_macro_argument_list_overflow(c_logger* self, c_macro* macro, ssize args_given, tree_location loc)
+{
+        const char* macro_name = tree_get_id_string(self->tree, macro->name);
+        c_error(self, CES_ERROR, loc, "macro '%s' passed %u arguments, but takes just %u",
+                macro_name, (uint)args_given, (uint)c_macro_get_params_size(macro));
+}
+
+extern void c_error_hash_is_not_followed_by_a_macro_param(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "'#' is not followed by a macro parameter");
 }
 
 extern void c_error_invalid_integer_literal(c_logger* self, tree_location loc, const char* num)

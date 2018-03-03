@@ -6,6 +6,7 @@
 
 typedef struct _c_logger c_logger;
 typedef struct _c_token c_token;
+typedef struct _c_macro c_macro;
 typedef struct _c_decl_specs c_decl_specs;
 typedef struct _c_declarator c_declarator;
 typedef struct _tree_context tree_context;
@@ -40,6 +41,10 @@ extern void c_error_macro_parameters_must_be_comma_separated(c_logger* self, tre
 extern void c_error_hash2_cannot_appear_at_either_end_of_macro_expansion(c_logger* self, tree_location loc);
 extern void c_error_whitespace_after_macro_name_required(c_logger* self, tree_location loc);
 extern void c_error_invalid_pasting(c_logger* self, c_token* a, c_token* b, tree_location loc);
+extern void c_error_unterminated_macro_argument_list(c_logger* self, c_macro* macro, tree_location loc);
+extern void c_error_macro_argument_list_underflow(c_logger* self, c_macro* macro, ssize args_given, tree_location loc);
+extern void c_error_macro_argument_list_overflow(c_logger* self, c_macro* macro, ssize args_given, tree_location loc);
+extern void c_error_hash_is_not_followed_by_a_macro_param(c_logger* self, tree_location loc);
 
 // lexer
 extern void c_error_invalid_integer_literal(c_logger* self, tree_location loc, const char* num);
