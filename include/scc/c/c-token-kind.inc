@@ -1,6 +1,8 @@
 C_TOKEN(UNKNOWN),
 C_TOKEN(EOF),
 C_TOKEN(EOL),
+// end of macro, used by c_macro_lexer to mark the end of macro expansion
+C_TOKEN(EOM),
 C_TOKEN(WSPACE),
 C_TOKEN(COMMENT),
 
