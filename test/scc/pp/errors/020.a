@@ -1,0 +1,1 @@
+020.t:2:1: error: macro 'A' requires 4 arguments, but only 3 given
