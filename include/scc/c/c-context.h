@@ -43,12 +43,12 @@ static inline allocator* c_context_get_allocator(c_context* self)
         return mempool_to_allocator(&self->memory);
 }
 
-static inline void* c_context_allocate_node(c_context* self, ssize bytes)
+static inline void* c_context_allocate_node(c_context* self, size_t bytes)
 {
         return obstack_allocate(&self->nodes, bytes);
 }
 
-static inline void* c_context_allocate(c_context* self, ssize bytes)
+static inline void* c_context_allocate(c_context* self, size_t bytes)
 {
         return mempool_allocate(&self->memory, bytes);
 }

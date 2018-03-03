@@ -7,7 +7,7 @@ extern c_token* c_token_new(c_context* context, c_token_kind kind, tree_location
 }
 
 extern c_token* c_token_new_ex(
-        c_context* context, c_token_kind kind, tree_location loc, ssize size)
+        c_context* context, c_token_kind kind, tree_location loc, size_t size)
 {
         // todo
         c_token* t = c_context_allocate_node(context, size);
@@ -20,7 +20,7 @@ extern c_token* c_token_new_ex(
 }
 
 extern c_token* c_token_new_string_ex(
-        c_context* context, c_token_kind kind, tree_location loc, tree_id ref, ssize size)
+        c_context* context, c_token_kind kind, tree_location loc, tree_id ref, size_t size)
 {
         c_token* t = c_token_new_ex(context, kind, loc, size);
         if (!t)
@@ -72,7 +72,7 @@ extern c_token* c_token_new_double(c_context* context, tree_location loc, ldoubl
 }
 
 extern c_token* c_token_new_int(
-        c_context* context, tree_location loc, suint64 val, bool is_signed, int ls)
+        c_context* context, tree_location loc, uint64_t val, bool is_signed, int ls)
 {
         c_token* t = c_token_new_ex(context, CTK_CONST_INT, loc, sizeof(struct _c_int_token));
         if (!t)

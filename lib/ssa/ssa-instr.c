@@ -6,8 +6,8 @@ extern ssa_instr* ssa_new_instr(
         ssa_instr_kind kind,
         ssa_id id,
         tree_type* type,
-        ssize reserved_operands,
-        ssize size)
+        size_t reserved_operands,
+        size_t size)
 {
         ssa_instr* instr = ssa_allocate(context, size);
         if (!instr)
@@ -29,7 +29,7 @@ extern ssa_instr* ssa_new_unary_instr(
         ssa_id id,
         tree_type* type,
         ssa_value* operand,
-        ssize size)
+        size_t size)
 {
         ssa_instr* instr = ssa_new_instr(context, kind, id, type, 1, size);
         if (!instr)
@@ -46,7 +46,7 @@ extern ssa_instr* ssa_new_binary_instr(
         tree_type* type,
         ssa_value* first,
         ssa_value* second,
-        ssize size)
+        size_t size)
 {
         ssa_instr* instr = ssa_new_instr(context, kind, id, type, 2, size);
         if (!instr)
@@ -84,7 +84,7 @@ extern ssa_value_use* ssa_add_instr_operand(ssa_instr* self, ssa_context* contex
         ssa_array new_ops;
         ssa_init_array(&new_ops);
         ssa_resize_array(context, &new_ops, sizeof(ssa_value_use), ops->size + 1);
-        for (ssize i = 0; i < ops->size; i++)
+        for (size_t i = 0; i < ops->size; i++)
         {
                 ssa_value_use* op = (ssa_value_use*)ops->data + i;
                 ssa_value_use* new_op = (ssa_value_use*)new_ops.data + i;
@@ -139,7 +139,7 @@ extern ssa_value_use* ssa_get_instr_operands_end(const ssa_instr* self)
         return ssa_get_instr_operands_begin(self) + ssa_get_instr_operands_size(self);
 }
 
-extern ssize ssa_get_instr_operands_size(const ssa_instr* self)
+extern size_t ssa_get_instr_operands_size(const ssa_instr* self)
 {
         return _ssa_instr_cbase(self)->_operands.size;
 }
@@ -265,8 +265,8 @@ extern void ssa_add_phi_operand(
 extern ssa_instr* ssa_new_terminator_instr(
         ssa_context* context,
         ssa_terminator_instr_kind kind,
-        ssize reserved_operands,
-        ssize size)
+        size_t reserved_operands,
+        size_t size)
 {
         ssa_instr* instr = ssa_new_instr(context,
                 SIK_TERMINATOR, 0, NULL, reserved_operands, size);

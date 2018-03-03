@@ -39,7 +39,7 @@ extern serrcode path_add_trailing_slash(char* path)
 {
         if (!path_has_trailing_slash(path))
         {
-                ssize len = strlen(path);
+                size_t len = strlen(path);
                 if (len + 1 >= S_MAX_PATH_LEN)
                         return S_ERROR;
 
@@ -73,7 +73,7 @@ extern void path_goto_parent_dir(char* path)
 
 extern bool path_has_trailing_slash(const char* path)
 {
-        ssize len = strlen(path);
+        size_t len = strlen(path);
         return len && path[len - 1] == S_PATH_DELIMETER;
 }
 
@@ -144,9 +144,9 @@ extern const char* path_get_cfile(const char* path)
         return end;
 }
 
-extern ssize path_get_size(const char* path)
+extern size_t path_get_size(const char* path)
 {
-        ssize res = 0;
+        size_t res = 0;
 #if S_WIN
         HANDLE h = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL,
                 OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
@@ -154,7 +154,7 @@ extern ssize path_get_size(const char* path)
         {
                 LARGE_INTEGER i;
                 if (GetFileSizeEx(h, &i))
-                        res = (ssize)i.QuadPart;
+                        res = (size_t)i.QuadPart;
                 CloseHandle(h);
         }
         return res;
@@ -205,7 +205,7 @@ extern serrcode path_change_ext(char* path, const char* ext)
         if (pos == path || *pos == S_PATH_DELIMETER)
                 pos = end;
 
-        ssize rem = S_MAX_PATH_LEN - strlen(path);
+        size_t rem = S_MAX_PATH_LEN - strlen(path);
         if (strlen(ext) + 1 >= rem)
                 return S_ERROR;
 
@@ -244,7 +244,7 @@ extern serrcode path_get_abs(char* abs, const char* loc)
         return S_NO_ERROR;
 }
 
-static ssize fread_cb_read(fread_cb* self, void* buf, ssize bytes)
+static size_t fread_cb_read(fread_cb* self, void* buf, size_t bytes)
 {
         return fread(buf, 1, bytes, self->_in);
 }
@@ -255,7 +255,7 @@ extern void fread_cb_init(fread_cb* self, FILE* in)
         read_cb_init(&self->_base, &fread_cb_read);
 }
 
-static ssize fwrite_cb_write(fwrite_cb* self, const void* data, ssize bytes)
+static size_t fwrite_cb_write(fwrite_cb* self, const void* data, size_t bytes)
 {
         return fwrite(data, 1, bytes, self->_out);
 }
@@ -363,7 +363,7 @@ extern const char* file_get_content(const file_entry* entry)
         return entry->_content;
 }
 
-extern ssize file_size(const file_entry* entry)
+extern size_t file_size(const file_entry* entry)
 {
         return file_emulated(entry)
                 ? strlen(file_get_content(entry))
@@ -456,7 +456,7 @@ static file_entry* file_get_without_lookup(file_lookup* self, const char* path)
 static file_entry* file_get_with_lookup(file_lookup* self, const char* path)
 {
         char abs[S_MAX_PATH_LEN + 1];
-        for (ssize i = 0; i < dseq_size(&self->_dirs); i++)
+        for (size_t i = 0; i < dseq_size(&self->_dirs); i++)
         {
                 if (S_FAILED(path_get_abs(abs, dseq_get(&self->_dirs, i))))
                         continue;

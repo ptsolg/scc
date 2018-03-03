@@ -9,11 +9,11 @@ extern bool c_source_has(const c_source* self, tree_location loc)
 extern int c_source_get_line(const c_source* self, tree_location loc)
 {
         // todo: log(n) search
-        ssize nlines = dseq_u32_size(&self->lines);
+        size_t nlines = dseq_u32_size(&self->lines);
         if (!nlines)
                 return 0;
 
-        for (ssize i = 0; i < nlines; i++)
+        for (size_t i = 0; i < nlines; i++)
         {
                 tree_location cur = dseq_u32_get(&self->lines, i);
                 tree_location next = c_source_get_loc_end(self);
@@ -33,7 +33,7 @@ extern int c_source_get_col(const c_source* self, tree_location loc)
         if (line == 0)
                 return 0;
 
-        tree_location line_loc = dseq_u32_get(&self->lines, (ssize)(line - 1));
+        tree_location line_loc = dseq_u32_get(&self->lines, (size_t)(line - 1));
         return loc - line_loc + 1;
 }
 
@@ -127,7 +127,7 @@ extern serrcode c_source_find_loc(const c_source_manager* self, c_location* res,
 {
         //todo: log(n) search
 
-        for (ssize i = 0; i < dseq_size(&self->sources); i++)
+        for (size_t i = 0; i < dseq_size(&self->sources); i++)
         {
                 c_source* s = dseq_get(&self->sources, i);
                 if (c_source_has(s, loc))

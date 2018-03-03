@@ -24,7 +24,7 @@ struct _c_token_base
 extern c_token* c_token_new(c_context* context, c_token_kind kind, tree_location loc);
 
 extern c_token* c_token_new_ex(
-        c_context* context, c_token_kind kind, tree_location loc, ssize size);
+        c_context* context, c_token_kind kind, tree_location loc, size_t size);
 
 static inline struct _c_token_base* _c_token_base(c_token* self);
 static inline const struct _c_token_base* _c_token_base_c(const c_token* self);
@@ -43,7 +43,7 @@ struct _c_string_token
 };
 
 extern c_token* c_token_new_string_ex(
-        c_context* context, c_token_kind kind, tree_location loc, tree_id ref, ssize size);
+        c_context* context, c_token_kind kind, tree_location loc, tree_id ref, size_t size);
 
 extern c_token* c_token_new_string(c_context* context, tree_location loc, tree_id ref);
 extern c_token* c_token_new_angle_string(c_context* context, tree_location loc, tree_id ref);
@@ -87,22 +87,22 @@ static inline void c_token_set_double(c_token* self, ldouble v);
 struct _c_int_token
 {
         struct _c_token_base base;
-        suint64 value;
+        uint64_t value;
         bool signed_;
         int ls;
 };
 
 extern c_token* c_token_new_int(
-        c_context* context, tree_location loc, suint64 val, bool is_signed, int ls);
+        c_context* context, tree_location loc, uint64_t val, bool is_signed, int ls);
 
 static inline struct _c_int_token* _c_int_token(c_token* self);
 static inline const struct _c_int_token* _c_int_token_c(const c_token* self);
 
-static inline suint64 c_token_get_int(const c_token* self);
+static inline uint64_t c_token_get_int(const c_token* self);
 static inline int c_token_get_int_ls(const c_token* self);
 static inline bool c_token_int_is_signed(const c_token* self);
 
-static inline void c_token_set_int(c_token* self, suint64 v);
+static inline void c_token_set_int(c_token* self, uint64_t v);
 static inline void c_token_set_int_signed(c_token* self, bool s);
 static inline void c_token_set_int_ls(c_token* self, int n);
 
@@ -278,7 +278,7 @@ static inline const struct _c_int_token* _c_int_token_c(const c_token* self)
         return (const struct _c_int_token*)self;
 }
 
-static inline suint64 c_token_get_int(const c_token* self)
+static inline uint64_t c_token_get_int(const c_token* self)
 {
         return _c_int_token_c(self)->value;
 }
@@ -293,7 +293,7 @@ static inline bool c_token_int_is_signed(const c_token* self)
         return _c_int_token_c(self)->signed_;
 }
 
-static inline void c_token_set_int(c_token* self, suint64 v)
+static inline void c_token_set_int(c_token* self, uint64_t v)
 {
         _c_int_token(self)->value = v;
 }

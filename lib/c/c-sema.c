@@ -1,7 +1,6 @@
 #include "scc/c/c-sema.h"
 #include "scc/c/c-info.h"
 #include "scc/c/c-errors.h"
-#include "scc/core/bit-utils.h"
 
 #define DSEQ_VALUE_TYPE c_switch_stmt_info
 #define DSEQ_TYPE c_switch_stack
@@ -37,12 +36,12 @@
 #undef DSEQ_SET 
 #undef DSEQ_APPEND
 
-#define CCASE_LABEL_MAP_EMPTY_KEY ((suint32)-1)
-#define CCASE_LABEL_MAP_DELETED_KEY ((suint32)-2)
+#define CCASE_LABEL_MAP_EMPTY_KEY ((uint32_t)-1)
+#define CCASE_LABEL_MAP_DELETED_KEY ((uint32_t)-2)
 
 #define HTAB_TYPE c_case_label_map
 #define HTAB_IMPL_FN_GENERATOR(NAME) _c_case_label_map_##NAME
-#define HTAB_KEY_TYPE suint32
+#define HTAB_KEY_TYPE uint32_t
 #define HTAB_DELETED_KEY CCASE_LABEL_MAP_EMPTY_KEY
 #define HTAB_EMPTY_KEY CCASE_LABEL_MAP_DELETED_KEY
 #define HTAB_VALUE_TYPE void*
@@ -180,7 +179,7 @@ extern void c_sema_push_switch_stmt_info(c_sema* self, tree_stmt* switch_stmt)
 
 extern void c_sema_pop_switch_stmt_info(c_sema* self)
 {
-        ssize size = c_switch_stack_size(&self->switch_stack);
+        size_t size = c_switch_stack_size(&self->switch_stack);
         S_ASSERT(size);
         c_case_label_map_dispose(&c_sema_get_switch_stmt_info(self)->labels);
         c_switch_stack_resize(&self->switch_stack, size - 1);
@@ -193,7 +192,7 @@ extern void c_sema_set_switch_stmt_has_default_label(c_sema* self)
 
 extern c_switch_stmt_info* c_sema_get_switch_stmt_info(const c_sema* self)
 {
-        ssize size = c_switch_stack_size(&self->switch_stack);
+        size_t size = c_switch_stack_size(&self->switch_stack);
         S_ASSERT(size);
         return c_switch_stack_begin(&self->switch_stack) + size - 1;
 }
@@ -211,10 +210,10 @@ extern bool c_sema_switch_stmt_has_default_label(const c_sema* self)
 extern bool c_sema_switch_stmt_register_case_label(const c_sema* self, tree_stmt* label)
 {
         const int_value* val = tree_get_case_cvalue(label);
-        suint32 key = int_get_u32(val);
+        uint32_t key = int_get_u32(val);
 
         c_case_label_map* labels = &c_sema_get_switch_stmt_info(self)->labels;
-        for (suint32 i = 1; ; i++)
+        for (uint32_t i = 1; ; i++)
         {
                 c_case_label_map_iter res;
                 if (c_case_label_map_find(labels, key, &res)

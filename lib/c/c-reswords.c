@@ -25,7 +25,7 @@ extern void c_reswords_add_pp_resword(c_reswords* self, const char* string, int 
         strmap_insert(&self->pp_reswords, STRREF(string), (void*)kind);
 }
 
-extern int c_reswords_get_resword(const c_reswords* self, const char* string, ssize len)
+extern int c_reswords_get_resword(const c_reswords* self, const char* string, size_t len)
 {
         return c_reswords_get_resword_by_ref(self, STRREFL(string, len));
 }
@@ -38,7 +38,7 @@ extern int c_reswords_get_resword_by_ref(const c_reswords* self, strref ref)
                 : CTK_UNKNOWN;
 }
 
-extern int c_reswords_get_pp_resword(const c_reswords* self, const char* string, ssize len)
+extern int c_reswords_get_pp_resword(const c_reswords* self, const char* string, size_t len)
 {
         return c_reswords_get_pp_resword_by_ref(self, STRREFL(string, len));
 }

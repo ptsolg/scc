@@ -521,7 +521,7 @@ extern ssa_value* ssaize_sizeof_expr(ssaizer* self, const tree_expr* expr)
                 ? tree_get_sizeof_type(expr)
                 : tree_get_expr_type(tree_get_sizeof_expr(expr));
 
-        ssize size = tree_get_sizeof(ssa_get_target(self->context), type);
+        size_t size = tree_get_sizeof(ssa_get_target(self->context), type);
         return ssa_build_int_constant(&self->builder, tree_get_expr_type(expr), size);
 }
 

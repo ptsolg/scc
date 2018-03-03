@@ -208,7 +208,7 @@ extern tree_expr* c_sema_new_character_literal(c_sema* self, tree_location loc, 
 }
 
 extern tree_expr* c_sema_new_integer_literal(
-        c_sema* self, tree_location loc, suint64 v, bool signed_, bool ext)
+        c_sema* self, tree_location loc, uint64_t v, bool signed_, bool ext)
 {
         return tree_new_integer_literal(self->context,
                 c_sema_get_int_type(self, signed_, ext), loc, v);
@@ -318,8 +318,8 @@ extern tree_expr* c_sema_check_call_expr_args(c_sema* self, tree_expr* call)
 
         tree_expr* lhs = tree_get_call_lhs(call);
         tree_type* ft = tree_desugar_type(tree_get_pointer_target(tree_get_expr_type(lhs)));
-        ssize num_params = tree_get_function_type_params_size(ft);
-        ssize num_args = tree_get_call_args_size(call);
+        size_t num_params = tree_get_function_type_params_size(ft);
+        size_t num_args = tree_get_call_args_size(call);
 
         if (num_args < num_params)
         {
@@ -332,7 +332,7 @@ extern tree_expr* c_sema_check_call_expr_args(c_sema* self, tree_expr* call)
                 return NULL;
         }
 
-        ssize i = 0;
+        size_t i = 0;
         for (; i < num_params; i++)
         {
                 tree_expr** parg = tree_get_call_args_begin(call) + i;

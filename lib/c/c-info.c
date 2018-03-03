@@ -4,9 +4,9 @@
 #include "scc/core/char-info.h"
 #include <stdio.h>
 
-extern void c_get_unescaped_string(char* buffer, const char* string, ssize len)
+extern void c_get_unescaped_string(char* buffer, const char* string, size_t len)
 {
-        for (ssize i = 0; i < len; i++)
+        for (size_t i = 0; i < len; i++)
         {
                 int c = string[i];
                 if (char_is_escape(c))
@@ -20,10 +20,10 @@ extern void c_get_unescaped_string(char* buffer, const char* string, ssize len)
         *buffer++ = '\0';
 }
 
-extern ssize c_get_escaped_string(char* buffer, const char* string, ssize len)
+extern size_t c_get_escaped_string(char* buffer, const char* string, size_t len)
 {
         char* begin = buffer;
-        for (ssize i = 0; i < len; i++)
+        for (size_t i = 0; i < len; i++)
         {
                 int c = string[i];
                 if (c == '\\')
@@ -85,7 +85,7 @@ extern const c_resword_info* c_get_token_kind_info(c_token_kind k)
         return &_c_resword_infos[k];
 }
 
-extern int c_token_to_string(const tree_context* context, const c_token* tok, char* buf, ssize n)
+extern int c_token_to_string(const tree_context* context, const c_token* tok, char* buf, size_t n)
 {
         c_token_kind k = c_token_get_kind(tok);
         const c_resword_info* info = c_get_token_kind_info(k);

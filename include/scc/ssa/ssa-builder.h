@@ -58,7 +58,7 @@ extern ssa_value* ssa_build_getfieldaddr(
         ssa_builder* self, ssa_value* record, tree_decl* field);
 
 extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id id);
-extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, suint64 val);
+extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, uint64_t val);
 extern ssa_value* ssa_build_size_t_constant(ssa_builder* self, size_t val);
 extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, float val);
 extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, double val);

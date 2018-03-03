@@ -9,7 +9,7 @@ extern tree_expr* tree_new_expr(
         tree_value_kind value_kind,
         tree_type* type,
         tree_location loc,
-        ssize size)
+        size_t size)
 {
         S_ASSERT(size >= sizeof(struct _tree_expr_base));
         tree_expr* e = tree_allocate_node(context, size);
@@ -141,7 +141,7 @@ extern tree_expr* tree_new_conditional_expr(
 }
 
 extern tree_expr* tree_new_integer_literal(
-        tree_context* context, tree_type* type, tree_location loc, suint64 value)
+        tree_context* context, tree_type* type, tree_location loc, uint64_t value)
 {
         tree_expr* e = tree_new_expr(context, TEK_INTEGER_LITERAL, TVK_RVALUE, type, loc,
                 sizeof(struct _tree_integer_literal_expr));

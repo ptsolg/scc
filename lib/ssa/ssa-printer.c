@@ -72,7 +72,7 @@ static void ssa_print_string(ssa_printer* self, tree_id id)
                 return;
 
         ssa_printc(self, '"');
-        for (ssize i = 0; i < entry.size; i++)
+        for (size_t i = 0; i < entry.size; i++)
         {
                 int c = entry.data[i];
                 ssa_printf(self, (char_is_escape(c) ? "\\%02X" : "%c"), c);
@@ -222,8 +222,8 @@ static void ssa_print_switch_instr_operands(ssa_printer* self, const ssa_instr* 
         ssa_print_value_ref(self, ssa_get_instr_operand_value(instr, 1));
 
         ssa_prints(self, " [");
-        ssize num_ops = ssa_get_instr_operands_size(instr);
-        for (ssize i = 2; i < num_ops; i++)
+        size_t num_ops = ssa_get_instr_operands_size(instr);
+        for (size_t i = 2; i < num_ops; i++)
         {
                 ssa_print_value_ref(self, ssa_get_instr_operand_value(instr, i));
                 if (i + 1 != num_ops)

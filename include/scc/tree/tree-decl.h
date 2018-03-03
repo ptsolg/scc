@@ -247,7 +247,7 @@ extern tree_decl* tree_new_decl(
         tree_decl_kind kind,
         tree_decl_scope* scope,
         tree_xlocation loc,
-        ssize size);
+        size_t size);
 
 static TREE_INLINE tree_decl* tree_get_next_decl(const tree_decl* self)
 {
@@ -343,7 +343,7 @@ extern tree_decl* tree_new_named_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
-        ssize size);
+        size_t size);
 
 static TREE_INLINE tree_id tree_get_decl_name(const tree_decl* self)
 {
@@ -367,7 +367,7 @@ extern tree_decl* tree_new_typed_decl(
         tree_xlocation loc,
         tree_id name,
         tree_type* type,
-        ssize size);
+        size_t size);
 
 static TREE_INLINE tree_type* tree_get_decl_type(const tree_decl* self)
 {
@@ -387,7 +387,7 @@ extern tree_decl* tree_new_value_decl(
         tree_id name,
         tree_decl_storage_class class_,
         tree_type* type,
-        ssize size);
+        size_t size);
 
 static TREE_INLINE tree_decl_storage_class tree_get_decl_storage_class(const tree_decl* self)
 {
@@ -412,7 +412,7 @@ extern tree_decl* tree_new_tag_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
-        ssize size);
+        size_t size);
 
 static TREE_INLINE bool tree_decl_is_tag(const tree_decl* self)
 {
@@ -565,7 +565,7 @@ extern uint tree_get_field_index(tree_decl* self);
 
 static TREE_INLINE tree_decl* tree_get_field_record(const tree_decl* self)
 {
-        return (tree_decl*)((suint8*)tree_get_decl_scope(self)
+        return (tree_decl*)((uint8_t*)tree_get_decl_scope(self)
                 - offsetof(struct _tree_record_decl, fields));
 }
 
@@ -658,12 +658,12 @@ static TREE_INLINE tree_decl** tree_get_decl_group_end(const tree_decl* self)
         return tree_get_decl_group_begin(self) + self->group.decls.size;
 }
 
-static TREE_INLINE ssize tree_get_decl_group_size(const tree_decl* self)
+static TREE_INLINE size_t tree_get_decl_group_size(const tree_decl* self)
 {
         return self->group.decls.size;
 }
 
-static TREE_INLINE tree_decl* tree_get_decl_group_decl(const tree_decl* self, ssize i)
+static TREE_INLINE tree_decl* tree_get_decl_group_decl(const tree_decl* self, size_t i)
 {
         return tree_get_decl_group_begin(self)[i];
 }

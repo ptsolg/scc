@@ -411,7 +411,7 @@ static bool c_sema_compute_enumerator_value(
         tree_expr* init,
         int_value* result)
 {
-        ssize i32_nbits = 8 * tree_get_builtin_type_size(self->target, TBTK_INT32);
+        size_t i32_nbits = 8 * tree_get_builtin_type_size(self->target, TBTK_INT32);
         if (init)
         {
                 tree_eval_result r;
@@ -785,7 +785,7 @@ static bool c_sema_set_function_params(c_sema* self, tree_decl* func, dseq* para
 {
         c_sema_enter_decl_scope(self, tree_get_function_params(func));
 
-        for (ssize i = 0; i < dseq_size(params); i++)
+        for (size_t i = 0; i < dseq_size(params); i++)
                 if (!c_sema_define_param_decl(self, dseq_get(params, i)))
                 {
                         c_sema_exit_decl_scope(self);

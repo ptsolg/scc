@@ -32,9 +32,9 @@ typedef struct _obstack
 
         struct
         {
-                suint8* pos;
-                suint8* end;
-                ssize size;
+                uint8_t* pos;
+                uint8_t* end;
+                size_t size;
         } _chunk;
 
         list_head _chunks;
@@ -44,11 +44,11 @@ typedef struct _obstack
 extern void obstack_init(obstack* self);
 extern void obstack_init_ex(obstack* self, allocator* alloc);
 extern void obstack_dispose(obstack* self);
-extern serrcode obstack_grow(obstack* self, ssize at_least);
+extern serrcode obstack_grow(obstack* self, size_t at_least);
 
-static inline void* obstack_allocate_aligned(obstack* self, ssize bytes, ssize alignment)
+static inline void* obstack_allocate_aligned(obstack* self, size_t bytes, size_t alignment)
 {
-        ssize adjustment = pointer_adjustment(self->_chunk.pos, alignment);
+        size_t adjustment = pointer_adjustment(self->_chunk.pos, alignment);
         if (self->_chunk.pos + bytes + adjustment >= self->_chunk.end)
         {
                 if (S_FAILED(obstack_grow(self, bytes + alignment)))
@@ -62,7 +62,7 @@ static inline void* obstack_allocate_aligned(obstack* self, ssize bytes, ssize a
         return block;
 }
 
-static inline void* obstack_allocate(obstack* self, ssize bytes)
+static inline void* obstack_allocate(obstack* self, size_t bytes)
 {
         return obstack_allocate_aligned(self, bytes, STDALIGNMENT);
 }
@@ -85,12 +85,12 @@ static inline allocator* obstack_allocator(const obstack* self)
 typedef struct _objpool
 {
         obstack _base;
-        suint8* _top;
-        ssize _obsize;
+        uint8_t* _top;
+        size_t _obsize;
 } objpool;
 
-extern void objpool_init(objpool* self, ssize obsize);
-extern void objpool_init_ex(objpool* self, ssize obsize, allocator* alloc);
+extern void objpool_init(objpool* self, size_t obsize);
+extern void objpool_init_ex(objpool* self, size_t obsize, allocator* alloc);
 extern void objpool_dispose(objpool* self);
 
 static inline void* objpool_allocate(objpool* self)
@@ -109,12 +109,12 @@ static inline void objpool_deallocate(objpool* self, void* object)
         if (!object)
                 return;
 
-        object = (suint8*)object - sizeof(void*);
+        object = (uint8_t*)object - sizeof(void*);
         *(void**)object = self->_top;
         self->_top = object;
 }
 
-typedef void*(*mempool_bad_alloc_handler)(void*, ssize);
+typedef void*(*mempool_bad_alloc_handler)(void*, size_t);
 
 typedef struct _mempool
 {
@@ -133,7 +133,7 @@ extern void mempool_init_ex(
 
 extern void mempool_dispose(mempool* self);
 
-static inline void* mempool_allocate(mempool* self, ssize bytes)
+static inline void* mempool_allocate(mempool* self, size_t bytes)
 {
         void* block = allocate(self->_alloc, sizeof(list_node) + bytes);
         if (!block)
@@ -146,7 +146,7 @@ static inline void* mempool_allocate(mempool* self, ssize bytes)
 
         list_node_init(block);
         list_push_back(&self->_used, block);
-        return (suint8*)block + sizeof(list_node);
+        return (uint8_t*)block + sizeof(list_node);
 }
 
 static inline void mempool_deallocate(mempool* self, void* block)
@@ -154,7 +154,7 @@ static inline void mempool_deallocate(mempool* self, void* block)
         if (!block)
                 return;
 
-        block = (suint8*)block - sizeof(list_node);
+        block = (uint8_t*)block - sizeof(list_node);
         list_node_remove(block);
         deallocate(self->_alloc, block);
 }

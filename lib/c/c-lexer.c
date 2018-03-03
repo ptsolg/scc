@@ -103,7 +103,7 @@ static inline c_token* c_lex_integer_constant(c_lexer* self, c_token* pp)
                 : 10;
 
         char* suffix = NULL;
-        suint64 val = strtoull(num, &suffix, base);
+        uint64_t val = strtoull(num, &suffix, base);
 
         bool is_signed = true;
         int ls = 0;
@@ -123,7 +123,7 @@ static inline c_token* c_lex_integer_constant(c_lexer* self, c_token* pp)
 static inline c_token* c_lex_floating_constant(c_lexer* self, c_token* pp)
 {
         const char* num = c_lexer_get_string(self, c_token_get_string(pp));
-        ssize len = strlen(num);
+        size_t len = strlen(num);
         char* suffix = NULL;
 
         float f;
@@ -134,7 +134,7 @@ static inline c_token* c_lex_floating_constant(c_lexer* self, c_token* pp)
         else
                 d = strtod(num, &suffix);
 
-        ssize suffix_len = strlen(suffix);
+        size_t suffix_len = strlen(suffix);
         if ((is_float && suffix_len > 1) || (!is_float && suffix_len))
         {
                 c_error_invalid_floating_literal(self->pp.logger, c_token_get_loc(pp), num);

@@ -158,7 +158,7 @@ struct _tree_conditional_expr
 struct _tree_integer_literal_expr
 {
         struct _tree_expr_base base;
-        suint64 value;
+        uint64_t value;
 };
 
 struct _tree_paren_expr
@@ -290,7 +290,7 @@ extern tree_expr* tree_new_expr(
         tree_value_kind value_kind,
         tree_type* type,
         tree_location loc,
-        ssize size);
+        size_t size);
 
 static TREE_INLINE tree_expr_kind tree_get_expr_kind(const tree_expr* self)
 {
@@ -472,7 +472,7 @@ static TREE_INLINE void tree_set_call_args(tree_expr* self, tree_array* args)
         self->call.args = *args;
 }
 
-static TREE_INLINE ssize tree_get_call_args_size(const tree_expr* self)
+static TREE_INLINE size_t tree_get_call_args_size(const tree_expr* self)
 {
         return self->call.args.size;
 }
@@ -492,7 +492,7 @@ static TREE_INLINE tree_expr** tree_get_call_args_end(const tree_expr* self)
         return tree_get_call_args_begin(self) + tree_get_call_args_size(self);
 }
 
-static TREE_INLINE tree_expr* tree_get_call_arg(const tree_expr* self, ssize i)
+static TREE_INLINE tree_expr* tree_get_call_arg(const tree_expr* self, size_t i)
 {
         return tree_get_call_args_begin(self)[i];
 }
@@ -574,14 +574,14 @@ static TREE_INLINE void tree_set_conditional_condition(tree_expr* self, tree_exp
 }
 
 extern tree_expr* tree_new_integer_literal(
-        tree_context* context, tree_type* type, tree_location loc, suint64 value);
+        tree_context* context, tree_type* type, tree_location loc, uint64_t value);
 
-static TREE_INLINE suint64 tree_get_integer_literal(const tree_expr* self)
+static TREE_INLINE uint64_t tree_get_integer_literal(const tree_expr* self)
 {
         return self->int_literal.value;
 }
 
-static TREE_INLINE void tree_set_integer_literal(tree_expr* self, suint64 value)
+static TREE_INLINE void tree_set_integer_literal(tree_expr* self, uint64_t value)
 {
         self->int_literal.value = value;
 }
@@ -821,7 +821,7 @@ static TREE_INLINE tree_expr** tree_get_init_list_exprs_begin(const tree_expr* s
         return (tree_expr**)self->init_list.exprs.data;
 }
 
-static TREE_INLINE tree_expr* tree_get_init_list_expr(const tree_expr* self, ssize i)
+static TREE_INLINE tree_expr* tree_get_init_list_expr(const tree_expr* self, size_t i)
 {
         return tree_get_init_list_exprs_begin(self)[i];
 }
@@ -831,7 +831,7 @@ static TREE_INLINE tree_expr** tree_get_init_list_exprs_end(const tree_expr* sel
         return tree_get_init_list_exprs_begin(self) + self->init_list.exprs.size;
 }
 
-static TREE_INLINE ssize tree_get_init_list_exprs_size(const tree_expr* self)
+static TREE_INLINE size_t tree_get_init_list_exprs_size(const tree_expr* self)
 {
         return tree_get_init_list_exprs_end(self) - tree_get_init_list_exprs_begin(self);
 }

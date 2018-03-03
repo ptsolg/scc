@@ -55,7 +55,7 @@ extern void ssa_init_value(
         tree_type* type);
 
 extern ssa_value* ssa_new_value(ssa_context* context,
-        ssa_value_kind kind, ssa_id id, tree_type* type, ssize size);
+        ssa_value_kind kind, ssa_id id, tree_type* type, size_t size);
 
 extern void ssa_replace_value_with(ssa_value* what, ssa_value* with);
 

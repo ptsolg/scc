@@ -3,8 +3,8 @@
 
 typedef struct
 {
-        ssize size;
-        suint8 data[0];
+        size_t size;
+        uint8_t data[0];
 } strentry_impl;
 
 extern void strpool_init(strpool* self)
@@ -45,7 +45,7 @@ extern bool strpooled(const strpool* self, strref ref)
         return strmap_find(&self->_map, ref, &placeholder);
 }
 
-extern strref strpool_insert(strpool* self, const void* data, ssize size)
+extern strref strpool_insert(strpool* self, const void* data, size_t size)
 {
         strref ref = STRREFL(data, size);
         for (strref i = 1; ; i++)

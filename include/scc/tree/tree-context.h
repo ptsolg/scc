@@ -31,7 +31,7 @@ extern void tree_dispose(tree_context* self);
 extern tree_type* tree_get_builtin_type(tree_context* self, tree_builtin_type_kind k);
 extern tree_type* tree_get_size_type(tree_context* self);
 
-static TREE_INLINE void* tree_allocate(tree_context* self, ssize bytes)
+static TREE_INLINE void* tree_allocate(tree_context* self, size_t bytes)
 {
         return allocate(self->alloc, bytes);
 }
@@ -41,7 +41,7 @@ static TREE_INLINE void tree_deallocate(tree_context* self, void* block)
         deallocate(self->alloc, block);
 }
 
-static TREE_INLINE void* tree_allocate_node(tree_context* self, ssize bytes)
+static TREE_INLINE void* tree_allocate_node(tree_context* self, size_t bytes)
 {
         return obstack_allocate(&self->nodes, bytes);
 }
@@ -61,7 +61,7 @@ static TREE_INLINE const char* tree_get_id_string(const tree_context* self, tree
 }
 
 static TREE_INLINE tree_id tree_get_id_for_string(
-        tree_context* self, const char* string, ssize len)
+        tree_context* self, const char* string, size_t len)
 {
         return strpool_insert(&self->strings, string, len);
 }
@@ -69,14 +69,14 @@ static TREE_INLINE tree_id tree_get_id_for_string(
 static TREE_INLINE serrcode tree_resize_array(
         tree_context* self,
         tree_array* array,
-        const ssize object_size,
-        const ssize new_size)
+        const size_t object_size,
+        const size_t new_size)
 {
-        suint8* new_data = tree_allocate(self, object_size * new_size);
+        uint8_t* new_data = tree_allocate(self, object_size * new_size);
         if (!new_data)
                 return S_ERROR;
 
-        ssize num_objects = S_MIN(new_size, array->size);
+        size_t num_objects = S_MIN(new_size, array->size);
         memcpy(new_data, array->data, array->size * object_size);
         tree_deallocate(self, array->data);
         array->data = new_data;

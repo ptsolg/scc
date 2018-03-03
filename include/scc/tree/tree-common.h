@@ -17,19 +17,19 @@ extern "C" {
 
 #define TREE_INVALID_ID STRREF_INVALID
 #define TREE_INVALID_LOC ((tree_location)-1)
-#define TREE_INVALID_XLOC ((suint64)-1)
+#define TREE_INVALID_XLOC ((uint64_t)-1)
 
 typedef strref tree_id;
 
 #define TREE_EMPTY_ID (STRREF(""))
 
-typedef suint32 tree_location;
+typedef uint32_t tree_location;
 
 typedef struct _tree_xlocation
 {
         union
         {
-                suint64 val;
+                uint64_t val;
                 struct
                 {
                         tree_location begin;
@@ -46,8 +46,8 @@ static tree_xlocation tree_create_xloc(tree_location begin, tree_location end)
 
 typedef struct _tree_array
 {
-        suint8* data;
-        ssize size;
+        uint8_t* data;
+        size_t size;
 } tree_array;
 
 static TREE_INLINE void tree_init_array(tree_array* self)

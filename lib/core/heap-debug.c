@@ -6,10 +6,10 @@
 #include <math.h>
 #define PAGE_SIZE 4096
 
-extern void* __cdecl hd_malloc_a(ssize size)
+extern void* __cdecl hd_malloc_a(size_t size)
 {
-        ssize available = (ssize)ceil((double)size / (double)PAGE_SIZE) * PAGE_SIZE;
-        ssize protected_ = PAGE_SIZE;
+        size_t available = (size_t)ceil((double)size / (double)PAGE_SIZE) * PAGE_SIZE;
+        size_t protected_ = PAGE_SIZE;
         DWORD old;
 
         char* p = VirtualAlloc(NULL, available + protected_, MEM_COMMIT, PAGE_READWRITE);
@@ -24,10 +24,10 @@ extern void __cdecl hd_free_a(void* block)
         VirtualFree(block, 0, MEM_RELEASE);
 }
 
-extern void* __cdecl hd_malloc_b(ssize size)
+extern void* __cdecl hd_malloc_b(size_t size)
 {
-        ssize available = (ssize)ceil((double)size / (double)PAGE_SIZE) * PAGE_SIZE;
-        ssize protected_ = PAGE_SIZE;
+        size_t available = (size_t)ceil((double)size / (double)PAGE_SIZE) * PAGE_SIZE;
+        size_t protected_ = PAGE_SIZE;
         DWORD old;
 
         char* p = VirtualAlloc(NULL, available + protected_, MEM_COMMIT, PAGE_READWRITE);

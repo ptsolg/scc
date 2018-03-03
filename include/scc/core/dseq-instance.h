@@ -43,7 +43,7 @@ extern "C" {
 #undef DSEQ_SET 
 #undef DSEQ_APPEND
 
-#define DSEQ_VALUE_TYPE suint32
+#define DSEQ_VALUE_TYPE uint32_t
 #define DSEQ_TYPE dseq_u32
 #define DSEQ_INIT dseq_u32_init
 #define DSEQ_INIT_ALLOC dseq_u32_init_alloc
@@ -77,7 +77,7 @@ extern "C" {
 #undef DSEQ_SET 
 #undef DSEQ_APPEND
 
-#define DSEQ_VALUE_TYPE suint8
+#define DSEQ_VALUE_TYPE uint8_t
 #define DSEQ_TYPE dseq_u8
 #define DSEQ_INIT dseq_u8_init
 #define DSEQ_INIT_ALLOC dseq_u8_init_alloc

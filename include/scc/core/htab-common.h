@@ -6,15 +6,15 @@
 struct _htab
 {
         uint8_t* _buckets;
-        ssize _num_buckets;
-        ssize _size;
+        size_t _num_buckets;
+        size_t _size;
         allocator* _alloc;
 };
 
 struct _hiter
 {
-        suint8* _bucket;
-        const suint8* _end;
+        uint8_t* _bucket;
+        const uint8_t* _end;
 };
 
 #endif

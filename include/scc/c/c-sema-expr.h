@@ -58,7 +58,7 @@ extern tree_expr* c_sema_new_sp_floating_literal(c_sema* self, tree_location loc
 extern tree_expr* c_sema_new_dp_floating_literal(c_sema* self, tree_location loc, ldouble v);
 extern tree_expr* c_sema_new_character_literal(c_sema* self, tree_location loc, int c);
 extern tree_expr* c_sema_new_integer_literal(
-        c_sema* self, tree_location loc, suint64 v, bool signed_, bool ext);
+        c_sema* self, tree_location loc, uint64_t v, bool signed_, bool ext);
 extern tree_expr* c_sema_new_string_literal(c_sema* self, tree_location loc, tree_id ref);
 
 extern tree_expr* c_sema_new_subscript_expr(

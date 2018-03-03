@@ -33,7 +33,7 @@ extern void ssa_init_ex(ssa_context* self,
 extern void ssa_dispose(ssa_context* self);
 extern tree_type* ssa_get_type_for_label(ssa_context* self);
 
-static inline void* ssa_allocate(ssa_context* self, ssize bytes)
+static inline void* ssa_allocate(ssa_context* self, size_t bytes)
 {
         return obstack_allocate(&self->nodes, bytes);
 }
@@ -56,14 +56,14 @@ static inline tree_context* ssa_get_tree(const ssa_context* self)
 static inline serrcode ssa_resize_array(
         ssa_context* self,
         ssa_array* array,
-        const ssize object_size,
-        const ssize new_size)
+        const size_t object_size,
+        const size_t new_size)
 {
-        suint8* new_data = mempool_allocate(&self->memory, object_size * new_size);
+        uint8_t* new_data = mempool_allocate(&self->memory, object_size * new_size);
         if (!new_data)
                 return S_ERROR;
 
-        ssize num_objects = S_MIN(new_size, array->size);
+        size_t num_objects = S_MIN(new_size, array->size);
         memcpy(new_data, array->data, num_objects * object_size);
         mempool_deallocate(&self->memory, array->data);
         array->data = new_data;
@@ -71,7 +71,7 @@ static inline serrcode ssa_resize_array(
         return S_NO_ERROR;
 }
 
-static inline void* ssa_reserve_object(ssa_context* self, ssa_array* array, const ssize object_size)
+static inline void* ssa_reserve_object(ssa_context* self, ssa_array* array, const size_t object_size)
 {
         if (S_FAILED(ssa_resize_array(self, array, object_size, array->size + 1)))
                 return NULL;

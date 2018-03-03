@@ -125,7 +125,7 @@ static bool c_preprocessor_read_macro_body(c_preprocessor* self, c_macro* macro)
                 c_macro_add_token(macro, self->context, t);
         }
 
-        ssize size = c_macro_get_tokens_size(macro);
+        size_t size = c_macro_get_tokens_size(macro);
         if (!size)
                 return true;
 

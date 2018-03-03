@@ -156,7 +156,7 @@ extern void float_to_sp(float_value* val)
 
 extern int_value float_to_int(const float_value* val, uint bits)
 {
-        suint64 v = float_get_u64(val);
+        uint64_t v = float_get_u64(val);
         int_value iv;
         int_init(&iv, bits, true, v);
         return iv;
@@ -179,53 +179,53 @@ extern double float_get_dp(const float_value* val)
                 return val->_double;
 }
 
-extern suint8 float_get_u8(const float_value* val)
+extern uint8_t float_get_u8(const float_value* val)
 {
-        return (suint8)float_get_u64(val);
+        return (uint8_t)float_get_u64(val);
 }
 
-extern suint16 float_get_u16(const float_value* val)
+extern uint16_t float_get_u16(const float_value* val)
 {
-        return (suint16)float_get_u64(val);
+        return (uint16_t)float_get_u64(val);
 }
 
-extern suint32 float_get_u32(const float_value* val)
+extern uint32_t float_get_u32(const float_value* val)
 {
-        return (suint32)float_get_u64(val);
+        return (uint32_t)float_get_u64(val);
 }
 
-extern suint64 float_get_u64(const float_value* val)
-{
-        if (float_is_sp(val))
-                return (suint64)val->_float;
-        else
-                return (suint64)val->_double;
-}
-
-extern sint8 float_get_i8(const float_value* val)
-{
-        return (sint8)float_get_i64(val);
-}
-
-extern sint16 float_get_i16(const float_value* val)
-{
-        return (sint16)float_get_i64(val);
-}
-
-extern sint32 float_get_i32(const float_value* val)
-{
-        return (sint32)float_get_i64(val);
-}
-
-extern sint64 float_get_i64(const float_value* val)
+extern uint64_t float_get_u64(const float_value* val)
 {
         if (float_is_sp(val))
-                return (sint64)val->_float;
+                return (uint64_t)val->_float;
         else
-                return (sint64)val->_double;
+                return (uint64_t)val->_double;
 }
 
-extern int float_print(const float_value* val, char* buf, ssize count, int precision)
+extern int8_t float_get_i8(const float_value* val)
+{
+        return (int8_t)float_get_i64(val);
+}
+
+extern int16_t float_get_i16(const float_value* val)
+{
+        return (int16_t)float_get_i64(val);
+}
+
+extern int32_t float_get_i32(const float_value* val)
+{
+        return (int32_t)float_get_i64(val);
+}
+
+extern int64_t float_get_i64(const float_value* val)
+{
+        if (float_is_sp(val))
+                return (int64_t)val->_float;
+        else
+                return (int64_t)val->_double;
+}
+
+extern int float_print(const float_value* val, char* buf, size_t count, int precision)
 {
         if (float_is_sp(val))
                 return snprintf(buf, count, "%.*f", precision, float_get_sp(val));
@@ -233,19 +233,19 @@ extern int float_print(const float_value* val, char* buf, ssize count, int preci
                 return snprintf(buf, count, "%.*lf", precision, float_get_dp(val));
 }
 
-extern int float_print_as_hex(const float_value* val, char* buf, ssize count)
+extern int float_print_as_hex(const float_value* val, char* buf, size_t count)
 {
         union
         {
                 double dp;
-                suint64 u64;
+                uint64_t u64;
         } v = { .u64 = 0ULL };
 
         v.dp = float_get_dp(val);
         return snprintf(buf, count, "0x%016llX", v.u64);
 }
 
-extern void int_init(int_value* self, uint bits, bool signed_, suint64 val)
+extern void int_init(int_value* self, uint bits, bool signed_, uint64_t val)
 {
         self->_val = val;
         int_set_signed(self, signed_);
@@ -269,24 +269,24 @@ extern bool int_is_signed(const int_value* self)
 
 extern op_result int_add(int_value* self, const int_value* rhs)
 {
-        suint64 x = int_get_u64(self);
-        suint64 y = int_get_u64(rhs);
+        uint64_t x = int_get_u64(self);
+        uint64_t y = int_get_u64(rhs);
         self->_val = mod2(x + y, int_get_bits(self));
         return self->_val < x ? OR_OVERFLOW : OR_OK;
 }
 
 extern op_result int_sub(int_value* self, const int_value* rhs)
 {
-        suint64 x = int_get_u64(self);
-        suint64 y = int_get_u64(rhs);
+        uint64_t x = int_get_u64(self);
+        uint64_t y = int_get_u64(rhs);
         self->_val = mod2(x - y, int_get_bits(self));
         return self->_val > x ? OR_UNDERFLOW : OR_OK;
 }
 
 extern op_result int_mul(int_value* self, const int_value* rhs)
 {
-        suint64 x = int_get_u64(self);
-        suint64 y = int_get_u64(rhs);
+        uint64_t x = int_get_u64(self);
+        uint64_t y = int_get_u64(rhs);
         self->_val = mod2(x * y, int_get_bits(self));
 
         return x != 0 && self->_val / x != y
@@ -295,8 +295,8 @@ extern op_result int_mul(int_value* self, const int_value* rhs)
 
 extern op_result int_div(int_value* self, const int_value* rhs)
 {
-        suint64 x = int_get_u64(self);
-        suint64 y = int_get_u64(rhs);
+        uint64_t x = int_get_u64(self);
+        uint64_t y = int_get_u64(rhs);
         if (y == 0)
                 return OR_DIV_BY_ZERO;
 
@@ -308,17 +308,17 @@ extern op_result int_mod(int_value* self, const int_value* rhs)
 {
         if (int_is_signed(self))
         {
-                sint64 x = int_get_i64(self);
-                sint64 y = int_get_i64(rhs);
+                int64_t x = int_get_i64(self);
+                int64_t y = int_get_i64(rhs);
                 if (y == 0)
                         return OR_DIV_BY_ZERO;
 
-                self->_val = mod2((suint64)(x % y), int_get_bits(self));
+                self->_val = mod2((uint64_t)(x % y), int_get_bits(self));
                 return OR_OK;
         }
 
-        suint64 x = int_get_u64(self);
-        suint64 y = int_get_u64(rhs);
+        uint64_t x = int_get_u64(self);
+        uint64_t y = int_get_u64(rhs);
         if (y == 0)
                 return OR_DIV_BY_ZERO;
 
@@ -328,16 +328,16 @@ extern op_result int_mod(int_value* self, const int_value* rhs)
 
 extern op_result int_shl(int_value* self, const int_value* rhs)
 {
-        suint64 x = int_get_u64(self);
-        suint64 y = int_get_u64(rhs);
+        uint64_t x = int_get_u64(self);
+        uint64_t y = int_get_u64(rhs);
         self->_val = mod2(x << y, int_get_bits(self));
         return self->_val >> y == x ? OR_OK : OR_OVERFLOW;
 }
 
 extern op_result int_shr(int_value* self, const int_value* rhs)
 {
-        suint64 x = int_get_u64(self);
-        suint64 y = int_get_u64(rhs);
+        uint64_t x = int_get_u64(self);
+        uint64_t y = int_get_u64(rhs);
         self->_val = x >> y;
         return self->_val << y == x ? OR_OK : OR_UNDERFLOW;
 }
@@ -368,7 +368,7 @@ extern op_result int_not(int_value* self)
 
 extern op_result int_neg(int_value* self)
 {
-        self->_val = mod2((suint64)(-int_get_i64(self)), int_get_bits(self));
+        self->_val = mod2((uint64_t)(-int_get_i64(self)), int_get_bits(self));
         return OR_OK;
 }
 
@@ -376,15 +376,15 @@ extern cmp_result int_cmp(const int_value* lhs, const int_value* rhs)
 {
         if (int_is_signed(lhs))
         {
-                sint64 l = int_get_i64(lhs);
-                sint64 r = int_get_i64(rhs);
+                int64_t l = int_get_i64(lhs);
+                int64_t r = int_get_i64(rhs);
                 if (l == r)
                         return CR_EQ;
                 return l > r ? CR_GR : CR_LE;
         }
 
-        suint64 l = int_get_u64(lhs);
-        suint64 r = int_get_u64(rhs);
+        uint64_t l = int_get_u64(lhs);
+        uint64_t r = int_get_u64(rhs);
         if (l == r)
                 return CR_EQ;
         return l > r ? CR_GR : CR_LE;
@@ -395,59 +395,59 @@ extern bool int_is_zero(const int_value* val)
         return int_get_u64(val) == 0;
 }
 
-extern suint8 int_get_u8(const int_value* val)
+extern uint8_t int_get_u8(const int_value* val)
 {
-        return (suint8)int_get_u64(val);
+        return (uint8_t)int_get_u64(val);
 }
 
-extern suint16 int_get_u16(const int_value* val)
+extern uint16_t int_get_u16(const int_value* val)
 {
-        return (suint16)int_get_u64(val);
+        return (uint16_t)int_get_u64(val);
 }
 
-extern suint32 int_get_u32(const int_value* val)
+extern uint32_t int_get_u32(const int_value* val)
 {
-        return (suint32)int_get_u64(val);
+        return (uint32_t)int_get_u64(val);
 }
 
-extern suint64 int_get_u64(const int_value* val)
+extern uint64_t int_get_u64(const int_value* val)
 {
         return val->_val;
 }
 
-extern sint8 int_get_i8(const int_value* val)
+extern int8_t int_get_i8(const int_value* val)
 {
-        return (sint8)int_get_i64(val);
+        return (int8_t)int_get_i64(val);
 }
 
-extern sint16 int_get_i16(const int_value* val)
+extern int16_t int_get_i16(const int_value* val)
 {
-        return (sint16)int_get_i64(val);
+        return (int16_t)int_get_i64(val);
 }
 
-extern sint32 int_get_i32(const int_value* val)
+extern int32_t int_get_i32(const int_value* val)
 {
-        return (sint32)int_get_i64(val);
+        return (int32_t)int_get_i64(val);
 }
 
-extern sint64 int_get_i64(const int_value* val)
+extern int64_t int_get_i64(const int_value* val)
 {
-        const suint64 mask = ((suint64)1) << (val->_bits - 1);
-        suint64 v = int_get_u64(val);
-        return -(sint64)(v & mask) + (sint64)(v & ~mask);
+        const uint64_t mask = ((uint64_t)1) << (val->_bits - 1);
+        uint64_t v = int_get_u64(val);
+        return -(int64_t)(v & mask) + (int64_t)(v & ~mask);
 }
 
-extern suint64 int_get_umax(const int_value* val)
+extern uint64_t int_get_umax(const int_value* val)
 {
-        return ((suint64)-1) >> (64 - val->_bits);
+        return ((uint64_t)-1) >> (64 - val->_bits);
 }
 
-extern sint64 int_get_imin(const int_value* val)
+extern int64_t int_get_imin(const int_value* val)
 {
-        return -(sint64)(((suint64)1) << (val->_bits - 1));
+        return -(int64_t)(((uint64_t)1) << (val->_bits - 1));
 }
 
-extern sint64 int_get_imax(const int_value* val)
+extern int64_t int_get_imax(const int_value* val)
 {
         return int_get_umax(val) >> 1;
 }
@@ -487,18 +487,18 @@ extern float_value int_to_dp(const int_value* val)
         return fv;
 }
 
-extern int int_print(const int_value* val, char* buf, ssize count)
+extern int int_print(const int_value* val, char* buf, size_t count)
 {
         return snprintf(buf, count,
                 (int_is_signed(val) ? "%lld" : "%llu"), int_get_u64(val));
 }
 
-extern int int_print_as_hex(const int_value* val, char* buf, ssize count)
+extern int int_print_as_hex(const int_value* val, char* buf, size_t count)
 {
         return snprintf(buf, count, "0x%llX", int_get_u64(val));
 }
 
-extern void avalue_init_int(avalue* self, uint bits, bool signed_, suint64 val)
+extern void avalue_init_int(avalue* self, uint bits, bool signed_, uint64_t val)
 {
         self->_integer = true;
         int_init(&self->_int, bits, signed_, val);
@@ -680,7 +680,7 @@ extern bool avalue_is_int(const avalue* val)
         return !avalue_is_float(val);
 }
 
-extern suint8 avalue_get_u8(const avalue* val)
+extern uint8_t avalue_get_u8(const avalue* val)
 {
         if (avalue_is_float(val))
                 return float_get_u8(&val->_float);
@@ -688,7 +688,7 @@ extern suint8 avalue_get_u8(const avalue* val)
                 return int_get_u8(&val->_int);
 }
 
-extern suint16 avalue_get_u16(const avalue* val)
+extern uint16_t avalue_get_u16(const avalue* val)
 {
         if (avalue_is_float(val))
                 return float_get_u16(&val->_float);
@@ -696,7 +696,7 @@ extern suint16 avalue_get_u16(const avalue* val)
                 return int_get_u16(&val->_int);
 }
 
-extern suint32 avalue_get_u32(const avalue* val)
+extern uint32_t avalue_get_u32(const avalue* val)
 {
         if (avalue_is_float(val))
                 return float_get_u32(&val->_float);
@@ -704,7 +704,7 @@ extern suint32 avalue_get_u32(const avalue* val)
                 return int_get_u32(&val->_int);
 }
 
-extern suint64 avalue_get_u64(const avalue* val)
+extern uint64_t avalue_get_u64(const avalue* val)
 {
         if (avalue_is_float(val))
                 return float_get_u64(&val->_float);
@@ -712,7 +712,7 @@ extern suint64 avalue_get_u64(const avalue* val)
                 return int_get_u64(&val->_int);
 }
 
-extern sint8 avalue_get_i8(const avalue* val)
+extern int8_t avalue_get_i8(const avalue* val)
 {
         if (avalue_is_float(val))
                 return float_get_i8(&val->_float);
@@ -720,7 +720,7 @@ extern sint8 avalue_get_i8(const avalue* val)
                 return int_get_i8(&val->_int);
 }
 
-extern sint16 avalue_get_i16(const avalue* val)
+extern int16_t avalue_get_i16(const avalue* val)
 {
         if (avalue_is_float(val))
                 return float_get_i16(&val->_float);
@@ -728,7 +728,7 @@ extern sint16 avalue_get_i16(const avalue* val)
                 return int_get_i16(&val->_int);
 }
 
-extern sint32 avalue_get_i32(const avalue* val)
+extern int32_t avalue_get_i32(const avalue* val)
 {
         if (avalue_is_float(val))
                 return float_get_i32(&val->_float);
@@ -736,7 +736,7 @@ extern sint32 avalue_get_i32(const avalue* val)
                 return int_get_i32(&val->_int);
 }
 
-extern sint64 avalue_get_i64(const avalue* val)
+extern int64_t avalue_get_i64(const avalue* val)
 {
         if (avalue_is_float(val))
                 return float_get_i64(&val->_float);
@@ -808,7 +808,7 @@ extern void avalue_to_dp(avalue* val)
         }
 }
 
-extern int avalue_print(const avalue* self, char* buf, ssize count, int precision)
+extern int avalue_print(const avalue* self, char* buf, size_t count, int precision)
 {
         if (avalue_is_float(self))
                 return float_print(&self->_float, buf, count, precision);
@@ -816,7 +816,7 @@ extern int avalue_print(const avalue* self, char* buf, ssize count, int precisio
                 return int_print(&self->_int, buf, count);
 }
 
-extern int avalue_print_as_hex(const avalue* val, char* buf, ssize count)
+extern int avalue_print_as_hex(const avalue* val, char* buf, size_t count)
 {
         if (avalue_is_float(val))
                 return float_print_as_hex(&val->_float, buf, count);

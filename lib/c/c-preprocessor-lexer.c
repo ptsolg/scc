@@ -85,26 +85,26 @@ extern void c_preprocessor_lexer_stack_dispose(c_preprocessor_lexer_stack* self)
 
 extern void c_preprocessor_lexer_stack_pop_lexer(c_preprocessor_lexer_stack* self)
 {
-        ssize size = c_pp_lexer_stack_size(&self->lexers);
+        size_t size = c_pp_lexer_stack_size(&self->lexers);
         S_ASSERT(size);
         c_pp_lexer_stack_resize(&self->lexers, size - 1);
 }
 
-extern ssize c_preprocessor_lexer_stack_size(const c_preprocessor_lexer_stack* self)
+extern size_t c_preprocessor_lexer_stack_size(const c_preprocessor_lexer_stack* self)
 {
         return c_pp_lexer_stack_size(&self->lexers);
 }
 
 extern c_preprocessor_lexer* c_preprocessor_lexer_stack_top(const c_preprocessor_lexer_stack* self)
 {
-        ssize size = c_preprocessor_lexer_stack_size(self);
+        size_t size = c_preprocessor_lexer_stack_size(self);
         S_ASSERT(size);
         return c_pp_lexer_stack_begin(&self->lexers) + size - 1;
 }
 
 static c_preprocessor_lexer* c_preprocessor_lexer_stack_push_lexer(c_preprocessor_lexer_stack* self)
 {
-        ssize size = c_pp_lexer_stack_size(&self->lexers);
+        size_t size = c_pp_lexer_stack_size(&self->lexers);
         c_pp_lexer_stack_resize(&self->lexers, size + 1);
         return c_pp_lexer_stack_begin(&self->lexers) + size;
 }

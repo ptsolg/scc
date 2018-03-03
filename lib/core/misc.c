@@ -3,22 +3,22 @@
 
 typedef struct
 {
-        suint8* first;
-        suint8* last;
+        uint8_t* first;
+        uint8_t* last;
 } memrange;
 
-static inline memrange memrange_create(suint8* first, suint8* last)
+static inline memrange memrange_create(uint8_t* first, uint8_t* last)
 {
         memrange r = { first, last };
         return r;
 }
 
-static inline memrange _partition(suint8* first, suint8* last, ssize obsize,
+static inline memrange _partition(uint8_t* first, uint8_t* last, size_t obsize,
         cmp_result(*const cmp_fn)(void*, const void*, const void*), void* ex_data)
 {
-        suint8 mid[SSORT_MAX_OBJECT_SIZE];
-        suint8 buffer[SSORT_MAX_OBJECT_SIZE];
-        ssize n = (last - first) / obsize;
+        uint8_t mid[SSORT_MAX_OBJECT_SIZE];
+        uint8_t buffer[SSORT_MAX_OBJECT_SIZE];
+        size_t n = (last - first) / obsize;
         memcpy(mid, first + (n / 2) * obsize, obsize);
 
         while (first <= last)
@@ -39,14 +39,14 @@ static inline memrange _partition(suint8* first, suint8* last, ssize obsize,
         return memrange_create(first, last);
 }
 
-extern void ssort(void* data, ssize n, ssize obsize,
+extern void ssort(void* data, size_t n, size_t obsize,
         cmp_result(*const cmp_fn)(void*, const void*, const void*), void* ex_data)
 {
         S_ASSERT(data && n && cmp_fn && obsize < SSORT_MAX_OBJECT_SIZE);
 
         memrange stack[128];
-        ssize sp = 0;
-        stack[sp++] = memrange_create((suint8*)data, (suint8*)data + (n - 1) * obsize);
+        size_t sp = 0;
+        stack[sp++] = memrange_create((uint8_t*)data, (uint8_t*)data + (n - 1) * obsize);
 
         while (sp)
         {

@@ -58,7 +58,7 @@ static c_token* _c_macro_lexer_concat(c_macro_lexer* self, c_token* l, c_token* 
 
 static c_token* c_macro_lexer_concat(c_macro_lexer* self, const dseq* tokens, tree_location loc)
 {
-        ssize size = dseq_size(tokens);
+        size_t size = dseq_size(tokens);
         S_ASSERT(size >= 2);
 
         c_token* concat = _c_macro_lexer_concat(self,
@@ -67,7 +67,7 @@ static c_token* c_macro_lexer_concat(c_macro_lexer* self, const dseq* tokens, tr
         if (!concat)
                 return NULL;
 
-        for (ssize i = 2; i < size; i++)
+        for (size_t i = 2; i < size; i++)
                 if (!(concat = _c_macro_lexer_concat(self, concat, dseq_get(tokens, i), loc)))
                         return NULL;
 

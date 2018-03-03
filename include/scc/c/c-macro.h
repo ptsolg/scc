@@ -25,14 +25,14 @@ extern c_macro* c_macro_new(c_context* context,
 extern void c_macro_delete(c_context* context, c_macro* macro);
 extern void c_macro_add_param(c_macro* self, c_context* context, tree_id param);
 extern void c_macro_add_token(c_macro* self, c_context* context, c_token* token);
-extern c_token* c_macro_get_token(const c_macro* self, ssize i);
+extern c_token* c_macro_get_token(const c_macro* self, size_t i);
 extern c_token** c_macro_get_tokens_begin(const c_macro* self);
 extern c_token** c_macro_get_tokens_end(const c_macro* self);
-extern ssize c_macro_get_tokens_size(const c_macro* self);
-extern tree_id c_macro_get_param(const c_macro* self, ssize i);
+extern size_t c_macro_get_tokens_size(const c_macro* self);
+extern tree_id c_macro_get_param(const c_macro* self, size_t i);
 extern tree_id* c_macro_get_params_begin(const c_macro* self);
 extern tree_id* c_macro_get_params_end(const c_macro* self);
-extern ssize c_macro_get_params_size(const c_macro* self);
+extern size_t c_macro_get_params_size(const c_macro* self);
 
 #define C_FOREACH_MACRO_TOKEN(PMACRO, ITNAME, ENDNAME) \
         for (c_token** ITNAME = c_macro_get_tokens_begin(PMACRO), \

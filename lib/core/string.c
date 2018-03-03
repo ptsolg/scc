@@ -41,7 +41,7 @@ extern char* strprecat(char* string, const char* other)
         return string;
 }
 
-extern char* strcatn(char* string, ssize n, ...)
+extern char* strcatn(char* string, size_t n, ...)
 {
         va_list strings;
         va_start(strings, n);
@@ -50,7 +50,7 @@ extern char* strcatn(char* string, ssize n, ...)
         return string;
 }
 
-extern char* strprecatn(char* string, ssize n, ...)
+extern char* strprecatn(char* string, size_t n, ...)
 {
         va_list strings;
         va_start(strings, n);
@@ -76,7 +76,7 @@ extern const char* cstrend(const char* string)
         return string + strlen(string);
 }
 
-extern char* strfill(char* string, int v, ssize n)
+extern char* strfill(char* string, int v, size_t n)
 {
         memset(string, v, n);
         string[n] = '\0';

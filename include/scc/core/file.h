@@ -26,7 +26,7 @@ extern bool path_is_file(const char* path);
 extern bool path_is_valid(const char* path);
 extern char* path_get_file(char* path);
 extern const char* path_get_cfile(const char* path);
-extern ssize path_get_size(const char* path);
+extern size_t path_get_size(const char* path);
 extern bool path_is_abs(const char* path);
 extern serrcode path_get_abs(char* abs, const char* loc);
 extern void path_fix_delimeter(char* path);
@@ -80,7 +80,7 @@ extern bool file_opened(const file_entry* entry);
 extern bool file_emulated(const file_entry* entry);
 extern const char* file_get_path(const file_entry* entry);
 extern const char* file_get_content(const file_entry* entry);
-extern ssize file_size(const file_entry* entry);
+extern size_t file_size(const file_entry* entry);
 
 typedef struct _file_lookup
 {

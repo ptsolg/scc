@@ -241,7 +241,7 @@ typedef struct _tree_stmt
 } tree_stmt;
 
 extern tree_stmt* tree_new_stmt(
-        tree_context* context, tree_stmt_kind kind, tree_xlocation loc, ssize size);
+        tree_context* context, tree_stmt_kind kind, tree_xlocation loc, size_t size);
 
 static TREE_INLINE tree_stmt_kind tree_get_stmt_kind(const tree_stmt* self)
 {

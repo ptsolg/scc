@@ -337,8 +337,8 @@ typedef enum
 static llvm_cast_kind llvm_get_cast_kind(const tree_target_info* target,
         const tree_type* from, const tree_type* to)
 {
-        ssize from_size = tree_get_sizeof(target, from);
-        ssize to_size = tree_get_sizeof(target, to);
+        size_t from_size = tree_get_sizeof(target, from);
+        size_t to_size = tree_get_sizeof(target, to);
         if (tree_type_is_pointer(to))
                 return tree_type_is_integer(from) ? LSK_INTTOPTR : LSK_BITCAST;
         else if (tree_type_is_pointer(from))
@@ -593,8 +593,8 @@ static void llvm_printer_emit_switch(llvm_printer* self, const ssa_instr* instr)
         llvm_prints(self, " [");
 
         self->indent_lvl++;
-        ssize num_ops = ssa_get_instr_operands_size(instr);
-        for (ssize i = 2; i < num_ops; i += 2)
+        size_t num_ops = ssa_get_instr_operands_size(instr);
+        for (size_t i = 2; i < num_ops; i += 2)
         {
                 llvm_print_endl(self);
                 llvm_print_indent(self);
@@ -789,7 +789,7 @@ extern void llvm_printer_emit_record_decls(llvm_printer* self, const ssa_module*
                 }
         }
 
-        for (ssize i = 0; i < dseq_size(&recs_to_print); i++)
+        for (size_t i = 0; i < dseq_size(&recs_to_print); i++)
                 llvm_printer_emit_record_decl(self, dseq_get(&recs_to_print, i), &recs_to_print);
 }
 
@@ -808,7 +808,7 @@ static void llvm_printer_emit_global(llvm_printer* self, ssa_value* global)
                 return;
 
         llvm_prints(self, " c\"");
-        for (ssize i = 0; i < entry.size; i++)
+        for (size_t i = 0; i < entry.size; i++)
         {
                 int c = entry.data[i];
                 llvm_printf(self, (char_is_escape(c) ? "\\%02X" : "%c"), c);

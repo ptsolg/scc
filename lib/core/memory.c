@@ -2,7 +2,7 @@
 #include "scc/core/malloc.h"
 #include <setjmp.h>
 
-static void* mallocate(void* self, ssize bytes)
+static void* mallocate(void* self, size_t bytes)
 {
         return smalloc(bytes);
 }
@@ -47,15 +47,15 @@ extern void obstack_dispose(obstack* self)
                 deallocate(self->_alloc, list_pop_front(&self->_chunks));
 }
 
-extern serrcode obstack_grow(obstack* self, ssize at_least)
+extern serrcode obstack_grow(obstack* self, size_t at_least)
 {
         struct
         {
                 list_node node;
-                suint8 data[0];
+                uint8_t data[0];
         } *chunk;
 
-        ssize data_size = at_least + self->_chunk.size;
+        size_t data_size = at_least + self->_chunk.size;
         if (!(chunk = allocate(self->_alloc, sizeof(*chunk) + data_size)))
                 return S_ERROR;
 
@@ -66,12 +66,12 @@ extern serrcode obstack_grow(obstack* self, ssize at_least)
         return S_NO_ERROR;
 }
 
-extern void objpool_init(objpool* self, ssize obsize)
+extern void objpool_init(objpool* self, size_t obsize)
 {
         objpool_init_ex(self, obsize, STDALLOC);
 }
 
-extern void objpool_init_ex(objpool* self, ssize obsize, allocator* alloc)
+extern void objpool_init_ex(objpool* self, size_t obsize, allocator* alloc)
 {
         obstack_init_ex(&self->_base, alloc);
         self->_obsize = obsize;

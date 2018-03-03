@@ -10,35 +10,50 @@ extern "C" {
 #endif
 
 #include "common.h"
-#include "bit-utils.h"
 
-static inline suint32 murmurhash3_86_32(const void* data, suint32 seed, int len)
+static inline uint32_t rotl32(uint32_t v, uint32_t n)
 {
-        const suint8* bytes = (const suint8*)data;
+        return (v << n) | (v >> (32 - n));
+}
+
+static inline uint32_t mix32(uint32_t v)
+{
+        v ^= v >> 16;
+        v *= 0x85ebca6b;
+        v ^= v >> 13;
+        v *= 0xc2b2ae35;
+        v ^= v >> 16;
+
+        return v;
+}
+
+static inline uint32_t murmurhash3_86_32(const void* data, uint32_t seed, int len)
+{
+        const uint8_t* bytes = (const uint8_t*)data;
         const int nblocks = len / 4;
         int i;
 
-        suint32 h1 = seed;
+        uint32_t h1 = seed;
 
-        suint32 c1 = 0xcc9e2d51;
-        suint32 c2 = 0x1b873593;
+        uint32_t c1 = 0xcc9e2d51;
+        uint32_t c2 = 0x1b873593;
 
-        const suint32* blocks = (const suint32*)(bytes + nblocks * 4);
+        const uint32_t* blocks = (const uint32_t*)(bytes + nblocks * 4);
         for (i = -nblocks; i; i++)
         {
-                suint32 k1 = blocks[i];
+                uint32_t k1 = blocks[i];
 
                 k1 *= c1;
-                k1 = s_rotl32(k1, 15);
+                k1 = rotl32(k1, 15);
                 k1 *= c2;
 
                 h1 ^= k1;
-                h1 = s_rotl32(h1, 13);
+                h1 = rotl32(h1, 13);
                 h1 = h1 * 5 + 0xe6546b64;
         }
 
-        const suint8* tail = (const suint8*)(bytes + nblocks * 4);
-        suint32 k1 = 0;
+        const uint8_t* tail = (const uint8_t*)(bytes + nblocks * 4);
+        uint32_t k1 = 0;
 
         switch (len & 3)
         {
@@ -47,13 +62,13 @@ static inline suint32 murmurhash3_86_32(const void* data, suint32 seed, int len)
                 case 1: k1 ^= tail[0];
 
                         k1 *= c1;
-                        k1 = s_rotl32(k1, 15);
+                        k1 = rotl32(k1, 15);
                         k1 *= c2;
                         h1 ^= k1;
         }
 
         h1 ^= len;
-        h1 = s_mix32(h1);
+        h1 = mix32(h1);
         return h1;
 }
 

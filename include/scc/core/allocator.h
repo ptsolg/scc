@@ -4,8 +4,8 @@
 #include "common.h"
 #include "misc.h"
 
-typedef void*(*allocate_fn)(void*, ssize);
-typedef void*(*allocate_aligned_fn)(void*, ssize, ssize);
+typedef void*(*allocate_fn)(void*, size_t);
+typedef void*(*allocate_aligned_fn)(void*, size_t, size_t);
 typedef void(*deallocate_fn)(void*, void*);
 
 // an allocator for 'heavy' allocations that is used by various data structures
@@ -24,9 +24,9 @@ static void allocator_init_ex(
         self->_deallocate = (deallocate_fn)deallocate;
 }
 
-static inline void* allocate(allocator*, ssize);
+static inline void* allocate(allocator*, size_t);
 
-static void* _allocate_aligned(void* allocator, ssize bytes, ssize alignment)
+static void* _allocate_aligned(void* allocator, size_t bytes, size_t alignment)
 {
         void* block = allocate(allocator, bytes + alignment);
         return block
@@ -39,13 +39,13 @@ static void allocator_init(allocator* self, void* allocate, void* deallocate)
         allocator_init_ex(self, allocate, &_allocate_aligned, deallocate);
 }
 
-static inline void* allocate(allocator* self, ssize bytes)
+static inline void* allocate(allocator* self, size_t bytes)
 {
         S_ASSERT(self && self->_allocate);
         return self->_allocate(self, bytes);
 }
 
-static inline void* allocate_aligned(allocator* self, ssize bytes, ssize alignment)
+static inline void* allocate_aligned(allocator* self, size_t bytes, size_t alignment)
 {
         S_ASSERT(self && self->_allocate_aligned && alignment);
         return self->_allocate_aligned(self, bytes, alignment);

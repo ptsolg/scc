@@ -73,7 +73,7 @@ extern serrcode llvm_compile(llvm_compiler* self, int* exit_code)
 extern serrcode llvm_linker_add_dir(llvm_linker* self, const char* dir)
 {
 #if S_WIN
-        ssize len = strlen(dir) + sizeof("/LIBPATH:\"\"");
+        size_t len = strlen(dir) + sizeof("/LIBPATH:\"\"");
         char* copy = allocate(self->alloc, len + 1);
         if (!copy)
                 return S_ERROR;

@@ -155,8 +155,8 @@ extern c_token* c_preprocess_directive(c_preprocessor* self)
 
 typedef struct
 {
-        ssize num_args;
-        ssize num_params;
+        size_t num_args;
+        size_t num_params;
         c_macro_args* args;
         c_macro* macro;
         tree_location loc;
@@ -343,15 +343,15 @@ static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, d
 
         dseq_u8 concat;
         dseq_u8_init_alloc(&concat, c_context_get_allocator(self->context));
-        for (ssize i = 0; i < dseq_size(strings); i++)
+        for (size_t i = 0; i < dseq_size(strings); i++)
         {
                 c_token* t = dseq_get(strings, i);
                 const char* string = tree_get_id_string(
                         c_context_get_tree_context(self->context), c_token_get_string(t));
 
                 char escaped[C_MAX_LINE_LENGTH + 1];
-                ssize size = c_get_escaped_string(escaped, string, strlen(string));
-                for (ssize j = 0; j < size - 1; j++)
+                size_t size = c_get_escaped_string(escaped, string, strlen(string));
+                for (size_t j = 0; j < size - 1; j++)
                         dseq_u8_append(&concat, escaped[j]);
         }
         dseq_u8_append(&concat, '\0');

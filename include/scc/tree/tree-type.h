@@ -37,7 +37,7 @@ struct _tree_type_base
         tree_type_kind kind;
 };
 
-extern tree_type* tree_new_type(tree_context* context, tree_type_kind kind, ssize size);
+extern tree_type* tree_new_type(tree_context* context, tree_type_kind kind, size_t size);
 
 static TREE_INLINE struct _tree_type_base* _tree_type_base(tree_type* self);
 static TREE_INLINE const struct _tree_type_base* _tree_type_cbase(const tree_type* self);
@@ -54,7 +54,7 @@ struct _tree_chain_type
 };
 
 extern tree_type* tree_new_chain_type(
-        tree_context* context, tree_type_kind kind, tree_type* next, ssize size);
+        tree_context* context, tree_type_kind kind, tree_type* next, size_t size);
 
 static TREE_INLINE struct _tree_chain_type* _tree_chain_type(tree_type* self);
 static TREE_INLINE const struct _tree_chain_type* _tree_chain_ctype(const tree_type* self);
@@ -109,9 +109,9 @@ extern serrcode tree_add_function_type_param(tree_type* self, tree_context* cont
 static TREE_INLINE struct _tree_function_type* _tree_function_type(tree_type* self);
 static TREE_INLINE const struct _tree_function_type* _tree_function_ctype(const tree_type* self);
 
-static TREE_INLINE ssize tree_get_function_type_params_size(const tree_type* self);
+static TREE_INLINE size_t tree_get_function_type_params_size(const tree_type* self);
 static TREE_INLINE tree_type* tree_get_function_type_result(const tree_type* self);
-static TREE_INLINE tree_type* tree_get_function_type_param(const tree_type* self, ssize n);
+static TREE_INLINE tree_type* tree_get_function_type_param(const tree_type* self, size_t n);
 static TREE_INLINE tree_type** tree_get_function_type_params_begin(const tree_type* self);
 static TREE_INLINE tree_type** tree_get_function_type_params_end(const tree_type* self);
 static TREE_INLINE bool tree_function_type_is_vararg(const tree_type* self);
@@ -135,7 +135,7 @@ struct _tree_array_type
 };
 
 extern tree_type* tree_new_array_type_ex(
-        tree_context* context, tree_array_kind kind, tree_type* eltype, ssize size);
+        tree_context* context, tree_array_kind kind, tree_type* eltype, size_t size);
 
 extern tree_type* tree_new_array_type(
         tree_context* context, tree_array_kind kind, tree_type* eltype);
@@ -236,7 +236,7 @@ struct _tree_qualified_type
         tree_type_quals quals;
 };
 
-#define _TREE_QUAL_FLAG ((ssize)1)
+#define _TREE_QUAL_FLAG ((size_t)1)
 #define _TREE_UNQUAL_MASK (~_TREE_QUAL_FLAG)
 
 extern tree_type* tree_new_qual_type(
@@ -402,7 +402,7 @@ static TREE_INLINE const struct _tree_function_type* _tree_function_ctype(const 
         return (const struct _tree_function_type*)tree_get_unqualified_ctype(self);
 }
 
-static TREE_INLINE ssize tree_get_function_type_params_size(const tree_type* self)
+static TREE_INLINE size_t tree_get_function_type_params_size(const tree_type* self)
 {
         return _tree_function_ctype(self)->params.size;
 }
@@ -418,7 +418,7 @@ static TREE_INLINE tree_type** tree_get_function_type_params_begin(const tree_ty
         return (tree_type**)_tree_function_ctype(self)->params.data;
 }
 
-static TREE_INLINE tree_type* tree_get_function_type_param(const tree_type* self, ssize n)
+static TREE_INLINE tree_type* tree_get_function_type_param(const tree_type* self, size_t n)
 {
         return tree_get_function_type_params_begin(self)[n];
 }
@@ -588,7 +588,7 @@ static TREE_INLINE void tree_set_paren_type(tree_type* self, tree_type* next)
 static TREE_INLINE struct _tree_qualified_type* _tree_qualified_type(tree_type* self)
 {
         S_ASSERT(tree_type_is_qualified(self));
-        self = (tree_type*)((ssize)self & _TREE_UNQUAL_MASK);
+        self = (tree_type*)((size_t)self & _TREE_UNQUAL_MASK);
         S_ASSERT(self);
         return (struct _tree_qualified_type*)self;
 }
@@ -596,7 +596,7 @@ static TREE_INLINE struct _tree_qualified_type* _tree_qualified_type(tree_type* 
 static TREE_INLINE const struct _tree_qualified_type* _tree_qualified_ctype(const tree_type* self)
 {
         S_ASSERT(tree_type_is_qualified(self));
-        self = (const tree_type*)((const ssize)self & _TREE_UNQUAL_MASK);
+        self = (const tree_type*)((const size_t)self & _TREE_UNQUAL_MASK);
         S_ASSERT(self);
         return (const struct _tree_qualified_type*)self;
 }
@@ -616,7 +616,7 @@ static TREE_INLINE bool tree_type_is(const tree_type* self, tree_type_kind k)
 
 static TREE_INLINE bool tree_type_is_qualified(const tree_type* self)
 {
-        return (bool)(((const ssize)self) & _TREE_QUAL_FLAG);
+        return (bool)(((const size_t)self) & _TREE_QUAL_FLAG);
 }
 
 static TREE_INLINE const tree_type* tree_get_unqualified_ctype(const tree_type* self)

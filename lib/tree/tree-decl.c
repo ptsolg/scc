@@ -98,7 +98,7 @@ extern tree_decl* tree_new_decl(
         tree_decl_kind kind,
         tree_decl_scope* scope,
         tree_xlocation loc,
-        ssize size)
+        size_t size)
 {
         tree_decl* d = tree_allocate_node(context, size);
         if (!d)
@@ -118,7 +118,7 @@ extern tree_decl* tree_new_named_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
-        ssize size)
+        size_t size)
 {
         tree_decl* d = tree_new_decl(context, kind, scope, loc, size);
         if (!d)
@@ -135,7 +135,7 @@ extern tree_decl* tree_new_typed_decl(
         tree_xlocation loc,
         tree_id name,
         tree_type* type,
-        ssize size)
+        size_t size)
 {
         tree_decl* d = tree_new_named_decl(context, kind, scope, loc, name, size);
         if (!d)
@@ -153,7 +153,7 @@ extern tree_decl* tree_new_value_decl(
         tree_id name,
         tree_decl_storage_class class_,
         tree_type* type,
-        ssize size)
+        size_t size)
 {
         tree_decl* d = tree_new_typed_decl(context, kind, scope, loc, name, type, size);
         if (!d)
@@ -180,7 +180,7 @@ extern tree_decl* tree_new_tag_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
-        ssize size)
+        size_t size)
 {
         tree_decl* d = tree_new_named_decl(context, kind, scope, loc, name, size);
         if (!d)

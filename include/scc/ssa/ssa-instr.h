@@ -48,8 +48,8 @@ extern ssa_instr* ssa_new_instr(
         ssa_instr_kind kind,
         ssa_id id,
         tree_type* type,
-        ssize reserved_operands,
-        ssize size);
+        size_t reserved_operands,
+        size_t size);
 
 extern ssa_instr* ssa_new_unary_instr(
         ssa_context* context,
@@ -57,7 +57,7 @@ extern ssa_instr* ssa_new_unary_instr(
         ssa_id id,
         tree_type* type,
         ssa_value* operand,
-        ssize size);
+        size_t size);
 
 extern ssa_instr* ssa_new_binary_instr(
         ssa_context* context,
@@ -66,7 +66,7 @@ extern ssa_instr* ssa_new_binary_instr(
         tree_type* type,
         ssa_value* first,
         ssa_value* second,
-        ssize size);
+        size_t size);
 
 extern ssa_value_use* ssa_add_instr_operand(ssa_instr* self, ssa_context* context, ssa_value* value);
 extern bool ssa_instr_has_var(const ssa_instr* self);
@@ -74,7 +74,7 @@ extern ssa_value* ssa_get_instr_operand_value(const ssa_instr* self, size_t i);
 extern ssa_value_use* ssa_get_instr_operand(const ssa_instr* self, size_t i);
 extern ssa_value_use* ssa_get_instr_operands_begin(const ssa_instr* self);
 extern ssa_value_use* ssa_get_instr_operands_end(const ssa_instr* self);
-extern ssize ssa_get_instr_operands_size(const ssa_instr* self);
+extern size_t ssa_get_instr_operands_size(const ssa_instr* self);
 
 extern void ssa_add_instr_after(ssa_instr* self, ssa_instr* pos);
 extern void ssa_add_instr_before(ssa_instr* self, ssa_instr* pos);
@@ -235,8 +235,8 @@ struct _ssa_terminator_instr
 extern ssa_instr* ssa_new_terminator_instr(
         ssa_context* context,
         ssa_terminator_instr_kind kind,
-        ssize reserved_operands,
-        ssize size);
+        size_t reserved_operands,
+        size_t size);
 
 extern ssa_value_use* ssa_get_terminator_instr_successors_begin(const ssa_instr* self);
 
@@ -313,13 +313,13 @@ static inline const struct _ssa_instr_base* _ssa_instr_cbase(const ssa_instr* se
 
 static inline ssa_instr* ssa_get_var_instr(ssa_value* self)
 {
-        return (ssa_instr*)((suint8*)self - offsetof(struct _ssa_instr_base, _val));
+        return (ssa_instr*)((uint8_t*)self - offsetof(struct _ssa_instr_base, _val));
 }
 
 static inline const ssa_instr* ssa_get_var_cinstr(const ssa_value* self)
 {
         return (const ssa_instr*)(
-                (const suint8*)self - offsetof(struct _ssa_instr_base, _val));
+                (const uint8_t*)self - offsetof(struct _ssa_instr_base, _val));
 }
 
 static inline ssa_instr_kind ssa_get_instr_kind(const ssa_instr* self)

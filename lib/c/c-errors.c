@@ -137,14 +137,14 @@ extern void c_error_unterminated_macro_argument_list(c_logger* self, c_macro* ma
         c_error(self, CES_ERROR, loc, "unterminated argument list invoking macro '%s'", macro_name);
 }
 
-extern void c_error_macro_argument_list_underflow(c_logger* self, c_macro* macro, ssize args_given, tree_location loc)
+extern void c_error_macro_argument_list_underflow(c_logger* self, c_macro* macro, size_t args_given, tree_location loc)
 {
         const char* macro_name = tree_get_id_string(self->tree, macro->name);
         c_error(self, CES_ERROR, loc, "macro '%s' requires %u arguments, but only %u given",
                 macro_name, (uint)c_macro_get_params_size(macro), (uint)args_given);
 }
 
-extern void c_error_macro_argument_list_overflow(c_logger* self, c_macro* macro, ssize args_given, tree_location loc)
+extern void c_error_macro_argument_list_overflow(c_logger* self, c_macro* macro, size_t args_given, tree_location loc)
 {
         const char* macro_name = tree_get_id_string(self->tree, macro->name);
         c_error(self, CES_ERROR, loc, "macro '%s' passed %u arguments, but takes just %u",
@@ -186,11 +186,11 @@ extern void c_error_expected_a_or_b_before_c(
 }
 
 extern void c_error_expected_one_of(
-        c_logger* self, tree_location loc, c_token_kind* v, ssize n, c_token_kind end)
+        c_logger* self, tree_location loc, c_token_kind* v, size_t n, c_token_kind end)
 {
         char buffer[1024];
         sprintf(buffer, "expected one of: ");
-        for (ssize i = 0; i < n; i++)
+        for (size_t i = 0; i < n; i++)
         {
                 strcat(buffer, c_get_token_kind_info(v[i])->desription);
                 if (i + 1 < n)

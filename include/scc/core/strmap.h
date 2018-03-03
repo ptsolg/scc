@@ -13,7 +13,7 @@ extern "C" {
 #include "hash.h"
 #include "string.h"
 
-typedef suint32 strref;
+typedef uint32_t strref;
 
 #define STRREF_INVALID ((strref)-1)
 
@@ -33,7 +33,7 @@ typedef suint32 strref;
 
 #define HTAB_TYPE strmap
 #define HTAB_IMPL_FN_GENERATOR(NAME) _strmap_##NAME
-#define HTAB_KEY_TYPE suint32
+#define HTAB_KEY_TYPE uint32_t
 #define HTAB_DELETED_KEY STRMAP_DELETED
 #define HTAB_EMPTY_KEY STRMAP_EMPTY
 #define HTAB_VALUE_TYPE void*

@@ -2,7 +2,7 @@
 #include "scc/tree/tree-context.h"
 #include "scc/tree/tree-target.h"
 
-extern tree_type* tree_new_type(tree_context* context, tree_type_kind kind, ssize size)
+extern tree_type* tree_new_type(tree_context* context, tree_type_kind kind, size_t size)
 {
         tree_type* t = tree_allocate_node(context, size);
         if (!t)
@@ -13,7 +13,7 @@ extern tree_type* tree_new_type(tree_context* context, tree_type_kind kind, ssiz
 }
 
 extern tree_type* tree_new_chain_type(
-        tree_context* context, tree_type_kind kind, tree_type* next, ssize size)
+        tree_context* context, tree_type_kind kind, tree_type* next, size_t size)
 {
         tree_type* t = tree_new_type(context, kind, size);
         if (!t)
@@ -63,7 +63,7 @@ extern serrcode tree_add_function_type_param(tree_type* self, tree_context* cont
 }
 
 extern tree_type* tree_new_array_type_ex(
-        tree_context* context, tree_array_kind kind, tree_type* eltype, ssize size)
+        tree_context* context, tree_array_kind kind, tree_type* eltype, size_t size)
 {
         tree_type* t = tree_new_chain_type(context, TTK_ARRAY, eltype, size);
         if (!t)
@@ -394,7 +394,7 @@ extern tree_type* tree_new_qual_type(
 
         qt->qualified.type = (union _tree_unqualified_type*)type;
         qt->qualified.quals = quals;
-        qt = (tree_type*)((ssize)qt | _TREE_QUAL_FLAG);
+        qt = (tree_type*)((size_t)qt | _TREE_QUAL_FLAG);
         return qt;
 }
 
@@ -502,12 +502,12 @@ static tree_type_equal_kind tree_compare_function_type_params(const tree_type* a
         if (tree_function_type_is_vararg(a) != tree_function_type_is_vararg(b))
                 return TTEK_NEQ;
 
-        ssize n = tree_get_function_type_params_size(a);
+        size_t n = tree_get_function_type_params_size(a);
         if (n != tree_get_function_type_params_size(b))
                 return TTEK_NEQ;
 
         tree_type_equal_kind k = TTEK_EQ;
-        for (ssize i = 0; i < n; i++)
+        for (size_t i = 0; i < n; i++)
         {
                 tree_type_equal_kind pk = tree_compare_types(
                         tree_get_function_type_param(a, i),

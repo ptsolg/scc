@@ -19,9 +19,9 @@ extern void c_reswords_init(c_reswords* self, c_context* context);
 extern void c_reswords_dispose(c_reswords* self);
 extern void c_reswords_add_resword(c_reswords* self, const char* string, int kind);
 extern void c_reswords_add_pp_resword(c_reswords* self, const char* string, int kind);
-extern int c_reswords_get_resword(const c_reswords* self, const char* string, ssize len);
+extern int c_reswords_get_resword(const c_reswords* self, const char* string, size_t len);
 extern int c_reswords_get_resword_by_ref(const c_reswords* self, strref h);
-extern int c_reswords_get_pp_resword(const c_reswords* self, const char* string, ssize len);
+extern int c_reswords_get_pp_resword(const c_reswords* self, const char* string, size_t len);
 extern int c_reswords_get_pp_resword_by_ref(const c_reswords* self, strref h);
 
 #ifdef __cplusplus

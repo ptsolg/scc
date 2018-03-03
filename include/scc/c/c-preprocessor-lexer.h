@@ -50,7 +50,7 @@ typedef struct _c_preprocessor_lexer_stack
 extern void c_preprocessor_lexer_stack_init(c_preprocessor_lexer_stack* self, c_context* context);
 extern void c_preprocessor_lexer_stack_dispose(c_preprocessor_lexer_stack* self);
 extern void c_preprocessor_lexer_stack_pop_lexer(c_preprocessor_lexer_stack* self);
-extern ssize c_preprocessor_lexer_stack_size(const c_preprocessor_lexer_stack* self);
+extern size_t c_preprocessor_lexer_stack_size(const c_preprocessor_lexer_stack* self);
 extern c_preprocessor_lexer* c_preprocessor_lexer_stack_top(const c_preprocessor_lexer_stack* self);
 
 extern c_preprocessor_lexer* c_preprocessor_lexer_stack_push_token_lexer(

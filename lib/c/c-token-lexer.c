@@ -122,7 +122,7 @@ extern serrcode c_token_lexer_enter(c_token_lexer* self, c_source* source)
 typedef struct
 {
         // size of the sequence including trailing zero
-        ssize size;
+        size_t size;
         tree_location loc;
         char val[C_MAX_LINE_LENGTH + 1];
 } c_sequence;

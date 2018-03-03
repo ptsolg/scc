@@ -170,10 +170,10 @@ static inline list_node* list_pop_front(list_head* self)
         return list_node_remove(self->_first);
 }
 
-static inline void list_init_array(list_head* self, list_node nodes[], ssize count)
+static inline void list_init_array(list_head* self, list_node nodes[], size_t count)
 {
         list_init(self);
-        for (ssize i = 0; i < count; i++)
+        for (size_t i = 0; i < count; i++)
         {
                 list_node_init(nodes + i);
                 list_push_back(self, nodes + i);

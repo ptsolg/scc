@@ -181,21 +181,21 @@ extern void ssaizer_push_switch_instr(ssaizer* self, ssa_instr* switch_instr)
 
 extern void ssaizer_pop_continue_dest(ssaizer* self)
 {
-        ssize size = dseq_size(&self->continue_stack);
+        size_t size = dseq_size(&self->continue_stack);
         S_ASSERT(size);
         dseq_resize(&self->continue_stack, size - 1);
 }
 
 extern void ssaizer_pop_break_dest(ssaizer* self)
 {
-        ssize size = dseq_size(&self->break_stack);
+        size_t size = dseq_size(&self->break_stack);
         S_ASSERT(size);
         dseq_resize(&self->break_stack, size - 1);
 }
 
 extern void ssaizer_pop_switch_instr(ssaizer* self)
 {
-        ssize size = dseq_size(&self->switch_stack);
+        size_t size = dseq_size(&self->switch_stack);
         S_ASSERT(size);
         dseq_resize(&self->switch_stack, size - 1);
 }

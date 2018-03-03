@@ -1,11 +1,38 @@
 #ifndef SCC_CORE_COMMON_H
 #define SCC_CORE_COMMON_H
 
-#include "target.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <assert.h>
+
+#if defined(_MSC_VER)
+#define S_MSVC 1
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define S_GCC 1
+#elif defined(__clang__)
+#define S_CLANG 1
+#else
+#error Unknown compiller.
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
+#define S_WIN 1
+#define S_MAX_PATH_LEN 256
+#define S_PATH_DELIMETER '\\'
+#elif defined(__APPLE__)
+#define S_OSX 1
+#define S_MAX_PATH_LEN 256
+#define S_PATH_DELIMETER '/'
+#else
+#error Unknown OS.
+#endif
+
+#if INTPTR_MAX == INT32_MAX
+#define S_X32 1
+#else
+#define S_X64 1
+#endif
 
 #if _DEBUG
 #define S_DEBUG 1
@@ -32,23 +59,6 @@
 #endif
 
 #define S_ARRAY_SIZE(A) (sizeof(A) / sizeof(*(A)))
-
-typedef signed char sint8;
-typedef unsigned char suint8;
-typedef signed short sint16;
-typedef unsigned short suint16;
-typedef int sint32;
-typedef unsigned int suint32;
-typedef long long sint64;
-typedef unsigned long long suint64;
-
-#if S_X32
-typedef suint32 ssize;
-typedef sint32 sptrdiff;
-#else
-typedef suint64 ssize;
-typedef sint64 sptrdiff;
-#endif
 
 typedef unsigned char uchar;
 typedef unsigned int uint;

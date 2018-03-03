@@ -72,7 +72,7 @@ static inline void c_print_d(c_printer* self, int v)
         c_printf(self, "%d", v);
 }
 
-static inline void c_print_lld(c_printer* self, sint64 v)
+static inline void c_print_lld(c_printer* self, int64_t v)
 {
         c_printf(self, "%lld", v);
         c_prints(self, "LL");
@@ -84,7 +84,7 @@ static inline void c_print_u(c_printer* self, uint v)
         c_prints(self, "U");
 }
 
-static inline void c_print_llu(c_printer* self, suint64 v)
+static inline void c_print_llu(c_printer* self, uint64_t v)
 {
         c_printf(self, "%llu", v);
         c_prints(self, "ULL");
@@ -222,7 +222,7 @@ extern void c_print_tokens(c_printer* self, const dseq* tokens)
         c_token_print_info info;
         c_token_print_info_init(&info);
 
-        for (ssize i = 0; i < dseq_size(tokens); i++)
+        for (size_t i = 0; i < dseq_size(tokens); i++)
         {
                 const c_token* token = dseq_get(tokens, i);
                 c_location loc;
@@ -241,7 +241,7 @@ extern void c_print_tokens(c_printer* self, const dseq* tokens)
                 if (len > info.max_kind_len)
                         info.max_kind_len = len;
         }
-        for (ssize i = 0; i < dseq_size(tokens); i++)
+        for (size_t i = 0; i < dseq_size(tokens); i++)
                 c_print_token(self, dseq_get(tokens, i), &info);
 }
 
@@ -383,7 +383,7 @@ static void c_print_floating_literal(c_printer* self, const tree_expr* expr)
                 c_print_double(self, float_get_dp(value));
 }
 
-static void c_print_integer(c_printer* self, const tree_type* t, suint64 v)
+static void c_print_integer(c_printer* self, const tree_type* t, uint64_t v)
 {
         S_ASSERT(tree_type_is_integer(t));
         bool sign = !tree_type_is_unsigned_integer(t);
@@ -391,7 +391,7 @@ static void c_print_integer(c_printer* self, const tree_type* t, suint64 v)
                 || tree_builtin_type_is(t, TBTK_INT64);
 
         if (sign && ext)
-                c_print_lld(self, (sint64)v);
+                c_print_lld(self, (int64_t)v);
         else if (!sign && ext)
                 c_print_llu(self, v);
         else if (!sign)

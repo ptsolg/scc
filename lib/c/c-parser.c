@@ -100,7 +100,7 @@ static void c_parser_print_expected(const c_parser* self, c_token_kind k, const 
                         expected_ex++;
         }
 
-        ssize size = it - expected;
+        size_t size = it - expected;
         tree_location loc = c_parser_get_loc(self);
         c_token_kind current = c_token_get_kind(c_parser_get_token(self));
 

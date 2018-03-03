@@ -205,7 +205,7 @@ extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const ssa_a
         if (!call)
                 return NULL;
 
-        for (ssize i = 0; i < args->size; i++)
+        for (size_t i = 0; i < args->size; i++)
                 ssa_add_instr_operand(call, self->context, *((ssa_value**)args->data + i));
        
         return ssa_build_instr(self, call);
@@ -278,7 +278,7 @@ extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id i
         return ssa_new_string(self->context, self->string_uid++, type, id);
 }
 
-extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, suint64 val)
+extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, uint64_t val)
 {
         S_ASSERT(tree_type_is_integer(type) || tree_type_is_pointer(type));
         uint bits = (uint)tree_get_sizeof(ssa_get_target(self->context), type) * 8;
@@ -345,7 +345,7 @@ extern ssa_value* ssa_build_not(ssa_builder* self, ssa_value* operand)
         tree_type* t = ssa_get_value_type(operand);
         S_ASSERT(t && tree_type_is_integer(t));
       
-        suint64 bits = 8ULL * tree_get_sizeof(ssa_get_target(self->context), t);
+        uint64_t bits = 8ULL * tree_get_sizeof(ssa_get_target(self->context), t);
         ssa_value* ones = ssa_build_int_constant(self, t, (1ULL << bits) - 1);
         if (!ones)
                 return NULL;

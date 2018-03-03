@@ -19,14 +19,14 @@ extern void aparser_init(aparser* self, int argc, const char** argv)
         self->_pos = 1;
 }
 
-extern void aparse(aparser* self, arg_handler* handlers, ssize nhandlers, arg_handler* def)
+extern void aparse(aparser* self, arg_handler* handlers, size_t nhandlers, arg_handler* def)
 {
         while (self->_pos < self->_argc)
         {
                 const char* arg = self->_argv[self->_pos++];
 
                 arg_handler* handler = NULL;
-                for (ssize i = 0; i < nhandlers; i++)
+                for (size_t i = 0; i < nhandlers; i++)
                 {
                         const char* prefix = handlers[i]._prefix;
                         if (*prefix && strncmp(arg, prefix, strlen(prefix)) == 0)
@@ -77,7 +77,7 @@ typedef struct
         char* buffer;
 } cmd_data;
 
-static void cmd_data_init(cmd_data* self, char* buffer, ssize buffer_size)
+static void cmd_data_init(cmd_data* self, char* buffer, size_t buffer_size)
 {
         self->buffer = buffer;
         self->total_len = 0;
@@ -133,7 +133,7 @@ static void _arg_to_cmd(cmd_data* cmd, const char* arg)
 #endif
 }
 
-extern int arg_to_cmd(char* buffer, ssize buffer_size, const char* arg)
+extern int arg_to_cmd(char* buffer, size_t buffer_size, const char* arg)
 {
         cmd_data cmd;
         cmd_data_init(&cmd, buffer, buffer_size);
@@ -168,7 +168,7 @@ static int _argv_to_cmd(cmd_data* cmd, const char* first, int argc, const char**
         return cmd->total_len;
 }
 
-extern int argv_to_cmd(char* buffer, ssize buffer_size, int argc, const char** argv)
+extern int argv_to_cmd(char* buffer, size_t buffer_size, int argc, const char** argv)
 {
         cmd_data cmd;
         cmd_data_init(&cmd, buffer, buffer_size);

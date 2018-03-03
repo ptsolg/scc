@@ -21,7 +21,7 @@ extern void membuf_dispose(membuf* self)
         self->_end = NULL;
 }
 
-extern serrcode membuf_resize(membuf* self, ssize size)
+extern serrcode membuf_resize(membuf* self, size_t size)
 {
         return membuf_resize_ex(self, 0, size);
 }
@@ -31,16 +31,16 @@ extern serrcode membuf_grow(membuf* self)
         return membuf_resize_ex(self, 2, 1);
 }
 
-extern serrcode membuf_resize_ex(membuf* self, ssize mul, ssize cst)
+extern serrcode membuf_resize_ex(membuf* self, size_t mul, size_t cst)
 {
-        ssize old_size = membuf_size(self);
-        ssize new_size = cst + mul * old_size;
+        size_t old_size = membuf_size(self);
+        size_t new_size = cst + mul * old_size;
 
         uchar* new_buf = allocate(self->_alloc, new_size);
         if (!new_buf)
                 return S_ERROR;
 
-        ssize cpy_size = S_MIN(old_size, new_size);
+        size_t cpy_size = S_MIN(old_size, new_size);
         memcpy(new_buf, self->_begin, cpy_size);
         deallocate(self->_alloc, self->_begin);
 

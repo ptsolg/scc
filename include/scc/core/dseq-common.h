@@ -5,10 +5,10 @@
 
 struct _dseq
 {
-        suint8* _elems;
+        uint8_t* _elems;
         allocator* _alloc;
-        ssize _size;
-        ssize _capacity;
+        size_t _size;
+        size_t _capacity;
 };
 
 #endif

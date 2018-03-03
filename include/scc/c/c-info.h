@@ -14,9 +14,9 @@ extern "C" {
 #include "scc/tree/tree-decl.h"
 #include "c-token.h"
 
-extern void c_get_unescaped_string(char* buffer, const char* string, ssize len);
+extern void c_get_unescaped_string(char* buffer, const char* string, size_t len);
 // returns size of the buffer (including trailing zero)
-extern ssize c_get_escaped_string(char* buffer, const char* string, ssize len);
+extern size_t c_get_escaped_string(char* buffer, const char* string, size_t len);
 
 typedef struct _c_resword_info c_resword_info;
 
@@ -24,7 +24,7 @@ extern const char* c_get_builtin_type_string(tree_builtin_type_kind k);
 extern const char* c_get_token_kind_string(c_token_kind k);
 extern const c_resword_info* c_get_token_info(const c_token* t);
 extern const c_resword_info* c_get_token_kind_info(c_token_kind k);
-extern int c_token_to_string(const tree_context* context, const c_token* tok, char* buf, ssize n);
+extern int c_token_to_string(const tree_context* context, const c_token* tok, char* buf, size_t n);
 
 typedef enum
 {

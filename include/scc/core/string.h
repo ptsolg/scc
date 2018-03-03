@@ -14,12 +14,12 @@ extern "C" {
 
 extern bool streq(const char* a, const char* b, const char* ignore);
 extern char* strprecat(char* string, const char* other);
-extern char* strcatn(char* string, ssize n, ...);
-extern char* strprecatn(char* string, ssize n, ...);
+extern char* strcatn(char* string, size_t n, ...);
+extern char* strprecatn(char* string, size_t n, ...);
 extern char* strwrap(const char* prefix, char* string, const char* suffix);
 extern char* strend(char* string);
 extern const char* cstrend(const char* string);
-extern char* strfill(char* string, int v, ssize n);
+extern char* strfill(char* string, int v, size_t n);
 
 #ifdef __cplusplus
 }

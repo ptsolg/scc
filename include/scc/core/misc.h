@@ -40,12 +40,12 @@ static inline uint prev_powerof2(uint v)
 
 #define IS_POWEROF2(X) ((X) && !((X) & ((X) - 1)))
 
-static inline void* align_pointer(void* p, ssize alignment)
+static inline void* align_pointer(void* p, size_t alignment)
 {
-        return (void*)(((ssize)p + alignment - 1) & ~(ssize)(alignment - 1));
+        return (void*)(((size_t)p + alignment - 1) & ~(size_t)(alignment - 1));
 }
 
-static inline ssize pointer_adjustment(void* p, ssize alignment)
+static inline size_t pointer_adjustment(void* p, size_t alignment)
 {
         return (char*)align_pointer(p, alignment) - (char*)p;
 }
@@ -56,13 +56,13 @@ static inline int ndigits(int n)
         return n ? (int)log10(n) + 1 : 1;
 }
 
-static inline suint64 mod2(suint64 x, uint pow)
+static inline uint64_t mod2(uint64_t x, uint pow)
 {
         S_ASSERT(pow <= 64);
         if (pow == 64)
                 return x;
 
-        suint64 y = (((suint64)1) << pow);
+        uint64_t y = (((uint64_t)1) << pow);
         return (x & (y - 1));
 }
 
@@ -75,7 +75,7 @@ typedef enum
 
 #define SSORT_MAX_OBJECT_SIZE 1024
 
-extern void ssort(void* data, ssize n, ssize obsize,
+extern void ssort(void* data, size_t n, size_t obsize,
         cmp_result(*const cmp_fn)(void*, const void*, const void*), void* ex_data);
 
 #ifdef __cplusplus
