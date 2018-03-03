@@ -1,4 +1,5 @@
 add_scc_lib(c
+	c-reswords.c
 	c-error.c
 	c-errors.c
 	c-token.c
@@ -19,7 +20,9 @@ add_scc_lib(c
 	c-info.c
 	c-preprocessor.c
 	c-preprocessor-lexer.c
+	c-token-lexer.c
 	c-macro.c
+	c-macro-lexer.c
 	c-printer.c
 	c-env.c
 	c-builtin-type.h

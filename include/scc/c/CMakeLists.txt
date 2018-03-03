@@ -1,5 +1,6 @@
 add_scc_target_sources(c
 	c-reswords.h
+	c-reswords-info.h
 	c-token-kind.h
 	c-limits.h
 	c-error.h
@@ -22,7 +23,9 @@ add_scc_target_sources(c
 	c-info.h
 	c-preprocessor.h
 	c-preprocessor-lexer.h
+	c-token-lexer.h
 	c-macro.h
+	c-macro-lexer.h
 	c-printer.h
 	c-env.h
 	c-token-kind.inc
