@@ -13,6 +13,7 @@ extern "C" {
 #include "scc/c/c-error.h"
 #include "scc/c/c-sema.h"
 #include "scc/c/c-parser.h"
+#include "scc/c/c-source.h"
 
 extern serrcode c_lex_source(
         c_context* context,
