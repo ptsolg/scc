@@ -1,5 +1,5 @@
-#ifndef SALLOCATOR_H
-#define SALLOCATOR_H
+#ifndef SCC_CORE_ALLOCATOR_H
+#define SCC_CORE_ALLOCATOR_H
 
 #include "common.h"
 #include "misc.h"
@@ -57,4 +57,4 @@ static inline void deallocate(allocator* self, void* block)
         self->_deallocate(self, block);
 }
 
-#endif // !SALLOCATOR_H
+#endif

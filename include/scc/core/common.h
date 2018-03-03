@@ -1,5 +1,5 @@
-#ifndef SCOMMON_H
-#define SCOMMON_H
+#ifndef SCC_CORE_COMMON_H
+#define SCC_CORE_COMMON_H
 
 #include "target.h"
 #include <stddef.h>
@@ -56,4 +56,4 @@ typedef unsigned short ushort;
 typedef unsigned long ulong;
 typedef long double ldouble;
 
-#endif // !SCOMMON_H
+#endif

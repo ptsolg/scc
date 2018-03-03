@@ -1,5 +1,5 @@
-#ifndef SLIST_H
-#define SLIST_H
+#ifndef SCC_CORE_LIST_H
+#define SCC_CORE_LIST_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -189,4 +189,4 @@ static inline void list_init_array(list_head* self, list_node nodes[], ssize cou
 }
 #endif
 
-#endif // !SLIST_H
+#endif

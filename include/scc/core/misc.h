@@ -1,5 +1,5 @@
-#ifndef SMISC_H
-#define SMISC_H
+#ifndef SCC_CORE_MISC_H
+#define SCC_CORE_MISC_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -82,4 +82,4 @@ extern void ssort(void* data, ssize n, ssize obsize,
 }
 #endif
 
-#endif // !SMISC_H
+#endif

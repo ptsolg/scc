@@ -1,5 +1,5 @@
-#ifndef SSTRMAP_H
-#define SSTRMAP_H
+#ifndef SCC_CORE_STRMAP_H
+#define SCC_CORE_STRMAP_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once

@@ -1,5 +1,5 @@
-#ifndef SMEMORY_H
-#define SMEMORY_H
+#ifndef SCC_CORE_MEMORY_H
+#define SCC_CORE_MEMORY_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once

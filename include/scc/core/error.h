@@ -1,5 +1,5 @@
-#ifndef SERROR_H
-#define SERROR_H
+#ifndef SCC_CORE_ERROR_H
+#define SCC_CORE_ERROR_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -23,4 +23,4 @@ typedef int serrcode;
 }
 #endif
 
-#endif // !SERROR_H
+#endif

@@ -1,5 +1,5 @@
-#ifndef SDSEQ_COMMON_H
-#define SDSEQ_COMMON_H
+#ifndef SCC_CORE_DSEQ_COMMON_H
+#define SCC_CORE_DSEQ_COMMON_H
 
 #include "memory.h"
 

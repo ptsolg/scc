@@ -1,5 +1,5 @@
-#ifndef SFILE_H
-#define SFILE_H
+#ifndef SCC_CORE_FILE_H
+#define SCC_CORE_FILE_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -112,4 +112,4 @@ extern file_entry* file_emulate(
 }
 #endif
 
-#endif // !SFILE_H
+#endif

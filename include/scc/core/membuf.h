@@ -1,5 +1,5 @@
-#ifndef SMEMBUF_H
-#define SMEMBUF_H
+#ifndef SCC_CORE_MEMBUF_H
+#define SCC_CORE_MEMBUF_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -60,4 +60,4 @@ static inline allocator* membuf_alloc(const membuf* self)
 }
 #endif
 
-#endif // !SMEMBUF_H
+#endif

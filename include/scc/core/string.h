@@ -1,5 +1,5 @@
-#ifndef STRING_H
-#define STRING_H
+#ifndef SCC_CORE_STRING_H
+#define SCC_CORE_STRING_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -25,4 +25,4 @@ extern char* strfill(char* string, int v, ssize n);
 }
 #endif
 
-#endif // !STRING_H
+#endif

@@ -1,5 +1,5 @@
-#ifndef SHASH_H
-#define SHASH_H
+#ifndef SCC_CORE_HASH_H
+#define SCC_CORE_HASH_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -61,4 +61,4 @@ static inline suint32 murmurhash3_86_32(const void* data, suint32 seed, int len)
 }
 #endif
 
-#endif // !SHASH_H
+#endif

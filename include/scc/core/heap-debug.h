@@ -1,5 +1,5 @@
-#ifndef SHEAP_DEBUG_H
-#define SHEAP_DEBUG_H
+#ifndef SCC_CORE_HEAP_DEBUG_H
+#define SCC_CORE_HEAP_DEBUG_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -25,4 +25,4 @@ extern void scl_enable_heap_debug(bool insert_after);
 }
 #endif
 
-#endif // !SHEAP_DEBUG_H
+#endif

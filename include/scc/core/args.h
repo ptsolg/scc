@@ -1,5 +1,5 @@
-#ifndef SPARSE_ARGS
-#define SPARSE_ARGS
+#ifndef SCC_CORE_ARGS_H
+#define SCC_CORE_ARGS_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -50,4 +50,4 @@ extern serrcode execute(const char* path, int* code, int argc, const char** argv
 }
 #endif
 
-#endif // !SPARSE_ARGS
+#endif

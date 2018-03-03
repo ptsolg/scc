@@ -1,5 +1,5 @@
-#ifndef SSTRING_H
-#define SSTRING_H
+#ifndef SCC_CORE_STRPOOL_H
+#define SCC_CORE_STRPOOL_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -35,4 +35,4 @@ extern strref strpool_insert(strpool* self, const void* data, ssize size);
 }
 #endif
 
-#endif // !SSTRING_H
+#endif

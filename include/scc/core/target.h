@@ -1,5 +1,5 @@
-#ifndef STARGET_H
-#define STARGET_H
+#ifndef SCC_CORE_TARGET_H
+#define SCC_CORE_TARGET_H
 
 #ifdef __cplusplus
 #define S_HAS_PRAGMA
@@ -36,4 +36,4 @@
 #define S_X64 1
 #endif
 
-#endif // !STARGET_H
+#endif

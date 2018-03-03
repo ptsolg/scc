@@ -1,5 +1,5 @@
-#ifndef SMALLOC_H
-#define SMALLOC_H
+#ifndef SCC_CORE_MALLOC_H
+#define SCC_CORE_MALLOC_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -23,4 +23,4 @@ extern void scl_override_malloc(malloc_fn malloc, free_fn free);
 }
 #endif
 
-#endif // !SMALLOC_H
+#endif

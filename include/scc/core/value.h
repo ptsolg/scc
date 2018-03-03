@@ -1,5 +1,5 @@
-#ifndef SVALUE_H
-#define SVALUE_H
+#ifndef SCC_CORE_VALUE_H
+#define SCC_CORE_VALUE_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -185,4 +185,4 @@ extern int avalue_print_as_hex(const avalue* val, char* buf, ssize count);
 }
 #endif
 
-#endif // !SVALUE_H
+#endif

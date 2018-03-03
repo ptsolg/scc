@@ -1,5 +1,5 @@
-#ifndef SREAD_WRITE_H
-#define SREAD_WRITE_H
+#ifndef SCC_CORE_READ_WRITE_H
+#define SCC_CORE_READ_WRITE_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -123,4 +123,4 @@ static inline read_cb* sread_cb_base(sread_cb* self)
 }
 #endif
 
-#endif // !SREAD_WRITE_H
+#endif

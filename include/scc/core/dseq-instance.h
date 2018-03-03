@@ -1,5 +1,5 @@
-#ifndef SDSEQ_INSTANCE_H
-#define SDSEQ_INSTANCE_H
+#ifndef SCC_CORE_DSEQ_INSTANCE_H
+#define SCC_CORE_DSEQ_INSTANCE_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -115,4 +115,4 @@ extern "C" {
 }
 #endif
 
-#endif // !SDSEQ_INSTANCE_H
+#endif

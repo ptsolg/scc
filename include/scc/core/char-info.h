@@ -1,5 +1,5 @@
-#ifndef SCHAR_INFO
-#define SCHAR_INFO
+#ifndef SCC_CORE_CHAR_INFO_H
+#define SCC_CORE_CHAR_INFO_H
 
 #ifdef S_HAS_PRAGMA
 #pragma once
@@ -98,4 +98,4 @@ static inline int escape_to_char(int c)
 }
 #endif
 
-#endif // !SCHAR_INFO
+#endif

@@ -1,5 +1,5 @@
-#ifndef SHTAB_COMMON_H
-#define SHTAB_COMMON_H
+#ifndef SCC_CORE_HTAB_COMMON_H
+#define SCC_CORE_HTAB_COMMON_H
 
 #include "memory.h"
 
