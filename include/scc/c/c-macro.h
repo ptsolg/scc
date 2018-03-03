@@ -13,6 +13,7 @@ typedef struct _c_macro
 {
         bool builtin;
         bool function_like;
+        bool used;
         dseq tokens;
         dseq_u32 params;
         tree_location loc;
@@ -28,8 +29,10 @@ extern c_token* c_macro_get_token(const c_macro* self, ssize i);
 extern c_token** c_macro_get_tokens_begin(const c_macro* self);
 extern c_token** c_macro_get_tokens_end(const c_macro* self);
 extern ssize c_macro_get_tokens_size(const c_macro* self);
+extern tree_id c_macro_get_param(const c_macro* self, ssize i);
 extern tree_id* c_macro_get_params_begin(const c_macro* self);
 extern tree_id* c_macro_get_params_end(const c_macro* self);
+extern ssize c_macro_get_params_size(const c_macro* self);
 
 #define C_FOREACH_MACRO_TOKEN(PMACRO, ITNAME, ENDNAME) \
         for (c_token** ITNAME = c_macro_get_tokens_begin(PMACRO), \
@@ -40,5 +43,17 @@ extern tree_id* c_macro_get_params_end(const c_macro* self);
         for (c_token** ITNAME = c_macro_get_tokens_end(PMACRO) - 1, \
                 **ENDNAME = c_macro_get_tokens_begin(PMACRO) - 1; \
                 ITNAME != ENDNAME; ITNAME--)
+
+typedef struct _c_macro_args
+{
+        strmap args;
+        c_context* context;
+} c_macro_args;
+
+extern void c_macro_args_init(c_macro_args* self, c_context* context);
+extern void c_macro_args_dispose(c_macro_args* self);
+extern void c_macro_args_add(c_macro_args* self, tree_id arg, c_token* token);
+extern void c_macro_args_set_empty(c_macro_args* self, tree_id arg);
+extern dseq* c_macro_args_get(c_macro_args* self, tree_id arg);
 
 #endif
