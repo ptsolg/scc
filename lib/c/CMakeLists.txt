@@ -20,6 +20,7 @@ add_scc_lib(c
 	c-info.c
 	c-preprocessor.c
 	c-preprocessor-lexer.c
+	c-preprocessor-directive.c
 	c-token-lexer.c
 	c-macro.c
 	c-macro-lexer.c

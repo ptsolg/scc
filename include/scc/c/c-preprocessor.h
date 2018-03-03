@@ -64,6 +64,13 @@ extern void c_preprocessor_exit(c_preprocessor* self);
 extern c_macro* c_preprocessor_get_macro(const c_preprocessor* self, tree_id name);
 extern bool c_preprocessor_macro_defined(const c_preprocessor* self, tree_id name);
 extern bool c_preprocessor_undef(c_preprocessor* self, tree_id name);
+
+// returns non-comment token
+extern c_token* c_preprocess_comment(c_preprocessor* self);
+// returns non-white-space token
+extern c_token* c_preprocess_wspace(c_preprocessor* self, bool skip_eol);
+extern c_token* c_preprocess_directive(c_preprocessor* self);
+extern c_token* c_preprocess_macro(c_preprocessor* self);
 extern c_token* c_preprocess(c_preprocessor* self);
 
 #ifdef __cplusplus

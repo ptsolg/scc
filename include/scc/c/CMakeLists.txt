@@ -23,6 +23,7 @@ add_scc_target_sources(c
 	c-info.h
 	c-preprocessor.h
 	c-preprocessor-lexer.h
+	c-preprocessor-directive.h
 	c-token-lexer.h
 	c-macro.h
 	c-macro-lexer.h
