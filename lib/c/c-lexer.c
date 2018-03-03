@@ -2,7 +2,7 @@
 #include "scc/c/c-info.h"
 #include "scc/c/c-context.h"
 #include "scc/c/c-errors.h"
-#include "scc/c/c-reswords.h"
+#include "scc/c/c-reswords-info.h"
 #include <stdlib.h> // strtoll, strtod, ...
 #include <ctype.h> // toupper
 
@@ -18,22 +18,22 @@ extern void c_lexer_init(
 
 extern serrcode c_lexer_enter_source_file(c_lexer* self, c_source* source)
 {
-        return c_preprocessor_enter(&self->pp, source);
+        return c_preprocessor_enter_source(&self->pp, source);
 }
 
-S_STATIC_ASSERT(CTK_TOTAL_SIZE == 108, "lexer reswords initialization needs an update");
+S_STATIC_ASSERT(CTK_TOTAL_SIZE == 109, "lexer reswords initialization needs an update");
 
 extern void c_lexer_init_reswords(c_lexer* self)
 {
         for (c_token_kind i = CTK_CHAR; i < CTK_CONST_INT; i++)
         {
                 const c_resword_info* info = c_get_token_kind_info(i);
-                c_reswords_add(&self->reswords, info->string, i);
+                c_reswords_add_resword(&self->reswords, info->string, i);
         }
         for (c_token_kind i = CTK_PP_IF; i < CTK_TOTAL_SIZE; i++)
         {
                 const c_resword_info* info = c_get_token_kind_info(i);
-                c_reswords_add_pp(&self->reswords, info->string, i);
+                c_reswords_add_pp_resword(&self->reswords, info->string, i);
         }
 }
 
@@ -165,7 +165,7 @@ static c_token* c_lex_pp_num(c_lexer* self, c_token* num)
 // converts identifier to keyword
 static c_token* c_lex_identifier(c_lexer* self, c_token* t)
 {
-        c_token_kind k = c_reswords_get_by_ref(&self->reswords, c_token_get_string(t));
+        c_token_kind k = c_reswords_get_resword_by_ref(&self->reswords, c_token_get_string(t));
         if (k != CTK_UNKNOWN)
                 c_token_set_kind(t, k);
 

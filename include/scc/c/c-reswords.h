@@ -1,156 +1,28 @@
 #ifndef C_RESWORDS_H
 #define C_RESWORDS_H
 
-#ifdef S_HAS_PRAGMA
-#pragma once
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "scc/scl/common.h"
-#include "c-token-kind.h"
+#include "scc/scl/strmap.h"
 
-S_STATIC_ASSERT(CTK_TOTAL_SIZE == 108, "Should update creswords table.");
+typedef struct _c_context c_context;
 
-typedef struct _c_resword_info
+typedef struct _c_reswords
 {
-        const char* string;
-        const char* desription;
-        const char* kind;
-} c_resword_info;
+        strmap reswords;
+        strmap pp_reswords;
+} c_reswords;
 
-#define C_RESWORD(s, d, k) {s, d, k}
-#define CRK_TOKEN "token"
-#define CRK_LITERAL "literal"
-#define CRK_EMPTY ""
-
-static const c_resword_info _c_reswords[CTK_TOTAL_SIZE] =
-{
-        C_RESWORD("", "unknown", CRK_TOKEN), // CTK_UNKNOWN
-        C_RESWORD("", "end of file", CRK_EMPTY), // CTK_EOF
-        C_RESWORD("", "end of line", CRK_EMPTY), // CTK_EOL
-        C_RESWORD("", "white space", CRK_EMPTY), // CTK_WSPACE
-        C_RESWORD("", "commetary", CRK_EMPTY), // CTK_COMMENT
-
-        C_RESWORD("char", "'char'", CRK_TOKEN),
-        C_RESWORD("short", "'short'", CRK_TOKEN),
-        C_RESWORD("int", "'int'", CRK_TOKEN),
-        C_RESWORD("long", "'long'", CRK_TOKEN),
-        C_RESWORD("float", "'float'", CRK_TOKEN),
-        C_RESWORD("double", "'double'", CRK_TOKEN),
-        C_RESWORD("signed", "'signed'", CRK_TOKEN),
-        C_RESWORD("unsigned", "'unsigned'", CRK_TOKEN),
-        C_RESWORD("void", "'void'", CRK_TOKEN),
-
-        C_RESWORD("struct", "'struct'", CRK_TOKEN),
-        C_RESWORD("union", "'union'", CRK_TOKEN),
-        C_RESWORD("enum", "'enum'", CRK_TOKEN),
-
-        C_RESWORD("if", "'if'", CRK_TOKEN),
-        C_RESWORD("else", "'else'", CRK_TOKEN),
-        C_RESWORD("while", "'while'", CRK_TOKEN),
-        C_RESWORD("for", "'for'", CRK_TOKEN),
-        C_RESWORD("do", "'do'", CRK_TOKEN),
-        C_RESWORD("break", "'break'", CRK_TOKEN),
-        C_RESWORD("continue", "'continue'", CRK_TOKEN),
-        C_RESWORD("return", "'return'", CRK_TOKEN),
-        C_RESWORD("goto", "'goto'", CRK_TOKEN),
-        C_RESWORD("switch", "'switch'", CRK_TOKEN),
-        C_RESWORD("default", "'default'", CRK_TOKEN),
-        C_RESWORD("case", "'case'", CRK_TOKEN),
-
-        C_RESWORD("auto", "'auto'", CRK_TOKEN),
-        C_RESWORD("register", "'register'", CRK_TOKEN),
-        C_RESWORD("static", "'static'", CRK_TOKEN),
-        C_RESWORD("extern", "'extern'", CRK_TOKEN),
-        C_RESWORD("inline", "'inline'", CRK_TOKEN),
-        C_RESWORD("const", "'const'", CRK_TOKEN),
-        C_RESWORD("volatile", "'volatile'", CRK_TOKEN),
-        C_RESWORD("restrict", "'restrict'", CRK_TOKEN),
-
-        C_RESWORD("sizeof", "'sizeof'", CRK_TOKEN),
-        C_RESWORD("typedef", "'typedef'", CRK_TOKEN),
-        C_RESWORD("", "identifier", CRK_EMPTY), // CTK_ID
-
-        C_RESWORD("{", "'{'", CRK_TOKEN),
-        C_RESWORD("}", "'}'", CRK_TOKEN),
-        C_RESWORD("[", "'['", CRK_TOKEN),
-        C_RESWORD("]", "']'", CRK_TOKEN),
-        C_RESWORD("(", "'('", CRK_TOKEN),
-        C_RESWORD(")", "')'", CRK_TOKEN),
-        C_RESWORD(".", "'.'", CRK_TOKEN),
-        C_RESWORD("->", "'->'", CRK_TOKEN),
-        C_RESWORD("<", "'<'", CRK_TOKEN),
-        C_RESWORD(">", "'>'", CRK_TOKEN),
-        C_RESWORD(">=", "'>='", CRK_TOKEN),
-        C_RESWORD("<=", "'<='", CRK_TOKEN),
-        C_RESWORD("==", "'=='", CRK_TOKEN),
-        C_RESWORD("!=", "'!='", CRK_TOKEN),
-        C_RESWORD("&&", "'&&'", CRK_TOKEN),
-        C_RESWORD("||", "'||'", CRK_TOKEN),
-        C_RESWORD("!", "'!'", CRK_TOKEN),
-        C_RESWORD("~", "'~'", CRK_TOKEN),
-        C_RESWORD("^", "'^'", CRK_TOKEN),
-        C_RESWORD("&", "'&'", CRK_TOKEN),
-        C_RESWORD("|", "'|'", CRK_TOKEN),
-        C_RESWORD("+", "'+'", CRK_TOKEN),
-        C_RESWORD("-", "'-'", CRK_TOKEN),
-        C_RESWORD("*", "'*'", CRK_TOKEN),
-        C_RESWORD("/", "'/'", CRK_TOKEN),
-        C_RESWORD("%", "'%'", CRK_TOKEN),
-        C_RESWORD("--", "'--'", CRK_TOKEN),
-        C_RESWORD("++", "'++'", CRK_TOKEN),
-        C_RESWORD("<<", "'<<'", CRK_TOKEN),
-        C_RESWORD(">>", "'>>'", CRK_TOKEN),
-        C_RESWORD("=", "'='", CRK_TOKEN),
-        C_RESWORD("^=", "'^='", CRK_TOKEN),
-        C_RESWORD("&=", "'&='", CRK_TOKEN),
-        C_RESWORD("|=", "'|='", CRK_TOKEN),
-        C_RESWORD("+=", "'+='", CRK_TOKEN),
-        C_RESWORD("-=", "'-='", CRK_TOKEN),
-        C_RESWORD("*=", "'*='", CRK_TOKEN),
-        C_RESWORD("/=", "'/='", CRK_TOKEN),
-        C_RESWORD("%=", "'%='", CRK_TOKEN),
-        C_RESWORD("<<=", "'<<='", CRK_TOKEN),
-        C_RESWORD(">>=", "'>>='", CRK_TOKEN),
-        C_RESWORD(":", "':'", CRK_TOKEN),
-        C_RESWORD(",", "','", CRK_TOKEN),
-        C_RESWORD("?", "'?'", CRK_TOKEN),
-        C_RESWORD(";", "';'", CRK_TOKEN),
-        C_RESWORD("...", "'...'", CRK_TOKEN),
-        C_RESWORD("#", "'#'", CRK_TOKEN),
-        C_RESWORD("##", "'##'", CRK_TOKEN),
-
-        C_RESWORD("", "integer", CRK_LITERAL), // CTK_CONST_INT
-        C_RESWORD("", "float", CRK_LITERAL), // CTK_CONST_FLOAT
-        C_RESWORD("", "double", CRK_LITERAL), // CTK_CONST_DOUBLE
-        C_RESWORD("", "character", CRK_LITERAL), // CTK_CONST_CHAR
-        C_RESWORD("", "string", CRK_EMPTY), // CTK_CONST_STRING
-        C_RESWORD("", "angle string", CRK_EMPTY), // CTK_ANGLE_STRING
-
-        C_RESWORD("", "pp-number", CRK_EMPTY), // CTK_PP_NUM
-        C_RESWORD("if", "#if", CRK_TOKEN),
-        C_RESWORD("ifdef", "#ifdef", CRK_TOKEN),
-        C_RESWORD("ifndef", "#ifndef", CRK_TOKEN),
-        C_RESWORD("elif", "#elif", CRK_TOKEN),
-        C_RESWORD("else", "#else", CRK_TOKEN),
-        C_RESWORD("endif", "#endif", CRK_TOKEN),
-        C_RESWORD("defined", "defined", CRK_TOKEN),
-
-        C_RESWORD("include", "#include", CRK_TOKEN),
-        C_RESWORD("define", "#define", CRK_TOKEN),
-        C_RESWORD("undef", "#undef", CRK_TOKEN),
-        C_RESWORD("line", "#line", CRK_TOKEN),
-        C_RESWORD("error", "#error", CRK_TOKEN),
-        C_RESWORD("pragma", "#pragma", CRK_TOKEN),
-};
-
-#undef C_RESWORD
-#undef CRK_TOKEN
-#undef CRK_LITERAL
-#undef CRK_EMPTY
+extern void c_reswords_init(c_reswords* self, c_context* context);
+extern void c_reswords_dispose(c_reswords* self);
+extern void c_reswords_add_resword(c_reswords* self, const char* string, int kind);
+extern void c_reswords_add_pp_resword(c_reswords* self, const char* string, int kind);
+extern int c_reswords_get_resword(const c_reswords* self, const char* string, ssize len);
+extern int c_reswords_get_resword_by_ref(const c_reswords* self, strref h);
+extern int c_reswords_get_pp_resword(const c_reswords* self, const char* string, ssize len);
+extern int c_reswords_get_pp_resword_by_ref(const c_reswords* self, strref h);
 
 #ifdef __cplusplus
 }

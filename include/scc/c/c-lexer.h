@@ -11,6 +11,7 @@ extern "C" {
 
 #include "c-preprocessor.h"
 #include "c-token.h"
+#include "c-reswords.h"
 
 typedef struct _c_lexer
 {
