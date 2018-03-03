@@ -15,9 +15,9 @@ extern "C" {
 #include "dseq-instance.h"
 #include <stdio.h>
 
-extern serrcode path_get_cd(char* path);
-extern serrcode path_add_trailing_slash(char* path);
-extern serrcode path_join(char* path, const char* other);
+extern errcode path_get_cd(char* path);
+extern errcode path_add_trailing_slash(char* path);
+extern errcode path_join(char* path, const char* other);
 extern void path_goto_parent_dir(char* path);
 extern bool path_has_trailing_slash(const char* path);
 extern void path_strip_file(char* path);
@@ -28,10 +28,10 @@ extern char* path_get_file(char* path);
 extern const char* path_get_cfile(const char* path);
 extern size_t path_get_size(const char* path);
 extern bool path_is_abs(const char* path);
-extern serrcode path_get_abs(char* abs, const char* loc);
+extern errcode path_get_abs(char* abs, const char* loc);
 extern void path_fix_delimeter(char* path);
-extern serrcode path_change_ext(char* path, const char* ext);
-extern serrcode path_delete_file(const char* path);
+extern errcode path_change_ext(char* path, const char* ext);
+extern errcode path_delete_file(const char* path);
 
 typedef struct _fread_cb
 {
@@ -92,7 +92,7 @@ typedef struct _file_lookup
 extern void flookup_init(file_lookup* self);
 extern void flookup_init_ex(file_lookup* self, allocator* alloc);
 extern void flookup_dispose(file_lookup* self);
-extern serrcode flookup_add(file_lookup* self, const char* dir);
+extern errcode flookup_add(file_lookup* self, const char* dir);
 
 extern const char** flookup_dirs_begin(const file_lookup* self);
 extern const char** flookup_dirs_end(const file_lookup* self);

@@ -61,7 +61,7 @@ extern tree_decl* tree_decl_scope_lookup(
         return NULL;
 }
 
-extern serrcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context* context, tree_decl* decl)
+extern errcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context* context, tree_decl* decl)
 {
         S_ASSERT(decl && tree_get_decl_scope(decl) == self);
 
@@ -78,7 +78,7 @@ extern serrcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_contex
         return strmap_insert(*p, tree_get_decl_name(decl), decl);
 }
 
-extern serrcode tree_decl_scope_add_decl(tree_decl_scope* self, tree_context* context, tree_decl* decl)
+extern errcode tree_decl_scope_add_decl(tree_decl_scope* self, tree_context* context, tree_decl* decl)
 {
         if (!tree_decl_is_anon(decl) && S_FAILED(tree_decl_scope_update_lookup(self, context, decl)))
                 return S_ERROR;
@@ -360,7 +360,7 @@ extern tree_decl* tree_new_decl_group(
         return d;
 }
 
-extern serrcode tree_add_decl_in_group(tree_decl* self, tree_context* context, tree_decl* decl)
+extern errcode tree_add_decl_in_group(tree_decl* self, tree_context* context, tree_decl* decl)
 {
         S_ASSERT(decl);
         S_ASSERT(tree_get_decl_kind(decl) != TDK_GROUP

@@ -38,7 +38,7 @@ extern void llvm_compiler_init(llvm_compiler* self, const char* path)
         self->output = NULL;
 }
 
-extern serrcode llvm_compile(llvm_compiler* self, int* exit_code)
+extern errcode llvm_compile(llvm_compiler* self, int* exit_code)
 {
         arg_info args;
         arg_info_init(&args);
@@ -70,7 +70,7 @@ extern serrcode llvm_compile(llvm_compiler* self, int* exit_code)
         return execute(self->path, exit_code, args.argc, args.argv);
 }
 
-extern serrcode llvm_linker_add_dir(llvm_linker* self, const char* dir)
+extern errcode llvm_linker_add_dir(llvm_linker* self, const char* dir)
 {
 #if S_WIN
         size_t len = strlen(dir) + sizeof("/LIBPATH:\"\"");
@@ -101,7 +101,7 @@ extern serrcode llvm_linker_add_dir(llvm_linker* self, const char* dir)
 #endif
 }
 
-extern serrcode llvm_linker_add_file(llvm_linker* self, const char* file)
+extern errcode llvm_linker_add_file(llvm_linker* self, const char* file)
 {
         char* copy = allocate(self->alloc, strlen(file) + 1);
         if (!copy)
@@ -144,7 +144,7 @@ extern void llvm_linker_dispose(llvm_linker* self)
         dseq_dispose(&self->dirs);
 }
 
-extern serrcode llvm_link(llvm_linker* self, int* exit_code)
+extern errcode llvm_link(llvm_linker* self, int* exit_code)
 {
         arg_info args;
         arg_info_init(&args);

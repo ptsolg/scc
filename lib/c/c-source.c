@@ -37,7 +37,7 @@ extern int c_source_get_col(const c_source* self, tree_location loc)
         return loc - line_loc + 1;
 }
 
-extern serrcode c_source_save_line_loc(c_source* self, tree_location loc)
+extern errcode c_source_save_line_loc(c_source* self, tree_location loc)
 {
         return dseq_u32_append(&self->lines, loc);
 }
@@ -123,7 +123,7 @@ extern c_source* c_source_emulate(c_source_manager* self, const char* path, cons
         return c_source_get_from_file(self, file_emulate(self->lookup, path, content));
 }
 
-extern serrcode c_source_find_loc(const c_source_manager* self, c_location* res, tree_location loc)
+extern errcode c_source_find_loc(const c_source_manager* self, c_location* res, tree_location loc)
 {
         //todo: log(n) search
 

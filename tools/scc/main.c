@@ -2,7 +2,7 @@
 
 int main(int argc, const char** argv)
 {
-        serrcode result = S_ERROR;
+        errcode result = S_ERROR;
         scc_env env;
         scc_env_init(&env);
         if (S_SUCCEEDED(scc_env_setup(&env, argc, argv)))

@@ -59,7 +59,7 @@ extern void c_preprocessor_init(
         c_context* context);
 
 extern void c_preprocessor_dispose(c_preprocessor* self);
-extern serrcode c_preprocessor_enter_source(c_preprocessor* self, c_source* source);
+extern errcode c_preprocessor_enter_source(c_preprocessor* self, c_source* source);
 extern void c_preprocessor_exit(c_preprocessor* self);
 extern c_macro* c_preprocessor_get_macro(const c_preprocessor* self, tree_id name);
 extern bool c_preprocessor_macro_defined(const c_preprocessor* self, tree_id name);

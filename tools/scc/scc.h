@@ -27,6 +27,6 @@ typedef struct
 extern void scc_env_init(scc_env* self);
 extern void scc_env_dispose(scc_env* self);
 extern void scc_error(scc_env* self, const char* format, ...);
-extern serrcode scc_env_setup(scc_env* self, int argc, const char** argv);
+extern errcode scc_env_setup(scc_env* self, int argc, const char** argv);
 
 #endif

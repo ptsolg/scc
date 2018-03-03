@@ -44,8 +44,8 @@ extern tree_decl* tree_decl_scope_lookup(
         tree_id id,
         bool parent_lookup);
 
-extern serrcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context* context, tree_decl* decl);
-extern serrcode tree_decl_scope_add_decl(tree_decl_scope* self, tree_context* context, tree_decl* decl);
+extern errcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context* context, tree_decl* decl);
+extern errcode tree_decl_scope_add_decl(tree_decl_scope* self, tree_context* context, tree_decl* decl);
 extern void tree_decl_scope_add_hidden_decl(tree_decl_scope* self, tree_decl* decl);
 
 static TREE_INLINE tree_decl_scope* tree_get_decl_scope_parent(const tree_decl_scope* self)
@@ -646,7 +646,7 @@ static TREE_INLINE void tree_set_label_decl_stmt(tree_decl* self, tree_stmt* stm
 extern tree_decl* tree_new_decl_group(
         tree_context* context, tree_decl_scope* scope, tree_xlocation loc);
 
-extern serrcode tree_add_decl_in_group(tree_decl* self, tree_context* context, tree_decl* decl);
+extern errcode tree_add_decl_in_group(tree_decl* self, tree_context* context, tree_decl* decl);
 
 static TREE_INLINE tree_decl** tree_get_decl_group_begin(const tree_decl* self)
 {

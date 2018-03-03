@@ -38,13 +38,13 @@ extern void aparser_init(aparser* self, int argc, const char** argv);
 extern void aparse(aparser* self, arg_handler* handlers, size_t nhandlers, arg_handler* def);
 extern int aparser_args_remain(const aparser* self);
 extern const char* aparser_get_string(aparser* self);
-extern serrcode aparser_get_int(aparser* self, int* pint);
+extern errcode aparser_get_int(aparser* self, int* pint);
 
 extern int arg_to_cmd(char* buffer, size_t buffer_size, const char* arg);
 extern int argv_to_cmd(char* buffer, size_t buffer_size, int argc, const char** argv);
 
 #define MAX_CMD_SIZE 4096
-extern serrcode execute(const char* path, int* code, int argc, const char** argv);
+extern errcode execute(const char* path, int* code, int argc, const char** argv);
 
 #ifdef __cplusplus
 }

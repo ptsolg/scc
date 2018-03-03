@@ -57,7 +57,7 @@ extern tree_type* tree_new_function_type(tree_context* context, tree_type* resty
         return t;
 }
 
-extern serrcode tree_add_function_type_param(tree_type* self, tree_context* context, tree_type* param)
+extern errcode tree_add_function_type_param(tree_type* self, tree_context* context, tree_type* param)
 {
         return tree_array_append_ptr(context, &_tree_function_type(self)->params, param);
 }

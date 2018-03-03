@@ -118,7 +118,7 @@ static DSEQ_INLINE size_t DSEQ_GET_CAPACITY(const DSEQ_TYPE* self)
         return self->_capacity;
 }
 
-static DSEQ_INLINE serrcode DSEQ_RESERVE(DSEQ_TYPE* self, const size_t new_capacity)
+static DSEQ_INLINE errcode DSEQ_RESERVE(DSEQ_TYPE* self, const size_t new_capacity)
 {
         if (DSEQ_GET_CAPACITY(self) >= new_capacity)
                 return S_NO_ERROR;
@@ -136,7 +136,7 @@ static DSEQ_INLINE serrcode DSEQ_RESERVE(DSEQ_TYPE* self, const size_t new_capac
         return S_NO_ERROR;
 }
 
-static DSEQ_INLINE serrcode DSEQ_RESIZE(DSEQ_TYPE* self, const size_t new_size)
+static DSEQ_INLINE errcode DSEQ_RESIZE(DSEQ_TYPE* self, const size_t new_size)
 {
         if (DSEQ_GET_CAPACITY(self) >= new_size)
         {
@@ -182,7 +182,7 @@ static DSEQ_INLINE void DSEQ_SET(
         DSEQ_GET_BEGIN(self)[index] = value;
 }
 
-static DSEQ_INLINE serrcode DSEQ_APPEND(DSEQ_TYPE* self, DSEQ_VALUE_TYPE const value)
+static DSEQ_INLINE errcode DSEQ_APPEND(DSEQ_TYPE* self, DSEQ_VALUE_TYPE const value)
 {
         if (DSEQ_GET_SIZE(self) == DSEQ_GET_CAPACITY(self))
         {

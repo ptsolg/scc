@@ -1,7 +1,7 @@
 #include "scc/c/c-env.h"
 #include "scc/c/c-parse-module.h"
 
-extern serrcode c_lex_source(
+extern errcode c_lex_source(
         c_context* context,
         file_lookup* source_lookup,
         file_entry* source,
@@ -10,7 +10,7 @@ extern serrcode c_lex_source(
 {
         c_env env;
         c_env_init(&env, context, source_lookup, error);
-        serrcode err = c_env_lex_source(&env, source, result);
+        errcode err = c_env_lex_source(&env, source, result);
         c_env_dispose(&env);
         return err;
 }
@@ -48,7 +48,7 @@ extern void c_env_dispose(c_env* self)
         c_source_manager_dispose(&self->source_manager);
 }
 
-extern serrcode c_env_lex_source(c_env* self, file_entry* source, dseq* result)
+extern errcode c_env_lex_source(c_env* self, file_entry* source, dseq* result)
 {
         c_source* s = c_source_get_from_file(&self->source_manager, source);
         if (!source || S_FAILED(c_lexer_enter_source_file(&self->lexer, s)))

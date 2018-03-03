@@ -108,7 +108,7 @@ static inline c_token* c_macro_lexer_stringify_macro_arg(
         return c_token_new_string(self->context, self->loc, string_id);
 }
 
-extern serrcode c_macro_lexer_substitute_macro_args(c_macro_lexer* self, c_macro_args* args)
+extern errcode c_macro_lexer_substitute_macro_args(c_macro_lexer* self, c_macro_args* args)
 {
         C_FOREACH_MACRO_TOKEN(self->macro, it, end)
         {

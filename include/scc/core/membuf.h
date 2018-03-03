@@ -24,12 +24,12 @@ typedef struct
 extern void membuf_init(membuf* self);
 extern void membuf_init_ex(membuf* self, allocator* alloc);
 extern void membuf_dispose(membuf* self);
-extern serrcode membuf_resize(membuf* self, size_t size);
+extern errcode membuf_resize(membuf* self, size_t size);
 
 // doubles the size of membuf
-extern serrcode membuf_grow(membuf* self);
+extern errcode membuf_grow(membuf* self);
 // new size = old size * mul + cst
-extern serrcode membuf_resize_ex(membuf* self, size_t mul, size_t cst);
+extern errcode membuf_resize_ex(membuf* self, size_t mul, size_t cst);
 // doesnt copy elements
 extern void membuf_move(membuf* to, membuf* from);
 

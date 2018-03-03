@@ -53,7 +53,7 @@ static inline tree_context* ssa_get_tree(const ssa_context* self)
         return self->tree;
 }
 
-static inline serrcode ssa_resize_array(
+static inline errcode ssa_resize_array(
         ssa_context* self,
         ssa_array* array,
         const size_t object_size,

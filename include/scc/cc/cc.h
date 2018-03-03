@@ -74,15 +74,15 @@ extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc);
 extern void cc_dispose(cc_instance* self);
 
 extern void cc_set_output_stream(cc_instance* self, FILE* out);
-extern serrcode cc_set_output_file(cc_instance* self, const char* file);
+extern errcode cc_set_output_file(cc_instance* self, const char* file);
 
-extern serrcode cc_add_lib_dir(cc_instance* self, const char* dir);
-extern serrcode cc_add_lib(cc_instance* self, const char* lib);
-extern serrcode cc_add_source_dir(cc_instance* self, const char* dir);
-extern serrcode cc_add_source_file(cc_instance* self, const char* file);
-extern serrcode cc_emulate_source_file(
+extern errcode cc_add_lib_dir(cc_instance* self, const char* dir);
+extern errcode cc_add_lib(cc_instance* self, const char* lib);
+extern errcode cc_add_source_dir(cc_instance* self, const char* dir);
+extern errcode cc_add_source_file(cc_instance* self, const char* file);
+extern errcode cc_emulate_source_file(
         cc_instance* self, const char* file, const char* content);
 
-extern serrcode cc_run(cc_instance* self);
+extern errcode cc_run(cc_instance* self);
 
 #endif

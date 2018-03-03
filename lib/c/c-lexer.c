@@ -16,7 +16,7 @@ extern void c_lexer_init(
         c_preprocessor_init(&self->pp, &self->reswords, source_manager, logger, context);
 }
 
-extern serrcode c_lexer_enter_source_file(c_lexer* self, c_source* source)
+extern errcode c_lexer_enter_source_file(c_lexer* self, c_source* source)
 {
         return c_preprocessor_enter_source(&self->pp, source);
 }

@@ -51,7 +51,7 @@ extern void cc_set_output_stream(cc_instance* self, FILE* out)
         self->output.file = out;
 }
 
-extern serrcode cc_set_output_file(cc_instance* self, const char* file)
+extern errcode cc_set_output_file(cc_instance* self, const char* file)
 {
         if (self->output.file)
                 fclose(self->output.file);
@@ -66,12 +66,12 @@ extern serrcode cc_set_output_file(cc_instance* self, const char* file)
         return S_NO_ERROR;
 }
 
-extern serrcode cc_add_lib_dir(cc_instance* self, const char* dir)
+extern errcode cc_add_lib_dir(cc_instance* self, const char* dir)
 {
         return flookup_add(&self->input.lib_lookup, dir);
 }
 
-extern serrcode cc_add_lib(cc_instance* self, const char* lib)
+extern errcode cc_add_lib(cc_instance* self, const char* lib)
 {
         file_entry* file = file_get(&self->input.lib_lookup, lib);
         if (!file)
@@ -84,12 +84,12 @@ extern serrcode cc_add_lib(cc_instance* self, const char* lib)
         return S_NO_ERROR;
 }
 
-extern serrcode cc_add_source_dir(cc_instance* self, const char* dir)
+extern errcode cc_add_source_dir(cc_instance* self, const char* dir)
 {
         return flookup_add(&self->input.source_lookup, dir);
 }
 
-extern serrcode cc_add_source_file(cc_instance* self, const char* file)
+extern errcode cc_add_source_file(cc_instance* self, const char* file)
 {
         file_entry* source = file_get(&self->input.source_lookup, file);
         if (!source)
@@ -102,7 +102,7 @@ extern serrcode cc_add_source_file(cc_instance* self, const char* file)
         return S_NO_ERROR;
 }
 
-extern serrcode cc_emulate_source_file(
+extern errcode cc_emulate_source_file(
         cc_instance* self, const char* file, const char* content)
 {
         file_entry* source = file_emulate(&self->input.source_lookup, file, content);
@@ -113,7 +113,7 @@ extern serrcode cc_emulate_source_file(
         return S_NO_ERROR;
 }
 
-extern serrcode cc_run(cc_instance* self)
+extern errcode cc_run(cc_instance* self)
 {
         if (!dseq_size(&self->input.sources))
         {

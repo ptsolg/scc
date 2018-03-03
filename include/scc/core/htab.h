@@ -185,8 +185,8 @@ static HTAB_INLINE void HTAB_CLEAR(HTAB_TYPE* self)
         self->_size = 0;
 }
 
-static HTAB_INLINE serrcode HTAB_INSERT(HTAB_TYPE*, HTAB_KEY_TYPE const, HTAB_VALUE_TYPE const);
-static HTAB_INLINE serrcode HTAB_RESIZE_IMPL(HTAB_TYPE* self, const size_t new_size)
+static HTAB_INLINE errcode HTAB_INSERT(HTAB_TYPE*, HTAB_KEY_TYPE const, HTAB_VALUE_TYPE const);
+static HTAB_INLINE errcode HTAB_RESIZE_IMPL(HTAB_TYPE* self, const size_t new_size)
 {
         S_ASSERT(IS_POWEROF2(new_size));
         uint8_t* new_buckets = allocate(HTAB_GET_ALLOCATOR(self), new_size * HTAB_BUCKET_SIZE);
@@ -213,7 +213,7 @@ static HTAB_INLINE serrcode HTAB_RESIZE_IMPL(HTAB_TYPE* self, const size_t new_s
         return S_NO_ERROR;
 }
 
-static HTAB_INLINE serrcode HTAB_RESERVE(HTAB_TYPE* self, const size_t at_least)
+static HTAB_INLINE errcode HTAB_RESERVE(HTAB_TYPE* self, const size_t at_least)
 {
         if (at_least <= self->_num_buckets - self->_size)
                 return S_NO_ERROR;
@@ -256,12 +256,12 @@ static HTAB_INLINE uint8_t* HTAB_FIND_IMPL(
         }
 }
 
-static HTAB_INLINE serrcode HTAB_GROW(HTAB_TYPE* self)
+static HTAB_INLINE errcode HTAB_GROW(HTAB_TYPE* self)
 {
         return HTAB_RESIZE_IMPL(self, self->_num_buckets ? self->_num_buckets << 1 : 2);
 }
 
-static HTAB_INLINE serrcode HTAB_INSERT(
+static HTAB_INLINE errcode HTAB_INSERT(
         HTAB_TYPE* self, HTAB_KEY_TYPE const key, HTAB_VALUE_TYPE const value)
 {
         S_ASSERT(key != HTAB_DELETED_KEY && key != HTAB_EMPTY_KEY

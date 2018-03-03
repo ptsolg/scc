@@ -35,7 +35,7 @@ extern void c_preprocessor_dispose(c_preprocessor* self)
         strmap_dispose(&self->macro_lookup);
 }
 
-extern serrcode c_preprocessor_enter_source(c_preprocessor* self, c_source* source)
+extern errcode c_preprocessor_enter_source(c_preprocessor* self, c_source* source)
 {
         S_ASSERT(source);
 

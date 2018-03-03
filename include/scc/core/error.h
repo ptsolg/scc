@@ -11,12 +11,12 @@ extern "C" {
 
 #include "common.h"
 
-typedef int serrcode;
+typedef int errcode;
 
-#define S_NO_ERROR ((serrcode)0)
-#define S_ERROR ((serrcode)1)
+#define S_NO_ERROR ((errcode)0)
+#define S_ERROR ((errcode)1)
 
-#define S_SUCCEEDED(E) (((serrcode)(E)) == S_NO_ERROR)
+#define S_SUCCEEDED(E) (((errcode)(E)) == S_NO_ERROR)
 #define S_FAILED(E) (!S_SUCCEEDED(E))
 
 #ifdef __cplusplus

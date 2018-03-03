@@ -21,7 +21,7 @@
 #error todo
 #endif
 
-extern serrcode path_get_cd(char* path)
+extern errcode path_get_cd(char* path)
 {
 #if S_WIN
         if (!GetCurrentDirectory(S_MAX_PATH_LEN, path))
@@ -35,7 +35,7 @@ extern serrcode path_get_cd(char* path)
         return path_add_trailing_slash(path);
 }
 
-extern serrcode path_add_trailing_slash(char* path)
+extern errcode path_add_trailing_slash(char* path)
 {
         if (!path_has_trailing_slash(path))
         {
@@ -49,7 +49,7 @@ extern serrcode path_add_trailing_slash(char* path)
         return S_NO_ERROR;
 }
 
-extern serrcode path_join(char* path, const char* other)
+extern errcode path_join(char* path, const char* other)
 {
         if (strlen(path) + strlen(other) >= S_MAX_PATH_LEN)
                 return S_ERROR;
@@ -194,7 +194,7 @@ extern void path_fix_delimeter(char* path)
         }
 }
 
-extern serrcode path_change_ext(char* path, const char* ext)
+extern errcode path_change_ext(char* path, const char* ext)
 {
         path_fix_delimeter(path);
         char* end = strend(path);
@@ -214,7 +214,7 @@ extern serrcode path_change_ext(char* path, const char* ext)
         return S_NO_ERROR;
 }
 
-extern serrcode path_delete_file(const char* path)
+extern errcode path_delete_file(const char* path)
 {
 #if S_WIN
         return DeleteFile(path) ? S_NO_ERROR : S_ERROR;
@@ -223,7 +223,7 @@ extern serrcode path_delete_file(const char* path)
 #endif
 }
 
-extern serrcode path_get_abs(char* abs, const char* loc)
+extern errcode path_get_abs(char* abs, const char* loc)
 {
         if (path_is_abs(loc))
         {
@@ -411,7 +411,7 @@ extern void flookup_dispose(file_lookup* self)
         dseq_dispose(&self->_dirs);
 }
 
-extern serrcode flookup_add(file_lookup* self, const char* dir)
+extern errcode flookup_add(file_lookup* self, const char* dir)
 {
         S_ASSERT(dir);
         char* copy = allocate(self->_alloc, strlen(dir) + 1);

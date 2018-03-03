@@ -59,7 +59,7 @@ extern const char* aparser_get_string(aparser* self)
                 : NULL;
 }
 
-extern serrcode aparser_get_int(aparser* self, int* pint)
+extern errcode aparser_get_int(aparser* self, int* pint)
 {
         const char* num = aparser_get_string(self);
         if (!num)
@@ -175,7 +175,7 @@ extern int argv_to_cmd(char* buffer, size_t buffer_size, int argc, const char** 
         return _argv_to_cmd(&cmd, NULL, argc, argv);
 }
 
-extern serrcode execute(const char* path, int* code, int argc, const char** argv)
+extern errcode execute(const char* path, int* code, int argc, const char** argv)
 {
         char cmd[MAX_CMD_SIZE];
 

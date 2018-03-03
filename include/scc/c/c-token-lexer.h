@@ -46,7 +46,7 @@ extern void c_token_lexer_init(
 extern void c_token_lexer_enter_char_stream(
         c_token_lexer* self, readbuf* buf, tree_location start_loc);
 
-extern serrcode c_token_lexer_enter(c_token_lexer* self, c_source* source);
+extern errcode c_token_lexer_enter(c_token_lexer* self, c_source* source);
 
 extern bool c_token_lexer_at_eof(const c_token_lexer* self);
 

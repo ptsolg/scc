@@ -31,7 +31,7 @@ extern void c_macro_lexer_init(
         c_logger* logger,
         tree_location loc);
 
-extern serrcode c_macro_lexer_substitute_macro_args(c_macro_lexer* self, c_macro_args* args);
+extern errcode c_macro_lexer_substitute_macro_args(c_macro_lexer* self, c_macro_args* args);
 extern c_token* c_macro_lexer_lex_token(c_macro_lexer* self);
 
 #endif

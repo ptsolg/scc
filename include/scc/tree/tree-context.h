@@ -66,7 +66,7 @@ static TREE_INLINE tree_id tree_get_id_for_string(
         return strpool_insert(&self->strings, string, len);
 }
 
-static TREE_INLINE serrcode tree_resize_array(
+static TREE_INLINE errcode tree_resize_array(
         tree_context* self,
         tree_array* array,
         const size_t object_size,
@@ -84,7 +84,7 @@ static TREE_INLINE serrcode tree_resize_array(
         return S_NO_ERROR;
 }
 
-static TREE_INLINE serrcode tree_array_append_ptr(
+static TREE_INLINE errcode tree_array_append_ptr(
         tree_context* self,
         tree_array* array,
         void* object)

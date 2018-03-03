@@ -227,7 +227,7 @@ static void scc_source_file(scc_env* self, aparser* parser)
         cc_add_source_file(&self->cc, file);
 }
 
-extern serrcode scc_parse_opts(scc_env* self, int argc, const char** argv)
+extern errcode scc_parse_opts(scc_env* self, int argc, const char** argv)
 {
         arg_handler handlers[] =
         {

@@ -47,7 +47,7 @@ extern void obstack_dispose(obstack* self)
                 deallocate(self->_alloc, list_pop_front(&self->_chunks));
 }
 
-extern serrcode obstack_grow(obstack* self, size_t at_least)
+extern errcode obstack_grow(obstack* self, size_t at_least)
 {
         struct
         {

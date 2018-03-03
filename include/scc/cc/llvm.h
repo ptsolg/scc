@@ -37,7 +37,7 @@ typedef struct
 #define LLC_NAME "llc.exe"
 
 extern void llvm_compiler_init(llvm_compiler* self, const char* path);
-extern serrcode llvm_compile(llvm_compiler* self, int* exit_code);
+extern errcode llvm_compile(llvm_compiler* self, int* exit_code);
 
 typedef struct
 {
@@ -53,8 +53,8 @@ typedef struct
 
 extern void llvm_linker_init(llvm_linker* self, const char* path);
 extern void llvm_linker_dispose(llvm_linker* self);
-extern serrcode llvm_linker_add_dir(llvm_linker* self, const char* dir);
-extern serrcode llvm_linker_add_file(llvm_linker* self, const char* file);
-extern serrcode llvm_link(llvm_linker* self, int* exit_code);
+extern errcode llvm_linker_add_dir(llvm_linker* self, const char* dir);
+extern errcode llvm_linker_add_file(llvm_linker* self, const char* file);
+extern errcode llvm_link(llvm_linker* self, int* exit_code);
 
 #endif

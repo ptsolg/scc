@@ -14,7 +14,7 @@ typedef enum
         CGOK_LLVM,
 } codegen_output_kind;
 
-extern serrcode codegen_module(
+extern errcode codegen_module(
         write_cb* write,
         ssa_context* context,
         const tree_module* module,

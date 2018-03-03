@@ -98,7 +98,7 @@ extern void c_token_lexer_enter_char_stream(
         self->in_directive = false;
 }
 
-extern serrcode c_token_lexer_enter(c_token_lexer* self, c_source* source)
+extern errcode c_token_lexer_enter(c_token_lexer* self, c_source* source)
 {
         if (!source)
                 return S_ERROR;

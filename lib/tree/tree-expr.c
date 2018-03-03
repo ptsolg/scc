@@ -96,7 +96,7 @@ extern tree_expr* tree_new_call_expr(
         return e;
 }
 
-extern serrcode tree_add_call_arg(tree_expr* self, tree_context* context, tree_expr* arg)
+extern errcode tree_add_call_arg(tree_expr* self, tree_context* context, tree_expr* arg)
 {
         S_ASSERT(arg);
         return tree_array_append_ptr(context, &self->call.args, arg);
@@ -302,7 +302,7 @@ extern tree_expr* tree_new_designation(tree_context* context, tree_expr* init)
         return e;
 }
 
-extern serrcode tree_add_designation_designator(
+extern errcode tree_add_designation_designator(
         tree_expr* self, tree_context* context, tree_designator* d)
 {
         S_ASSERT(d);
@@ -321,7 +321,7 @@ extern tree_expr* tree_new_init_list_expr(tree_context* context, tree_location l
         return e;
 }
 
-extern serrcode tree_add_init_list_expr(tree_expr* self, tree_context* context, tree_expr* expr)
+extern errcode tree_add_init_list_expr(tree_expr* self, tree_context* context, tree_expr* expr)
 {
         S_ASSERT(expr);
         return tree_array_append_ptr(context, &self->init_list.exprs, expr);

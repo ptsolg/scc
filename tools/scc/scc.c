@@ -29,7 +29,7 @@ extern void scc_error(scc_env* self, const char* format, ...)
         printf("\n");
 }
 
-static serrcode scc_env_add_cd_dir(scc_env* self)
+static errcode scc_env_add_cd_dir(scc_env* self)
 {
         char cd[S_MAX_PATH_LEN + 1];
         if (S_FAILED(path_get_cd(cd)))
@@ -37,7 +37,7 @@ static serrcode scc_env_add_cd_dir(scc_env* self)
         return cc_add_source_dir(&self->cc, cd);
 }
 
-static serrcode scc_env_add_stdlibc_dir(scc_env* self, const char* argv0)
+static errcode scc_env_add_stdlibc_dir(scc_env* self, const char* argv0)
 {
         char dir[S_MAX_PATH_LEN];
         strncpy(dir, argv0, S_MAX_PATH_LEN);
@@ -48,7 +48,7 @@ static serrcode scc_env_add_stdlibc_dir(scc_env* self, const char* argv0)
         return cc_add_source_dir(&self->cc, dir);
 }
 
-static serrcode scc_env_add_stdlibc_libs(scc_env* self, const char* argv0)
+static errcode scc_env_add_stdlibc_libs(scc_env* self, const char* argv0)
 {
         char dir[S_MAX_PATH_LEN];
         strncpy(dir, argv0, S_MAX_PATH_LEN);
@@ -72,7 +72,7 @@ static serrcode scc_env_add_stdlibc_libs(scc_env* self, const char* argv0)
         return S_NO_ERROR;
 }
 
-static serrcode scc_env_setup_llc_lld(scc_env* self, const char* argv0)
+static errcode scc_env_setup_llc_lld(scc_env* self, const char* argv0)
 {
         char dir[S_MAX_PATH_LEN];
         strncpy(dir, argv0, S_MAX_PATH_LEN);
@@ -94,9 +94,9 @@ static serrcode scc_env_setup_llc_lld(scc_env* self, const char* argv0)
         return S_NO_ERROR;
 }
 
-extern serrcode scc_env_setup(scc_env* self, int argc, const char** argv)
+extern errcode scc_env_setup(scc_env* self, int argc, const char** argv)
 {
-        extern serrcode scc_parse_opts(scc_env*, int, const char**);
+        extern errcode scc_parse_opts(scc_env*, int, const char**);
         if (S_FAILED(scc_parse_opts(self, argc, argv)))
                 return S_ERROR;
 

@@ -4,7 +4,7 @@
 #include "scc/ssa/ssa-printer.h"
 #include "scc/codegen/llvm-printer.h"
 
-extern serrcode codegen_module(
+extern errcode codegen_module(
         write_cb* write,
         ssa_context* context,
         const tree_module* module,

@@ -44,7 +44,7 @@ typedef struct _obstack
 extern void obstack_init(obstack* self);
 extern void obstack_init_ex(obstack* self, allocator* alloc);
 extern void obstack_dispose(obstack* self);
-extern serrcode obstack_grow(obstack* self, size_t at_least);
+extern errcode obstack_grow(obstack* self, size_t at_least);
 
 static inline void* obstack_allocate_aligned(obstack* self, size_t bytes, size_t alignment)
 {

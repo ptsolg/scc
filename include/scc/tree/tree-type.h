@@ -104,7 +104,7 @@ struct _tree_function_type
 };
 
 extern tree_type* tree_new_function_type(tree_context* context, tree_type* restype);
-extern serrcode tree_add_function_type_param(tree_type* self, tree_context* context, tree_type* param);
+extern errcode tree_add_function_type_param(tree_type* self, tree_context* context, tree_type* param);
 
 static TREE_INLINE struct _tree_function_type* _tree_function_type(tree_type* self);
 static TREE_INLINE const struct _tree_function_type* _tree_function_ctype(const tree_type* self);
