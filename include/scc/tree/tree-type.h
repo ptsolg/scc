@@ -1,7 +1,7 @@
 #ifndef TREE_TYPE_H
 #define TREE_TYPE_H
 
-#ifdef S_HAS_PRAGMA
+#ifdef HAS_PRAGMA
 #pragma once
 #endif
 

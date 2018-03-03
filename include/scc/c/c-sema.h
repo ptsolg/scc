@@ -1,7 +1,7 @@
 #ifndef C_SEMA_H
 #define C_SEMA_H
 
-#ifdef S_HAS_PRAGMA
+#ifdef HAS_PRAGMA
 #pragma once
 #endif
 

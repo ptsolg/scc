@@ -28,7 +28,7 @@ extern errcode path_get_cd(char* path)
                 return EC_ERROR;
 #elif OS_OSX
         if (!getcwd(path, S_MAX_PATH_LEN))
-                return S_ERROR;
+                return EC_ERROR;
 #else
 #error todo
 #endif
@@ -219,7 +219,7 @@ extern errcode path_delete_file(const char* path)
 #if OS_WIN
         return DeleteFile(path) ? EC_NO_ERROR : EC_ERROR;
 #elif OS_OSX
-        return remove(path) == 0 ? S_NO_ERROR : S_ERROR;
+        return remove(path) == 0 ? EC_NO_ERROR : EC_ERROR;
 #endif
 }
 
@@ -236,7 +236,7 @@ extern errcode path_get_abs(char* abs, const char* loc)
                 return EC_ERROR;
 #elif OS_OSX
         if (!realpath(loc, abs))
-                return S_ERROR;
+                return EC_ERROR;
 #else
 #error todo
 #endif

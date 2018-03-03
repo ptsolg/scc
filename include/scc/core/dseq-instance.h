@@ -1,7 +1,7 @@
 #ifndef SCC_CORE_DSEQ_INSTANCE_H
 #define SCC_CORE_DSEQ_INSTANCE_H
 
-#ifdef S_HAS_PRAGMA
+#ifdef HAS_PRAGMA
 #pragma once
 #endif
 

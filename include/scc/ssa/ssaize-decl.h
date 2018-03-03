@@ -1,7 +1,7 @@
 #ifndef SSAIZE_DECL_H
 #define SSAIZE_DECL_H
 
-#ifdef S_HAS_PRAGMA
+#ifdef HAS_PRAGMA
 #pragma once
 #endif
 

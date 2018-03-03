@@ -1,7 +1,7 @@
 #ifndef SCC_CORE_HEAP_DEBUG_H
 #define SCC_CORE_HEAP_DEBUG_H
 
-#ifdef S_HAS_PRAGMA
+#ifdef HAS_PRAGMA
 #pragma once
 #endif
 

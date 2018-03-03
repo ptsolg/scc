@@ -1,7 +1,7 @@
 #ifndef SCC_CORE_HASH_H
 #define SCC_CORE_HASH_H
 
-#ifdef S_HAS_PRAGMA
+#ifdef HAS_PRAGMA
 #pragma once
 #endif
 

@@ -1,7 +1,7 @@
 #ifndef SSA_BLOCK_H
 #define SSA_BLOCK_H
 
-#ifdef S_HAS_PRAGMA
+#ifdef HAS_PRAGMA
 #pragma once
 #endif
 

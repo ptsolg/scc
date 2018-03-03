@@ -1,7 +1,7 @@
 #ifndef C_PARSER_H
 #define C_PARSER_H
 
-#ifdef S_HAS_PRAGMA
+#ifdef HAS_PRAGMA
 #pragma once
 #endif
 

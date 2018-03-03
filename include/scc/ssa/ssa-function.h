@@ -1,7 +1,7 @@
 #ifndef SSA_FUNCTION_H
 #define SSA_FUNCTION_H
 
-#ifdef S_HAS_PRAGMA
+#ifdef HAS_PRAGMA
 #pragma once
 #endif
 

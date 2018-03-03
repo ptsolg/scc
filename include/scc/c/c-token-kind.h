@@ -1,7 +1,7 @@
 #ifndef C_TOKEN_KIND_H
 #define C_TOKEN_KIND_H
 
-#ifdef S_HAS_PRAGMA
+#ifdef HAS_PRAGMA
 #pragma once
 #endif
 

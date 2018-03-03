@@ -86,10 +86,10 @@ static errcode scc_env_setup_llc_lld(scc_env* self, const char* argv0)
         if (EC_FAILED(path_join(self->lld_path, "win\\lld-link.exe")))
                 return EC_ERROR;
 #else
-        if (S_FAILED(path_join(self->llc_path, "osx/llc")))
-                return S_ERROR;
-        if (S_FAILED(path_join(self->lld_path, "osx/ld")))
-                return S_ERROR;
+        if (EC_FAILED(path_join(self->llc_path, "osx/llc")))
+                return EC_ERROR;
+        if (EC_FAILED(path_join(self->lld_path, "osx/ld")))
+                return EC_ERROR;
 #endif
         return EC_NO_ERROR;
 }
