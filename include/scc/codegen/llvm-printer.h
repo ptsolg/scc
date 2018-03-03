@@ -1,7 +1,7 @@
 #ifndef CG_LLVM_PRINTER_H
 #define CG_LLVM_PRINTER_H
 
-#include "scc/scl/read-write.h"
+#include "scc/core/read-write.h"
 #include "scc/ssa/ssa-common.h"
 
 typedef struct _ssa_module ssa_module;

@@ -2,7 +2,7 @@
 #define C_MACRO_LEXER_H
 
 #include "scc/tree/tree-common.h"
-#include "scc/scl/dseq-common.h"
+#include "scc/core/dseq-common.h"
 
 typedef struct _c_context c_context;
 typedef struct _c_macro c_macro;

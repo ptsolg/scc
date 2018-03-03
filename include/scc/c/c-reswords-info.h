@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "scc/scl/common.h"
+#include "scc/core/common.h"
 #include "c-token-kind.h"
 
 S_STATIC_ASSERT(CTK_TOTAL_SIZE == 109, "Should update _c_resword_infos table.");

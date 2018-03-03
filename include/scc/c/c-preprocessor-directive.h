@@ -1,7 +1,7 @@
 #ifndef C_PREPROCESSOR_DIRECTIVE_H
 #define C_PREPROCESSOR_DIRECTIVE_H
 
-#include "scc/scl/common.h"
+#include "scc/core/common.h"
 
 typedef struct _c_preprocessor c_preprocessor;
 typedef struct _c_token c_token;

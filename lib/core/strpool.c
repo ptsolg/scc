@@ -1,4 +1,4 @@
-#include "scc/scl/strpool.h"
+#include "scc/core/strpool.h"
 #include <stdarg.h>
 
 typedef struct

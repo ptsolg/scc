@@ -1,4 +1,4 @@
-#include "scc/scl/char-info.h"
+#include "scc/core/char-info.h"
 
 const int _ascii_char_info[256] =
 {

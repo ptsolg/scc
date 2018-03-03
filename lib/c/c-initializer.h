@@ -1,7 +1,7 @@
 #ifndef C_INITIALIZER_H
 #define C_INITIALIZER_H
 
-#include "scc/scl/list.h"
+#include "scc/core/list.h"
 
 typedef struct _tree_expr tree_expr;
 typedef struct _tree_type tree_type;

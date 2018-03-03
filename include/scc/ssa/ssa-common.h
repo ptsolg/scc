@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "scc/scl/value.h"
+#include "scc/core/value.h"
 #include "scc/tree/tree-common.h"
 
 // a unique identifier

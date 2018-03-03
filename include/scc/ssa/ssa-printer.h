@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "scc/scl/read-write.h"
+#include "scc/core/read-write.h"
 
 typedef struct _ssa_module ssa_module;
 typedef struct _ssa_block ssa_block;

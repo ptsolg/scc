@@ -1,7 +1,7 @@
 #include "scc/ssa/ssa-module.h"
 #include "scc/ssa/ssa-context.h"
 #include "scc/ssa/ssa-function.h"
-#include "scc/scl/dseq-instance.h"
+#include "scc/core/dseq-instance.h"
 
 extern ssa_module* ssa_new_module(ssa_context* context)
 {

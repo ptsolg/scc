@@ -6,7 +6,7 @@
 #include "scc/c/c-source.h"
 #include "scc/c/c-limits.h"
 #include "scc/tree/tree-eval.h"
-#include "scc/scl/char-info.h"
+#include "scc/core/char-info.h"
 #include <stdarg.h>
 
 extern void c_printer_opts_init(c_printer_opts* self)

@@ -11,7 +11,7 @@ extern "C" {
 
 #include "c-error.h"
 #include "c-context.h"
-#include "scc/scl/dseq-common.h"
+#include "scc/core/dseq-common.h"
 
 typedef struct _htab c_case_label_map;
 

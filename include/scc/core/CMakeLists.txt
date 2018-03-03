@@ -1,4 +1,4 @@
-add_scc_target_sources(scl
+add_scc_target_sources(core
 	allocator.h
 	common.h
 	error.h

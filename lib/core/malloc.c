@@ -1,4 +1,4 @@
-#include "scc/scl/malloc.h"
+#include "scc/core/malloc.h"
 #include <stdlib.h>
 
 malloc_fn smalloc = &malloc;

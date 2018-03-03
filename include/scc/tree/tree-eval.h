@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "scc/scl/value.h"
+#include "scc/core/value.h"
 
 typedef struct _tree_context tree_context;
 typedef struct _tree_expr tree_expr;

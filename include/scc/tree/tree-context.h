@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "scc/scl/memory.h"
+#include "scc/core/memory.h"
 #include "tree-common.h"
 #include "tree-type.h"
 

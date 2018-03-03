@@ -1,5 +1,5 @@
 #include "scc.h"
-#include "scc/scl/args.h"
+#include "scc/core/args.h"
 
 static void scc_missing_argument(scc_env* self, const char* arg)
 {

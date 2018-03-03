@@ -1,4 +1,4 @@
-add_scc_lib(scl
+add_scc_lib(core
 	file.c
 	malloc.c
 	args.c

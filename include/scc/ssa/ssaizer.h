@@ -12,7 +12,7 @@ extern "C" {
 #include "ssa-common.h"
 #include "ssa-builder.h"
 #include "ssa-function.h"
-#include "scc/scl/dseq-common.h"
+#include "scc/core/dseq-common.h"
 
 typedef struct _ssa_context ssa_context;
 typedef struct _tree_stmt tree_stmt;

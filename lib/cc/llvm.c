@@ -1,6 +1,6 @@
 #include "scc/cc/llvm.h"
-#include "scc/scl/file.h"
-#include "scc/scl/args.h"
+#include "scc/core/file.h"
+#include "scc/core/args.h"
 #include <stdio.h>
 #include <string.h>
 #include <scc/cc/llvm.h>

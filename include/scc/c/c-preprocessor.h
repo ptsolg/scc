@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "scc/scl/dseq-common.h"
+#include "scc/core/dseq-common.h"
 #include "c-preprocessor-lexer.h"
 
 typedef struct _c_macro c_macro;

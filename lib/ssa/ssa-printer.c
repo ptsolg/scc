@@ -6,7 +6,7 @@
 #include "scc/ssa/ssa-function.h"
 #include "scc/ssa/ssa-module.h"
 #include "scc/tree/tree-context.h"
-#include "scc/scl/char-info.h"
+#include "scc/core/char-info.h"
 #include <stdio.h>
 #include <stdarg.h>
 

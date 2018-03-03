@@ -1,7 +1,7 @@
 #ifndef C_MACRO_H
 #define C_MACRO_H
 
-#include "scc/scl/dseq-common.h"
+#include "scc/core/dseq-common.h"
 #include "scc/tree/tree-common.h"
 
 typedef struct _dseq dseq;

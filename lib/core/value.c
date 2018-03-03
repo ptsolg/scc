@@ -1,5 +1,5 @@
-#include "scc/scl/value.h"
-#include "scc/scl/misc.h"
+#include "scc/core/value.h"
+#include "scc/core/misc.h"
 #include <math.h>
 #include <stdio.h>
 

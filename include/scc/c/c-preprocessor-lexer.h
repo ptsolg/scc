@@ -7,7 +7,7 @@ extern "C" {
 
 #include "c-token-lexer.h"
 #include "c-macro-lexer.h"
-#include "scc/scl/dseq-common.h"
+#include "scc/core/dseq-common.h"
 
 typedef enum
 {

@@ -55,7 +55,7 @@ extern c_token* c_preprocessor_lexer_lex_token(c_preprocessor_lexer* self)
 #define DSEQ_SET           c_pp_lexer_stack_set
 #define DSEQ_APPEND        c_pp_lexer_stack_append
 
-#include "scc/scl/dseq.h"
+#include "scc/core/dseq.h"
 
 #undef DSEQ_VALUE_TYPE
 #undef DSEQ_TYPE 

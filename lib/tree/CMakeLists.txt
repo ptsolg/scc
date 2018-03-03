@@ -9,7 +9,7 @@ add_scc_lib(tree
 	tree-eval.c
 
 	DEPENDS
-	scl
+	core
 
 	INCLUDE
 	${SCC_INC_DIR}

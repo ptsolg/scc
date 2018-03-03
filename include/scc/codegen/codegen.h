@@ -1,8 +1,8 @@
 #ifndef CODEGEN_H
 #define CODEGEN_H
 
-#include "scc/scl/read-write.h"
-#include "scc/scl/error.h"
+#include "scc/core/read-write.h"
+#include "scc/core/error.h"
 #include "scc/ssa/ssa-opt.h"
 
 typedef struct _ssa_context ssa_context;

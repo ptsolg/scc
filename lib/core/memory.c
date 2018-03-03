@@ -1,5 +1,5 @@
-#include "scc/scl/memory.h"
-#include "scc/scl/malloc.h"
+#include "scc/core/memory.h"
+#include "scc/core/malloc.h"
 #include <setjmp.h>
 
 static void* mallocate(void* self, ssize bytes)

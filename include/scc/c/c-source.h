@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "scc/scl/file.h"
+#include "scc/core/file.h"
 #include "scc/tree/tree-common.h"
 
 typedef struct _c_source_manager c_source_manager;

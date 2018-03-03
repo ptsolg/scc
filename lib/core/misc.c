@@ -1,4 +1,4 @@
-#include "scc/scl/misc.h"
+#include "scc/core/misc.h"
 #include <string.h> // memcpy
 
 typedef struct

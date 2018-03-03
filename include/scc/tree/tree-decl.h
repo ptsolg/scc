@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #include "tree-common.h"
-#include "scc/scl/value.h"
+#include "scc/core/value.h"
 
 typedef struct _tree_decl_scope tree_decl_scope;
 typedef struct _tree_context tree_context;

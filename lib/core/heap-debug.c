@@ -1,5 +1,5 @@
-#include "scc/scl/heap-debug.h"
-#include "scc/scl/malloc.h"
+#include "scc/core/heap-debug.h"
+#include "scc/core/malloc.h"
 
 #if S_WIN
 #include <Windows.h>
@@ -44,7 +44,7 @@ extern void __cdecl hd_free_b(void* block)
 
 #else
 
-#include "scc/scl/malloc.h"
+#include "scc/core/malloc.h"
 
 extern void* __cdecl hd_malloc_a(size_t size)
 {

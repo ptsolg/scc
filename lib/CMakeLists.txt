@@ -1,4 +1,4 @@
-add_subdirectory(scl)
+add_subdirectory(core)
 add_subdirectory(tree)
 add_subdirectory(c)
 add_subdirectory(ssa)

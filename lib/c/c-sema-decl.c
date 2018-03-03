@@ -4,7 +4,7 @@
 #include "scc/c/c-sema-expr.h"
 #include "scc/c/c-errors.h"
 #include "scc/tree/tree-eval.h"
-#include "scc/scl/dseq-instance.h"
+#include "scc/core/dseq-instance.h"
 
 extern tree_decl* c_sema_local_lookup(const c_sema* self, tree_id name, tree_lookup_kind lk)
 {

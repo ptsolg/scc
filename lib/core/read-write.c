@@ -1,5 +1,5 @@
-#include "scc/scl/read-write.h"
-#include "scc/scl/string.h"
+#include "scc/core/read-write.h"
+#include "scc/core/string.h"
 
 extern void write_cb_init(write_cb* self, void* write_fn)
 {

@@ -1,7 +1,7 @@
 #ifndef CC_H
 #define CC_H
 
-#include "scc/scl/file.h"
+#include "scc/core/file.h"
 
 typedef enum
 {

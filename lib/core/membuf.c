@@ -1,5 +1,5 @@
-#include "scc/scl/membuf.h"
-#include "scc/scl/memory.h"
+#include "scc/core/membuf.h"
+#include "scc/core/memory.h"
 #include <memory.h>
 
 extern void membuf_init_ex(membuf* self, allocator* alloc)

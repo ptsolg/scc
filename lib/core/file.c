@@ -1,5 +1,5 @@
-#include "scc/scl/file.h"
-#include "scc/scl/string.h"
+#include "scc/core/file.h"
+#include "scc/core/string.h"
 #include <stdio.h>
 
 #if S_WIN

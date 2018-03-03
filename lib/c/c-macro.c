@@ -1,6 +1,6 @@
 #include "scc/c/c-macro.h"
 #include "scc/c/c-context.h"
-#include "scc/scl/dseq-instance.h"
+#include "scc/core/dseq-instance.h"
 
 extern c_macro* c_macro_new(c_context* context,
         bool builtin, bool function_like, tree_location loc, tree_id name)

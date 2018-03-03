@@ -1,7 +1,7 @@
 #include "scc/c/c-sema.h"
 #include "scc/c/c-info.h"
 #include "scc/c/c-errors.h"
-#include "scc/scl/bit-utils.h"
+#include "scc/core/bit-utils.h"
 
 #define DSEQ_VALUE_TYPE c_switch_stmt_info
 #define DSEQ_TYPE c_switch_stack
@@ -19,7 +19,7 @@
 #define DSEQ_SET c_switch_stack_set
 #define DSEQ_APPEND c_switch_stack_append
 
-#include "scc/scl/dseq.h"
+#include "scc/core/dseq.h"
 
 #undef DSEQ_VALUE_TYPE
 #undef DSEQ_TYPE 
@@ -66,7 +66,7 @@
 #define HTAB_ITERATOR_IS_VALID c_case_label_map_iter_valid
 #define HTAB_ITERATOR_GET_VALUE c_case_label_map_iter_value
 
-#include "scc/scl/htab.h"
+#include "scc/core/htab.h"
 
 #undef HTAB_TYPE
 #undef HTAB_IMPL_FN_GENERATOR

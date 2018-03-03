@@ -1,6 +1,6 @@
-#include "scc/scl/args.h"
-#include "scc/scl/string.h"
-#include "scc/scl/file.h"
+#include "scc/core/args.h"
+#include "scc/core/string.h"
+#include "scc/core/file.h"
 #include <stdlib.h> // strtoi
 #include <stdio.h> // strtoi
 

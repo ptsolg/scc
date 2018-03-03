@@ -9,7 +9,7 @@
 #include "scc/c/c-macro.h"
 #include "scc/c/c-source.h"
 #include "scc/c/c-limits.h"
-#include "scc/scl/dseq-instance.h"
+#include "scc/core/dseq-instance.h"
 
 extern void c_preprocessor_init(
         c_preprocessor* self,

@@ -1,7 +1,7 @@
 #include "scc/c/c-info.h"
 #include "scc/c/c-reswords-info.h"
 #include "scc/tree/tree-context.h"
-#include "scc/scl/char-info.h"
+#include "scc/core/char-info.h"
 #include <stdio.h>
 
 extern void c_get_unescaped_string(char* buffer, const char* string, ssize len)

@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #include "ssa-common.h"
-#include "scc/scl/dseq-common.h"
+#include "scc/core/dseq-common.h"
 
 typedef struct _ssa_context ssa_context;
 typedef struct _ssa_function ssa_function;

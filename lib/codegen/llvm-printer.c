@@ -2,8 +2,8 @@
 #include "scc/ssa/ssa.h"
 #include "scc/tree/tree-type.h"
 #include "scc/tree/tree-module.h"
-#include "scc/scl/char-info.h"
-#include "scc/scl/dseq-instance.h"
+#include "scc/core/char-info.h"
+#include "scc/core/dseq-instance.h"
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -39,7 +39,7 @@ typedef struct
 #define HTAB_ITERATOR_IS_VALID record_info_map_iter_valid
 #define HTAB_ITERATOR_GET_VALUE record_info_map_iter_value
 
-#include "scc/scl/htab.h"
+#include "scc/core/htab.h"
 
 #undef HTAB_TYPE
 #undef HTAB_IMPL_FN_GENERATOR

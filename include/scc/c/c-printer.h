@@ -10,8 +10,8 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-#include "scc/scl/read-write.h"
-#include "scc/scl/dseq-instance.h"
+#include "scc/core/read-write.h"
+#include "scc/core/dseq-instance.h"
 
 typedef struct _c_token c_token;
 typedef struct _c_context c_context;

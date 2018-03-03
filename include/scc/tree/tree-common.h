@@ -9,9 +9,9 @@
 extern "C" {
 #endif
 
-#include "scc/scl/common.h"
-#include "scc/scl/strpool.h"
-#include "scc/scl/list.h"
+#include "scc/core/common.h"
+#include "scc/core/strpool.h"
+#include "scc/core/list.h"
 
 #define TREE_INLINE inline
 

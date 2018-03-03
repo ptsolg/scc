@@ -1,7 +1,7 @@
 #ifndef SSA_PASS_H
 #define SSA_PASS_H
 
-#include "scc/scl/list.h"
+#include "scc/core/list.h"
 
 typedef struct _ssa_pass ssa_pass;
 typedef struct _ssa_module ssa_module;

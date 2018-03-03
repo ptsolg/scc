@@ -1,4 +1,4 @@
-#include "scc/scl/string.h"
+#include "scc/core/string.h"
 #include <stdarg.h>
 
 extern bool streq(const char* a, const char* b, const char* ignore)

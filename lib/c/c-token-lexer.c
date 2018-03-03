@@ -5,8 +5,8 @@
 #include "scc/c/c-info.h"
 #include "scc/c/c-source.h"
 #include "scc/c/c-limits.h"
-#include "scc/scl/char-info.h"
-#include "scc/scl/read-write.h"
+#include "scc/core/char-info.h"
+#include "scc/core/read-write.h"
 
 static inline tree_location c_token_lexer_get_loc(const c_token_lexer* self)
 {

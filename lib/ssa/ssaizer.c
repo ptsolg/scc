@@ -5,7 +5,7 @@
 #include "scc/ssa/ssa-block.h"
 #include "scc/ssa/ssa-instr.h"
 #include "scc/tree/tree-module.h"
-#include "scc/scl/dseq-instance.h"
+#include "scc/core/dseq-instance.h"
 
 #define DSEQ_VALUE_TYPE strmap
 #define DSEQ_TYPE strmap_stack
@@ -23,7 +23,7 @@
 #define DSEQ_SET strmap_stack_set
 #define DSEQ_APPEND strmap_stack_append
 
-#include "scc/scl/dseq.h"
+#include "scc/core/dseq.h"
 
 #undef DSEQ_VALUE_TYPE
 #undef DSEQ_TYPE 

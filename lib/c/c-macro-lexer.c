@@ -7,8 +7,8 @@
 #include "scc/c/c-token-lexer.h"
 #include "scc/c/c-error.h"
 #include "scc/c/c-errors.h"
-#include "scc/scl/dseq-instance.h"
-#include "scc/scl/read-write.h"
+#include "scc/core/dseq-instance.h"
+#include "scc/core/read-write.h"
 
 extern void c_macro_lexer_init(
         c_macro_lexer* self,
