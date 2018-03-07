@@ -32,7 +32,7 @@ extern void c_error_empty_file_name_in_include(c_logger* self, tree_location loc
 extern void c_error_unexpected_hash(c_logger* self, tree_location loc);
 extern void c_error_unknown_preprocessor_directive(c_logger* self, tree_location loc);
 extern void c_error_unsupported_preprocessor_directive(c_logger* self, tree_location loc);
-extern void c_error_no_macro_name_given_in_define(c_logger* self, tree_location loc);
+extern void c_error_no_macro_name_given_in_directive(c_logger* self, c_token_kind directive, tree_location loc);
 extern void c_error_macro_names_must_be_identifiers(c_logger* self, tree_location loc);
 extern void c_error_macro_redefenition(c_logger* self, tree_id name, tree_location loc);
 extern void c_error_expected_identifier(c_logger* self, tree_location loc);
@@ -45,6 +45,15 @@ extern void c_error_unterminated_macro_argument_list(c_logger* self, c_macro* ma
 extern void c_error_macro_argument_list_underflow(c_logger* self, c_macro* macro, size_t args_given, tree_location loc);
 extern void c_error_macro_argument_list_overflow(c_logger* self, c_macro* macro, size_t args_given, tree_location loc);
 extern void c_error_hash_is_not_followed_by_a_macro_param(c_logger* self, tree_location loc);
+extern void c_error_ending_directive_without_if(c_logger* self, c_token* directive);
+extern void c_error_extra_tokens_at_end_of_directive(c_logger* self, c_token_kind directive, tree_location loc);
+extern void c_error_missing_token_in_expression(c_logger* self, c_token_kind k, tree_location l);
+extern void c_error_floating_constant_in_preprocessor_expression(c_logger* self, tree_location l);
+extern void c_error_division_by_zero_in_preprocessor_expression(c_logger* self, tree_location l);
+extern void c_error_unterminated_directive(c_logger* self, const c_token* directive);
+extern void c_error_directive_after_else(c_logger* self, const c_token* directive);
+extern void c_error_token_is_not_valid_in_preprocessor_expressions(c_logger* self, const c_token* tok);
+extern void c_error_error_directive(c_logger* self, tree_location loc, const char* msg);
 
 // lexer
 extern void c_error_invalid_integer_literal(c_logger* self, tree_location loc, const char* num);

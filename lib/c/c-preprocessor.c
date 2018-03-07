@@ -11,6 +11,11 @@
 #include "scc/c/c-limits.h"
 #include "scc/core/dseq-instance.h"
 
+static void c_preprocessor_init_names(c_preprocessor* self)
+{
+        self->names.defined = tree_get_id_for_string(self->context->tree, "defined");
+}
+
 extern void c_preprocessor_init(
         c_preprocessor* self,
         const c_reswords* reswords,
@@ -27,6 +32,7 @@ extern void c_preprocessor_init(
         self->source_manager = source_manager;
         self->logger = logger;
         self->context = context;
+        c_preprocessor_init_names(self);
 }
 
 extern void c_preprocessor_dispose(c_preprocessor* self)
@@ -82,7 +88,7 @@ extern bool c_preprocessor_undef(c_preprocessor* self, tree_id name)
         return strmap_erase(&self->macro_lookup, name);
 }
 
-extern c_token* c_preprocess_comment(c_preprocessor* self)
+extern c_token* c_preprocess_non_comment(c_preprocessor* self)
 {
         while (1)
         {
@@ -93,38 +99,45 @@ extern c_token* c_preprocess_comment(c_preprocessor* self)
                 if (c_token_is(t, CTK_COMMENT))
                         return c_token_new_wspace(self->context, c_token_get_loc(t), 1);
 
-                if (c_token_is(t, CTK_EOF) 
-                        && c_preprocessor_lexer_stack_size(&self->lexer_stack) > 1)
+                if (!c_token_is(t, CTK_EOF))
+                        return t;
+
+                if (c_preprocessor_lexer_get_conditional_directive_stack_depth(self->lexer))
+                {
+                        c_error_unterminated_directive(self->logger, 
+                                c_preprocessor_lexer_get_conditional_directive(self->lexer)->token);
+                        return NULL;
+                }
+                if (c_preprocessor_lexer_stack_depth(&self->lexer_stack) > 1)
                 {
                         c_preprocessor_exit(self);
-                        // consume eof of included file
-                        continue;
+                        continue; // consume eof of included file
                 }
 
                 return t;
         }
 }
 
-extern c_token* c_preprocess_wspace(c_preprocessor* self, bool skip_eol)
+extern c_token* c_preprocess_non_wspace(c_preprocessor* self)
 {
         while (1)
         {
-                c_token* t = c_preprocess_comment(self);
+                c_token* t = c_preprocess_non_comment(self);
                 if (!t)
                         return NULL;
 
-                if (c_token_is(t, CTK_EOL) && skip_eol)
+                if (c_token_is(t, CTK_WSPACE) || c_token_is(t, CTK_EOL))
                         continue;
-                if (!c_token_is(t, CTK_WSPACE))
-                        return t;
+
+                return t;
         }
 }
 
-extern c_token* c_preprocess_directive(c_preprocessor* self)
+extern c_token* c_preprocess_non_directive(c_preprocessor* self)
 {
         while (1)
         {
-                c_token* t = c_preprocess_wspace(self, true);
+                c_token* t = c_preprocess_non_wspace(self);
                 if (!t || !c_token_is(t, CTK_HASH))
                         return t;
 
@@ -137,18 +150,19 @@ extern c_token* c_preprocess_directive(c_preprocessor* self)
                         return NULL;
                 }
 
-                if (!(t = c_preprocess_wspace(self, false)))
+                if (!(t = c_preprocess_non_wspace(self)))
                         return NULL;
 
                 if (c_token_is(t, CTK_EOF))
                         return t;
-                else if (c_token_is(t, CTK_EOL))
-                        continue;
-
-                self->lexer->token_lexer.in_directive = true;
-                bool failed = !c_preprocessor_handle_directive(self, t);
-                self->lexer->token_lexer.in_directive = false;
-                if (failed)
+ 
+                if (c_token_is(t, CTK_ID))
+                {
+                        c_token_kind directive = c_reswords_get_pp_resword_by_ref(
+                                self->reswords, c_token_get_string(t));
+                        c_token_set_kind(t, directive);
+                }
+                if (!c_preprocessor_handle_directive(self, t))
                         return NULL;
         }
 }
@@ -228,7 +242,7 @@ static bool c_preprocessor_read_macro_args(
         c_preprocessing_args_init(&pp_args, macro, args, loc);
         while (1)
         {
-                c_token* t = c_preprocess_comment(self);
+                c_token* t = c_preprocess_non_comment(self);
                 if (!t)
                         return false;
 
@@ -265,14 +279,14 @@ static bool c_preprocessor_read_macro_args(
         }
 }
 
-extern c_token* c_preprocess_macro(c_preprocessor* self)
+extern c_token* c_preprocess_non_macro(c_preprocessor* self)
 {
         while (1)
         {
                 c_token* t;
                 if ((t = self->lookahead.next_unexpanded_token))
                         self->lookahead.next_unexpanded_token = NULL;
-                else if (!(t = c_preprocess_directive(self)))
+                else if (!(t = c_preprocess_non_directive(self)))
                         return NULL;
 
                 if (c_token_is(t, CTK_EOM))
@@ -294,7 +308,7 @@ extern c_token* c_preprocess_macro(c_preprocessor* self)
                 c_macro_args_init(&args, self->context);
                 if (macro->function_like)
                 {
-                        c_token* next = c_preprocess_wspace(self, true);
+                        c_token* next = c_preprocess_non_wspace(self);
                         if (!next)
                                 return NULL;
 
@@ -323,7 +337,7 @@ static bool c_preprocessor_collect_adjacent_strings(c_preprocessor* self, dseq* 
 {
         while (1)
         {
-                c_token* t = c_preprocess_macro(self);
+                c_token* t = c_preprocess_non_macro(self);
                 if (!t)
                         return false;
 
@@ -356,7 +370,7 @@ static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, d
         }
         dseq_u8_append(&concat, '\0');
 
-        tree_id concat_ref = tree_get_id_for_string(
+        tree_id concat_ref = tree_get_id_for_string_s(
                 c_context_get_tree_context(self->context), (char*)dseq_u8_begin(&concat), dseq_u8_size(&concat));
         tree_location loc = c_token_get_loc(dseq_get(strings, 0));
         dseq_u8_dispose(&concat);
@@ -369,7 +383,7 @@ extern c_token* c_preprocess(c_preprocessor* self)
         c_token* t;
         if ((t = self->lookahead.next_expanded_token))
                 self->lookahead.next_expanded_token = NULL;
-        else if (!(t = c_preprocess_macro(self)))
+        else if (!(t = c_preprocess_non_macro(self)))
                 return NULL;
 
         if (!c_token_is(t, CTK_CONST_STRING))

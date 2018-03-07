@@ -37,7 +37,6 @@ typedef struct _c_preprocessor
 {
         c_preprocessor_lexer* lexer;
         c_preprocessor_lexer_stack lexer_stack;
-        c_builtin_macro_names builtin_macro_names;
         strmap macro_lookup;
         const c_reswords* reswords;
         c_source_manager* source_manager;
@@ -49,6 +48,12 @@ typedef struct _c_preprocessor
                 c_token* next_unexpanded_token;
                 c_token* next_expanded_token;
         } lookahead;
+
+        struct
+        {
+                c_builtin_macro_names builtin_macro;
+                tree_id defined;
+        } names;
 } c_preprocessor;
 
 extern void c_preprocessor_init(
@@ -65,12 +70,10 @@ extern c_macro* c_preprocessor_get_macro(const c_preprocessor* self, tree_id nam
 extern bool c_preprocessor_macro_defined(const c_preprocessor* self, tree_id name);
 extern bool c_preprocessor_undef(c_preprocessor* self, tree_id name);
 
-// returns non-comment token
-extern c_token* c_preprocess_comment(c_preprocessor* self);
-// returns non-white-space token
-extern c_token* c_preprocess_wspace(c_preprocessor* self, bool skip_eol);
-extern c_token* c_preprocess_directive(c_preprocessor* self);
-extern c_token* c_preprocess_macro(c_preprocessor* self);
+extern c_token* c_preprocess_non_comment(c_preprocessor* self);
+extern c_token* c_preprocess_non_wspace(c_preprocessor* self);
+extern c_token* c_preprocess_non_directive(c_preprocessor* self);
+extern c_token* c_preprocess_non_macro(c_preprocessor* self);
 extern c_token* c_preprocess(c_preprocessor* self);
 
 #ifdef __cplusplus

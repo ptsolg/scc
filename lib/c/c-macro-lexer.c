@@ -104,7 +104,7 @@ static inline c_token* c_macro_lexer_stringify_macro_arg(
         for (c_token** it = from; it <= to; it++)
                 len += c_token_to_string(self->context->tree, *it, string + len, C_MAX_LINE_LENGTH - len);
 
-        tree_id string_id = tree_get_id_for_string(self->context->tree, string, len + 1);
+        tree_id string_id = tree_get_id_for_string_s(self->context->tree, string, len + 1);
         return c_token_new_string(self->context, self->loc, string_id);
 }
 

@@ -153,7 +153,7 @@ static inline bool c_sequence_append(c_sequence* self, const c_token_lexer* lexe
 
 static tree_id c_token_lexer_get_sequence_id(c_token_lexer* self, c_sequence* seq)
 {
-        tree_id id = tree_get_id_for_string(
+        tree_id id = tree_get_id_for_string_s(
                 c_context_get_tree_context(self->context), seq->val, seq->size);
         assert(id != TREE_INVALID_ID);
         return id;
@@ -555,7 +555,7 @@ static inline c_token* _c_token_lexer_lex_token(c_token_lexer* self)
         {
                 tree_location loc = c_token_lexer_get_loc(self);
                 c_token_lexer_readc(self);
-                return c_token_new(self->context, CTK_EOL, loc);
+                return c_token_new(self->context, self->in_directive ? CTK_EOD : CTK_EOL, loc);
 
         }
         else if (c_token_lexer_at_eof(self))
@@ -571,7 +571,7 @@ extern c_token* c_token_lexer_lex_token(c_token_lexer* self)
         if (!t)
                 return NULL;
 
-        if (c_token_is(t, CTK_EOL))
+        if (c_token_is(t, CTK_EOL) || c_token_is(t, CTK_EOD))
                 self->hash_expected = true;
         else if (!c_token_is(t, CTK_WSPACE) && !c_token_is(t, CTK_COMMENT))
         {
