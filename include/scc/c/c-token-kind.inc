@@ -3,6 +3,8 @@ C_TOKEN(EOF),
 C_TOKEN(EOL),
 // end of macro, used by c_macro_lexer to mark the end of macro expansion
 C_TOKEN(EOM),
+// end of directive
+C_TOKEN(EOD),
 C_TOKEN(WSPACE),
 C_TOKEN(COMMENT),
 
@@ -116,7 +118,6 @@ C_PP_KEYWORD(IFNDEF),
 C_PP_KEYWORD(ELIF),
 C_PP_KEYWORD(ELSE),
 C_PP_KEYWORD(ENDIF),
-C_PP_KEYWORD(DEFINED),
 
 C_PP_KEYWORD(INCLUDE),
 C_PP_KEYWORD(DEFINE),

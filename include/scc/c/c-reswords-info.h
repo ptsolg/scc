@@ -31,9 +31,10 @@ static const c_resword_info _c_resword_infos[CTK_TOTAL_SIZE] =
         C_RESWORD("", "unknown", CRK_TOKEN), // CTK_UNKNOWN
         C_RESWORD("", "end of file", CRK_EMPTY), // CTK_EOF
         C_RESWORD("", "end of line", CRK_EMPTY), // CTK_EOL
-        C_RESWORD("", "end of macro", CRK_EMPTY),
+        C_RESWORD("", "end of macro", CRK_EMPTY), // CTK_EOM
+        C_RESWORD("", "end of directive", CRK_EMPTY), // CTK_EOD
         C_RESWORD("", "white space", CRK_EMPTY), // CTK_WSPACE
-        C_RESWORD("", "commetary", CRK_EMPTY), // CTK_COMMENT
+        C_RESWORD("", "commentary", CRK_EMPTY), // CTK_COMMENT
 
         C_RESWORD("char", "'char'", CRK_TOKEN),
         C_RESWORD("short", "'short'", CRK_TOKEN),
@@ -138,7 +139,6 @@ static const c_resword_info _c_resword_infos[CTK_TOTAL_SIZE] =
         C_RESWORD("elif", "#elif", CRK_TOKEN),
         C_RESWORD("else", "#else", CRK_TOKEN),
         C_RESWORD("endif", "#endif", CRK_TOKEN),
-        C_RESWORD("defined", "defined", CRK_TOKEN),
 
         C_RESWORD("include", "#include", CRK_TOKEN),
         C_RESWORD("define", "#define", CRK_TOKEN),
