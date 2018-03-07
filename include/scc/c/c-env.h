@@ -1,7 +1,7 @@
 #ifndef C_ENV_H
 #define C_ENV_H
 
-#ifdef S_HAS_PRAGMA
+#ifdef HAS_PRAGMA
 #pragma once
 #endif
 
