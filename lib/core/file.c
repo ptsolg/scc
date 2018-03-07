@@ -27,7 +27,7 @@ extern errcode path_get_cd(char* path)
         if (!GetCurrentDirectory(MAX_PATH_LEN, path))
                 return EC_ERROR;
 #elif OS_OSX
-        if (!getcwd(path, S_MAX_PATH_LEN))
+        if (!getcwd(path, MAX_PATH_LEN))
                 return EC_ERROR;
 #else
 #error todo
@@ -66,7 +66,10 @@ extern void path_goto_parent_dir(char* path)
 {
         char* file = path_get_file(path);
         if (file == path)
+        {
+                *path = '\0';
                 return;
+        }
         *(file - 1) = '\0';
         path_strip_file(path);
 }
