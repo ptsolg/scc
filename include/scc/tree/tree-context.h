@@ -60,10 +60,15 @@ static TREE_INLINE const char* tree_get_id_string(const tree_context* self, tree
                 : NULL;
 }
 
-static TREE_INLINE tree_id tree_get_id_for_string(
-        tree_context* self, const char* string, size_t len)
+static TREE_INLINE tree_id tree_get_id_for_string_s(
+        tree_context* self, const char* string, size_t size)
 {
-        return strpool_insert(&self->strings, string, len);
+        return strpool_insert(&self->strings, string, size);
+}
+
+static TREE_INLINE tree_id tree_get_id_for_string(tree_context* self, const char* string)
+{
+        return tree_get_id_for_string_s(self, string, strlen(string) + 1);
 }
 
 static TREE_INLINE errcode tree_resize_array(
