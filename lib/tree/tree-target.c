@@ -3,49 +3,49 @@
 
 extern void tree_init_target_info(tree_target_info* self, tree_target_architecture_kind k)
 {
-        self->_kind = k;
+        self->kind = k;
         
-        self->_builtin_align[TBTK_INVALID] = 0;
-        self->_builtin_align[TBTK_VOID] = 1;
-        self->_builtin_align[TBTK_INT8] = 1;
-        self->_builtin_align[TBTK_UINT8] = 1;
-        self->_builtin_align[TBTK_INT16] = 2;
-        self->_builtin_align[TBTK_UINT16] = 2;
-        self->_builtin_align[TBTK_INT32] = 4;
-        self->_builtin_align[TBTK_UINT32] = 4;
-        self->_builtin_align[TBTK_FLOAT] = 4;
+        self->builtin_align[TBTK_INVALID] = 0;
+        self->builtin_align[TBTK_VOID] = 1;
+        self->builtin_align[TBTK_INT8] = 1;
+        self->builtin_align[TBTK_UINT8] = 1;
+        self->builtin_align[TBTK_INT16] = 2;
+        self->builtin_align[TBTK_UINT16] = 2;
+        self->builtin_align[TBTK_INT32] = 4;
+        self->builtin_align[TBTK_UINT32] = 4;
+        self->builtin_align[TBTK_FLOAT] = 4;
 
-        self->_builtin_size[TBTK_INVALID] = 0;
-        self->_builtin_size[TBTK_VOID] = 1;
-        self->_builtin_size[TBTK_INT8] = 1;
-        self->_builtin_size[TBTK_UINT8] = 1;
-        self->_builtin_size[TBTK_INT16] = 2;
-        self->_builtin_size[TBTK_UINT16] = 2;
-        self->_builtin_size[TBTK_INT32] = 4;
-        self->_builtin_size[TBTK_UINT32] = 4;
-        self->_builtin_size[TBTK_INT64] = 8;
-        self->_builtin_size[TBTK_UINT64] = 8;
-        self->_builtin_size[TBTK_FLOAT] = 4;
-        self->_builtin_size[TBTK_DOUBLE] = 8;
+        self->builtin_size[TBTK_INVALID] = 0;
+        self->builtin_size[TBTK_VOID] = 1;
+        self->builtin_size[TBTK_INT8] = 1;
+        self->builtin_size[TBTK_UINT8] = 1;
+        self->builtin_size[TBTK_INT16] = 2;
+        self->builtin_size[TBTK_UINT16] = 2;
+        self->builtin_size[TBTK_INT32] = 4;
+        self->builtin_size[TBTK_UINT32] = 4;
+        self->builtin_size[TBTK_INT64] = 8;
+        self->builtin_size[TBTK_UINT64] = 8;
+        self->builtin_size[TBTK_FLOAT] = 4;
+        self->builtin_size[TBTK_DOUBLE] = 8;
 
         if (k == TTAK_X86_32)
         {
-                self->_pointer_align = 4;
-                self->_pointer_size = 4;
+                self->pointer_align = 4;
+                self->pointer_size = 4;
 
-                self->_builtin_align[TBTK_INT64] = 4;
-                self->_builtin_align[TBTK_UINT64] = 4;
-                self->_builtin_align[TBTK_DOUBLE] = 8;
+                self->builtin_align[TBTK_INT64] = 4;
+                self->builtin_align[TBTK_UINT64] = 4;
+                self->builtin_align[TBTK_DOUBLE] = 8;
         }
         else if (k == TTAK_X86_64)
         {
-                self->_pointer_align = 8;
-                self->_pointer_size = 8;
+                self->pointer_align = 8;
+                self->pointer_size = 8;
 
-                self->_builtin_align[TBTK_INT64] = 8;
-                self->_builtin_align[TBTK_UINT64] = 8;
-                self->_builtin_align[TBTK_FLOAT] = 8;
-                self->_builtin_align[TBTK_DOUBLE] = 8;
+                self->builtin_align[TBTK_INT64] = 8;
+                self->builtin_align[TBTK_UINT64] = 8;
+                self->builtin_align[TBTK_FLOAT] = 8;
+                self->builtin_align[TBTK_DOUBLE] = 8;
         }
         else
                 UNREACHABLE();
@@ -53,7 +53,7 @@ extern void tree_init_target_info(tree_target_info* self, tree_target_architectu
 
 extern tree_target_architecture_kind tree_get_target_kind(const tree_target_info* self)
 {
-        return self->_kind;
+        return self->kind;
 }
 
 extern bool tree_target_is(const tree_target_info* self, tree_target_architecture_kind k)
@@ -63,22 +63,32 @@ extern bool tree_target_is(const tree_target_info* self, tree_target_architectur
 
 extern size_t tree_get_pointer_size(const tree_target_info* self)
 {
-        return self->_pointer_size;
+        return self->pointer_size;
 }
 
 extern size_t tree_get_pointer_align(const tree_target_info* self)
 {
-        return self->_pointer_align;
+        return self->pointer_align;
+}
+
+extern size_t tree_get_intmax_t_size(const tree_target_info* self)
+{
+        return tree_get_builtin_type_size(self, TBTK_INT64);
+}
+
+extern size_t tree_get_uintmax_t_size(const tree_target_info* self)
+{
+        return tree_get_builtin_type_size(self, TBTK_UINT64);
 }
 
 extern size_t tree_get_builtin_type_size(const tree_target_info* self, tree_builtin_type_kind k)
 {
-        return self->_builtin_size[k];
+        return self->builtin_size[k];
 }
 
 extern size_t tree_get_builtin_type_align(const tree_target_info* self, tree_builtin_type_kind k)
 {
-        return self->_builtin_align[k];
+        return self->builtin_align[k];
 }
 
 extern size_t tree_get_sizeof_record(const tree_target_info* info, const tree_decl* d)
