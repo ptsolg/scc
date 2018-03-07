@@ -37,10 +37,10 @@ static errcode scc_env_add_cd_dir(scc_env* self)
         return cc_add_source_dir(&self->cc, cd);
 }
 
-static errcode scc_env_add_stdlibc_dir(scc_env* self, const char* argv0)
+static errcode scc_env_add_stdlibc_dir(scc_env* self, const char* exec_path)
 {
         char dir[MAX_PATH_LEN];
-        strncpy(dir, argv0, MAX_PATH_LEN);
+        strncpy(dir, exec_path, MAX_PATH_LEN);
         path_goto_parent_dir(dir);
         if (EC_FAILED(path_join(dir, "libstdc")))
                 return EC_ERROR;
@@ -48,10 +48,10 @@ static errcode scc_env_add_stdlibc_dir(scc_env* self, const char* argv0)
         return cc_add_source_dir(&self->cc, dir);
 }
 
-static errcode scc_env_add_stdlibc_libs(scc_env* self, const char* argv0)
+static errcode scc_env_add_stdlibc_libs(scc_env* self, const char* exec_path)
 {
         char dir[MAX_PATH_LEN];
-        strncpy(dir, argv0, MAX_PATH_LEN);
+        strncpy(dir, exec_path, MAX_PATH_LEN);
         path_strip_file(dir);
 
 #if OS_WIN
@@ -72,10 +72,10 @@ static errcode scc_env_add_stdlibc_libs(scc_env* self, const char* argv0)
         return EC_NO_ERROR;
 }
 
-static errcode scc_env_setup_llc_lld(scc_env* self, const char* argv0)
+static errcode scc_env_setup_llc_lld(scc_env* self, const char* exec_path)
 {
         char dir[MAX_PATH_LEN];
-        strncpy(dir, argv0, MAX_PATH_LEN);
+        strncpy(dir, exec_path, MAX_PATH_LEN);
         path_strip_file(dir);
         strcpy(self->llc_path, dir);
         strcpy(self->lld_path, dir);
@@ -110,9 +110,13 @@ extern errcode scc_env_setup(scc_env* self, int argc, const char** argv)
 #else
 #error
 #endif
+        char exec_path[MAX_PATH_LEN];
+        if (EC_FAILED(path_get_abs(exec_path, argv[0])))
+                return EC_ERROR;
+
         return EC_FAILED(scc_env_add_cd_dir(self))
-                || EC_FAILED(scc_env_add_stdlibc_dir(self, argv[0]))
-                || (self->link_stdlib && EC_FAILED(scc_env_add_stdlibc_libs(self, argv[0])))
-                || EC_FAILED(scc_env_setup_llc_lld(self, argv[0]))
+                || EC_FAILED(scc_env_add_stdlibc_dir(self, exec_path))
+                || (self->link_stdlib && EC_FAILED(scc_env_add_stdlibc_libs(self, exec_path)))
+                || EC_FAILED(scc_env_setup_llc_lld(self, exec_path))
                 ? EC_ERROR : EC_NO_ERROR;
 }
