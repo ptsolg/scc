@@ -141,6 +141,8 @@ extern void avalue_init_int(avalue* self, uint bits, bool signed_, uint64_t val)
 extern void avalue_init_sp(avalue* self, float v);
 extern void avalue_init_dp(avalue* self, double v);
 
+extern void avalue_set_signed(avalue* self, bool signed_);
+
 extern op_result avalue_add(avalue* self, const avalue* rhs);
 extern op_result avalue_sub(avalue* self, const avalue* rhs);
 extern op_result avalue_mul(avalue* self, const avalue* rhs);

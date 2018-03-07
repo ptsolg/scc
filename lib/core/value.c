@@ -516,6 +516,12 @@ extern void avalue_init_dp(avalue* self, double v)
         float_init_dp(&self->_float, v);
 }
 
+extern void avalue_set_signed(avalue* self, bool signed_)
+{
+        assert(self->_integer);
+        int_set_signed(&self->_int, signed_);
+}
+
 extern op_result avalue_add(avalue* self, const avalue* rhs)
 {
         avalue r = *rhs;
