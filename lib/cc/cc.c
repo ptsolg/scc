@@ -103,13 +103,15 @@ extern errcode cc_add_source_file(cc_instance* self, const char* file)
 }
 
 extern errcode cc_emulate_source_file(
-        cc_instance* self, const char* file, const char* content)
+        cc_instance* self, const char* file, const char* content, bool add_to_input)
 {
         file_entry* source = file_emulate(&self->input.source_lookup, file, content);
         if (!source)
                 return EC_ERROR;
 
-         dseq_append(&self->input.sources, source);
+        if (add_to_input)
+                dseq_append(&self->input.sources, source);
+
         return EC_NO_ERROR;
 }
 
