@@ -88,14 +88,14 @@ extern errcode llvm_linker_add_dir(llvm_linker* self, const char* dir)
 #elif OS_OSX
         char* copy = allocate(self->alloc, strlen(dir) + 1);
         if (!copy)
-                return S_ERROR;
-        if (S_FAILED(dseq_append(&self->dirs, copy)))
+                return EC_ERROR;
+        if (EC_FAILED(dseq_append(&self->dirs, copy)))
         {
                 deallocate(self->alloc, copy);
-                return S_ERROR;
+                return EC_ERROR;
         }
         strcpy(copy, dir);
-        return S_NO_ERROR;
+        return EC_NO_ERROR;
 #else
 #error
 #endif
