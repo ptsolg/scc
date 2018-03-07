@@ -3,8 +3,7 @@
 #include "scc/c/c-context.h"
 #include "scc/c/c-errors.h"
 #include "scc/c/c-reswords-info.h"
-#include <stdlib.h> // strtoll, strtod, ...
-#include <ctype.h> // toupper
+#include "c-numeric-literal.h"
 
 extern void c_lexer_init(
         c_lexer* self,
@@ -43,123 +42,31 @@ extern void c_lexer_dispose(c_lexer* self)
         c_preprocessor_dispose(&self->pp);
 }
 
-static inline const char* c_lexer_get_string(c_lexer* self, tree_id ref)
-{
-        return tree_get_id_string(c_context_get_tree_context(self->pp.context), ref);
-}
-
-static inline bool c_lexer_pp_num_is_floating_constant(c_lexer* self, const c_token* pp_num)
-{
-        const char* num = c_lexer_get_string(self, c_token_get_string(pp_num));
-        bool can_be_hex = false;
-
-        while (*num)
-        {
-                int c = *num++;
-
-                if (c == '.')
-                        return true;
-
-                if (toupper(c) == 'X')
-                        can_be_hex = true;
-
-                if (toupper(c) == 'E' && !can_be_hex)
-                        return true;
-        }
-        return false;
-}
-
-static bool c_lex_integer_suffix(c_lexer* self, const char* suffix, bool* is_signed, int* ls)
-{
-        int lc = 0;
-        int uc = 0;
-
-        const char* it = suffix;
-        while (*it)
-        {
-                int c = toupper(*it);
-                if (c == 'L')
-                        lc++;
-                else if (c == 'U')
-                        uc++;
-                else
-                        return false;
-                it++;
-        }
-
-        if (lc > 2 || uc > 1)
-                return false;
-
-        *ls = lc;
-        *is_signed = uc == 0;
-        return true;
-}
-
-static inline c_token* c_lex_integer_constant(c_lexer* self, c_token* pp)
-{
-        const char* num = c_lexer_get_string(self, c_token_get_string(pp));
-        int base = num[0] == '0'
-                ? toupper(num[1]) == 'X' ? 16 : 8
-                : 10;
-
-        char* suffix = NULL;
-        uint64_t val = strtoull(num, &suffix, base);
-
-        bool is_signed = true;
-        int ls = 0;
-        if (!c_lex_integer_suffix(self, suffix, &is_signed, &ls))
-        {
-                c_error_invalid_integer_literal(self->pp.logger, c_token_get_loc(pp), num);
-                return NULL;
-        }
-
-        c_token_set_kind(pp, CTK_CONST_INT);
-        c_token_set_int(pp, val);
-        c_token_set_int_signed(pp, is_signed);
-        c_token_set_int_ls(pp, ls);
-        return pp;
-}
-
-static inline c_token* c_lex_floating_constant(c_lexer* self, c_token* pp)
-{
-        const char* num = c_lexer_get_string(self, c_token_get_string(pp));
-        size_t len = strlen(num);
-        char* suffix = NULL;
-
-        float f;
-        double d;
-        bool is_float = toupper(num[len - 1]) == 'F';
-        if (is_float)
-                f = strtof(num, &suffix);
-        else
-                d = strtod(num, &suffix);
-
-        size_t suffix_len = strlen(suffix);
-        if ((is_float && suffix_len > 1) || (!is_float && suffix_len))
-        {
-                c_error_invalid_floating_literal(self->pp.logger, c_token_get_loc(pp), num);
-                return NULL;
-        }
-                
-        if (is_float)
-        {
-                c_token_set_kind(pp, CTK_CONST_FLOAT);
-                c_token_set_float(pp, f);
-        }
-        else
-        {
-                c_token_set_kind(pp, CTK_CONST_DOUBLE);
-                c_token_set_double(pp, d);
-        }
-        return pp;
-}
-
 // converts pp-number to floating or integer constant
 static c_token* c_lex_pp_num(c_lexer* self, c_token* num)
 {
-        return c_lexer_pp_num_is_floating_constant(self, num)
-                ? c_lex_floating_constant(self, num)
-                : c_lex_integer_constant(self, num);
+        const char* num_string = tree_get_id_string(self->pp.context->tree, c_token_get_string(num));
+        c_numeric_literal literal;
+        c_parse_numeric_literal(num_string, c_token_get_loc(num), &literal, self->pp.logger);
+        switch (literal.kind)
+        {
+                case CNLK_SP_FLOATING:
+                        c_token_set_kind(num, CTK_CONST_FLOAT);
+                        c_token_set_float(num, literal.sp.value);
+                        return num;
+                case CNLK_DP_FLOATING:
+                        c_token_set_kind(num, CTK_CONST_DOUBLE);
+                        c_token_set_double(num, literal.dp.value);
+                        return num;
+                case CNLK_INTEGER:
+                        c_token_set_kind(num, CTK_CONST_INT);
+                        c_token_set_int(num, literal.integer.value);
+                        c_token_set_int_ls(num, literal.integer.num_ls);
+                        c_token_set_int_signed(num, literal.integer.is_signed);
+                        return num;
+                default:
+                        return NULL;
+        }
 }
 
 // converts identifier to keyword
