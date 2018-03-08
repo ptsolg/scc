@@ -1,1 +1,1 @@
-035.t:1:2: error: unterminated #ifdef
+035.t:1:7: error: no macro name given in #ifdef directive

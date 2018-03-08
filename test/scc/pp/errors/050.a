@@ -1,1 +1,1 @@
-050.t:2:2: error: unterminated #elif
+050.t:2:6: error: expected an expression
