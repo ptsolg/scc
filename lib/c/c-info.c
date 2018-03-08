@@ -2,37 +2,57 @@
 #include "scc/c/c-reswords-info.h"
 #include "scc/tree/tree-context.h"
 #include "scc/core/char-info.h"
+#include "scc/core/read-write.h"
 #include <stdio.h>
 
-extern void c_get_unescaped_string(char* buffer, const char* string, size_t len)
+extern void c_get_unescaped_string(char* dst, size_t dst_size, const char* string, size_t string_size)
 {
-        for (size_t i = 0; i < len; i++)
+        if (!dst_size || !string_size)
+                return;
+
+        snwrite_cb cb;
+        snwrite_cb_init(&cb, dst, dst_size);
+        writebuf wb;
+        writebuf_init(&wb, snwrite_cb_base(&cb));
+
+        for (size_t i = 0; i < string_size - 1; i++)
         {
                 int c = string[i];
                 if (char_is_escape(c))
                 {
-                        *buffer++ = '\\';
-                        *buffer++ = escape_to_char(c);
+                        writebuf_writec(&wb, '\\');
+                        writebuf_writec(&wb, escape_to_char(c));
                 }
                 else
-                        *buffer++ = c;
+                        writebuf_writec(&wb, c);
         }
-        *buffer++ = '\0';
+        writebuf_flush(&wb);
+        writebuf_dispose(&wb);
 }
 
-extern size_t c_get_escaped_string(char* buffer, const char* string, size_t len)
+extern size_t c_get_escaped_string(char* dst, size_t dst_size, const char* string, size_t string_size)
 {
-        char* begin = buffer;
-        for (size_t i = 0; i < len; i++)
+        if (!dst_size || !string_size)
+                return 0;
+
+        snwrite_cb cb;
+        snwrite_cb_init(&cb, dst, dst_size);
+        writebuf wb;
+        writebuf_init(&wb, snwrite_cb_base(&cb));
+
+        for (size_t i = 0; i < string_size - 1; i++)
         {
                 int c = string[i];
                 if (c == '\\')
-                        *buffer++ = char_to_escape(string[++i]);
+                        writebuf_writec(&wb, char_to_escape(string[++i]));
                 else
-                        *buffer++ = c;
+                        writebuf_writec(&wb, c);
+
         }
-        *buffer++ = '\0';
-        return buffer - begin;
+        writebuf_flush(&wb);
+        size_t written = writebuf_get_bytes_written(&wb);
+        writebuf_dispose(&wb);
+        return written;
 }
 
 #define ASSERT_ENUM_RANGE(V, MAX) assert((V) > -1 && (V) < (MAX))

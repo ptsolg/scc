@@ -150,8 +150,8 @@ static void _c_print_string_literal(c_printer* self, tree_id id)
 {
         strentry entry;
         tree_get_id_strentry(self->context, id, &entry);
-        char unescaped[C_MAX_LINE_LENGTH + 1];
-        c_get_unescaped_string(unescaped, (const char*)entry.data, entry.size - 1);
+        char unescaped[C_MAX_LINE_LENGTH * 2];
+        c_get_unescaped_string(unescaped, ARRAY_SIZE(unescaped), (const char*)entry.data, entry.size);
         c_printf(self, "\"%s\"", unescaped);
 }
 

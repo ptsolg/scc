@@ -14,9 +14,9 @@ extern "C" {
 #include "scc/tree/tree-decl.h"
 #include "c-token.h"
 
-extern void c_get_unescaped_string(char* buffer, const char* string, size_t len);
-// returns size of the buffer (including trailing zero)
-extern size_t c_get_escaped_string(char* buffer, const char* string, size_t len);
+extern void c_get_unescaped_string(char* dst, size_t dst_size, const char* string, size_t string_size);
+// returns bytes written (including trailing zero)
+extern size_t c_get_escaped_string(char* dst, size_t dst_size, const char* string, size_t string_size);
 
 typedef struct _c_resword_info c_resword_info;
 
