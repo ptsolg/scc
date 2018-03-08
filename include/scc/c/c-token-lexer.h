@@ -33,6 +33,7 @@ typedef struct _c_token_lexer
         c_logger* logger;
         c_context* context;
         tree_location loc;
+        int line;
         int tab_to_space;
 } c_token_lexer;
 

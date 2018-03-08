@@ -57,8 +57,12 @@ static inline int c_token_lexer_readc(c_token_lexer* self)
                 self->loc += 2;
         }
 
-        if (c_token_lexer_at_start_of_line(self) && self->source)
-                c_source_save_line_loc(self->source, c_token_lexer_get_loc(self));
+        if (c_token_lexer_at_start_of_line(self))
+        {
+                self->line++;
+                if (self->source)
+                        c_source_save_line_loc(self->source, c_token_lexer_get_loc(self));
+        }
 
         return c_token_lexer_getc(self);
 }
@@ -81,6 +85,7 @@ extern void c_token_lexer_init(
         self->chars[1] = RB_ENDC;
         self->chars[2] = RB_ENDC;
         self->loc = TREE_INVALID_LOC;
+        self->line = 1;
         self->angle_string_expected = false;
         self->hash_expected = true;
         self->in_directive = false;
