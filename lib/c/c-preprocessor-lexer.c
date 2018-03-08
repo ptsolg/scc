@@ -36,10 +36,12 @@
 #undef DSEQ_SET 
 #undef DSEQ_APPEND
 
-extern void c_cond_directive_info_init(c_cond_directive_info* self, c_token* token, bool condition)
+extern void c_cond_directive_info_init(
+        c_cond_directive_info* self, c_token* token, bool condition, bool has_body)
 {
         self->token = token;
         self->condition = condition;
+        self->has_body = has_body;
 }
 
 extern void c_preprocessor_lexer_init_token(
@@ -93,8 +95,7 @@ extern c_cond_directive_info* c_preprocessor_lexer_push_conditional_directive(
         size_t depth = c_preprocessor_lexer_get_conditional_directive_stack_depth(self);
         c_pp_cond_stack_resize(&self->cond_stack, depth + 1);
         c_cond_directive_info* info = c_pp_cond_stack_begin(&self->cond_stack) + depth;
-        info->token = token;
-        info->condition = condition;
+        c_cond_directive_info_init(info, token, condition, false);
         return info;
 }
 

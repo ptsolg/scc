@@ -118,8 +118,11 @@ static void c_preprocessor_push_conditional_directive(c_preprocessor* self, c_to
 static bool c_preprocessor_finish_conditional_directive(c_preprocessor* self, bool condition)
 {
         c_cond_directive_info* info = c_preprocessor_lexer_get_conditional_directive(self->lexer);
-        info->condition = condition;
-        return condition || c_preprocessor_skip_conditional_directive_body(self);
+        info->condition = !info->has_body && condition;
+        if (info->condition)
+                info->has_body = true;
+        
+        return info->condition || c_preprocessor_skip_conditional_directive_body(self);
 }
 
 static bool c_preprocessor_require_end_of_directive(c_preprocessor* self, c_token_kind directive)

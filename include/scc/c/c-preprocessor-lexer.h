@@ -13,9 +13,11 @@ typedef struct
 {
         c_token* token;
         bool condition;
+        bool has_body;
 } c_cond_directive_info;
 
-extern void c_cond_directive_info_init(c_cond_directive_info* self, c_token* token, bool condition);
+extern void c_cond_directive_info_init(
+        c_cond_directive_info* self, c_token* token, bool condition, bool has_body);
 
 typedef enum
 {
