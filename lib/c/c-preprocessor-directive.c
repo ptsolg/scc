@@ -339,16 +339,6 @@ static bool c_preprocessor_read_macro_body(c_preprocessor* self, c_macro* macro)
         return true;
 }
 
-static bool c_preprocessor_check_macro_redefinition(const c_preprocessor* self, c_macro* macro)
-{
-        if (c_preprocessor_macro_defined(self, macro->name))
-        {
-                c_error_macro_redefenition(self->logger, macro->name, macro->loc);
-                return false;
-        }
-        return true;
-}
-
 static bool c_preprocessor_read_macro_params(c_preprocessor* self, c_macro* macro)
 {
         while (1)
@@ -389,7 +379,6 @@ extern bool c_preprocessor_handle_define_directive(c_preprocessor* self)
 
         c_macro* macro = c_macro_new(self->context, false, false,
                 c_token_get_loc(t), c_token_get_string(t));
-
         if (!(t = c_preprocess_non_comment(self)))
                 return false;
 
@@ -408,13 +397,10 @@ extern bool c_preprocessor_handle_define_directive(c_preprocessor* self)
                 return false;
         }
 
-        if (!c_preprocessor_check_macro_redefinition(self, macro))
-                return false;
         if (has_body && !c_preprocessor_read_macro_body(self, macro))
                 return false;
 
-        strmap_insert(&self->macro_lookup, macro->name, macro);
-        return true;
+        return c_preprocessor_define_macro(self, macro);
 }
 
 extern bool c_preprocessor_handle_error_directive(c_preprocessor* self, c_token* tok)

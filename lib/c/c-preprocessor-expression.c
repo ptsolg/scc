@@ -111,7 +111,7 @@ static bool c_preprocessor_evaluate_defined(c_preprocessor* self, int_value* res
 static bool c_preprocessor_evaluate_unary_expr(c_preprocessor* self, c_token* tok, int_value* result)
 {
         c_token_kind k = c_token_get_kind(tok);
-        if (k == CTK_ID && c_token_get_string(tok) == self->names.defined)
+        if (k == CTK_ID && c_token_get_string(tok) == self->defined_id)
                 return c_preprocessor_evaluate_defined(self, result);
         if (k != CTK_MINUS && k != CTK_TILDE && k != CTK_EXCLAIM && k != CTK_PLUS)
                 return c_preprocessor_evaluate_primary_expr(self, tok, result);

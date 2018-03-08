@@ -15,33 +15,17 @@ extern "C" {
 typedef struct _c_macro c_macro;
 typedef struct _dseq dseq;
 
-typedef enum
-{
-        CBMK_DATE,                 // __DATE__
-        CBMK_FILE,                 // __FILE__
-        CBMK_LINE,                 // __LINE__
-        CBMK_STDC,                 // __STDC__
-        CBMK_STDC_HOSTED,          // __STDC_HOSTED__
-        CBMK_STDC_MB_MIGHT_NEQ_WC, // __STDC_MB_MIGHT_NEQ_WC_
-        CBMK_STDC_VERSION,         // __STDC_VERSION__
-        CBMK_TIME,                 // __TIME__
-
-        CBMK_SCC,                  // __SCC__
-
-        CBMK_SIZE,
-} c_builtin_macro_kind;
-
-typedef tree_id c_builtin_macro_names[CBMK_SIZE];
-
 typedef struct _c_preprocessor
 {
         c_preprocessor_lexer* lexer;
+        size_t token_lexer_depth;
         c_preprocessor_lexer_stack lexer_stack;
         strmap macro_lookup;
         const c_reswords* reswords;
         c_source_manager* source_manager;
         c_logger* logger;
         c_context* context;
+        tree_id defined_id;
 
         struct
         {
@@ -51,9 +35,9 @@ typedef struct _c_preprocessor
 
         struct
         {
-                c_builtin_macro_names builtin_macro;
-                tree_id defined;
-        } names;
+                c_macro* line;
+                c_macro* file;
+        } builtin_macro;
 } c_preprocessor;
 
 extern void c_preprocessor_init(
@@ -67,6 +51,7 @@ extern void c_preprocessor_dispose(c_preprocessor* self);
 extern errcode c_preprocessor_enter_source(c_preprocessor* self, c_source* source);
 extern void c_preprocessor_exit(c_preprocessor* self);
 extern c_macro* c_preprocessor_get_macro(const c_preprocessor* self, tree_id name);
+extern bool c_preprocessor_define_macro(c_preprocessor* self, c_macro* macro);
 extern bool c_preprocessor_macro_defined(const c_preprocessor* self, tree_id name);
 extern bool c_preprocessor_undef(c_preprocessor* self, tree_id name);
 
