@@ -47,6 +47,11 @@ extern const char* c_source_get_name(const c_source* self)
         return path_get_cfile(file_get_path(self->file));
 }
 
+extern const char* c_source_get_path(const c_source* self)
+{
+        return file_get_path(self->file);
+}
+
 extern tree_location c_source_get_loc_begin(const c_source* self)
 {
         return self->begin;
