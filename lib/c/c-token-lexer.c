@@ -89,6 +89,7 @@ extern void c_token_lexer_init(
         self->angle_string_expected = false;
         self->hash_expected = true;
         self->in_directive = false;
+        self->eod_before_eof_returned = false;
 }
 
 extern void c_token_lexer_enter_char_stream(
@@ -564,7 +565,15 @@ static inline c_token* _c_token_lexer_lex_token(c_token_lexer* self)
 
         }
         else if (c_token_lexer_at_eof(self))
-                return c_token_new(self->context, CTK_EOF, c_token_lexer_get_loc(self));
+        {
+                tree_location loc = c_token_lexer_get_loc(self);
+                if (!self->eod_before_eof_returned && self->in_directive)
+                {
+                        self->eod_before_eof_returned = true;
+                        return c_token_new(self->context, CTK_EOD, loc);
+                }
+                return c_token_new(self->context, CTK_EOF, loc);
+        }
 
         c_error_unknown_symbol(self->logger, c_token_lexer_get_loc(self), c);
         return NULL;

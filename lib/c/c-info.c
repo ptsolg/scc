@@ -380,11 +380,6 @@ extern bool c_token_starts_declarator(const c_token* self)
         return k == CTK_STAR || k == CTK_ID || k == CTK_LBRACKET;
 }
 
-extern bool c_token_ends_directive(const c_token* self)
-{
-        return c_token_is(self, CTK_EOD) || c_token_is(self, CTK_EOF);
-}
-
 extern int c_get_type_rank(const tree_type* t)
 {
         t = tree_desugar_ctype(t);

@@ -27,6 +27,7 @@ typedef struct _c_token_lexer
         bool angle_string_expected;
         bool hash_expected;
         bool in_directive;
+        bool eod_before_eof_returned;
         const c_reswords* reswords;
         c_source* source;
         c_source_manager* source_manager;

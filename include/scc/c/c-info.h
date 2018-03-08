@@ -62,7 +62,6 @@ extern bool c_token_is_type_qualifier(const c_token* self);
 extern tree_decl_storage_class c_token_to_decl_storage_class(const c_token* self);
 extern bool c_token_is_decl_storage_class(const c_token* self);
 extern bool c_token_starts_declarator(const c_token* self);
-extern bool c_token_ends_directive(const c_token* self);
 
 extern int c_get_type_rank(const tree_type* t);
 

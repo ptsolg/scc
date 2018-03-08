@@ -131,7 +131,7 @@ static bool c_preprocessor_require_end_of_directive(c_preprocessor* self, c_toke
         if (!t)
                 return false;
 
-        if (!c_token_ends_directive(t))
+        if (!c_token_is(t, CTK_EOD))
         {
                 c_error_extra_tokens_at_end_of_directive(self->logger, directive, c_token_get_loc(t));
                 return false;
@@ -148,7 +148,7 @@ extern bool c_preprocessor_handle_if_directive(c_preprocessor* self, c_token* to
         int_value val;
         if (!(last = c_preprocessor_evaluate_expr(self, &val)))
                 return false;
-        if (!c_token_ends_directive(last))
+        if (!c_token_is(last, CTK_EOD))
         {
                 c_error_extra_tokens_at_end_of_directive(self->logger, CTK_PP_IF, c_token_get_loc(last));
                 return false;
@@ -164,7 +164,7 @@ static c_token* c_preprocessor_read_macro_name(c_preprocessor* self, c_token_kin
                 return NULL;
 
         tree_location loc = c_token_get_loc(t);
-        if (c_token_ends_directive(t))
+        if (c_token_is(t, CTK_EOD))
         {
                 c_error_no_macro_name_given_in_directive(self->logger, directive, c_token_get_loc(t));
                 return NULL;
@@ -232,7 +232,7 @@ extern bool c_preprocessor_handle_elif_directive(c_preprocessor* self, c_token* 
         int_value val;
         if (!(last = c_preprocessor_evaluate_expr(self, &val)))
                 return false;
-        if (!c_token_ends_directive(last))
+        if (!c_token_is(last, CTK_EOD))
         {
                 c_error_extra_tokens_at_end_of_directive(self->logger, CTK_PP_ELIF, c_token_get_loc(last));
                 return false;
@@ -318,7 +318,7 @@ static bool c_preprocessor_read_macro_body(c_preprocessor* self, c_macro* macro)
                 if (!t)
                         return false;
 
-                if (c_token_ends_directive(t))
+                if (c_token_is(t, CTK_EOD))
                         break;
 
                 c_macro_add_token(macro, self->context, t);
@@ -359,7 +359,7 @@ static bool c_preprocessor_read_macro_params(c_preprocessor* self, c_macro* macr
 
                 if (c_token_is(t, CTK_RBRACKET))
                         return true;
-                else if (c_token_ends_directive(t))
+                else if (c_token_is(t, CTK_EOD))
                 {
                         c_error_missing_closing_bracket_in_macro_parameter_list(
                                 self->logger, c_token_get_loc(t));
@@ -392,7 +392,7 @@ extern bool c_preprocessor_handle_define_directive(c_preprocessor* self)
                 if (!c_preprocessor_read_macro_params(self, macro))
                         return false;
         }
-        else if (c_token_ends_directive(t))
+        else if (c_token_is(t, CTK_EOD))
                 has_body = false;
         else if (!c_token_is(t, CTK_WSPACE))
         {
@@ -414,7 +414,7 @@ extern bool c_preprocessor_handle_error_directive(c_preprocessor* self, c_token*
                 if (!t)
                         return false;
 
-                if (c_token_ends_directive(t))
+                if (c_token_is(t, CTK_EOD))
                         break;
         }
 
