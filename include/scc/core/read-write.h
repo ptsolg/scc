@@ -58,7 +58,7 @@ typedef struct _snwrite_cb
         size_t _n;
 } snwrite_cb;
 
-extern void snwrite_cb_init(snwrite_cb* self, char* buf, size_t n);
+extern void snwrite_cb_init(snwrite_cb* self, char* buf, size_t buf_size);
 
 static inline write_cb* snwrite_cb_base(snwrite_cb* self)
 {

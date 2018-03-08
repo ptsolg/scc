@@ -21,9 +21,6 @@ extern void writebuf_dispose(writebuf* self)
 
 static inline size_t writebuf_write(writebuf* self, const void* data, size_t len)
 {
-        if (!len)
-                return 0;
-
         size_t bytes = self->_cb->_write(self->_cb, data, len);
         self->_written += bytes;
         return bytes;
@@ -90,23 +87,22 @@ static size_t snwrite_cb_write(snwrite_cb* self, const void* data, size_t bytes)
         assert(written <= self->_n);
 
         size_t available = self->_n - written;
+        if (!available)
+                return 0;
 
         if (bytes > available)
                 bytes = available;
 
-        if (!bytes)
-                return 0;
-
-        memcpy(self->_pos, data, bytes - 1);
+        memcpy(self->_pos, data, bytes);
         self->_pos += bytes;
-        self->_pos[bytes] = '\0';
+        *self->_pos = '\0';
 
-        return bytes;
+        return bytes + 1;
 }
 
-extern void snwrite_cb_init(snwrite_cb* self, char* buf, size_t n)
+extern void snwrite_cb_init(snwrite_cb* self, char* buf, size_t buf_size)
 {
-        self->_n = n;
+        self->_n = buf_size ? buf_size - 1 : 0; // reserve space for \0
         self->_pos = buf;
         self->_begin = buf;
         write_cb_init(snwrite_cb_base(self), &snwrite_cb_write);
