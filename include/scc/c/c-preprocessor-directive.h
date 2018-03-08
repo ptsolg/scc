@@ -18,5 +18,6 @@ extern bool c_preprocessor_handle_include_directive(c_preprocessor* self);
 extern bool c_preprocessor_handle_define_directive(c_preprocessor* self);
 extern bool c_preprocessor_handle_error_directive(c_preprocessor* self, c_token* tok);
 extern bool c_preprocessor_handle_pragma_directive(c_preprocessor* self);
+extern bool c_preprocessor_handle_undef_directive(c_preprocessor* self, c_token* tok);
 
 #endif

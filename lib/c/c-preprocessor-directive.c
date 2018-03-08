@@ -36,6 +36,8 @@ static bool _c_preprocessor_handle_directive(c_preprocessor* self, c_token* tok)
                         return c_preprocessor_handle_error_directive(self, tok);
                 case CTK_PP_PRAGMA:
                         return c_preprocessor_handle_pragma_directive(self);
+                case CTK_PP_UNDEF:
+                        return c_preprocessor_handle_undef_directive(self, tok);
                 case CTK_UNKNOWN:
                         c_error_unknown_preprocessor_directive(self->logger, loc);
                         return false;
@@ -426,4 +428,13 @@ extern bool c_preprocessor_handle_error_directive(c_preprocessor* self, c_token*
 extern bool c_preprocessor_handle_pragma_directive(c_preprocessor* self)
 {
         return false;
+}
+
+extern bool c_preprocessor_handle_undef_directive(c_preprocessor* self, c_token* tok)
+{
+        c_token* t = c_preprocessor_read_macro_name(self, CTK_PP_UNDEF);
+        if (!t || !c_preprocessor_require_end_of_directive(self, CTK_PP_UNDEF))
+                return false;
+        c_preprocessor_undef(self, c_token_get_string(t));
+        return true;
 }
