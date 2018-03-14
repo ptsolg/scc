@@ -38,7 +38,6 @@ typedef struct _tree_decl tree_decl;
 //      declarator
 //      declarator = initializer
 extern tree_decl* c_parse_decl(c_parser* self);
-//extern bool cparse_decl_ex(cparser* self, tree_decl** pfirst, tree_decl** plast);
 
 //c99 6.7 declaration-specifiers:
 //      storage_class_specifier declaration-specifiers-opt
