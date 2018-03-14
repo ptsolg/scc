@@ -13,7 +13,6 @@ add_scc_target_sources(core
 	strpool.h
 	strmap.h
 	string.h
-	char-info.h
 	heap-debug.h
 	read-write.h
 	value.h

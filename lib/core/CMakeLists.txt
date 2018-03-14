@@ -5,7 +5,6 @@ add_scc_lib(core
 	membuf.c
 	strpool.c
 	string.c
-	char-info.c
 	heap-debug.c
 	read-write.c
 	value.c

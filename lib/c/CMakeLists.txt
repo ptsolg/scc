@@ -6,6 +6,7 @@ add_scc_lib(c
 	c-source.c
 	c-lexer.c
 	c-context.c
+	c-charset.c
 	c-parser.c
 	c-parse-module.c
 	c-parse-expr.c

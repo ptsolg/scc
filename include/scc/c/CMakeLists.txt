@@ -3,6 +3,7 @@ add_scc_target_sources(c
 	c-reswords-info.h
 	c-token-kind.h
 	c-limits.h
+	c-charset.h
 	c-error.h
 	c-errors.h
 	c-token.h
