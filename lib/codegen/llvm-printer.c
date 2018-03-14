@@ -2,10 +2,10 @@
 #include "scc/ssa/ssa.h"
 #include "scc/tree/tree-type.h"
 #include "scc/tree/tree-module.h"
-#include "scc/core/char-info.h"
 #include "scc/core/dseq-instance.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <ctype.h> // isprint
 
 typedef struct
 {
@@ -811,7 +811,7 @@ static void llvm_printer_emit_global(llvm_printer* self, ssa_value* global)
         for (size_t i = 0; i < entry.size; i++)
         {
                 int c = entry.data[i];
-                llvm_printf(self, (char_is_escape(c) ? "\\%02X" : "%c"), c);
+                llvm_printf(self, (isprint(c) ? "%c" : "\\%02X"), c);
 
         }
         llvm_printc(self, '"');

@@ -6,9 +6,9 @@
 #include "scc/ssa/ssa-function.h"
 #include "scc/ssa/ssa-module.h"
 #include "scc/tree/tree-context.h"
-#include "scc/core/char-info.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <ctype.h> // isprint
 
 extern void ssa_init_printer(ssa_printer* self, write_cb* write, const ssa_context* context)
 {
@@ -75,7 +75,7 @@ static void ssa_print_string(ssa_printer* self, tree_id id)
         for (size_t i = 0; i < entry.size; i++)
         {
                 int c = entry.data[i];
-                ssa_printf(self, (char_is_escape(c) ? "\\%02X" : "%c"), c);
+                ssa_printf(self, (isprint(c) ? "\\%02X" : "%c"), c);
                 
         }
         ssa_printc(self, '"');
