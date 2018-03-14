@@ -17,6 +17,7 @@ extern "C" {
 #include "tree-type.h"
 #include "tree-module.h"
 #include "tree-target.h"
+#include "tree-eval.h"
 
 #ifdef __cplusplus
 }
