@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include "c-sema.h"
+#include "scc/tree/tree-type.h"
 
 extern bool c_sema_types_are_same(const c_sema* self, const tree_type* a, const tree_type* b);
 extern bool c_sema_types_are_compatible(const c_sema* self, const tree_type* a, const tree_type* b);

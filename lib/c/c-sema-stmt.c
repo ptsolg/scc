@@ -5,6 +5,7 @@
 #include "scc/c/c-info.h"
 #include "scc/c/c-errors.h"
 #include "scc/tree/tree-eval.h"
+#include "scc/tree/tree-stmt.h"
 
 extern tree_stmt* c_sema_add_stmt(c_sema* self, tree_stmt* s)
 {

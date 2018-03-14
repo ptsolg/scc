@@ -2,6 +2,9 @@
 #include "scc/c/c-sema-decl.h"
 #include "scc/c/c-errors.h"
 #include "scc/tree/tree-eval.h"
+#include "scc/tree/tree-target.h"
+#include "scc/tree/tree-context.h"
+#include "scc/tree/tree-expr.h"
 
 extern bool c_sema_types_are_same(const c_sema* self, const tree_type* a, const tree_type* b)
 {

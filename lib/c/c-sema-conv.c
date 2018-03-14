@@ -1,6 +1,7 @@
 #include "scc/c/c-sema-conv.h"
 #include "scc/c/c-sema-type.h"
 #include "scc/c/c-info.h"
+#include "scc/tree/tree-target.h"
 
 extern tree_expr* c_sema_new_impl_cast(c_sema* self, tree_expr* e, tree_type* t)
 {

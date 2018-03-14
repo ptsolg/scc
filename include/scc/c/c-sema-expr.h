@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include "c-sema.h"
+#include "scc/tree/tree-expr.h"
 
 extern bool c_sema_require_object_pointer_expr_type(
         const c_sema* self, const tree_type* t, tree_location l);

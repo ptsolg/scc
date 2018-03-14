@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include "c-sema.h"
+#include "scc/tree/tree-type.h"
 
 extern tree_expr* c_sema_new_impl_cast(c_sema* self, tree_expr* e, tree_type* t);
 extern tree_type* c_sema_lvalue_conversion(c_sema* self, tree_expr** e);

@@ -14,6 +14,14 @@ extern "C" {
 #include "scc/core/dseq-common.h"
 
 typedef struct _htab c_case_label_map;
+typedef struct _tree_stmt tree_stmt;
+typedef struct _tree_decl tree_decl;
+typedef struct _tree_target_info tree_target_info;
+typedef struct _tree_module tree_module;
+typedef struct _tree_scope tree_scope;
+typedef struct _tree_decl_scope tree_decl_scope;
+typedef struct _tree_type tree_type;
+typedef struct _tree_expr tree_expr;
 
 typedef struct
 {

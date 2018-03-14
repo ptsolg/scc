@@ -10,6 +10,8 @@ extern "C" {
 #endif
 
 #include "c-sema.h"
+#include "scc/tree/tree-decl.h"
+#include "scc/tree/tree-type.h"
 
 typedef struct _c_param c_param;
 

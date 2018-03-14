@@ -1,6 +1,9 @@
 #include "scc/c/c-sema.h"
 #include "scc/c/c-info.h"
 #include "scc/c/c-errors.h"
+#include "scc/tree/tree-decl.h"
+#include "scc/tree/tree-stmt.h"
+#include "scc/tree/tree-module.h"
 
 #define DSEQ_VALUE_TYPE c_switch_stmt_info
 #define DSEQ_TYPE c_switch_stack
@@ -95,7 +98,7 @@
 extern void c_sema_init(c_sema* self, c_context* context, c_logger* logger)
 {
         self->ccontext = context;
-        self->context = c_context_get_tree_context(context);
+        self->context = context->tree;
         self->module = NULL;
         self->globals = NULL;
         self->target = NULL;
