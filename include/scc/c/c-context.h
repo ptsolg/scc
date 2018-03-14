@@ -9,34 +9,33 @@
 extern "C" {
 #endif
 
-#include "scc/tree/tree.h"
-#include <stdio.h>
+#include "scc/c/c-source.h"
 #include <setjmp.h>
 
-typedef struct _c_source c_source;
-typedef struct _file_entry file_entry;
+typedef struct _tree_context tree_context;
 
 typedef struct _c_context
 {
         mempool memory;
         obstack nodes;
-        list_head sources;
         tree_context* tree;
+        c_source_manager source_manager;
 } c_context;
 
-extern void c_context_init(c_context* self, tree_context* tree, jmp_buf on_bad_alloc);
-extern void c_context_init_ex(c_context* self,
-        tree_context* tree, jmp_buf on_bad_alloc, allocator* alloc);
+extern void c_context_init(
+        c_context* self, 
+        tree_context* tree, 
+        file_lookup* lookup,
+        jmp_buf on_bad_alloc);
+
+extern void c_context_init_ex(
+        c_context* self,
+        tree_context* tree,
+        file_lookup* lookup,
+        jmp_buf on_bad_alloc,
+        allocator* alloc);
 
 extern void c_context_dispose(c_context* self);
-
-extern c_source* c_new_source(c_context* context, file_entry* entry);
-extern void c_delete_source(c_context* context, c_source* source);
-
-static inline tree_context* c_context_get_tree_context(const c_context* self)
-{
-        return self->tree;
-}
 
 static inline allocator* c_context_get_allocator(c_context* self)
 {

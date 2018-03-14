@@ -19,12 +19,7 @@ typedef struct _c_lexer
         c_reswords reswords;
 } c_lexer;
 
-extern void c_lexer_init(
-        c_lexer* self,
-        c_source_manager* source_manager,
-        c_logger* logger,
-        c_context* context);
-
+extern void c_lexer_init(c_lexer* self, c_logger* logger, c_context* context);
 extern errcode c_lexer_enter_source_file(c_lexer* self, c_source* source);
 extern void c_lexer_init_reswords(c_lexer* self);
 extern void c_lexer_dispose(c_lexer* self);

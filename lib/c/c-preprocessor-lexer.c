@@ -45,27 +45,22 @@ extern void c_cond_directive_info_init(
 }
 
 extern void c_preprocessor_lexer_init_token(
-        c_preprocessor_lexer* self,
-        const c_reswords* reswords,
-        c_source_manager* source_manager,
-        c_logger* logger,
-        c_context* context)
+        c_preprocessor_lexer* self, c_logger* logger, c_context* context)
 {
         self->kind = CPLK_TOKEN;
-        c_token_lexer_init(&self->token_lexer, reswords, source_manager, logger, context);
+        c_token_lexer_init(&self->token_lexer, context, logger);
         c_pp_cond_stack_init_alloc(&self->cond_stack, c_context_get_allocator(context));
 }
 
 extern void c_preprocessor_lexer_init_macro(
         c_preprocessor_lexer* self,
         c_context* context,
-        const c_reswords* reswords,
         c_macro* macro,
         c_logger* logger,
         tree_location loc)
 {
         self->kind = CPLK_MACRO;
-        c_macro_lexer_init(&self->macro_lexer, context, reswords, macro, logger, loc);
+        c_macro_lexer_init(&self->macro_lexer, context, macro, logger, loc);
 }
 
 extern void c_preprocessor_lexer_dispose(c_preprocessor_lexer* self)
@@ -199,26 +194,21 @@ static c_preprocessor_lexer* c_preprocessor_lexer_stack_push_lexer(c_preprocesso
 }
 
 extern c_preprocessor_lexer* c_preprocessor_lexer_stack_push_token_lexer(
-        c_preprocessor_lexer_stack* self,
-        const c_reswords* reswords,
-        c_source_manager* source_manager,
-        c_logger* logger,
-        c_context* context)
+        c_preprocessor_lexer_stack* self, c_logger* logger, c_context* context)
 {
         c_preprocessor_lexer* lexer = c_preprocessor_lexer_stack_push_lexer(self);
-        c_preprocessor_lexer_init_token(lexer, reswords, source_manager, logger, context);
+        c_preprocessor_lexer_init_token(lexer, logger, context);
         return lexer;
 }
 
 extern c_preprocessor_lexer* c_preprocessor_lexer_stack_push_macro_lexer(
         c_preprocessor_lexer_stack* self,
         c_context* context,
-        const c_reswords* reswords,
         c_macro* macro,
         c_logger* logger,
         tree_location loc)
 {
         c_preprocessor_lexer* lexer = c_preprocessor_lexer_stack_push_lexer(self);
-        c_preprocessor_lexer_init_macro(lexer, context, reswords, macro, logger, loc);
+        c_preprocessor_lexer_init_macro(lexer, context, macro, logger, loc);
         return lexer;
 }

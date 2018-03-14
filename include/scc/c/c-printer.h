@@ -51,12 +51,7 @@ typedef struct _c_printer
         int indent_level;
 } c_printer;
 
-extern void c_printer_init(
-        c_printer* self,
-        write_cb* write,
-        const c_context* context,
-        const c_source_manager* source_manager);
-
+extern void c_printer_init(c_printer* self, write_cb* write, const c_context* context);
 extern void c_printer_dispose(c_printer* self);
 
 typedef struct

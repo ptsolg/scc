@@ -3,16 +3,13 @@
 #include "scc/c/c-context.h"
 #include "scc/c/c-errors.h"
 #include "scc/c/c-reswords-info.h"
+#include "scc/tree/tree-context.h"
 #include "c-numeric-literal.h"
 
-extern void c_lexer_init(
-        c_lexer* self,
-        c_source_manager* source_manager,
-        c_logger* logger,
-        c_context* context)
+extern void c_lexer_init(c_lexer* self, c_logger* logger, c_context* context)
 {
         c_reswords_init(&self->reswords, context);
-        c_preprocessor_init(&self->pp, &self->reswords, source_manager, logger, context);
+        c_preprocessor_init(&self->pp, &self->reswords,  logger, context);
 }
 
 extern errcode c_lexer_enter_source_file(c_lexer* self, c_source* source)

@@ -1,6 +1,26 @@
 #include "scc/c/c-source.h"
 #include "scc/c/c-context.h"
 
+static c_source* c_source_new(c_source_manager* manager, file_entry* entry)
+{
+        c_source* s = c_context_allocate(manager->context, sizeof(*s));
+        s->begin = TREE_INVALID_LOC;
+        s->end = TREE_INVALID_LOC;
+        s->file = entry;
+        list_node_init(&s->node);
+        dseq_u32_init_alloc(&s->lines, c_context_get_allocator(manager->context));
+        return s;
+}
+
+static void c_source_delete(c_source_manager* manager, c_source* source)
+{
+        if (!source)
+                return;
+
+        file_close(source->file);
+        c_context_deallocate(manager->context, source);
+}
+
 extern bool c_source_has(const c_source* self, tree_location loc)
 {
         return loc >= c_source_get_loc_begin(self) && loc < c_source_get_loc_end(self);
@@ -86,7 +106,7 @@ extern void c_source_manager_init(
 extern void c_source_manager_dispose(c_source_manager* self)
 {
         STRMAP_FOREACH(&self->file_to_source, it)
-                c_delete_source(self->context, *strmap_iter_value(&it));
+                c_source_delete(self, *strmap_iter_value(&it));
 
         strmap_dispose(&self->file_to_source);
         dseq_dispose(&self->sources);
@@ -107,7 +127,7 @@ extern c_source* c_source_get_from_file(c_source_manager* self, file_entry* file
         if (strmap_find(&self->file_to_source, ref, &res))
                 return *strmap_iter_value(&res);
 
-        c_source* source = c_new_source(self->context, file);
+        c_source* source = c_source_new(self, file);
         source->begin = 0;
         if (dseq_size(&self->sources))
                 source->begin = c_source_get_loc_end(*(dseq_end(&self->sources) - 1));

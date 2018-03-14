@@ -31,7 +31,7 @@ static void cc_context_init(cc_context* self, cc_instance* cc, jmp_buf on_fatal_
         tree_init_target_info(&self->target,
                 cc->opts.target == CTK_X86_32 ? TTAK_X86_32 : TTAK_X86_64);
         tree_init(&self->tree, &self->target);
-        c_context_init(&self->c, &self->tree, on_fatal_error);
+        c_context_init(&self->c, &self->tree, &cc->input.source_lookup, on_fatal_error);
         ssa_init(&self->ssa, &self->tree, on_fatal_error);
 }
 
@@ -111,14 +111,13 @@ static void cc_set_cprinter_opts(cc_instance* self, c_printer* printer)
 static void cc_print_tokens(
         cc_instance* self,
         cc_context* context,
-        c_source_manager* source_manager,
         FILE* output,
         const dseq* tokens)
 {
         fwrite_cb write;
         fwrite_cb_init(&write, output);
         c_printer printer;
-        c_printer_init(&printer, fwrite_cb_base(&write), &context->c, source_manager);
+        c_printer_init(&printer, fwrite_cb_base(&write), &context->c);
         cc_set_cprinter_opts(self, &printer);
         c_print_tokens(&printer, tokens);
         c_printer_dispose(&printer);
@@ -136,7 +135,7 @@ extern errcode cc_dump_tokens(cc_instance* self)
         dseq tokens;
 
         cc_context_init(&context, self, fatal);
-        c_env_init(&env, &context.c, &self->input.source_lookup, self->output.message);
+        c_env_init(&env, &context.c, self->output.message);
         dseq_init_alloc(&tokens, self->alloc);
 
         if (setjmp(fatal))
@@ -148,8 +147,7 @@ extern errcode cc_dump_tokens(cc_instance* self)
 
         result = EC_NO_ERROR;
         if (self->output.file)
-                cc_print_tokens(self, &context, &env.source_manager,
-                        self->output.file, &tokens);
+                cc_print_tokens(self, &context, self->output.file, &tokens);
 
 cleanup:
         dseq_dispose(&tokens);
@@ -164,7 +162,7 @@ static void cc_print_tree_module(cc_instance* self,
         fwrite_cb write;
         fwrite_cb_init(&write, output);
         c_printer printer;
-        c_printer_init(&printer, fwrite_cb_base(&write), &context->c, NULL);
+        c_printer_init(&printer, fwrite_cb_base(&write), &context->c);
         cc_set_cprinter_opts(self, &printer);
         c_print_module(&printer, module);
         c_printer_dispose(&printer);
@@ -172,8 +170,7 @@ static void cc_print_tree_module(cc_instance* self,
 
 static tree_module* cc_parse_file(cc_instance* self, cc_context* context, file_entry* file)
 {
-        return c_parse_source(&context->c,
-                &self->input.source_lookup, file, self->output.message);
+        return c_parse_source(&context->c, file, self->output.message);
 }
 
 extern errcode cc_dump_tree(cc_instance* self)
@@ -216,8 +213,7 @@ extern errcode cc_perform_syntax_analysis(cc_instance* self)
 
         errcode result = EC_NO_ERROR;
         CC_FOREACH_SOURCE(self, it, end)
-                if (!c_parse_source(&context.c,
-                        &self->input.source_lookup, *it, self->output.message))
+                if (!c_parse_source(&context.c, *it, self->output.message))
                 {
                         result = EC_ERROR;
                         break;

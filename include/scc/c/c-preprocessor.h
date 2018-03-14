@@ -22,7 +22,6 @@ typedef struct _c_preprocessor
         c_preprocessor_lexer_stack lexer_stack;
         strmap macro_lookup;
         const c_reswords* reswords;
-        c_source_manager* source_manager;
         c_logger* logger;
         c_context* context;
         tree_id defined_id;
@@ -43,7 +42,6 @@ typedef struct _c_preprocessor
 extern void c_preprocessor_init(
         c_preprocessor* self,
         const c_reswords* reswords,
-        c_source_manager* source_manager,
         c_logger* logger,
         c_context* context);
 

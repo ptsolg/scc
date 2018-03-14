@@ -40,16 +40,11 @@ typedef struct _c_preprocessor_lexer
 } c_preprocessor_lexer;
 
 extern void c_preprocessor_lexer_init_token(
-        c_preprocessor_lexer* self,
-        const c_reswords* reswords,
-        c_source_manager* source_manager,
-        c_logger* logger,
-        c_context* context);
+        c_preprocessor_lexer* self, c_logger* logger, c_context* context);
 
 extern void c_preprocessor_lexer_init_macro(
         c_preprocessor_lexer* self,
         c_context* context,
-        const c_reswords* reswords,
         c_macro* macro,
         c_logger* logger,
         tree_location loc);
@@ -79,16 +74,11 @@ extern c_preprocessor_lexer* c_preprocessor_lexer_stack_get(
         const c_preprocessor_lexer_stack* self, size_t depth);
 
 extern c_preprocessor_lexer* c_preprocessor_lexer_stack_push_token_lexer(
-        c_preprocessor_lexer_stack* self,
-        const c_reswords* reswords,
-        c_source_manager* source_manager,
-        c_logger* logger,
-        c_context* context);
+        c_preprocessor_lexer_stack* self, c_logger* logger, c_context* context);
 
 extern c_preprocessor_lexer* c_preprocessor_lexer_stack_push_macro_lexer(
         c_preprocessor_lexer_stack* self,
         c_context* context,
-        const c_reswords* reswords,
         c_macro* macro,
         c_logger* logger,
         tree_location loc);

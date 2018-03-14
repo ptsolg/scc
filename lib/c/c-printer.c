@@ -5,8 +5,8 @@
 #include "scc/c/c-context.h"
 #include "scc/c/c-source.h"
 #include "scc/c/c-limits.h"
-#include "scc/tree/tree-eval.h"
-#include "scc/core/char-info.h"
+#include "scc/c/c-charset.h"
+#include "scc/tree/tree.h"
 #include <stdarg.h>
 
 extern void c_printer_opts_init(c_printer_opts* self)
@@ -20,15 +20,11 @@ extern void c_printer_opts_init(c_printer_opts* self)
         self->force_brackets = false;
 }
 
-extern void c_printer_init(
-        c_printer* self,
-        write_cb* write,
-        const c_context* context,
-        const c_source_manager* source_manager)
+extern void c_printer_init(c_printer* self, write_cb* write, const c_context* context)
 {
-        self->context = c_context_get_tree_context(context);
+        self->context = context->tree;
         self->ccontext = context;
-        self->source_manager = source_manager;
+        self->source_manager = &context->source_manager;
         self->target = self->context->target;
         self->indent_level = 0;
         writebuf_init(&self->buf, write);
@@ -179,8 +175,8 @@ static void c_print_token_value(c_printer* self, const c_token* token)
         else if (k == CTK_CONST_CHAR)
         {
                 int c = c_token_get_char(token);
-                if (char_is_escape(c))
-                        c_printf(self, "'\\%c'", escape_to_char(c));
+                if (c_char_is_escape(c))
+                        c_printf(self, "'\\%c'", c_char_from_escape(c));
                 else
                         c_printf(self, "'%c'", c);
         }

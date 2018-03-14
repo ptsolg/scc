@@ -17,20 +17,17 @@ extern "C" {
 
 extern errcode c_lex_source(
         c_context* context,
-        file_lookup* source_lookup,
         file_entry* source,
         FILE* error,
         dseq* result);
 
 extern tree_module* c_parse_source(
         c_context* context,
-        file_lookup* source_lookup,
         file_entry* source,
         FILE* error);
 
 typedef struct _c_env
 {
-        c_source_manager source_manager;
         c_logger logger;
         c_lexer lexer;
         c_sema sema;
@@ -38,7 +35,7 @@ typedef struct _c_env
         c_context* context;
 } c_env;
 
-extern void c_env_init(c_env* self, c_context* context, file_lookup* source_lookup, FILE* err);
+extern void c_env_init(c_env* self, c_context* context, FILE* err);
 extern void c_env_dispose(c_env* self);
 
 extern errcode c_env_lex_source(c_env* self, file_entry* source, dseq* result);

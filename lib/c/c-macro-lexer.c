@@ -9,17 +9,16 @@
 #include "scc/c/c-errors.h"
 #include "scc/core/dseq-instance.h"
 #include "scc/core/read-write.h"
+#include "scc/tree/tree-context.h"
 
 extern void c_macro_lexer_init(
         c_macro_lexer* self,
         c_context* context,
-        const c_reswords* reswords,
         c_macro* macro,
         c_logger* logger,
         tree_location loc)
 {
         self->context = context;
-        self->reswords = reswords;
         self->macro = macro;
         self->logger = logger;
         self->loc = loc;
@@ -30,7 +29,7 @@ extern void c_macro_lexer_init(
 static c_token* _c_macro_lexer_concat(c_macro_lexer* self, c_token* l, c_token* r, tree_location loc)
 {
         c_token_lexer lexer;
-        c_token_lexer_init(&lexer, self->reswords, NULL, self->logger, self->context);
+        c_token_lexer_init(&lexer, self->context, self->logger);
 
         char buf[C_MAX_LINE_LENGTH + 1];
         int n = c_token_to_string(self->context->tree, l, buf, C_MAX_LINE_LENGTH);

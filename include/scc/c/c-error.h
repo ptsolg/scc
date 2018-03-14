@@ -12,8 +12,7 @@ extern "C" {
 #include <stdio.h>
 #include "scc/tree/tree-common.h"
 
-typedef struct _c_source_manager c_source_manager;
-typedef struct _tree_context tree_context;
+typedef struct _c_context c_context;
 
 typedef struct _c_logger
 {
@@ -21,17 +20,11 @@ typedef struct _c_logger
         int warnings;
         bool errors_as_warnings;
         bool enabled;
-        const c_source_manager* source_manager;
-        const tree_context* tree;
+        const c_context* context;
         FILE* output;
 } c_logger;
 
-extern void c_logger_init(
-        c_logger* self,
-        const c_source_manager* source_manager,
-        const tree_context* tree,
-        FILE* log);
-
+extern void c_logger_init(c_logger* self, const c_context* context, FILE* log);
 extern void c_logger_set_output(c_logger* self, FILE* output);
 extern void c_logger_set_enabled(c_logger* self);
 extern void c_logger_set_disabled(c_logger* self);
