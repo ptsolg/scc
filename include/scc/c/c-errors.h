@@ -15,21 +15,19 @@ typedef struct _tree_expr tree_expr;
 typedef struct _tree_stmt tree_stmt;
 typedef struct _tree_designator tree_designator;
 
-// preprocessing lexer
+// token lexer
 extern void c_error_cannot_open_source_file(c_logger* self, tree_location loc, const char* file);
 extern void c_error_token_is_too_long(c_logger* self, tree_location loc);
 extern void c_error_missing_closing_quote(c_logger* self, tree_location loc);
 extern void c_error_empty_character_constant(c_logger* self, tree_location loc);
 extern void c_error_invalid_character_constant(c_logger* self, tree_location loc);
 extern void c_error_unclosed_comment(c_logger* self, tree_location loc);
-extern void c_error_unknown_punctuator(c_logger* self, tree_location loc, int c);
-extern void c_error_unknown_symbol(c_logger* self, tree_location loc, int c);
+extern void c_error_stray_symbol(c_logger* self, tree_location loc, int c);
 
 // preprocessor
 extern void c_error_too_deep_include_nesting(c_logger* self);
 extern void c_error_expected_file_name(c_logger* self, tree_location loc);
 extern void c_error_empty_file_name_in_include(c_logger* self, tree_location loc);
-extern void c_error_unexpected_hash(c_logger* self, tree_location loc);
 extern void c_error_unknown_preprocessor_directive(c_logger* self, tree_location loc);
 extern void c_error_unsupported_preprocessor_directive(c_logger* self, tree_location loc);
 extern void c_error_no_macro_name_given_in_directive(c_logger* self, c_token_kind directive, tree_location loc);

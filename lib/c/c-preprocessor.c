@@ -10,6 +10,8 @@
 #include "scc/c/c-source.h"
 #include "scc/c/c-limits.h"
 #include "scc/core/dseq-instance.h"
+#include "scc/tree/tree-context.h"
+#include "scc/tree/tree-target.h"
 #include <time.h>
 
 static c_macro* _c_preprocessor_init_builtin_macro(
@@ -88,7 +90,6 @@ static void c_preprocessor_init_builtin_macro(c_preprocessor* self)
 extern void c_preprocessor_init(
         c_preprocessor* self,
         const c_reswords* reswords,
-        c_source_manager* source_manager,
         c_logger* logger,
         c_context* context)
 {
@@ -99,7 +100,6 @@ extern void c_preprocessor_init(
         self->lookahead.next_expanded_token = NULL;
         strmap_init_alloc(&self->macro_lookup, c_context_get_allocator(context));
         self->reswords = reswords;
-        self->source_manager = source_manager;
         self->logger = logger;
         self->context = context;
         self->defined_id = tree_get_id_for_string(self->context->tree, "defined");
@@ -117,7 +117,7 @@ extern errcode c_preprocessor_enter_source(c_preprocessor* self, c_source* sourc
         assert(source);
 
         self->lexer = c_preprocessor_lexer_stack_push_token_lexer(
-                &self->lexer_stack, self->reswords, self->source_manager, self->logger, self->context);
+                &self->lexer_stack, self->logger, self->context);
         c_preprocessor_set_file(self, source);
         self->token_lexer_depth = c_preprocessor_lexer_stack_depth(&self->lexer_stack) - 1;
         return c_token_lexer_enter(&self->lexer->token_lexer, source);
@@ -129,7 +129,7 @@ static void c_preprocessor_enter_macro(
         assert(macro);
         macro->used = true;
         self->lexer = c_preprocessor_lexer_stack_push_macro_lexer(
-                &self->lexer_stack, self->context, self->reswords, macro, self->logger, loc);
+                &self->lexer_stack, self->context, macro, self->logger, loc);
 }
 
 extern void c_preprocessor_exit(c_preprocessor* self)
@@ -238,15 +238,13 @@ extern c_token* c_preprocess_non_directive(c_preprocessor* self)
                 //      A
                 if (self->lexer->kind != CPLK_TOKEN)
                 {
-                        c_error_unexpected_hash(self->logger, c_token_get_loc(t));
+                        c_error_stray_symbol(self->logger, c_token_get_loc(t), '#');
                         return NULL;
                 }
 
+                self->lexer->token_lexer.in_directive = true;
                 if (!(t = c_preprocess_non_wspace(self)))
                         return NULL;
-
-                if (c_token_is(t, CTK_EOF))
-                        return t;
  
                 if (c_token_is(t, CTK_ID))
                 {
@@ -452,9 +450,7 @@ static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, d
         for (size_t i = 0; i < dseq_size(strings); i++)
         {
                 c_token* t = dseq_get(strings, i);
-                const char* string = tree_get_id_string(
-                        c_context_get_tree_context(self->context), c_token_get_string(t));
-
+                const char* string = tree_get_id_string(self->context->tree, c_token_get_string(t));
                 char escaped[C_MAX_LINE_LENGTH + 1];
                 size_t size = c_get_escaped_string(escaped, ARRAY_SIZE(escaped), string, strlen(string) + 1);
                 for (size_t j = 0; j < size - 1; j++)
@@ -462,8 +458,8 @@ static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, d
         }
         dseq_u8_append(&concat, '\0');
 
-        tree_id concat_ref = tree_get_id_for_string_s(
-                c_context_get_tree_context(self->context), (char*)dseq_u8_begin(&concat), dseq_u8_size(&concat));
+        tree_id concat_ref = tree_get_id_for_string_s(self->context->tree,
+                (char*)dseq_u8_begin(&concat), dseq_u8_size(&concat));
         tree_location loc = c_token_get_loc(dseq_get(strings, 0));
         dseq_u8_dispose(&concat);
 
