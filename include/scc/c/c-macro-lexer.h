@@ -17,7 +17,6 @@ typedef struct _c_macro_lexer
         c_token** pos;
         dseq tokens;
         c_context* context;
-        const c_reswords* reswords;
         c_macro* macro;
         c_logger* logger;
         tree_location loc;
@@ -26,7 +25,6 @@ typedef struct _c_macro_lexer
 extern void c_macro_lexer_init(
         c_macro_lexer* self,
         c_context* context,
-        const c_reswords* reswords,
         c_macro* macro,
         c_logger* logger,
         tree_location loc);
