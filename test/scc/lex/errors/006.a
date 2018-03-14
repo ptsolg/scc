@@ -1,1 +1,1 @@
-006.t:1:1: error: unknown punctuator '@'
+006.t:1:1: error: stray '@' in program

@@ -1,1 +1,1 @@
-016.t:2:3: error: '#' is not expected here
+016.t:2:3: error: stray '#' in program
