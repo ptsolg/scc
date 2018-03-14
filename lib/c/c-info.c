@@ -1,7 +1,7 @@
 #include "scc/c/c-info.h"
 #include "scc/c/c-reswords-info.h"
+#include "scc/c/c-charset.h"
 #include "scc/tree/tree-context.h"
-#include "scc/core/char-info.h"
 #include "scc/core/read-write.h"
 #include <stdio.h>
 
@@ -18,10 +18,10 @@ extern void c_get_unescaped_string(char* dst, size_t dst_size, const char* strin
         for (size_t i = 0; i < string_size - 1; i++)
         {
                 int c = string[i];
-                if (char_is_escape(c))
+                if (c_char_is_escape(c))
                 {
                         writebuf_writec(&wb, '\\');
-                        writebuf_writec(&wb, escape_to_char(c));
+                        writebuf_writec(&wb, c_char_from_escape(c));
                 }
                 else
                         writebuf_writec(&wb, c);
@@ -44,7 +44,7 @@ extern size_t c_get_escaped_string(char* dst, size_t dst_size, const char* strin
         {
                 int c = string[i];
                 if (c == '\\')
-                        writebuf_writec(&wb, char_to_escape(string[++i]));
+                        writebuf_writec(&wb, c_char_to_escape(string[++i]));
                 else
                         writebuf_writec(&wb, c);
 
