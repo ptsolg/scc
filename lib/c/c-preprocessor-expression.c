@@ -5,6 +5,7 @@
 #include "scc/c/c-errors.h"
 #include "scc/c/c-token.h"
 #include "scc/c/c-info.h"
+#include "scc/tree/tree-context.h"
 #include "scc/tree/tree-target.h"
 #include "scc/core/value.h"
 

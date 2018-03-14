@@ -6,9 +6,16 @@
 #include "scc/c/c-info.h"
 #include "scc/c/c-reswords-info.h"
 #include "scc/c/c-sema-decl.h"
+#include "scc/c/c-context.h"
 #include "scc/tree/tree-context.h"
 #include "scc/tree/tree-decl.h"
 #include "scc/tree/tree-stmt.h"
+#include <ctype.h> // isprint
+
+static const char* c_logger_get_id_string(c_logger* self, tree_id id)
+{
+        return tree_get_id_string(self->context->tree, id);
+}
 
 extern void c_error_cannot_open_source_file(c_logger* self, tree_location loc, const char* file)
 {
@@ -40,14 +47,12 @@ extern void c_error_unclosed_comment(c_logger* self, tree_location loc)
         c_error(self, CES_ERROR, loc, "comment unclosed at end of file");
 }
 
-extern void c_error_unknown_punctuator(c_logger* self, tree_location loc, int c)
+extern void c_error_stray_symbol(c_logger* self, tree_location loc, int c)
 {
-        c_error(self, CES_ERROR, loc, "unknown punctuator '%c'", c);
-}
-
-extern void c_error_unknown_symbol(c_logger* self, tree_location loc, int c)
-{
-        c_error(self, CES_ERROR, loc, "unknown symbol '%c'", c);
+        if (isprint(c))
+                c_error(self, CES_ERROR, loc, "stray '%c' in program", c);
+        else
+                c_error(self, CES_ERROR, loc, "stray \\%02X in program", c);
 }
 
 extern void c_error_too_deep_include_nesting(c_logger* self)
@@ -64,11 +69,6 @@ extern void c_error_expected_file_name(c_logger* self, tree_location loc)
 extern void c_error_empty_file_name_in_include(c_logger* self, tree_location loc)
 {
         c_error(self, CES_ERROR, loc, "empty file name in #include");
-}
-
-extern void c_error_unexpected_hash(c_logger* self, tree_location loc)
-{
-        c_error(self, CES_ERROR, loc, "'#' is not expected here");
 }
 
 extern void c_error_unknown_preprocessor_directive(c_logger* self, tree_location loc)
@@ -94,7 +94,7 @@ extern void c_error_macro_names_must_be_identifiers(c_logger* self, tree_locatio
 
 extern void c_error_macro_redefenition(c_logger* self, tree_id name, tree_location loc)
 {
-        c_error(self, CES_ERROR, loc, "'%s' redefenition", tree_get_id_string(self->tree, name));
+        c_error(self, CES_ERROR, loc, "'%s' redefenition", c_logger_get_id_string(self, name));
 }
 
 extern void c_error_expected_identifier(c_logger* self, tree_location loc)
@@ -125,29 +125,29 @@ extern void c_error_whitespace_after_macro_name_required(c_logger* self, tree_lo
 extern void c_error_invalid_pasting(c_logger* self, c_token* a, c_token* b, tree_location loc)
 {
         char a_str[30];
-        c_token_to_string(self->tree, a, a_str, 30);
+        c_token_to_string(self->context->tree, a, a_str, 30);
         char b_str[30];
-        c_token_to_string(self->tree, b, b_str, 30);
+        c_token_to_string(self->context->tree, b, b_str, 30);
         c_error(self, CES_ERROR, loc,
                 "pasting '%s' and '%s' does not give a valid preprocessing token", a_str, b_str);
 }
 
 extern void c_error_unterminated_macro_argument_list(c_logger* self, c_macro* macro, tree_location loc)
 {
-        const char* macro_name = tree_get_id_string(self->tree, macro->name);
+        const char* macro_name = c_logger_get_id_string(self, macro->name);
         c_error(self, CES_ERROR, loc, "unterminated argument list invoking macro '%s'", macro_name);
 }
 
 extern void c_error_macro_argument_list_underflow(c_logger* self, c_macro* macro, size_t args_given, tree_location loc)
 {
-        const char* macro_name = tree_get_id_string(self->tree, macro->name);
+        const char* macro_name = c_logger_get_id_string(self, macro->name);
         c_error(self, CES_ERROR, loc, "macro '%s' requires %u arguments, but only %u given",
                 macro_name, (uint)c_macro_get_params_size(macro), (uint)args_given);
 }
 
 extern void c_error_macro_argument_list_overflow(c_logger* self, c_macro* macro, size_t args_given, tree_location loc)
 {
-        const char* macro_name = tree_get_id_string(self->tree, macro->name);
+        const char* macro_name = c_logger_get_id_string(self, macro->name);
         c_error(self, CES_ERROR, loc, "macro '%s' passed %u arguments, but takes just %u",
                 macro_name, (uint)args_given, (uint)c_macro_get_params_size(macro));
 }
@@ -255,7 +255,7 @@ extern void c_error_expected_one_of(
 extern void c_error_unknown_type_name(c_logger* self, const c_token* id)
 {
         c_error(self, CES_ERROR, c_token_get_loc(id), "unknown type name '%s'",
-                tree_get_id_string(self->tree, c_token_get_string(id)));
+                c_logger_get_id_string(self, c_token_get_string(id)));
 }
 
 extern void c_error_expected_type_specifier(c_logger* self, tree_location loc)
@@ -295,8 +295,7 @@ extern void c_error_too_many_initializer_values(c_logger* self, tree_location lo
 
 extern void c_error_undeclared_identifier(c_logger* self, tree_location loc, tree_id name)
 {
-        c_error(self, CES_ERROR, loc, "undeclared identifier '%s'",
-                tree_get_id_string(self->tree, name));
+        c_error(self, CES_ERROR, loc, "undeclared identifier '%s'", c_logger_get_id_string(self, name));
 }
 
 extern void c_error_multiple_storage_classes(c_logger* self, const c_decl_specs* ds)
@@ -314,14 +313,14 @@ extern void c_error_inline_allowed_on_functions_only(c_logger* self, tree_locati
 extern void c_error_invalid_parameter_storage_class(c_logger* self, const c_declarator* d)
 {       
         c_error(self, CES_ERROR, d->name_loc, "invalid storage class for parameter '%s'",
-                tree_get_id_string(self->tree, d->name));
+                c_logger_get_id_string(self, d->name));
 }
 
 extern void c_error_function_initialized_like_a_variable(c_logger* self, const tree_decl* func)
 {
         c_error(self, CES_ERROR, tree_get_decl_loc_begin(func),
                 "function '%s' is initialized like a variable",
-                tree_get_id_string(self->tree, tree_get_decl_name(func)));
+                c_logger_get_id_string(self, tree_get_decl_name(func)));
 }
 
 extern void c_error_invalid_initializer(c_logger* self, const tree_expr* init)
@@ -388,7 +387,7 @@ extern void c_error_named_argument_before_ellipsis_required(c_logger* self, tree
 
 extern void c_error_redefinition(c_logger* self, tree_location loc, tree_id id)
 {
-        c_error(self, CES_ERROR, loc, "redefinition of '%s'", tree_get_id_string(self->tree, id));
+        c_error(self, CES_ERROR, loc, "redefinition of '%s'", c_logger_get_id_string(self, id));
 }
 
 extern void c_error_decl_redefinition(c_logger* self, const tree_decl* decl)
@@ -399,19 +398,19 @@ extern void c_error_decl_redefinition(c_logger* self, const tree_decl* decl)
 extern void c_error_enumerator_value_isnt_constant(c_logger* self, tree_location loc, tree_id name)
 {
         c_error(self, CES_ERROR, loc, "enumerator value for '%s' is not an integer constant",
-                tree_get_id_string(self->tree, name));
+                c_logger_get_id_string(self, name));
 }
 
 extern void c_error_wrong_king_of_tag(c_logger* self, tree_location loc, tree_id name)
 {
         c_error(self, CES_ERROR, loc, "'%s' defined as wrong kind of tag",
-                tree_get_id_string(self->tree, name));
+                c_logger_get_id_string(self, name));
 }
 
 static void c_error_decl(c_logger* self, const char* msg, const tree_decl* decl)
 {
         c_error(self, CES_ERROR, tree_get_decl_loc_begin(decl), msg,
-                tree_get_id_string(self->tree, tree_get_decl_name(decl)));
+                c_logger_get_id_string(self, tree_get_decl_name(decl)));
 }
 
 extern void c_error_field_function(c_logger* self, const tree_decl* field)
@@ -655,7 +654,7 @@ extern void c_error_invalid_storage_class_for_loop_decl(c_logger* self, const tr
                 tree_get_decl_loc_begin(decl),
                 "declaration of '%s' variable '%s' in 'for' loop initial declaration",
                 c_get_decl_storage_class_string(sc),
-                tree_get_id_string(self->tree, tree_get_decl_name(decl)));
+                c_logger_get_id_string(self, tree_get_decl_name(decl)));
 }
 
 extern void c_error_return_non_void(c_logger* self, const tree_expr* expr)

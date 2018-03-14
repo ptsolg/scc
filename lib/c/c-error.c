@@ -1,20 +1,16 @@
 #include "scc/c/c-error.h"
 #include "scc/c/c-limits.h"
 #include "scc/c/c-source.h"
+#include "scc/c/c-context.h"
 #include <stdarg.h>
 
-extern void c_logger_init(
-        c_logger* self,
-        const c_source_manager* source_manager,
-        const tree_context* tree,
-        FILE* log)
+extern void c_logger_init(c_logger* self, const c_context* context, FILE* log)
 {
         self->enabled = true;
         self->errors = 0;
         self->warnings = 0;
         self->errors_as_warnings = false;
-        self->source_manager = source_manager;
-        self->tree = tree;
+        self->context = context;
         self->output = log;
 }
 
@@ -50,7 +46,7 @@ extern void c_error(
                 return;
 
         c_location l;
-        c_source_find_loc(self->source_manager, &l, location);
+        c_source_find_loc(&self->context->source_manager, &l, location);
 
         char buffer[C_MAX_LINE_LENGTH];
         va_list args;

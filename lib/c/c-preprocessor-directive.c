@@ -10,6 +10,7 @@
 #include "scc/c/c-reswords.h"
 #include "scc/c/c-macro.h"
 #include "scc/c/c-token.h"
+#include "scc/tree/tree-context.h"
 
 static bool _c_preprocessor_handle_directive(c_preprocessor* self, c_token* tok)
 {
@@ -38,6 +39,8 @@ static bool _c_preprocessor_handle_directive(c_preprocessor* self, c_token* tok)
                         return c_preprocessor_handle_pragma_directive(self);
                 case CTK_PP_UNDEF:
                         return c_preprocessor_handle_undef_directive(self, tok);
+                case CTK_EOD:
+                        return true;
                 case CTK_UNKNOWN:
                         c_error_unknown_preprocessor_directive(self->logger, loc);
                         return false;
@@ -274,8 +277,7 @@ static c_source* c_preprocessor_find_source(c_preprocessor* self, c_token* tok)
                 return NULL;
         }
 
-        const char* filename = tree_get_id_string(
-                c_context_get_tree_context(self->context), c_token_get_string(tok));
+        const char* filename = tree_get_id_string(self->context->tree, c_token_get_string(tok));
         assert(filename);
 
         if (!*filename)
@@ -284,7 +286,7 @@ static c_source* c_preprocessor_find_source(c_preprocessor* self, c_token* tok)
                 return NULL;
         }
 
-        c_source* source = c_source_find(self->source_manager, filename);
+        c_source* source = c_source_find(&self->context->source_manager, filename);
         if (!source)
         {
                 c_error_cannot_open_source_file(self->logger, loc, filename);

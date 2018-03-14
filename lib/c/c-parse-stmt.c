@@ -3,6 +3,7 @@
 #include "scc/c/c-sema-stmt.h"
 #include "scc/c/c-sema-decl.h"
 #include "scc/c/c-parse-decl.h"
+#include "scc/tree/tree-stmt.h"
 
 static tree_stmt* _c_parse_stmt_no_check(c_parser* self, int scope_flags)
 {
