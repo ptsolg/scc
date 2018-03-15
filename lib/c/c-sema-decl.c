@@ -310,7 +310,7 @@ extern tree_decl* c_sema_handle_unused_decl_specs(c_sema* self, c_decl_specs* ds
         d.loc = ds->loc;
 
         // todo: warning
-        tree_decl* decl = c_sema_new_external_decl(self, ds, &d);
+        tree_decl* decl = c_sema_new_external_decl(self, ds, &d, false);
         if (!decl)
                 return NULL;
 
@@ -823,17 +823,23 @@ static tree_decl* c_sema_new_function_decl(
         return func;
 }
 
-static bool c_sema_check_var_decl(const c_sema* self, const tree_decl* var)
+static bool c_sema_check_var_decl(const c_sema* self, const tree_decl* var, bool has_init)
 {
         tree_decl_storage_class sc = tree_get_decl_storage_class(var);
         if (sc == TDSC_NONE || sc == TDSC_IMPL_EXTERN)
-                return c_sema_require_complete_type(self,
-                        tree_get_decl_loc_begin(var), tree_get_decl_type(var));
+        {
+                tree_type* t = tree_desugar_type(tree_get_decl_type(var));
+                if (tree_type_is(t, TTK_ARRAY) && tree_array_is(t, TAK_INCOMPLETE) && has_init)
+                        ; // int a[] = { ... }; is ok
+                else
+                        return c_sema_require_complete_type(self,
+                                tree_get_decl_loc_begin(var), tree_get_decl_type(var));
+        }
         return true;
 }
 
 static tree_decl* c_sema_new_var_decl(
-        c_sema* self, c_decl_specs* specs, c_declarator* d)
+        c_sema* self, c_decl_specs* specs, c_declarator* d, bool has_init)
 {
         if (!c_sema_check_specifiers(self, specs, d, false))
                 return NULL;
@@ -847,13 +853,11 @@ static tree_decl* c_sema_new_var_decl(
 
         tree_decl* v = tree_new_var_decl(
                 self->context, self->locals, specs->loc, d->name, sc, d->type.head, NULL);
-        if (!c_sema_check_var_decl(self, v))
-                return NULL;
 
-        return v;
+        return c_sema_check_var_decl(self, v, has_init) ? v : NULL;
 }
 
-static tree_decl* c_sema_new_external_decl(c_sema* self, c_decl_specs* ds, c_declarator* d)
+static tree_decl* c_sema_new_external_decl(c_sema* self, c_decl_specs* ds, c_declarator* d, bool has_init)
 {
         if (!c_sema_finish_decl_type(self, ds, d))
                 return NULL;
@@ -863,12 +867,12 @@ static tree_decl* c_sema_new_external_decl(c_sema* self, c_decl_specs* ds, c_dec
         else if (tree_type_is(d->type.head, TTK_FUNCTION))
                 return c_sema_new_function_decl(self, ds, d);
 
-        return c_sema_new_var_decl(self, ds, d);
+        return c_sema_new_var_decl(self, ds, d, has_init);
 }
 
-extern tree_decl* c_sema_declare_external_decl(c_sema* self, c_decl_specs* ds, c_declarator* d)
+extern tree_decl* c_sema_declare_external_decl(c_sema* self, c_decl_specs* ds, c_declarator* d, bool has_init)
 {
-        tree_decl* decl = c_sema_new_external_decl(self, ds, d);
+        tree_decl* decl = c_sema_new_external_decl(self, ds, d, has_init);
         if (!decl)
                 return NULL;
 

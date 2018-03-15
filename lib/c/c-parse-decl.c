@@ -19,7 +19,7 @@ static tree_decl* c_parse_function_or_init_declarator(
                 return NULL;
         }
 
-        tree_decl* decl = c_sema_declare_external_decl(self->sema, specs, &d);
+        tree_decl* decl = c_sema_declare_external_decl(self->sema, specs, &d, c_parser_at(self, CTK_EQ));
         c_declarator_dispose(&d);
         if (!decl)
                 return NULL;

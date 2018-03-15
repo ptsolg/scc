@@ -488,9 +488,8 @@ static bool tree_array_types_are_same(const tree_type* a, const tree_type* b)
 {
         if (tree_get_array_kind(a) != tree_get_array_kind(b))
                 return false;
-        if (tree_get_array_kind(a) == TAK_CONSTANT
-                && int_cmp(tree_get_constant_array_size_cvalue(a),
-                        tree_get_constant_array_size_cvalue(b)) != CR_EQ)
+        if (tree_get_array_kind(a) == TAK_CONSTANT 
+                && tree_get_constant_array_size(a) != tree_get_constant_array_size(b))
         {
                 return false;
         }

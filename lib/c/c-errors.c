@@ -380,6 +380,17 @@ extern void c_error_initializer_element_isnt_constant(c_logger* self, const tree
         c_error(self, CES_ERROR, tree_get_expr_loc_begin(init), "initializer element is not constant");
 }
 
+extern void c_error_initializer_string_is_too_long(c_logger* self, const tree_expr* init)
+{
+        c_error(self, CES_ERROR, tree_get_expr_loc_begin(init), "initializer-string is too long");
+}
+
+extern void c_error_wide_character_array_initialized_from_non_wide_string(c_logger* self, const tree_expr* init)
+{
+        c_error(self, CES_ERROR, tree_get_expr_loc_begin(init),
+                "wide character array initialized from non-wide string");
+}
+
 extern void c_error_named_argument_before_ellipsis_required(c_logger* self, tree_location loc)
 {
         c_error(self, CES_ERROR, loc, "ISO C requires a named argument before '...'");

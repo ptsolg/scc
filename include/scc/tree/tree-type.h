@@ -169,6 +169,7 @@ static TREE_INLINE const struct _tree_constant_array_type* _tree_constant_array_
 
 static TREE_INLINE tree_expr* tree_get_constant_array_size_expr(const tree_type* self);
 static TREE_INLINE const int_value* tree_get_constant_array_size_cvalue(const tree_type* self);
+static TREE_INLINE uint tree_get_constant_array_size(const tree_type* self);
 static TREE_INLINE void tree_set_constant_array_size_expr(tree_type* self, tree_expr* size);
 static TREE_INLINE void tree_set_constant_array_size_value(tree_type* self, const int_value* size);
 
@@ -505,6 +506,11 @@ static TREE_INLINE tree_expr* tree_get_constant_array_size_expr(const tree_type*
 static TREE_INLINE const int_value* tree_get_constant_array_size_cvalue(const tree_type* self)
 {
         return &_tree_constant_array_ctype(self)->size;
+}
+
+static TREE_INLINE uint tree_get_constant_array_size(const tree_type* self)
+{
+        return int_get_u32(tree_get_constant_array_size_cvalue(self));
 }
 
 static TREE_INLINE void tree_set_constant_array_size_expr(tree_type* self, tree_expr* size)

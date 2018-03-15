@@ -181,7 +181,7 @@ static void llvm_printer_emit_array_type(llvm_printer* self, const tree_type* ty
         if (tree_get_array_kind(type) != TAK_CONSTANT)
                 return;
 
-        llvm_printf(self, "[%u x ", int_get_u32(tree_get_constant_array_size_cvalue(type)));
+        llvm_printf(self, "[%u x ", tree_get_constant_array_size(type));
         llvm_printer_emit_type(self, tree_get_array_eltype(type));
         llvm_printc(self, ']');
 }

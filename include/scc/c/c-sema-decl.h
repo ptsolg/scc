@@ -128,7 +128,7 @@ extern tree_decl* c_sema_define_label_decl(
         c_sema* self, tree_location name_loc, tree_id name, tree_location colon_loc, tree_stmt* stmt);
 extern tree_decl* c_sema_declare_label_decl(c_sema* self, tree_location name_loc, tree_id name);
 
-extern tree_decl* c_sema_declare_external_decl(c_sema* self, c_decl_specs* ds, c_declarator* d);
+extern tree_decl* c_sema_declare_external_decl(c_sema* self, c_decl_specs* ds, c_declarator* d, bool has_init);
 extern tree_decl* c_sema_define_var_decl(c_sema* self, tree_decl* var, tree_expr* init);
 extern tree_decl* c_sema_define_func_decl(c_sema* self, tree_decl* func, tree_stmt* body);
 extern bool c_sema_check_func_def_loc(c_sema* self, const tree_decl* func);
