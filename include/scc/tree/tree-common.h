@@ -14,10 +14,10 @@ extern "C" {
 #include "scc/core/list.h"
 
 #define TREE_INLINE inline
-
 #define TREE_INVALID_ID STRREF_INVALID
-#define TREE_INVALID_LOC ((tree_location)-1)
-#define TREE_INVALID_XLOC ((uint64_t)-1)
+#define TREE_INVALID_LOC ((tree_location)UINT32_MAX)
+#define TREE_MAX_LOC (TREE_INVALID_LOC - 1)
+#define TREE_INVALID_XLOC ((uint64_t)UINT64_MAX)
 
 typedef strref tree_id;
 
