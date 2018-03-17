@@ -108,6 +108,8 @@ extern void c_preprocessor_init(
 
 extern void c_preprocessor_dispose(c_preprocessor* self)
 {
+        while (c_preprocessor_lexer_stack_depth(&self->lexer_stack))
+                c_preprocessor_exit(self);
         c_preprocessor_lexer_stack_dispose(&self->lexer_stack);
         strmap_dispose(&self->macro_lookup);
 }
