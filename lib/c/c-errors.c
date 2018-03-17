@@ -331,7 +331,7 @@ extern void c_error_invalid_initializer(c_logger* self, const tree_expr* init)
 extern void c_error_initialization_discards_qualifer(c_logger* self, const tree_expr* init, int quals)
 {
         char qstring[128];
-        c_qet_qual_string(quals, qstring);
+        c_get_qual_string(quals, qstring);
         c_error(self, CES_ERROR, tree_get_expr_loc(init),
                 "initialization discards '%s' qualifier", qstring);
 }
@@ -561,7 +561,7 @@ extern void c_error_passing_argument_discards_qualifer(
         c_logger* self, tree_location loc, unsigned pos, int quals)
 {
         char qstring[128];
-        c_qet_qual_string(quals, qstring);
+        c_get_qual_string(quals, qstring);
         c_error(self, CES_ERROR, loc,
                 "passing argument %u discards '%s' qualifier", pos, qstring);
 }
@@ -609,7 +609,7 @@ extern void c_error_cmp_of_distinct_pointers(c_logger* self, tree_location loc)
 extern void c_error_assignment_discards_quals(c_logger* self, tree_location loc, int quals)
 {
         char qstring[128];
-        c_qet_qual_string(quals, qstring);
+        c_get_qual_string(quals, qstring);
         c_error(self, CES_ERROR, loc, "assignment discards '%s' qualifier", qstring);
 }
 
@@ -683,7 +683,7 @@ extern void c_error_return_type_doesnt_match(c_logger* self, const tree_expr* ex
 extern void c_error_return_discards_quals(c_logger* self, tree_location loc, int quals)
 {
         char qstring[128];
-        c_qet_qual_string(quals, qstring);
+        c_get_qual_string(quals, qstring);
         c_error(self, CES_ERROR, loc, "return discards '%s' qualifier", qstring);
 }
 
