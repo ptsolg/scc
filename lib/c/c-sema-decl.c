@@ -301,7 +301,7 @@ static tree_decl* csema_add_decl_to_scope(c_sema* self, tree_decl_scope* scope, 
         return decl;
 }
 
-static tree_decl* c_sema_new_external_decl(c_sema*, c_decl_specs*, c_declarator*);
+static tree_decl* c_sema_new_external_decl(c_sema*, c_decl_specs*, c_declarator*, bool);
 
 extern tree_decl* c_sema_handle_unused_decl_specs(c_sema* self, c_decl_specs* ds)
 {
