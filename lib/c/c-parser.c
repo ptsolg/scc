@@ -1,6 +1,6 @@
 #include "scc/c/c-parser.h"
 #include "scc/c/c-errors.h"
-#include "scc/c/c-info.h"
+#include "c-misc.h"
 #include "scc/c/c-reswords.h"
 #include <setjmp.h>
 

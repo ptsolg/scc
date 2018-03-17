@@ -3,7 +3,7 @@
 #include "scc/c/c-limits.h"
 #include "scc/c/c-token.h"
 #include "scc/c/c-macro.h"
-#include "scc/c/c-info.h"
+#include "c-misc.h"
 #include "scc/c/c-reswords-info.h"
 #include "scc/c/c-sema-decl.h"
 #include "scc/c/c-context.h"

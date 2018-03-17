@@ -1,7 +1,7 @@
 #include "scc/c/c-macro-lexer.h"
 #include "scc/c/c-macro.h"
 #include "scc/c/c-limits.h"
-#include "scc/c/c-info.h"
+#include "c-misc.h"
 #include "scc/c/c-token.h"
 #include "scc/c/c-context.h"
 #include "scc/c/c-token-lexer.h"

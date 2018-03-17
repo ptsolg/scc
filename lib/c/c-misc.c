@@ -1,4 +1,4 @@
-#include "scc/c/c-info.h"
+#include "c-misc.h"
 #include "scc/c/c-reswords-info.h"
 #include "scc/c/c-charset.h"
 #include "scc/tree/tree-context.h"
@@ -241,7 +241,7 @@ extern const char* c_get_decl_storage_class_string(tree_decl_storage_class sc)
         return "";
 }
 
-extern void c_qet_qual_string(tree_type_quals q, char* buf)
+extern void c_get_qual_string(tree_type_quals q, char* buf)
 {
         *buf = '\0';
         if (q & TTQ_CONST)

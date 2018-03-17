@@ -3,7 +3,7 @@
 #include "scc/c/c-sema-type.h"
 #include "scc/c/c-parse-stmt.h"
 #include "scc/c/c-parse-expr.h" // cparse_const_expr
-#include "scc/c/c-info.h"
+#include "c-misc.h"
 #include "scc/c/c-context.h"
 #include "scc/c/c-errors.h"
 #include "c-builtin-type.h"

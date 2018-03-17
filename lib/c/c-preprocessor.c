@@ -5,7 +5,7 @@
 #include "scc/c/c-context.h"
 #include "scc/c/c-error.h"
 #include "scc/c/c-reswords.h"
-#include "scc/c/c-info.h"
+#include "c-misc.h"
 #include "scc/c/c-macro.h"
 #include "scc/c/c-source.h"
 #include "scc/c/c-limits.h"

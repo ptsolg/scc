@@ -2,7 +2,7 @@
 #include "scc/c/c-sema-conv.h"
 #include "scc/c/c-sema-decl.h"
 #include "scc/c/c-sema-expr.h"
-#include "scc/c/c-info.h"
+#include "c-misc.h"
 #include "scc/c/c-errors.h"
 #include "scc/tree/tree-eval.h"
 #include "scc/tree/tree-stmt.h"

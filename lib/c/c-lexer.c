@@ -1,5 +1,5 @@
 #include "scc/c/c-lexer.h"
-#include "scc/c/c-info.h"
+#include "c-misc.h"
 #include "scc/c/c-context.h"
 #include "scc/c/c-errors.h"
 #include "scc/c/c-reswords-info.h"

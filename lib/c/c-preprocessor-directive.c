@@ -3,7 +3,6 @@
 #include "scc/c/c-preprocessor.h"
 #include "scc/c/c-context.h"
 #include "scc/c/c-limits.h"
-#include "scc/c/c-info.h" // c_token_ends_macro
 #include "scc/c/c-error.h"
 #include "scc/c/c-errors.h"
 #include "scc/c/c-source.h"

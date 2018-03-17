@@ -18,7 +18,8 @@ add_scc_lib(c
 	c-sema-decl.c
 	c-sema-type.c
 	c-sema-stmt.c
-	c-info.c
+	c-misc.c
+	c-misc.h
 	c-preprocessor.c
 	c-preprocessor-lexer.c
 	c-preprocessor-directive.c

@@ -12,7 +12,7 @@ extern "C" {
 #include "scc/tree/tree-type.h"
 #include "scc/tree/tree-expr.h"
 #include "scc/tree/tree-decl.h"
-#include "c-token.h"
+#include "scc/c/c-token.h"
 
 extern void c_get_unescaped_string(char* dst, size_t dst_size, const char* string, size_t string_size);
 // returns bytes written (including trailing zero)
@@ -51,7 +51,7 @@ extern int c_get_binop_precedence(tree_binop_kind k);
 extern const char* c_get_binop_string(tree_binop_kind k);
 extern const char* c_get_unop_string(tree_unop_kind k);
 extern const char* c_get_decl_storage_class_string(tree_decl_storage_class sc);
-extern void c_qet_qual_string(tree_type_quals q, char* buf);
+extern void c_get_qual_string(tree_type_quals q, char* buf);
 
 extern tree_binop_kind c_token_to_binop(const c_token* self);
 extern tree_unop_kind c_token_to_prefix_unary_operator(const c_token* self);

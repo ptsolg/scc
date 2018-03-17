@@ -1,5 +1,5 @@
 #include "scc/c/c-sema.h"
-#include "scc/c/c-info.h"
+#include "c-misc.h"
 #include "scc/c/c-errors.h"
 #include "scc/tree/tree-decl.h"
 #include "scc/tree/tree-stmt.h"

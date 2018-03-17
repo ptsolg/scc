@@ -21,7 +21,7 @@ add_scc_target_sources(c
 	c-sema-decl.h
 	c-sema-type.h
 	c-sema-stmt.h
-	c-info.h
+	c-lang-opts.h
 	c-preprocessor.h
 	c-preprocessor-lexer.h
 	c-preprocessor-directive.h

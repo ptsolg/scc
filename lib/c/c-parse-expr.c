@@ -1,6 +1,6 @@
 #include "scc/c/c-parse-expr.h"
 #include "scc/c/c-parse-decl.h"
-#include "scc/c/c-info.h"
+#include "c-misc.h"
 #include "scc/c/c-sema-expr.h"
 #include "scc/c/c-errors.h"
 

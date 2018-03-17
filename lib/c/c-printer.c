@@ -1,6 +1,6 @@
 #include "scc/c/c-printer.h"
 #include "scc/c/c-token.h"
-#include "scc/c/c-info.h"
+#include "c-misc.h"
 #include "scc/c/c-reswords-info.h"
 #include "scc/c/c-context.h"
 #include "scc/c/c-source.h"
