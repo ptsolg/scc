@@ -6,6 +6,7 @@
 #include "scc/c/c-errors.h"
 #include "scc/tree/tree-eval.h"
 #include "scc/tree/tree-context.h"
+#include "scc/tree/tree-target.h"
 #include "c-initializer.h"
 
 extern bool c_sema_require_object_pointer_expr_type(
@@ -1121,9 +1122,7 @@ static c_initialized_object* c_sema_check_array_designator(
         }
 
         uint index_val = avalue_get_u32(&eval_result.value);
-        if (tree_array_is(parent->type, TAK_INCOMPLETE))
-                ; // todo: replace incomplete array type with constant
-        else
+        if (tree_array_is(parent->type, TAK_CONSTANT))
         {
                 if (index_val >= tree_get_constant_array_size(parent->type))
                 {
@@ -1162,77 +1161,99 @@ static c_initialized_object* c_sema_check_designation(
         return result;
 }
 
+static void c_sema_set_incomplete_array_size(c_sema* self, tree_type* array, uint size)
+{
+        assert(tree_array_is(array, TAK_INCOMPLETE));
+        int_value size_value;
+        int_init(&size_value, 
+                8 * tree_get_sizeof(self->target, c_sema_get_size_t_type(self)), false, size);
+        tree_init_constant_array_type(array, tree_get_array_eltype(array), NULL, &size_value);
+}
+
 static bool _c_sema_check_initializer(c_sema*, tree_type*, c_initializer*, c_initialized_object*);
 
 typedef enum
 {
-        CAIK_INVALID,
-        CAIK_VALID,
-        CAIK_ORDINARY,
-} c_array_initializer_kind;
+        CIK_INVALID,
+        CIK_STRING,
+        CIK_ORDINARY,
+} c_initializer_kind;
 
 // handles special cases like:
 //      char a[] = "abc";
 //      char a[] = { "abc" };
-static c_array_initializer_kind c_sema_maybe_handle_special_array_initializer(
-        c_sema* self, tree_type* type, c_initializer* it)
+static c_initializer_kind c_sema_maybe_handle_special_array_initializer(
+        c_sema* self, c_initialized_object* array, c_initializer* it)
 {
-        tree_type* eltype = tree_get_array_eltype(type);
+        bool is_constant_array = tree_array_is(array->type, TAK_CONSTANT);
+        tree_type* eltype = tree_get_array_eltype(array->type);
         if (!tree_type_is_scalar(eltype))
-                return CAIK_ORDINARY;
+                return CIK_ORDINARY;
 
+        bool in_init_list = false;
         tree_expr* init = tree_desugar_expr(*it->init);
         if (tree_expr_is(init, TEK_INIT_LIST))
+        {
                 init = tree_desugar_expr(*it->pos);
+                in_init_list = true;
+        }
 
         if (!tree_expr_is(init, TEK_STRING_LITERAL))
-                return CAIK_ORDINARY;
+                return CIK_ORDINARY;
 
         if (!tree_builtin_type_is(eltype, TBTK_UINT8) 
                 && !tree_builtin_type_is(eltype, TBTK_INT8))
         {
                 // todo
                 c_error_wide_character_array_initialized_from_non_wide_string(self->logger, init);
-                return CAIK_INVALID;
+                return CIK_INVALID;
         }
 
         strentry entry;
         tree_get_id_strentry(self->context, tree_get_string_literal(init), &entry);
 
-        if (tree_array_is(type, TAK_CONSTANT))
+        uint num_elems = (uint)(entry.size - 1); // ignore '\0' at first...
+        if ((in_init_list && it->end - it->pos > 1) || !is_constant_array)
         {
-                if (tree_get_constant_array_size(type) < entry.size - 1)
-                {
-                        c_error_initializer_string_is_too_long(self->logger, init);
-                        return CAIK_INVALID;
-                }
+                // ...except this cases:
+                //      char a[3] = { "ab", 'c' };
+                //      char a[] = "abc";
+                num_elems += 1;
         }
-        else
-                ; // todo: resize array
+      
+        if (is_constant_array && tree_get_constant_array_size(array->type) < num_elems)
+        {
+                c_error_initializer_string_is_too_long(self->logger, init);
+                return CIK_INVALID;
+        }
 
-        return CAIK_VALID;
+        it->pos++;
+        if (!is_constant_array)
+                c_sema_set_incomplete_array_size(self, array->type, num_elems);
+
+        c_initialized_object_set_index(array, num_elems);
+        return CIK_STRING;
 }
 
-static bool c_sema_check_array_or_record_initializer(
-        c_sema* self, tree_type* type, c_initializer* it, c_initialized_object* parent)
+static bool _c_sema_check_array_or_record_initializer(
+        c_sema* self, c_initialized_object* object, c_initializer* it)
 {
-        if (tree_type_is_array(type))
-        {
-                c_array_initializer_kind k = c_sema_maybe_handle_special_array_initializer(self, type, it);
-                if (k == CAIK_INVALID)
-                        return false;
-                else if (k == CAIK_VALID)
-                        return true;
-        }
+        bool top_level = object->semantical_parent == NULL;
+        c_initializer_kind init_kind = CIK_ORDINARY;
+        if (object->kind == CIOK_ARRAY)
+                init_kind = c_sema_maybe_handle_special_array_initializer(self, object, it);
+        else
+                ; // handle other cases...
 
-        bool top_level = parent == NULL;
-        if (top_level && !tree_expr_is(*it->init, TEK_INIT_LIST))
+        if (init_kind == CIK_INVALID)
+                return false;
+
+        if (init_kind == CIK_ORDINARY && top_level && !tree_expr_is(*it->init, TEK_INIT_LIST))
         {
                 c_error_invalid_initializer(self->logger, *it->init);
                 return false;
         }
 
-        c_initialized_object* object = c_initialized_object_new(self->ccontext, type, !top_level, parent);
         while (1)
         {
                 if (it->pos == it->end)
@@ -1271,6 +1292,19 @@ static bool c_sema_check_array_or_record_initializer(
                         c_initialized_object_next_subobject(object);
                 }
         }
+}
+
+static bool c_sema_check_array_or_record_initializer(
+        c_sema* self, tree_type* type, c_initializer* it, c_initialized_object* parent)
+{
+        c_initialized_object* object = c_initialized_object_new(self->ccontext, type, parent != NULL, parent);
+        if (!_c_sema_check_array_or_record_initializer(self, object, it))
+                return false;
+
+        if (tree_type_is(object->type, TTK_ARRAY) && tree_array_is(object->type, TAK_INCOMPLETE))
+                c_sema_set_incomplete_array_size(self, type, object->array.size);
+
+        return true;
 }
 
 static bool c_sema_check_scalar_initializer(

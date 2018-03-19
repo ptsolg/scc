@@ -110,6 +110,8 @@ extern void c_initialized_object_set_index(c_initialized_object* self, uint inde
 {
         assert(self->kind == CIOK_ARRAY);
         self->array.index = index;
+        if (tree_array_is(self->type, TAK_INCOMPLETE) && index > self->array.size)
+                self->array.size = index;
 }
 
 extern void c_initialized_object_set_initialized(c_initialized_object* self)
@@ -151,7 +153,7 @@ extern void c_initialized_object_next_subobject(c_initialized_object* self)
         if (self->kind == CIOK_SCALAR)
                 self->scalar.initialized = true;
         else if (self->kind == CIOK_ARRAY)
-                self->array.index++;
+                c_initialized_object_set_index(self, self->array.index + 1);
         else if (self->kind == CIOK_STRUCT || self->kind == CIOK_UNION)
         {
                 self->record.field = tree_get_next_decl(self->record.field);
