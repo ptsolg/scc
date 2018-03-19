@@ -142,7 +142,14 @@ extern void c_preprocessor_exit(c_preprocessor* self)
                 self->lexer->macro_lexer.macro->used = false;
         else
                 UNREACHABLE();
+
         c_preprocessor_lexer_stack_pop_lexer(&self->lexer_stack);
+        if (!c_preprocessor_lexer_stack_depth(&self->lexer_stack))
+        {
+                self->lexer = NULL;
+                return;
+        }
+
         self->lexer = c_preprocessor_lexer_stack_top(&self->lexer_stack);
         if (self->lexer->kind == CPLK_TOKEN)
         {
