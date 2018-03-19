@@ -11,13 +11,15 @@ const c_token_kind ctk_rbracket_or_comma[] =
         CTK_UNKNOWN
 };
 
+static tree_expr* _c_parse_expr(c_parser* self);
+
 extern tree_expr* c_parse_paren_expr(c_parser* self)
 {
         tree_location lbracket_loc = c_parser_get_loc(self);
         if (!c_parser_require(self, CTK_LBRACKET))
                 return NULL;
 
-        tree_expr* e = c_parse_expr(self);
+        tree_expr* e = _c_parse_expr(self);
         tree_location rbracket_loc = c_parser_get_loc(self);
         return e && c_parser_require(self, CTK_RBRACKET)
                 ? c_sema_new_paren_expr(self->sema, lbracket_loc, e, rbracket_loc)
@@ -91,7 +93,7 @@ static tree_expr* c_parse_postfix_expr_suffix(c_parser* self, tree_expr* lhs)
         if (k == CTK_LSBRACKET)
         {
                 c_parser_consume_token(self);
-                tree_expr* rhs = c_parse_expr(self);
+                tree_expr* rhs = _c_parse_expr(self);
                 return rhs && c_parser_require(self, CTK_RSBRACKET)
                         ? c_sema_new_subscript_expr(self->sema, loc, lhs, rhs)
                         : NULL;
@@ -145,29 +147,36 @@ extern tree_expr* c_parse_postfix_expr(c_parser* self)
         }
 }
 
+static tree_expr* c_parse_sizeof_expr(c_parser* self)
+{
+        void* operand;
+        bool contains_type = false;
+        tree_location loc = c_parser_get_loc(self);
+
+        if (c_parser_at(self, CTK_LBRACKET)
+                && c_parser_token_starts_type_name(self, c_parser_get_next(self)))
+        {
+                c_parser_consume_token(self);
+                loc = c_parser_get_loc(self);
+                operand = c_parse_type_name(self);
+                assert(operand);
+                contains_type = true;
+                if (!c_parser_require(self, CTK_RBRACKET))
+                        return NULL;
+        }
+        else if (!(operand = c_parse_unary_expr(self)))
+                return NULL;
+
+        return c_sema_new_sizeof_expr(self->sema, loc, operand, contains_type);
+}
+
 extern tree_expr* c_parse_unary_expr(c_parser* self)
 {
         tree_location loc = c_parser_get_loc(self);
         if (c_parser_at(self, CTK_SIZEOF))
         {
                 c_parser_consume_token(self);
-
-                void* operand;
-                bool contains_type = false;
-                tree_location loc = c_parser_get_loc(self);;
-                if (c_parser_at(self, CTK_LBRACKET))
-                {
-                        c_parser_consume_token(self);
-                        loc = c_parser_get_loc(self);
-                        operand = c_parse_type_name(self);
-                        if (!operand || !c_parser_require(self, CTK_RBRACKET))
-                                return NULL;
-                        contains_type = true;
-                }
-                else if (!(operand = c_parse_unary_expr(self)))
-                        return NULL;
-                
-                return c_sema_new_sizeof_expr(self->sema, loc, operand, contains_type);
+                return c_parse_sizeof_expr(self);
         }
 
         tree_unop_kind op = c_token_to_prefix_unary_operator(c_parser_get_token(self));
@@ -217,7 +226,7 @@ static inline tree_expr* c_parse_rhs_of_binary_expr(c_parser* self, tree_expr* l
                 tree_expr* ternary_middle = NULL;
                 if (c_token_is(optoken, CTK_QUESTION))
                 {
-                        ternary_middle = c_parse_expr(self);
+                        ternary_middle = _c_parse_expr(self);
                         if (!ternary_middle || !c_parser_require(self, CTK_COLON))
                                 return NULL;
                 }
@@ -246,12 +255,7 @@ extern tree_expr* c_parse_assignment_expr(c_parser* self)
         return c_parse_expr_ex(self, CPL_ASSIGN);
 }
 
-extern tree_expr* c_parse_expr(c_parser* self)
-{
-        return c_parse_expr_ex(self, CPL_COMMA);
-}
-
-extern tree_expr* c_parse_expr_ex(c_parser* self, int min_prec)
+static tree_expr* _c_parse_expr_ex(c_parser* self, int min_prec, bool finish)
 {
         tree_expr* lhs = c_parse_cast_expr(self);
         if (!lhs)
@@ -261,8 +265,24 @@ extern tree_expr* c_parse_expr_ex(c_parser* self, int min_prec)
         if (!expr)
                 return NULL;
 
-        return c_sema_finish_expr(self->sema, expr);
+        return finish ? c_sema_finish_expr(self->sema, expr) : expr;
 }
+
+extern tree_expr* c_parse_expr_ex(c_parser* self, int min_prec)
+{
+        return _c_parse_expr_ex(self, min_prec, true);
+}
+
+static tree_expr* _c_parse_expr(c_parser* self)
+{
+        return _c_parse_expr_ex(self, CPL_COMMA, false);
+}
+
+extern tree_expr* c_parse_expr(c_parser* self)
+{
+        return c_parse_expr_ex(self, CPL_COMMA);
+}
+
 
 extern tree_expr* c_parse_const_expr(c_parser* self)
 {
