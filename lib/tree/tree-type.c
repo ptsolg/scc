@@ -62,27 +62,41 @@ extern errcode tree_add_function_type_param(tree_type* self, tree_context* conte
         return tree_array_append_ptr(context, &_tree_function_type(self)->params, param);
 }
 
-extern tree_type* tree_new_array_type_ex(
-        tree_context* context, tree_array_kind kind, tree_type* eltype, size_t size)
+extern void tree_init_array_type(tree_type* self, tree_array_kind kind, tree_type* eltype)
 {
-        tree_type* t = tree_new_chain_type(context, TTK_ARRAY, eltype, size);
-        if (!t)
-                return NULL;
-
-        tree_set_array_eltype(t, eltype);
-        tree_set_array_kind(t, kind);
-        return t;
+        tree_set_type_kind(self, TTK_ARRAY);
+        tree_set_array_eltype(self, eltype);
+        tree_set_array_kind(self, kind);
 }
 
 extern tree_type* tree_new_array_type(
         tree_context* context, tree_array_kind kind, tree_type* eltype)
 {
-        return tree_new_array_type_ex(context, kind, eltype, sizeof(struct _tree_array_type));
+        tree_type* t = tree_new_chain_type(context,
+                TTK_ARRAY, eltype, sizeof(struct _tree_constant_array_type));
+        if (!t)
+                return NULL;
+
+        tree_set_array_kind(t, kind);
+        return t;
+}
+
+extern void  tree_init_incomplete_array_type(tree_type* self, tree_type* eltype)
+{
+        tree_init_array_type(self, TAK_INCOMPLETE, eltype);
 }
 
 extern tree_type* tree_new_incomplete_array_type(tree_context* context, tree_type* eltype)
 {
         return tree_new_array_type(context, TAK_INCOMPLETE, eltype);
+}
+
+extern void tree_init_constant_array_type(
+        tree_type* self, tree_type* eltype, tree_expr* size_expr, const int_value* size_value)
+{
+        tree_init_array_type(self, TAK_CONSTANT, eltype);
+        tree_set_constant_array_size_expr(self, size_expr);
+        tree_set_constant_array_size_value(self, size_value);
 }
 
 extern tree_type* tree_new_constant_array_type(
@@ -91,8 +105,7 @@ extern tree_type* tree_new_constant_array_type(
         tree_expr* size_expr,
         const int_value* size_value)
 {
-        tree_type* t = tree_new_array_type_ex(context, TAK_CONSTANT, eltype,
-                sizeof(struct _tree_constant_array_type));
+        tree_type* t = tree_new_array_type(context, TAK_CONSTANT, eltype);
         if (!t)
                 return NULL;
 

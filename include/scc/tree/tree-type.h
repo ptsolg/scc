@@ -134,12 +134,11 @@ struct _tree_array_type
         tree_array_kind kind;
 };
 
-extern tree_type* tree_new_array_type_ex(
-        tree_context* context, tree_array_kind kind, tree_type* eltype, size_t size);
-
+extern void tree_init_array_type(tree_type* self, tree_array_kind kind, tree_type* eltype);
 extern tree_type* tree_new_array_type(
         tree_context* context, tree_array_kind kind, tree_type* eltype);
 
+extern void  tree_init_incomplete_array_type(tree_type* self, tree_type* eltype);
 extern tree_type* tree_new_incomplete_array_type(tree_context* context, tree_type* eltype);
 
 static TREE_INLINE struct _tree_array_type* _tree_array_type(tree_type* self);
@@ -157,6 +156,9 @@ struct _tree_constant_array_type
         tree_expr* expr;
         int_value size;
 };
+
+extern void tree_init_constant_array_type(
+        tree_type* self, tree_type* eltype, tree_expr* size_expr, const int_value* size_value);
 
 extern tree_type* tree_new_constant_array_type(
         tree_context* context,
