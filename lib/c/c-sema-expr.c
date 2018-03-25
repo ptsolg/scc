@@ -1183,7 +1183,7 @@ typedef enum
 //      char a[] = "abc";
 //      char a[] = { "abc" };
 static c_initializer_kind c_sema_maybe_handle_special_array_initializer(
-        c_sema* self, c_initialized_object* array, c_initializer* it)
+        c_sema* self, c_initialized_object* array, c_initializer* init)
 {
         bool is_constant_array = tree_array_is(array->type, TAK_CONSTANT);
         tree_type* eltype = tree_get_array_eltype(array->type);
@@ -1191,29 +1191,29 @@ static c_initializer_kind c_sema_maybe_handle_special_array_initializer(
                 return CIK_ORDINARY;
 
         bool in_init_list = false;
-        tree_expr* init = tree_desugar_expr(*it->init);
-        if (tree_expr_is(init, TEK_INIT_LIST))
+        tree_expr* expr = tree_desugar_expr(*init->expr);
+        if (tree_expr_is(expr, TEK_INIT_LIST))
         {
-                init = tree_desugar_expr(*it->pos);
+                expr = tree_desugar_expr(*init->pos);
                 in_init_list = true;
         }
 
-        if (!tree_expr_is(init, TEK_STRING_LITERAL))
+        if (!tree_expr_is(expr, TEK_STRING_LITERAL))
                 return CIK_ORDINARY;
 
         if (!tree_builtin_type_is(eltype, TBTK_UINT8) 
                 && !tree_builtin_type_is(eltype, TBTK_INT8))
         {
                 // todo
-                c_error_wide_character_array_initialized_from_non_wide_string(self->logger, init);
+                c_error_wide_character_array_initialized_from_non_wide_string(self->logger, expr);
                 return CIK_INVALID;
         }
 
         strentry entry;
-        tree_get_id_strentry(self->context, tree_get_string_literal(init), &entry);
+        tree_get_id_strentry(self->context, tree_get_string_literal(expr), &entry);
 
         uint num_elems = (uint)(entry.size - 1); // ignore '\0' at first...
-        if ((in_init_list && it->end - it->pos > 1) || !is_constant_array)
+        if ((in_init_list && init->end - init->pos > 1) || !is_constant_array)
         {
                 // ...except this cases:
                 //      char a[3] = { "ab", 'c' };
@@ -1223,11 +1223,11 @@ static c_initializer_kind c_sema_maybe_handle_special_array_initializer(
       
         if (is_constant_array && tree_get_constant_array_size(array->type) < num_elems)
         {
-                c_error_initializer_string_is_too_long(self->logger, init);
+                c_error_initializer_string_is_too_long(self->logger, expr);
                 return CIK_INVALID;
         }
 
-        it->pos++;
+        init->pos++;
         if (!is_constant_array)
                 c_sema_set_incomplete_array_size(self, array->type, num_elems);
 
@@ -1236,37 +1236,33 @@ static c_initializer_kind c_sema_maybe_handle_special_array_initializer(
 }
 
 static bool _c_sema_check_array_or_record_initializer(
-        c_sema* self, c_initialized_object* object, c_initializer* it)
+        c_sema* self, c_initialized_object* object, c_initializer* init)
 {
         bool top_level = object->semantical_parent == NULL;
         c_initializer_kind init_kind = CIK_ORDINARY;
         if (object->kind == CIOK_ARRAY)
-                init_kind = c_sema_maybe_handle_special_array_initializer(self, object, it);
+                init_kind = c_sema_maybe_handle_special_array_initializer(self, object, init);
         else
                 ; // handle other cases...
 
         if (init_kind == CIK_INVALID)
                 return false;
 
-        if (init_kind == CIK_ORDINARY && top_level && !tree_expr_is(*it->init, TEK_INIT_LIST))
+        if (init_kind == CIK_ORDINARY && top_level && !tree_expr_is(*init->expr, TEK_INIT_LIST))
         {
-                c_error_invalid_initializer(self->logger, *it->init);
+                c_error_invalid_initializer(self->logger, *init->expr);
                 return false;
         }
 
-        while (1)
+        while (init->pos != init->end)
         {
-                if (it->pos == it->end)
-                        return true;
-
-                tree_expr* init = *it->pos;
-                if (tree_expr_is(init, TEK_DESIGNATION))
+                if (tree_expr_is(*init->pos, TEK_DESIGNATION))
                 {
                         if (!top_level)
                                 return true;
                         c_initialized_object* designation_parent = object->implicit
                                 ? object->syntactical_parent : object;
-                        if (!(object = c_sema_check_designation(self, it, designation_parent)))
+                        if (!(object = c_sema_check_designation(self, init, designation_parent)))
                                 return false;
                         while (!c_initialized_object_valid(object) && object->semantical_parent)
                         {
@@ -1278,27 +1274,28 @@ static bool _c_sema_check_array_or_record_initializer(
                 {
                         if (!c_initialized_object_valid(object))
                         {
-                                if (!top_level || it->pos == it->end)
+                                if (!top_level)
                                         return true;
-                                c_error_too_many_initializer_values(self->logger, tree_get_expr_loc(init));
+                                c_error_too_many_initializer_values(self->logger, tree_get_expr_loc(*init->pos));
                                 return false;
                         }
 
                         if (!_c_sema_check_initializer(self,
-                                c_initialized_object_get_subobject(object), it, object))
+                                c_initialized_object_get_subobject(object), init, object))
                         {
                                 return false;
                         }
                         c_initialized_object_next_subobject(object);
                 }
         }
+        return true;
 }
 
 static bool c_sema_check_array_or_record_initializer(
-        c_sema* self, tree_type* type, c_initializer* it, c_initialized_object* parent)
+        c_sema* self, tree_type* type, c_initializer* init, c_initialized_object* parent)
 {
         c_initialized_object* object = c_initialized_object_new(self->ccontext, type, parent != NULL, parent);
-        if (!_c_sema_check_array_or_record_initializer(self, object, it))
+        if (!_c_sema_check_array_or_record_initializer(self, object, init))
                 return false;
 
         if (tree_type_is(object->type, TTK_ARRAY) && tree_array_is(object->type, TAK_INCOMPLETE))
@@ -1308,35 +1305,35 @@ static bool c_sema_check_array_or_record_initializer(
 }
 
 static bool c_sema_check_scalar_initializer(
-        c_sema* self, tree_type* type, c_initializer* it, bool top_level)
+        c_sema* self, tree_type* type, c_initializer* init, bool top_level)
 {
         assert(tree_type_is_scalar(type));
-        if (top_level && tree_expr_is(*it->init, TEK_INIT_LIST))
+        if (top_level && tree_expr_is(*init->expr, TEK_INIT_LIST))
         {
-                if (tree_get_init_list_exprs_size(*it->init) > 1)
+                if (tree_get_init_list_exprs_size(*init->expr) > 1)
                 {
                         c_error_too_many_initializer_values(self->logger,
-                                tree_get_expr_loc(tree_get_init_list_expr(*it->init, 1)));
+                                tree_get_expr_loc(tree_get_init_list_expr(*init->expr, 1)));
                         return false;
                 }
         }
 
-        tree_expr** init = it->pos;
-        if (tree_expr_is(*init, TEK_INIT_LIST))
+        tree_expr** expr = init->pos;
+        if (tree_expr_is(*expr, TEK_INIT_LIST))
         {
-                c_error_braces_around_scalar_initializer(self->logger, tree_get_expr_loc(*init));
+                c_error_braces_around_scalar_initializer(self->logger, tree_get_expr_loc(*expr));
                 return false;
         }
-        else if (tree_expr_is(*init, TEK_DESIGNATION))
+        else if (tree_expr_is(*expr, TEK_DESIGNATION))
         { 
                 c_initialized_object object;
                 c_initialized_object_init(&object, type, false, NULL);
-                c_sema_check_designation(self, it, &object);
+                c_sema_check_designation(self, init, &object);
                 return false;
         }
 
         c_assignment_conversion_result r;
-        c_sema_assignment_conversion(self, type, init, &r);
+        c_sema_assignment_conversion(self, type, expr, &r);
         switch (r.kind)
         {
                 case CACRK_COMPATIBLE:
@@ -1345,17 +1342,17 @@ static bool c_sema_check_scalar_initializer(
                 case CACRK_INCOMPATIBLE:
                 case CACRK_RHS_NOT_A_RECORD:
                 case CACRK_INCOMPATIBLE_RECORDS:
-                        c_error_invalid_initializer(self->logger, *init);
+                        c_error_invalid_initializer(self->logger, *expr);
                         return false;
                 case CACRK_RHS_NOT_AN_ARITHMETIC:
                         c_sema_require_arithmetic_expr_type(self,
-                                tree_get_expr_type(*init), tree_get_expr_loc(*init));
+                                tree_get_expr_type(*expr), tree_get_expr_loc(*expr));
                         return false;
                 case CACRK_QUAL_DISCARTION:
-                        c_error_initialization_discards_qualifer(self->logger, *init, r.discarded_quals);
+                        c_error_initialization_discards_qualifer(self->logger, *expr, r.discarded_quals);
                         return false;
                 case CACRK_INCOMPATIBLE_POINTERS:
-                        c_error_initialization_from_incompatible_pointer_types(self->logger, *init);
+                        c_error_initialization_from_incompatible_pointer_types(self->logger, *expr);
                         return false;
                 default:
                         UNREACHABLE();
@@ -1363,9 +1360,9 @@ static bool c_sema_check_scalar_initializer(
         }
 
         tree_eval_result eval_result;
-        if (c_sema_at_file_scope(self) && !tree_eval_expr(self->context, *init, &eval_result))
+        if (c_sema_at_file_scope(self) && !tree_eval_expr(self->context, *expr, &eval_result))
         {
-                c_error_initializer_element_isnt_constant(self->logger, *init);
+                c_error_initializer_element_isnt_constant(self->logger, *expr);
                 return false;
         }
 
@@ -1373,24 +1370,24 @@ static bool c_sema_check_scalar_initializer(
 }
 
 static bool _c_sema_check_initializer(
-        c_sema* self, tree_type* type, c_initializer* it, c_initialized_object* parent)
+        c_sema* self, tree_type* type, c_initializer* init, c_initialized_object* parent)
 {
-        assert(it->pos != it->end);
+        assert(init->pos != init->end);
         bool top_level = parent == NULL;
         if (tree_type_is_array(type) || tree_type_is_record(type))
         {
-                if (!top_level && tree_expr_is(*it->pos, TEK_INIT_LIST))
+                if (!top_level && tree_expr_is(*init->pos, TEK_INIT_LIST))
                 {
-                        if (!c_sema_check_initializer(self, type, *it->pos))
+                        if (!c_sema_check_initializer(self, type, *init->pos))
                                 return false;
                 }
                 else
-                        return c_sema_check_array_or_record_initializer(self, type, it, parent);
+                        return c_sema_check_array_or_record_initializer(self, type, init, parent);
         }
-        else if (!c_sema_check_scalar_initializer(self, type, it, top_level))
+        else if (!c_sema_check_scalar_initializer(self, type, init, top_level))
                 return false;
 
-        it->pos++;
+        init->pos++;
         return true;
 }
 

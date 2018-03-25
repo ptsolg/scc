@@ -4,7 +4,7 @@
 
 extern void c_initializer_init(c_initializer* self, tree_expr** init)
 {
-        self->init = init;
+        self->expr = init;
         if (tree_expr_is(*init, TEK_INIT_LIST))
         {
                 self->pos = tree_get_init_list_exprs_begin(*init);

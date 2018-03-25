@@ -11,7 +11,7 @@ typedef struct _dseq dseq;
 
 typedef struct
 {
-        tree_expr** init;
+        tree_expr** expr;
         tree_expr** pos;
         tree_expr** end;
 } c_initializer;
