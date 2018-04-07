@@ -2,22 +2,20 @@
 #include "scc/tree/tree-context.h"
 
 extern void tree_init_scope(
-        tree_scope* self, tree_context* context, tree_scope* parent, tree_scope_flags flags)
+        tree_scope* self, tree_context* context, tree_scope* parent)
 {
-        tree_init_scope_ex(self, context, parent, tree_get_scope_decls(parent), flags);
+        tree_init_scope_ex(self, context, parent, tree_get_scope_decls(parent));
 }
 
 extern void tree_init_scope_ex(
         tree_scope* self,
         tree_context* context,
         tree_scope* parent,
-        tree_decl_scope* decl_parent,
-        tree_scope_flags flags)
+        tree_decl_scope* decl_parent)
 {
         tree_init_decl_scope(tree_get_scope_decls(self), context, decl_parent);
         list_init(&self->stmts);
         self->parent = parent;
-        self->flags = flags;
 }
 
 extern void tree_add_stmt_to_scope(tree_scope* self, tree_stmt* s)
@@ -76,28 +74,16 @@ extern tree_stmt* tree_new_default_stmt(tree_context* context, tree_xlocation lo
 }
 
 extern tree_stmt* tree_new_compound_stmt(
-        tree_context* context, tree_xlocation loc, tree_scope* parent, tree_scope_flags flags)
-{
-        tree_stmt* s = tree_new_stmt(context, TSK_COMPOUND, loc, sizeof(struct _tree_compound_stmt));
-        if (!s)
-                return NULL;
-
-        tree_init_scope(tree_get_compound_scope(s), context, parent, flags);
-        return s;
-}
-
-extern tree_stmt* tree_new_compound_stmt_ex(
         tree_context* context,
         tree_xlocation loc,
         tree_scope* parent,
-        tree_decl_scope* decl_parent,
-        tree_scope_flags flags)
+        tree_decl_scope* decl_parent)
 {
         tree_stmt* s = tree_new_stmt(context, TSK_COMPOUND, loc, sizeof(struct _tree_compound_stmt));
         if (!s)
                 return NULL;
 
-        tree_init_scope_ex(tree_get_compound_scope(s), context, parent, decl_parent, flags);
+        tree_init_scope_ex(tree_get_compound_scope(s), context, parent, decl_parent);
         return s;
 }
 
@@ -139,14 +125,14 @@ extern tree_stmt* tree_new_if_stmt(
 }
 
 extern tree_stmt* tree_new_switch_stmt(tree_context* context,
-                                      tree_xlocation loc,
-                                      tree_stmt* body,
-                                      tree_expr* expr)
+        tree_xlocation loc,
+        tree_stmt* body,
+        tree_expr* expr)
 {
         tree_stmt* s = tree_new_stmt(context, TSK_SWITCH, loc, sizeof(struct _tree_switch_stmt));
         if (!s)
                 return NULL;
-        
+
         tree_set_switch_body(s, body);
         tree_set_switch_expr(s, expr);
         return s;
@@ -222,5 +208,15 @@ extern tree_stmt* tree_new_return_stmt(tree_context* context, tree_xlocation loc
                 return NULL;
 
         tree_set_return_value(s, value);
+        return s;
+}
+
+extern tree_stmt* tree_new_atomic_stmt(tree_context* context, tree_xlocation loc, tree_stmt* body)
+{
+        tree_stmt* s = tree_new_stmt(context, TSK_ATOMIC, loc, sizeof(struct _tree_atomic_stmt));
+        if (!s)
+                return NULL;
+
+        tree_set_atomic_body(s, body);
         return s;
 }
