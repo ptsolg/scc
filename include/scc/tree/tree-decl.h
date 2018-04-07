@@ -164,19 +164,13 @@ struct _tree_enum_decl
         tree_decl_scope values;
 };
 
-typedef enum
-{
-        TFSK_NONE,
-        TFSK_INLINE,
-} tree_function_specifier_kind;
-
 struct _tree_function_decl
 {
         struct _tree_value_decl base;
-        tree_function_specifier_kind specs;
         tree_decl_scope params;
         tree_decl_scope labels;
         tree_stmt* body;
+        bool inlined;
 };
 
 struct _tree_var_decl
@@ -491,12 +485,11 @@ extern tree_decl* tree_new_function_decl(
         tree_id name,
         tree_decl_storage_class class_,
         tree_type* type,
-        tree_function_specifier_kind spec,
         tree_stmt* body);
 
-static TREE_INLINE tree_function_specifier_kind tree_get_function_specifier(const tree_decl* self)
+static TREE_INLINE bool tree_function_is_inlined(const tree_decl* self)
 {
-        return self->func.specs;
+        return self->func.inlined;
 }
 
 static TREE_INLINE tree_decl_scope* tree_get_function_params(tree_decl* self)
@@ -524,9 +517,9 @@ static TREE_INLINE tree_stmt* tree_get_function_body(const tree_decl* self)
         return self->func.body;
 }
 
-static TREE_INLINE void tree_set_function_specifier(tree_decl* self, tree_function_specifier_kind specs)
+static TREE_INLINE void tree_set_function_inlined(tree_decl* self, bool inlined)
 {
-        self->func.specs = specs;
+        self->func.inlined = inlined;
 }
 
 static TREE_INLINE void tree_set_function_body(tree_decl* self, tree_stmt* body)

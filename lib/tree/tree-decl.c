@@ -226,7 +226,6 @@ extern tree_decl* tree_new_function_decl(
         tree_id name,
         tree_decl_storage_class class_,
         tree_type* type,
-        tree_function_specifier_kind spec,
         tree_stmt* body)
 {
         tree_decl* d = tree_new_value_decl(context,
@@ -236,7 +235,7 @@ extern tree_decl* tree_new_function_decl(
 
         tree_init_decl_scope(tree_get_function_params(d), context, scope);
         tree_init_decl_scope(tree_get_function_labels(d), context, NULL);
-        tree_set_function_specifier(d, spec);
+        tree_set_function_inlined(d, false);
         tree_set_function_body(d, body);
         return d;
 }
