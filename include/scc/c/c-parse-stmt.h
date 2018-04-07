@@ -21,6 +21,7 @@ typedef struct _tree_stmt tree_stmt;
 //      selection-statement
 //      iteration-statement
 //      jump-statement
+//      transaction-statement
 extern tree_stmt* c_parse_stmt(c_parser* self);
 
 // c99 6.8.1 labeled-statement:
@@ -41,7 +42,7 @@ extern tree_stmt* c_parse_labeled_stmt(c_parser* self, int scope_flags);
 // block-item:
 //      declaration
 //      statement
-extern tree_stmt* c_parse_block_stmt(c_parser* self, int scope_flags);
+extern tree_stmt* c_parse_compound_stmt(c_parser* self, int scope_flags);
 extern tree_stmt* c_parse_decl_stmt(c_parser* self);
 
 // c99 6.8.3 expression-statement:
@@ -69,10 +70,14 @@ extern tree_stmt* c_parse_for_stmt(c_parser* self, int scope_flags);
 //      continue ;
 //      break ;
 //      return expression-opt ;
-extern tree_stmt* c_parse_goto_stmt(c_parser* self);
+extern tree_stmt* c_parse_goto_stmt(c_parser* self, int scope_flags);
 extern tree_stmt* c_parse_continue_stmt(c_parser* self);
 extern tree_stmt* c_parse_break_stmt(c_parser* self);
 extern tree_stmt* c_parse_return_stmt(c_parser* self);
+
+// transaction-statement:
+//      _Atomic statement
+extern tree_stmt* c_parse_atomic_stmt(c_parser* self, int scope_flags);
 
 #ifdef __cplusplus
 }

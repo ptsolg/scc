@@ -28,6 +28,17 @@ extern int c_token_to_string(const tree_context* context, const c_token* tok, ch
 
 typedef enum
 {
+        CSF_NONE = 0,
+        CSF_BREAK = 1,
+        CSF_CONTINUE = 2,
+        CSF_SWITCH = 4 | CSF_BREAK,
+        CSF_DECL = 8,
+        CSF_ATOMIC = 16 | CSF_BREAK,
+        CSF_ITERATION = CSF_BREAK | CSF_CONTINUE,
+} c_scope_flags;
+
+typedef enum
+{
         CPL_UNKNOWN,
 
         CPL_COMMA,
