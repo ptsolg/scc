@@ -32,6 +32,7 @@ static void cc_context_init(cc_context* self, cc_instance* cc, jmp_buf on_fatal_
                 cc->opts.target == CTK_X86_32 ? TTAK_X86_32 : TTAK_X86_64);
         tree_init(&self->tree, &self->target);
         c_context_init(&self->c, &self->tree, &cc->input.source_lookup, on_fatal_error);
+        self->c.lang_opts.ext.tm_enabled = cc->opts.ext.enable_stm;
         ssa_init(&self->ssa, &self->tree, on_fatal_error);
 }
 
@@ -141,9 +142,7 @@ extern errcode cc_dump_tokens(cc_instance* self)
         if (setjmp(fatal))
                 goto cleanup;
         if (EC_FAILED(c_env_lex_source(&env, *cc_sources_begin(self), &tokens)))
-        {
                 goto cleanup;
-        }
 
         result = EC_NO_ERROR;
         if (self->output.file)

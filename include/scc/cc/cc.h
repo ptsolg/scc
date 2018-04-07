@@ -59,6 +59,11 @@ typedef struct
                 bool print_eval_result;
                 bool force_brackets;
         } cprint;
+
+        struct
+        {
+                bool enable_tm;
+        } ext;
 } cc_opts;
 
 typedef struct _cc_instance
