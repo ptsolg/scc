@@ -32,7 +32,7 @@ static void cc_context_init(cc_context* self, cc_instance* cc, jmp_buf on_fatal_
                 cc->opts.target == CTK_X86_32 ? TTAK_X86_32 : TTAK_X86_64);
         tree_init(&self->tree, &self->target);
         c_context_init(&self->c, &self->tree, &cc->input.source_lookup, on_fatal_error);
-        self->c.lang_opts.ext.tm_enabled = cc->opts.ext.enable_stm;
+        self->c.lang_opts.ext.tm_enabled = cc->opts.ext.enable_tm;
         ssa_init(&self->ssa, &self->tree, on_fatal_error);
 }
 

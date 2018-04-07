@@ -32,7 +32,7 @@ extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc)
         self->opts.cprint.print_impl_casts = false;
         self->opts.cprint.print_eval_result = false;
         self->opts.cprint.force_brackets = false;
-        self->opts.ext.enable_stm = false;
+        self->opts.ext.enable_tm = false;
 }
 
 extern void cc_dispose(cc_instance* self)

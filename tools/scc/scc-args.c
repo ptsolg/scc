@@ -153,7 +153,7 @@ static void scc_fcf(scc_env* self, aparser* parser)
 
 static void scc_ftm(scc_env* self, aparser* parser)
 {
-        self->cc.opts.ext.enable_stm = true;
+        self->cc.opts.ext.enable_tm = true;
 }
 
 static void scc_emit_ssa(scc_env* self, aparser* parser)
