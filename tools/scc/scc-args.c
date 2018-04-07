@@ -40,6 +40,7 @@ typedef enum
         SAK_fforce_brackets,
         SAK_fdce,
         SAK_fcf,
+        SAK_ftm,
         SAK_emit_ssa,
         SAK_emit_llvm,
         SAK_I,
@@ -150,6 +151,11 @@ static void scc_fcf(scc_env* self, aparser* parser)
         self->cc.opts.optimization.fold_constants = true;
 }
 
+static void scc_ftm(scc_env* self, aparser* parser)
+{
+        self->cc.opts.ext.enable_stm = true;
+}
+
 static void scc_emit_ssa(scc_env* self, aparser* parser)
 {
         if (self->mode != SRM_ASSEMBLE)
@@ -246,6 +252,7 @@ extern errcode scc_parse_opts(scc_env* self, int argc, const char** argv)
                 ARG_HANDLER_INIT("-fforce-brackets", &scc_fforce_brackets, self),
                 ARG_HANDLER_INIT("-fdce", &scc_fdce, self),
                 ARG_HANDLER_INIT("-fcf", &scc_fcf, self),
+                ARG_HANDLER_INIT("-ftm", &scc_ftm, self),
                 ARG_HANDLER_INIT("-emit-ssa", &scc_emit_ssa, self),
                 ARG_HANDLER_INIT("-emit-llvm", &scc_emit_llvm, self),
                 ARG_HANDLER_INIT("-I", &scc_I, self),
