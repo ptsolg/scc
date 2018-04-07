@@ -17,20 +17,27 @@ extern errcode c_lexer_enter_source_file(c_lexer* self, c_source* source)
         return c_preprocessor_enter_source(&self->pp, source);
 }
 
-static_assert(CTK_TOTAL_SIZE == 109, "lexer reswords initialization needs an update");
+static_assert(CTK_TOTAL_SIZE == 111, "lexer reswords initialization needs an update");
+
+static void c_lexer_add_token(c_lexer* self, c_token_kind k, bool pp)
+{
+        const c_resword_info* info = c_get_token_kind_info(k);
+        if (pp)
+                c_reswords_add_pp_resword(&self->reswords, info->string, k);
+        else
+                c_reswords_add_resword(&self->reswords, info->string, k);
+}
 
 extern void c_lexer_init_reswords(c_lexer* self)
 {
         for (c_token_kind i = CTK_CHAR; i < CTK_CONST_INT; i++)
-        {
-                const c_resword_info* info = c_get_token_kind_info(i);
-                c_reswords_add_resword(&self->reswords, info->string, i);
-        }
-        for (c_token_kind i = CTK_PP_IF; i < CTK_TOTAL_SIZE; i++)
-        {
-                const c_resword_info* info = c_get_token_kind_info(i);
-                c_reswords_add_pp_resword(&self->reswords, info->string, i);
-        }
+                c_lexer_add_token(self, i, false);
+        for (c_token_kind i = CTK_PP_IF; i < CTK_PP_PRAGMA; i++)
+                c_lexer_add_token(self, i, true);
+
+        if (self->pp.context->lang_opts.ext.tm_enabled)
+                for (c_token_kind i = CTK_ATOMIC; i < CTK_TOTAL_SIZE; i++)
+                        c_lexer_add_token(self, i, false);
 }
 
 extern void c_lexer_dispose(c_lexer* self)
