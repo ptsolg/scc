@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include "scc/c/c-source.h"
+#include "scc/c/c-lang-opts.h"
 #include <setjmp.h>
 
 typedef struct _tree_context tree_context;
@@ -20,6 +21,7 @@ typedef struct _c_context
         obstack nodes;
         tree_context* tree;
         c_source_manager source_manager;
+        c_lang_opts lang_opts;
 } c_context;
 
 extern void c_context_init(

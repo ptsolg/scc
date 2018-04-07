@@ -24,6 +24,7 @@ extern void c_context_init_ex(
         mempool_init_ex(&self->memory, NULL, on_bad_alloc, alloc);
         obstack_init_ex(&self->nodes, c_context_get_allocator(self));
         c_source_manager_init(&self->source_manager, lookup, self);
+        c_lang_opts_init(&self->lang_opts);
 }
 
 extern void c_context_dispose(c_context* self)
