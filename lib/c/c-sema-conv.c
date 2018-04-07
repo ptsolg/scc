@@ -198,27 +198,18 @@ static bool c_sema_check_pointer_qualifier_discartion(
         return false;
 }
 
-static bool c_sema_pointer_operands_are_compatible(c_sema* self, tree_type* lt, tree_type* rt)
-{
-        if (c_sema_types_are_same(self, lt, rt))
-                return true;
-
-        if ((tree_type_is_incomplete(lt) || tree_type_is_object(lt)) && tree_type_is_void(rt))
-                return true;
-
-        return (tree_type_is_incomplete(rt) || tree_type_is_object(rt)) && tree_type_is_void(lt);
-}
-
-static bool c_sema_check_assignment_pointer_types(
+static bool c_sema_check_pointer_assignment(
         c_sema* self, tree_type* lt, tree_type* rt, c_assignment_conversion_result* r)
 {
-        assert(tree_type_is_pointer(lt) && tree_type_is_pointer(rt));
-
         tree_type* ltarget = tree_get_unqualified_type(tree_get_pointer_target(lt));
         tree_type* rtarget = tree_get_unqualified_type(tree_get_pointer_target(rt));
 
-        if (c_sema_pointer_operands_are_compatible(self, ltarget, rtarget))
+        if (c_sema_types_are_compatible(self, ltarget, rtarget)
+                || (tree_type_is_incomplete_or_object(ltarget) && tree_type_is_void(rtarget))
+                || (tree_type_is_incomplete_or_object(rtarget) && tree_type_is_void(ltarget)))
+        {
                 return c_sema_check_pointer_qualifier_discartion(self, lt, rt, r);
+        }
 
         r->kind = CACRK_INCOMPATIBLE_POINTERS;
         return false;
@@ -249,17 +240,16 @@ extern tree_type* c_sema_assignment_conversion(
                 if (!c_sema_types_are_same(self, lt, rt))
                         return c_assignment_conversion_error(r, CACRK_INCOMPATIBLE_RECORDS);
         }
-        else if (tree_type_is_object_pointer(lt)
-                && tree_expr_is_null_pointer_constant(self->context, *rhs))
+        else if (tree_type_is_pointer(lt) && tree_type_is_pointer(rt))
         {
-                ; // nothing to check
-        }
-        else if (tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt))
-        {
-                if (!c_sema_check_assignment_pointer_types(self, lt, rt, r))
+                if (!c_sema_check_pointer_assignment(self, lt, rt, r))
                         return NULL;
         }
-        else 
+        else if (tree_type_is_pointer(lt) && tree_expr_is_null_pointer_constant(self->context, *rhs))
+                ;
+        else if (/*lt is bool*/0 && tree_type_is_pointer(rt))
+                UNREACHABLE(); // todo _Bool
+        else
                 return c_assignment_conversion_error(r, CACRK_INCOMPATIBLE);
 
         *rhs = c_sema_new_impl_cast(self, *rhs, lt);
