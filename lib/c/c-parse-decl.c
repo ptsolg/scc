@@ -177,13 +177,13 @@ extern bool c_parse_decl_specs(c_parser* self, c_decl_specs* result)
                 }
                 else if (c_parser_at(self, CTK_TYPEDEF))
                 {
-                        if (!c_sema_set_typedef_specifier(self->sema, result))
+                        if (!c_sema_set_typedef_specified(self->sema, result))
                                 return false;
                         c_parser_consume_token(self);
                 }
                 else if (c_parser_at(self, CTK_INLINE))
                 {
-                        if (!c_sema_set_inline_specifier(self->sema, result))
+                        if (!c_sema_set_inline_specified(self->sema, result))
                                 return false;
                         c_parser_consume_token(self);
                 }
@@ -577,36 +577,42 @@ static bool c_parse_parameter_type_list_opt(c_parser* self, c_declarator* result
 
 static bool c_parse_direct_declarator_suffix_opt(c_parser* self, c_declarator* result)
 {
-        if (c_parser_at(self, CTK_LBRACKET))
+        while (1)
         {
-                c_parser_consume_token(self);
-                if (!c_sema_add_direct_declarator_function_suffix(self->sema, result))
-                        return false;
-                if (!c_parse_parameter_type_list_opt(self, result))
-                        return false;
-                if (!c_parser_require(self, CTK_RBRACKET))
-                        return false;
-        }
-        else if (c_parser_at(self, CTK_LSBRACKET))
-        {
-                c_parser_consume_token(self);
-                tree_expr* size = NULL;
-                if (!c_parser_at(self, CTK_RSBRACKET))
-                        if (!(size = c_parse_const_expr(self)))
-                                return false;
-
-                if (!c_sema_add_direct_declarator_array_suffix(
-                        self->sema, result, TTQ_UNQUALIFIED, size))
+                if (c_parser_at(self, CTK_LBRACKET))
                 {
-                        return false;
+                        c_parser_consume_token(self);
+                        if (!c_sema_add_direct_declarator_function_suffix(self->sema, result))
+                                return false;
+                        if (!c_parse_parameter_type_list_opt(self, result))
+                                return false;
+                        if (!c_parser_require(self, CTK_RBRACKET))
+                                return false;
+                        if (c_parser_at(self, CTK_TRANSACTION_SAFE))
+                        {
+                                c_parser_consume_token(self);
+                                c_sema_add_direct_declarator_transaction_safe_attribute(self->sema, result);
+                        }
                 }
-                if (!c_parser_require(self, CTK_RSBRACKET))
-                        return false;
-        }
-        else
-                return true;
+                else if (c_parser_at(self, CTK_LSBRACKET))
+                {
+                        c_parser_consume_token(self);
+                        tree_expr* size = NULL;
+                        if (!c_parser_at(self, CTK_RSBRACKET))
+                                if (!(size = c_parse_const_expr(self)))
+                                        return false;
 
-        return c_parse_direct_declarator_suffix_opt(self, result);
+                        if (!c_sema_add_direct_declarator_array_suffix(
+                                self->sema, result, TTQ_UNQUALIFIED, size))
+                        {
+                                return false;
+                        }
+                        if (!c_parser_require(self, CTK_RSBRACKET))
+                                return false;
+                }
+                else
+                        return true;
+        }
 }
 
 static bool c_parse_direct_declarator(c_parser* self, c_declarator* result)
@@ -655,7 +661,7 @@ extern tree_type* c_parse_type_name(c_parser* self)
         tree_type* t = c_parse_specifier_qualifier_list(self);
         if (!t)
                 return NULL;
-
+        
         if (c_token_starts_declarator(c_parser_get_token(self)))
         {
                 c_declarator d;

@@ -134,8 +134,11 @@ extern tree_decl* c_parse_enum_specifier(c_parser* self, bool* referenced);
 // direct-declarator:
 //      identifier
 //      ( declarator )
-//      direct-declarator ( parameter-type-list-opt )
+//      direct-declarator ( parameter-type-list-opt ) transaction-safe-specifier-opt
 //      direct-declarator [ const-expression-opt ]
+//
+// transaction-safe-specifier:
+//      _Transaction_safe
 //
 // pointer:
 //      * type-qualifier-list-opt
