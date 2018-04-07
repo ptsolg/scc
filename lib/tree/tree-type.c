@@ -53,6 +53,7 @@ extern tree_type* tree_new_function_type(tree_context* context, tree_type* resty
                 return NULL;
 
         tree_set_function_type_vararg(t, false);
+        tree_set_function_type_transaction_safe(t, false);
         tree_init_array(&_tree_function_type(t)->params);
         return t;
 }
@@ -378,6 +379,11 @@ extern bool tree_type_is_incomplete(const tree_type* self)
         return false;
 }
 
+extern bool tree_type_is_incomplete_or_object(const tree_type* self)
+{
+        return tree_type_is_incomplete(self) || tree_type_is_object(self);
+}
+
 extern tree_type* tree_get_type_next(const tree_type* self)
 {
         tree_type_kind k = tree_get_type_kind(self);
@@ -569,6 +575,11 @@ extern tree_type_equal_kind tree_compare_types(const tree_type* a, const tree_ty
                                 break;
                         case TTK_FUNCTION:
                         {
+                                if (tree_function_type_is_transaction_safe(a)
+                                        != tree_function_type_is_transaction_safe(b))
+                                {
+                                        return TTEK_DIFFERENT_ATTRIBS;
+                                }
                                 tree_type_equal_kind ek = tree_compare_function_type_params(a, b);
                                 if (ek == TTEK_NEQ)
                                         return TTEK_NEQ;

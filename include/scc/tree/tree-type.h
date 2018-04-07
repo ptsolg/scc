@@ -101,6 +101,7 @@ struct _tree_function_type
         struct _tree_chain_type base;
         tree_array params;
         bool vararg;
+        bool transaction_safe;
 };
 
 extern tree_type* tree_new_function_type(tree_context* context, tree_type* restype);
@@ -115,8 +116,10 @@ static TREE_INLINE tree_type* tree_get_function_type_param(const tree_type* self
 static TREE_INLINE tree_type** tree_get_function_type_params_begin(const tree_type* self);
 static TREE_INLINE tree_type** tree_get_function_type_params_end(const tree_type* self);
 static TREE_INLINE bool tree_function_type_is_vararg(const tree_type* self);
+static TREE_INLINE bool tree_function_type_is_transaction_safe(const tree_type* self);
 static TREE_INLINE void tree_set_function_type_result(tree_type* self, tree_type* restype);
 static TREE_INLINE void tree_set_function_type_vararg(tree_type* self, bool vararg);
+static TREE_INLINE void tree_set_function_type_transaction_safe(tree_type* self, bool safe);
 
 #define TREE_FOREACH_FUNCTION_TYPE_PARAM(PFUNC, ITNAME) \
         for (tree_type** ITNAME = tree_get_function_type_params_begin(PFUNC); \
@@ -301,6 +304,7 @@ extern bool tree_type_is_void_pointer(const tree_type* self);
 
 // returns false if type size cannot be computed
 extern bool tree_type_is_incomplete(const tree_type* self);
+extern bool tree_type_is_incomplete_or_object(const tree_type* self);
 
 // if type is pointer returns pointer target
 // if type is array returns array element type
@@ -318,6 +322,8 @@ typedef enum
         TTEK_EQ,
         // types are equal, but have different qualifiers
         TTEK_DIFFERENT_QUALS,
+        // types are equal, but have different attributes
+        TTEK_DIFFERENT_ATTRIBS,
 } tree_type_equal_kind;
 
 extern tree_type_equal_kind tree_compare_types(const tree_type* a, const tree_type* b);
@@ -436,6 +442,11 @@ static TREE_INLINE bool tree_function_type_is_vararg(const tree_type* self)
         return _tree_function_ctype(self)->vararg;
 }
 
+static TREE_INLINE bool tree_function_type_is_transaction_safe(const tree_type* self)
+{
+        return _tree_function_ctype(self)->transaction_safe;
+}
+
 static TREE_INLINE void tree_set_function_type_result(tree_type* self, tree_type* restype)
 {
         tree_set_chain_type_next(self, restype);
@@ -444,6 +455,11 @@ static TREE_INLINE void tree_set_function_type_result(tree_type* self, tree_type
 static TREE_INLINE void tree_set_function_type_vararg(tree_type* self, bool vararg)
 {
         _tree_function_type(self)->vararg = vararg;
+}
+
+static TREE_INLINE void tree_set_function_type_transaction_safe(tree_type* self, bool safe)
+{
+        _tree_function_type(self)->transaction_safe = safe;
 }
 
 static TREE_INLINE struct _tree_array_type* _tree_array_type(tree_type* self)
