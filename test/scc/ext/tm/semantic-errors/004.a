@@ -1,0 +1,1 @@
+004.t:1:11: error: volatile parameter cannot appear in _Transaction_safe function

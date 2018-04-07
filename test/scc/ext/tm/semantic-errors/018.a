@@ -1,0 +1,1 @@
+018.t:4:9: error: volatile objects cannot be used within _Transaction_safe function

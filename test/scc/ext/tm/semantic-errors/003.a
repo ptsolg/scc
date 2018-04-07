@@ -1,0 +1,1 @@
+003.t:8:13: error: jumping into the body of _Atomic block using case statement is prohibited

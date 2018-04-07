@@ -1,0 +1,1 @@
+009.t:8:9: error: volatile objects cannot be used within _Transaction_safe function

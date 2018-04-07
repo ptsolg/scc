@@ -1,0 +1,1 @@
+002.t:3:5: error: jumping into the body of _Atomic block using goto statement is prohibited

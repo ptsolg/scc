@@ -1,0 +1,1 @@
+016.t:5:10: error: volatile objects cannot be used within _Atomic block

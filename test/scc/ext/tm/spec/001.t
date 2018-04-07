@@ -1,0 +1,1 @@
+void (*foo() _Transaction_safe)() _Transaction_safe;
