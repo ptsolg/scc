@@ -7,21 +7,32 @@
 #include "scc/tree/tree-eval.h"
 #include "scc/tree/tree-stmt.h"
 
-extern tree_stmt* c_sema_add_stmt(c_sema* self, tree_stmt* s)
+extern void c_sema_add_compound_stmt_item(c_sema* self, tree_stmt* compound, tree_stmt* item)
 {
-        assert(s);
-        tree_add_stmt_to_scope(self->scope, s);
-        return s;
+        assert(item);
+        tree_add_stmt_to_scope(tree_get_compound_scope(compound), item);
 }
 
-extern tree_stmt* c_sema_new_block_stmt(
-        c_sema* self, tree_location lbrace_loc, int scope_flags)
+extern tree_stmt* c_sema_new_compound_stmt(c_sema* self, tree_location lbrace_loc)
 {
-        return tree_new_compound_stmt_ex(self->context,
-                tree_create_xloc(lbrace_loc, 0), self->scope, self->locals, scope_flags);
+        return tree_new_compound_stmt(self->context,
+                tree_create_xloc(lbrace_loc, TREE_INVALID_LOC), self->scope, self->locals);
 }
 
-extern tree_stmt* c_sema_new_case_stmt(
+extern tree_stmt* c_sema_start_atomic_stmt(c_sema* self, tree_location kw_loc)
+{
+        self->tm_info.atomic_stmt_nesting++;
+        return tree_new_atomic_stmt(self->context, tree_create_xloc(kw_loc, kw_loc), NULL);
+}
+
+extern tree_stmt* c_sema_finish_atomic_stmt(c_sema* self, tree_stmt* atomic, tree_stmt* body)
+{
+        self->tm_info.atomic_stmt_nesting--;
+        tree_set_atomic_body(atomic, body);
+        return atomic;
+}
+
+extern tree_stmt* c_sema_start_case_stmt(
         c_sema* self,
         tree_location kw_loc,
         tree_location colon_loc,
@@ -30,7 +41,13 @@ extern tree_stmt* c_sema_new_case_stmt(
         if (!c_sema_in_switch_stmt(self))
         {
                 c_error_case_stmt_outside_switch(self->logger, kw_loc);
-                return false;
+                return NULL;
+        }
+
+        if (c_sema_in_transaction_safe_block(self) && !c_sema_switch_stmt_in_atomic_block(self))
+        {
+                c_error_jumping_into_the_atomic_block_is_prohibited(self->logger, kw_loc, CTK_CASE);
+                return NULL;
         }
 
         if (!c_sema_require_integer_expr(self, expr))
@@ -58,12 +75,13 @@ extern tree_stmt* c_sema_new_case_stmt(
         return case_stmt;
 }
 
-extern void c_sema_set_case_stmt_body(c_sema* self, tree_stmt* stmt, tree_stmt* body)
+extern tree_stmt* c_sema_finish_case_stmt(c_sema* self, tree_stmt* stmt, tree_stmt* body)
 {
         tree_set_case_body(stmt, body);
+        return stmt;
 }
 
-extern tree_stmt* c_sema_new_default_stmt(
+extern tree_stmt* c_sema_start_default_stmt(
         c_sema* self, tree_location kw_loc, tree_location colon_loc)
 {
         if (!c_sema_in_switch_stmt(self))
@@ -76,6 +94,11 @@ extern tree_stmt* c_sema_new_default_stmt(
                 c_error_default_stmt_duplication(self->logger, kw_loc);
                 return false;
         }
+        if (c_sema_in_transaction_safe_block(self) && !c_sema_switch_stmt_in_atomic_block(self))
+        {
+                c_error_jumping_into_the_atomic_block_is_prohibited(self->logger, kw_loc, CTK_DEFAULT);
+                return NULL;
+        }
 
         tree_stmt* default_stmt = tree_new_default_stmt(self->context,
                 tree_create_xloc(kw_loc, colon_loc), NULL);
@@ -83,13 +106,17 @@ extern tree_stmt* c_sema_new_default_stmt(
         return default_stmt;
 }
 
-extern void c_sema_set_default_stmt_body(c_sema* self, tree_stmt* stmt, tree_stmt* body)
+extern tree_stmt* c_sema_finish_default_stmt(c_sema* self, tree_stmt* stmt, tree_stmt* body)
 {
         tree_set_default_body(stmt, body);
+        return stmt;
 }
 
 extern tree_stmt* c_sema_new_labeled_stmt(c_sema* self, tree_decl* label, tree_stmt* stmt)
 {
+        if (c_sema_in_transaction_safe_block(self))
+                strmap_insert(&self->tm_info.atomic_labels, tree_get_decl_name(label), label);
+
         tree_set_label_decl_stmt(label, stmt);
         return tree_new_labeled_stmt(self->context, tree_get_decl_loc(label), label);
 }
@@ -97,8 +124,7 @@ extern tree_stmt* c_sema_new_labeled_stmt(c_sema* self, tree_decl* label, tree_s
 extern tree_stmt* c_sema_new_expr_stmt(
         c_sema* self, tree_location begin_loc, tree_location semicolon_loc, tree_expr* expr)
 {
-        return tree_new_expr_stmt(self->context,
-                tree_create_xloc(begin_loc, semicolon_loc), expr);
+        return tree_new_expr_stmt(self->context, tree_create_xloc(begin_loc, semicolon_loc), expr);
 }
 
 extern tree_stmt* c_sema_new_if_stmt(
@@ -112,7 +138,7 @@ extern tree_stmt* c_sema_new_if_stmt(
         if (!c_sema_require_scalar_expr(self, condition))
                 return NULL;
 
-        return tree_new_if_stmt(self->context,
+        return tree_new_if_stmt(self->context, 
                 tree_create_xloc(kw_loc, rbracket_loc), condition, body, else_);
 }
 
@@ -142,21 +168,22 @@ extern tree_stmt* c_sema_start_switch_stmt(
         c_sema* self,
         tree_location kw_loc,
         tree_location rbracket_loc,
-        tree_expr* value)
+        tree_expr* value,
+        int scope_flags)
 {
         tree_stmt* s = c_sema_new_switch_stmt(self, kw_loc, rbracket_loc, value, NULL);
         if (!s)
                 return NULL;
 
         c_sema_push_switch_stmt_info(self, s);
+        if (scope_flags & CSF_ATOMIC)
+                c_sema_set_switch_stmt_in_atomic_block(self);
+
         return s;
 }
 
 extern tree_stmt* c_sema_finish_switch_stmt(c_sema* self, tree_stmt* switch_, tree_stmt* body)
 {
-        if (!body)
-                return NULL;
-
         tree_set_switch_body(switch_, body);
         c_sema_pop_switch_stmt_info(self);
         return switch_;
@@ -243,27 +270,31 @@ extern tree_stmt* c_sema_new_goto_stmt(
         tree_location kw_loc,
         tree_location id_loc,
         tree_id id,
-        tree_location semicolon_loc)
+        tree_location semicolon_loc,
+        int scope_flags)
 {
         tree_decl* l = c_sema_declare_label_decl(self, id_loc, id);
         if (!l)
                 return NULL;
 
-        return tree_new_goto_stmt(self->context, tree_create_xloc(kw_loc, semicolon_loc), l);
+        tree_stmt* goto_stmt = tree_new_goto_stmt(
+                self->context, tree_create_xloc(kw_loc, semicolon_loc), l);
+        if (!(scope_flags & CSF_ATOMIC))
+                dseq_append(&self->tm_info.non_atomic_gotos, goto_stmt);
+
+        return goto_stmt;
 }
 
 extern tree_stmt* c_sema_new_continue_stmt(
         c_sema* self, tree_location kw_loc, tree_location semicolon_loc)
 {
-        return tree_new_continue_stmt(self->context,
-                tree_create_xloc(kw_loc, semicolon_loc));
+        return tree_new_continue_stmt(self->context, tree_create_xloc(kw_loc, semicolon_loc));
 }
 
 extern tree_stmt* c_sema_new_break_stmt(
         c_sema* self, tree_location kw_loc, tree_location semicolon_loc)
 {
-        return tree_new_break_stmt(self->context,
-                tree_create_xloc(kw_loc, semicolon_loc));
+        return tree_new_break_stmt(self->context, tree_create_xloc(kw_loc, semicolon_loc));
 }
 
 extern tree_stmt* c_sema_new_return_stmt(
@@ -299,6 +330,30 @@ extern tree_stmt* c_sema_new_return_stmt(
         return NULL;
 }
 
+static bool c_sema_check_top_level_compound_stmt(const c_sema* self, const tree_stmt* s)
+{
+        TREE_FOREACH_DECL_IN_SCOPE(self->labels, it)
+                if (!tree_get_label_decl_stmt(it))
+                {
+                        c_error_undefined_label(self->logger, it);
+                        return false;
+                }
+
+        for (void** it = dseq_begin(&self->tm_info.non_atomic_gotos),
+                **end = dseq_end(&self->tm_info.non_atomic_gotos); it != end; it++)
+        {
+                tree_decl* goto_dest = tree_get_goto_label(*it);
+                strmap_iter result;
+                if (!strmap_find(&self->tm_info.atomic_labels, tree_get_decl_name(goto_dest), &result))
+                        continue;
+
+                c_error_jumping_into_the_atomic_block_is_prohibited(
+                        self->logger, tree_get_stmt_loc(*it).begin, CTK_GOTO);
+                return false;
+        }
+        return true;
+}
+
 extern bool c_sema_check_stmt(const c_sema* self, const tree_stmt* s, int scope_flags)
 {
         if (!s)
@@ -307,29 +362,23 @@ extern bool c_sema_check_stmt(const c_sema* self, const tree_stmt* s, int scope_
         bool is_top_level = self->scope == NULL;
         tree_stmt_kind sk = tree_get_stmt_kind(s);
 
-        if (sk == TSK_BREAK && !(scope_flags & TSF_BREAK))
+        if (sk == TSK_BREAK && !(scope_flags & CSF_BREAK))
         {
                 c_error_break_stmt_outside_loop_or_switch(self->logger, s);
                 return false;
         }
-        else if (sk == TSK_CONTINUE && !(scope_flags & TSF_CONTINUE))
+        else if (sk == TSK_CONTINUE && !(scope_flags & CSF_CONTINUE))
         {
                 c_error_continue_stmt_outside_loop(self->logger, s);
                 return false;
         }
-        else if (sk == TSK_DECL && !(scope_flags & TSF_DECL))
+        else if (sk == TSK_DECL && !(scope_flags & CSF_DECL))
         {
                 c_error_decl_stmt_outside_block(self->logger, s);
                 return false;
         }
         else if (sk == TSK_COMPOUND && is_top_level)
-        {
-                TREE_FOREACH_DECL_IN_SCOPE(self->labels, it)
-                        if (!tree_get_label_decl_stmt(it))
-                        {
-                                c_error_undefined_label(self->logger, it);
-                                return false;
-                        }
-        }
+                return c_sema_check_top_level_compound_stmt(self, s);
+
         return true;
 }

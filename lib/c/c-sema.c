@@ -107,7 +107,12 @@ extern void c_sema_init(c_sema* self, c_context* context, c_logger* logger)
         self->labels = NULL;
         self->scope = NULL;
         self->logger = logger;
-        c_switch_stack_init_alloc(&self->switch_stack, c_context_get_allocator(self->ccontext));
+        self->tm_info.atomic_stmt_nesting = 0;
+
+        allocator* alloc = c_context_get_allocator(self->ccontext);
+        c_switch_stack_init_alloc(&self->switch_stack, alloc);
+        dseq_init_alloc(&self->tm_info.non_atomic_gotos, alloc);
+        strmap_init_alloc(&self->tm_info.atomic_labels, alloc);
 }
 
 extern void c_sema_dispose(c_sema* self)
@@ -164,6 +169,9 @@ extern void c_sema_exit_function(c_sema* self)
         self->labels = NULL;
         self->function = NULL;
         c_sema_exit_decl_scope(self);
+
+        dseq_resize(&self->tm_info.non_atomic_gotos, 0);
+        strmap_clear(&self->tm_info.atomic_labels);
 }
 
 extern void c_sema_push_scope(c_sema* self)
@@ -175,6 +183,7 @@ extern void c_sema_push_switch_stmt_info(c_sema* self, tree_stmt* switch_stmt)
 {
         c_switch_stmt_info info;
         info.has_default_label = false;
+        info.in_atomic_block = false;
         info.switch_stmt = switch_stmt;
         c_case_label_map_init_alloc(&info.labels, c_context_get_allocator(self->ccontext));
         c_switch_stack_append(&self->switch_stack, info);
@@ -193,6 +202,11 @@ extern void c_sema_set_switch_stmt_has_default_label(c_sema* self)
         c_sema_get_switch_stmt_info(self)->has_default_label = true;
 }
 
+extern void c_sema_set_switch_stmt_in_atomic_block(c_sema* self)
+{
+        c_sema_get_switch_stmt_info(self)->in_atomic_block = true;
+}
+
 extern c_switch_stmt_info* c_sema_get_switch_stmt_info(const c_sema* self)
 {
         size_t size = c_switch_stack_size(&self->switch_stack);
@@ -208,6 +222,11 @@ extern bool c_sema_in_switch_stmt(const c_sema* self)
 extern bool c_sema_switch_stmt_has_default_label(const c_sema* self)
 {
         return c_sema_get_switch_stmt_info(self)->has_default_label;
+}
+
+extern bool c_sema_switch_stmt_in_atomic_block(const c_sema* self)
+{
+        return c_sema_get_switch_stmt_info(self)->in_atomic_block;
 }
 
 extern bool c_sema_switch_stmt_register_case_label(const c_sema* self, tree_stmt* label)
@@ -241,4 +260,21 @@ extern bool c_sema_at_file_scope(const c_sema* self)
 extern bool c_sema_at_block_scope(const c_sema* self)
 {
         return (bool)self->function;
+}
+
+extern bool c_sema_in_atomic_block(const c_sema* self)
+{
+        return self->tm_info.atomic_stmt_nesting != 0;
+}
+
+extern bool c_sema_in_transaction_safe_function(const c_sema* self)
+{
+        return self->function
+                && tree_function_type_is_transaction_safe(
+                        tree_desugar_type(tree_get_decl_type(self->function)));
+}
+
+extern bool c_sema_in_transaction_safe_block(const c_sema* self)
+{
+        return c_sema_in_atomic_block(self) || c_sema_in_transaction_safe_function(self);
 }

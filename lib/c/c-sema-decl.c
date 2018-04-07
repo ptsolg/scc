@@ -151,15 +151,21 @@ static tree_type* c_sema_add_declarator_type(c_sema* self, c_declarator* d, tree
 
 extern bool c_sema_add_direct_declarator_function_suffix(c_sema* self, c_declarator* d)
 {
-        return c_sema_add_declarator_type(self, d,
-                c_sema_new_function_type(self, NULL)) != NULL;
+        return c_sema_add_declarator_type(self, 
+                d, c_sema_new_function_type(self, NULL)) != NULL;
 }
 
 extern bool c_sema_add_direct_declarator_array_suffix(
         c_sema* self, c_declarator* d, tree_type_quals q, tree_expr* size_expr)
 {
-        return c_sema_add_declarator_type(self, d, 
-                c_sema_new_array_type(self, q, NULL, size_expr)) != NULL;
+        return c_sema_add_declarator_type(self,
+                d, c_sema_new_array_type(self, q, NULL, size_expr)) != NULL;
+}
+
+extern void c_sema_add_direct_declarator_transaction_safe_attribute(c_sema* self, c_declarator* d)
+{
+        assert(d->type.tail && tree_type_is(d->type.tail, TTK_FUNCTION));
+        tree_set_function_type_transaction_safe(d->type.tail, true);
 }
 
 extern bool c_sema_add_direct_declarator_parens(c_sema* self, c_declarator* d)
@@ -195,19 +201,19 @@ extern bool c_sema_set_declarator_has_vararg(c_sema* self, c_declarator* d, tree
         return true;
 }
 
-extern bool c_sema_finish_declarator(c_sema* self, c_declarator* d, c_type_chain* pointers)
+extern bool c_sema_finish_declarator(c_sema* self, c_declarator* declarator, c_type_chain* pointers)
 {
         if (!pointers->head)
                 return true;
 
-        if (d->type.tail)
+        if (declarator->type.tail)
         {
-                bool res = c_sema_add_declarator_type(self, d, pointers->head) != NULL;
-                d->type.tail = pointers->tail;
+                bool res = c_sema_add_declarator_type(self, declarator, pointers->head) != NULL;
+                declarator->type.tail = pointers->tail;
                 return res;
         }
 
-        d->type = *pointers;
+        declarator->type = *pointers;
         return true;
 }
 
@@ -215,9 +221,9 @@ extern void c_decl_specs_init(c_decl_specs* self)
 {
         self->class_ = TDSC_NONE;
         self->typespec = NULL;
-        self->funcspec = TFSK_NONE;
-        self->is_typedef = false;
         self->loc.val = TREE_INVALID_XLOC;
+        self->has_inline = false;
+        self->has_typedef = false;
 }
 
 extern void c_decl_specs_set_loc_begin(c_decl_specs* self, tree_location begin)
@@ -249,28 +255,27 @@ extern bool c_sema_set_type_specifier(c_sema* self, c_decl_specs* ds, tree_type*
         return true;
 }
 
-extern bool c_sema_set_typedef_specifier(c_sema* self, c_decl_specs* ds)
+extern bool c_sema_set_typedef_specified(c_sema* self, c_decl_specs* ds)
 {
-        if (ds->class_ != TDSC_NONE || ds->is_typedef)
+        if (ds->class_ != TDSC_NONE || ds->has_typedef)
         {
                 c_error_multiple_storage_classes(self->logger, ds);
                 return false;
         }
 
-        ds->is_typedef = true;
+        ds->has_typedef = true;
         return true;
-
 }
 
-extern bool c_sema_set_inline_specifier(c_sema* self, c_decl_specs* ds)
+extern bool c_sema_set_inline_specified(c_sema* self, c_decl_specs* ds)
 {
-        ds->funcspec = TFSK_INLINE;
+        ds->has_inline = true;
         return true;
 }
 
 extern bool c_sema_set_decl_storage_class(c_sema* self, c_decl_specs* ds, tree_decl_storage_class sc)
 {
-        if (ds->class_ != TDSC_NONE || ds->is_typedef)
+        if (ds->class_ != TDSC_NONE || ds->has_typedef)
         {
                 c_error_multiple_storage_classes(self->logger, ds);
                 return false;
@@ -349,7 +354,7 @@ static tree_type* c_sema_finish_decl_type(
 static bool c_sema_check_specifiers(
         const c_sema* self, const c_decl_specs* specs, const c_declarator* d, bool function)
 {
-        if (specs->funcspec == TFSK_INLINE && !function)
+        if (specs->has_inline && !function)
         {
                 tree_location loc = c_declarator_get_name_loc_or_begin(d);
                 if (loc == TREE_INVALID_LOC)
@@ -814,9 +819,9 @@ static tree_decl* c_sema_new_function_decl(
                 d->name,
                 sc,
                 d->type.head,
-                specs->funcspec,
                 NULL);
 
+        tree_set_function_inlined(func, specs->has_inline);
         if (!c_sema_set_function_params(self, func, &d->params))
                 return NULL;
 
@@ -862,7 +867,7 @@ static tree_decl* c_sema_new_external_decl(c_sema* self, c_decl_specs* ds, c_dec
         if (!c_sema_finish_decl_type(self, ds, d))
                 return NULL;
 
-        if (ds->is_typedef)
+        if (ds->has_typedef)
                 return c_sema_new_typedef_decl(self, ds, d);
         else if (tree_type_is(d->type.head, TTK_FUNCTION))
                 return c_sema_new_function_decl(self, ds, d);
@@ -942,7 +947,8 @@ extern tree_decl* c_sema_define_func_decl(c_sema* self, tree_decl* func, tree_st
         }
 
         tree_location loc = tree_get_decl_loc_begin(func);
-        tree_type* restype = tree_get_function_type_result(tree_get_decl_type(func));
+        tree_type* func_type = tree_desugar_type(tree_get_decl_type(func));
+        tree_type* restype = tree_get_function_type_result(func_type);
         if (!tree_type_is_void(restype) && !c_sema_require_complete_type(self, loc, restype))
                 return false;
 
@@ -959,6 +965,12 @@ extern tree_decl* c_sema_define_func_decl(c_sema* self, tree_decl* func, tree_st
                 tree_location ploc = tree_get_decl_loc_begin(p);
                 if (!c_sema_require_complete_type(self, ploc, ptype))
                         return NULL;
+                if (tree_function_type_is_transaction_safe(func_type)
+                        && (tree_get_type_quals(ptype) & TTQ_VOLATILE))
+                {
+                        c_error_volatile_param_is_not_allowed(self->logger, ploc);
+                        return NULL;
+                }
         }
 
         tree_set_function_body(func, body);

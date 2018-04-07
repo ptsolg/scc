@@ -67,18 +67,19 @@ extern tree_location c_declarator_get_name_loc_or_begin(const c_declarator* self
 extern bool c_sema_add_direct_declarator_function_suffix(c_sema* self, c_declarator* d);
 extern bool c_sema_add_direct_declarator_array_suffix(
         c_sema* self, c_declarator* d, tree_type_quals q, tree_expr* size_expr);
+extern void c_sema_add_direct_declarator_transaction_safe_attribute(c_sema* self, c_declarator* d);
 extern bool c_sema_add_direct_declarator_parens(c_sema* self, c_declarator* d);
 extern void c_sema_add_declarator_param(c_sema* self, c_declarator* d, c_param* p);
 extern bool c_sema_set_declarator_has_vararg(c_sema* self, c_declarator* d, tree_location ellipsis_loc);
-extern bool c_sema_finish_declarator(c_sema* self, c_declarator* d, c_type_chain* pointers);
+extern bool c_sema_finish_declarator(c_sema* self, c_declarator* declarator, c_type_chain* pointers);
 
 typedef struct _c_decl_specs
 {
         tree_decl_storage_class class_;
         tree_type* typespec;
-        tree_function_specifier_kind funcspec;
         tree_xlocation loc;
-        bool is_typedef;
+        bool has_inline;
+        bool has_typedef;
 } c_decl_specs;
 
 extern void c_decl_specs_init(c_decl_specs* self);
@@ -88,8 +89,8 @@ extern tree_location c_decl_specs_get_loc_begin(const c_decl_specs* self);
 extern tree_location c_decl_specs_get_loc_end(const c_decl_specs* self);
 
 extern bool c_sema_set_type_specifier(c_sema* self, c_decl_specs* ds, tree_type* ts);
-extern bool c_sema_set_typedef_specifier(c_sema* self, c_decl_specs* ds);
-extern bool c_sema_set_inline_specifier(c_sema* self, c_decl_specs* ds);
+extern bool c_sema_set_typedef_specified(c_sema* self, c_decl_specs* ds);
+extern bool c_sema_set_inline_specified(c_sema* self, c_decl_specs* ds);
 extern bool c_sema_set_decl_storage_class(c_sema* self, c_decl_specs* ds, tree_decl_storage_class sc);
 extern tree_decl* c_sema_handle_unused_decl_specs(c_sema* self, c_decl_specs* ds);
 

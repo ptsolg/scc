@@ -11,23 +11,24 @@ extern "C" {
 
 #include "c-sema.h"
 
-extern tree_stmt* c_sema_add_stmt(c_sema* self, tree_stmt* s);
+extern void c_sema_add_compound_stmt_item(c_sema* self, tree_stmt* compound, tree_stmt* item);
+extern tree_stmt* c_sema_new_compound_stmt(c_sema* self, tree_location lbrace_loc);
 
-extern tree_stmt* c_sema_new_block_stmt(
-        c_sema* self, tree_location lbrace_loc, int scope_flags);
+extern tree_stmt* c_sema_start_atomic_stmt(c_sema* self, tree_location kw_loc);
+extern tree_stmt* c_sema_finish_atomic_stmt(c_sema* self, tree_stmt* atomic, tree_stmt* body);
 
-extern tree_stmt* c_sema_new_case_stmt(
+extern tree_stmt* c_sema_start_case_stmt(
         c_sema* self,
         tree_location kw_loc,
         tree_location colon_loc,
         tree_expr* expr);
 
-extern void c_sema_set_case_stmt_body(c_sema* self, tree_stmt* stmt, tree_stmt* body);
+extern tree_stmt* c_sema_finish_case_stmt(c_sema* self, tree_stmt* stmt, tree_stmt* body);
 
-extern tree_stmt* c_sema_new_default_stmt(
+extern tree_stmt* c_sema_start_default_stmt(
         c_sema* self, tree_location kw_loc, tree_location colon_loc);
 
-extern void c_sema_set_default_stmt_body(c_sema* self, tree_stmt* stmt, tree_stmt* body);
+extern tree_stmt* c_sema_finish_default_stmt(c_sema* self, tree_stmt* stmt, tree_stmt* body);
 
 extern tree_stmt* c_sema_new_labeled_stmt(c_sema* self, tree_decl* label, tree_stmt* stmt);
 
@@ -56,7 +57,8 @@ extern tree_stmt* c_sema_start_switch_stmt(
         c_sema* self,
         tree_location kw_loc,
         tree_location rbracket_loc,
-        tree_expr* value);
+        tree_expr* value,
+        int scope_flags);
 
 extern tree_stmt* c_sema_finish_switch_stmt(c_sema* self, tree_stmt* switch_, tree_stmt* body);
 
@@ -88,7 +90,8 @@ extern tree_stmt* c_sema_new_goto_stmt(
         tree_location kw_loc,
         tree_location id_loc,
         tree_id id,
-        tree_location semicolon_loc);
+        tree_location semicolon_loc,
+        int scope_flags);
 
 extern tree_stmt* c_sema_new_continue_stmt(
         c_sema* self, tree_location kw_loc, tree_location semicolon_loc);

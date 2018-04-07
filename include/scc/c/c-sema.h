@@ -28,6 +28,7 @@ typedef struct
         tree_stmt* switch_stmt;
         c_case_label_map labels;
         bool has_default_label;
+        bool in_atomic_block;
 } c_switch_stmt_info;
 
 typedef struct _dseq c_switch_stack;
@@ -46,6 +47,13 @@ typedef struct _c_sema
         tree_scope* scope;
         tree_module* module;
         tree_target_info* target;
+
+        struct
+        {
+                dseq non_atomic_gotos;
+                strmap atomic_labels;
+                int atomic_stmt_nesting;
+        } tm_info;
 } c_sema;
 
 extern void c_sema_init(c_sema* self, c_context* context, c_logger* logger);
@@ -67,13 +75,19 @@ extern void c_sema_push_scope(c_sema* self);
 extern void c_sema_push_switch_stmt_info(c_sema* self, tree_stmt* switch_stmt);
 extern void c_sema_pop_switch_stmt_info(c_sema* self);
 extern void c_sema_set_switch_stmt_has_default_label(c_sema* self);
+extern void c_sema_set_switch_stmt_in_atomic_block(c_sema* self);
 extern c_switch_stmt_info* c_sema_get_switch_stmt_info(const c_sema* self);
 extern bool c_sema_in_switch_stmt(const c_sema* self);
 extern bool c_sema_switch_stmt_has_default_label(const c_sema* self);
+extern bool c_sema_switch_stmt_in_atomic_block(const c_sema* self);
 extern bool c_sema_switch_stmt_register_case_label(const c_sema* self, tree_stmt* label);
 
 extern bool c_sema_at_file_scope(const c_sema* self);
 extern bool c_sema_at_block_scope(const c_sema* self);
+
+extern bool c_sema_in_atomic_block(const c_sema* self);
+extern bool c_sema_in_transaction_safe_function(const c_sema* self);
+extern bool c_sema_in_transaction_safe_block(const c_sema* self);
 
 #ifdef __cplusplus
 }

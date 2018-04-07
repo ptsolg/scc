@@ -310,6 +310,12 @@ extern void c_error_inline_allowed_on_functions_only(c_logger* self, tree_locati
                 "'inline' specifier allowed on function declarations only");
 }
 
+extern void c_error_transaction_safe_allowed_on_functions_only(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc,
+                "'_Transaction_safe' specifier allowed on functions only");
+}
+
 extern void c_error_invalid_parameter_storage_class(c_logger* self, const c_declarator* d)
 {       
         c_error(self, CES_ERROR, d->name_loc, "invalid storage class for parameter '%s'",
@@ -573,7 +579,7 @@ extern void c_error_passing_argument_from_incompatible_pointer_type(
                 "passing argument %u from incompatible pointer type", pos);
 }
 
-extern void c_error_to_many_arguments(c_logger* self, const tree_expr* call)
+extern void c_error_too_many_arguments(c_logger* self, const tree_expr* call)
 {
         c_error(self, CES_ERROR, tree_get_expr_loc(call), 
                 "too many arguments in function call");
@@ -753,4 +759,25 @@ extern void c_error_function_returning_function(c_logger* self, tree_location lo
 extern void c_error_invalid_use_of_restrict(c_logger* self, tree_location loc)
 {
         c_error(self, CES_ERROR, loc, "invalid use of 'restrict'");
+}
+
+extern void c_error_reffering_volatile_object_is_not_allowed(c_logger* self, tree_location loc, bool in_atomic_block)
+{
+        const char* context = in_atomic_block ? "_Atomic block" : "_Transaction_safe function";
+        c_error(self, CES_ERROR, loc, "volatile objects cannot be used within %s", context);
+}
+
+extern void c_error_volatile_param_is_not_allowed(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "volatile parameter cannot appear in _Transaction_safe function");
+}
+
+extern void c_error_jumping_into_the_atomic_block_is_prohibited(c_logger* self, tree_location loc, c_token_kind stmt_kind)
+{
+        const char* stmt_name = stmt_kind == CTK_GOTO
+                ? "goto"
+                : stmt_kind == CTK_CASE ? "case" : "default";
+
+        c_error(self, CES_ERROR, loc,
+                "jumping into the body of _Atomic block using %s statement is prohibited", stmt_name);
 }

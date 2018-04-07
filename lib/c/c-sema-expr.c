@@ -168,6 +168,17 @@ extern tree_expr* c_sema_new_paren_expr(
                 expr);
 }
 
+static bool c_sema_check_object_type(c_sema* self, tree_location loc, tree_type* type)
+{
+        if (c_sema_in_transaction_safe_block(self) && (tree_get_type_quals(type) & TTQ_VOLATILE))
+        {
+                c_error_reffering_volatile_object_is_not_allowed(
+                        self->logger, loc, c_sema_in_atomic_block(self));
+                return false;
+        }
+        return true;
+}
+
 extern tree_expr* c_sema_new_decl_expr(c_sema* self, tree_id id, tree_location id_loc)
 {
         tree_decl* d = c_sema_require_local_decl(self, id_loc, id);
@@ -177,6 +188,9 @@ extern tree_expr* c_sema_new_decl_expr(c_sema* self, tree_id id, tree_location i
         tree_decl_kind dk = tree_get_decl_kind(d);
         tree_value_kind vk = TVK_LVALUE;
         tree_type* t = tree_desugar_type(tree_get_decl_type(d));
+
+        if (!c_sema_check_object_type(self, id_loc, t))
+                return NULL;
 
         if (dk == TDK_ENUMERATOR || dk == TDK_FUNCTION)
                 vk = TVK_RVALUE;
@@ -251,8 +265,11 @@ extern tree_expr* c_sema_new_subscript_expr(
         if (!c_sema_require_integer_expr(self, index))
                 return NULL;
 
-        return tree_new_subscript_expr(self->context,
-                TVK_LVALUE, tree_get_pointer_target(base_type), loc, lhs, rhs);
+        tree_type* eltype = tree_get_pointer_target(base_type);
+        if (!c_sema_check_object_type(self, loc, eltype))
+                return NULL;
+
+        return tree_new_subscript_expr(self->context, TVK_LVALUE, eltype, loc, lhs, rhs);
 }
 
 static bool c_sema_check_call_argument(
@@ -303,9 +320,11 @@ extern tree_expr* c_sema_new_call_expr(
                 return NULL;
 
         t = tree_desugar_type(tree_get_pointer_target(tree_desugar_ctype(t)));
+        tree_type* restype = tree_get_function_type_result(t);
+        if (!c_sema_check_object_type(self, loc, restype))
+                return NULL;
 
-        return tree_new_call_expr(self->context,
-                TVK_RVALUE, tree_get_function_type_result(t), loc, lhs);
+        return tree_new_call_expr(self->context, TVK_RVALUE, restype, loc, lhs);
 }
 
 extern void c_sema_add_call_expr_arg(c_sema* self, tree_expr* call, tree_expr* arg)
@@ -330,7 +349,7 @@ extern tree_expr* c_sema_check_call_expr_args(c_sema* self, tree_expr* call)
         }
         if (!tree_function_type_is_vararg(ft) && num_args > num_params)
         {
-                c_error_to_many_arguments(self->logger, lhs);
+                c_error_too_many_arguments(self->logger, lhs);
                 return NULL;
         }
 
@@ -386,6 +405,10 @@ extern tree_expr* c_sema_new_member_expr(
         if (!field)
                 return NULL;
 
+        tree_type* field_type = tree_get_decl_type(field);
+        if (!c_sema_check_object_type(self, id_loc, field_type))
+                return NULL;
+
         if (tree_decl_is(field, TDK_FIELD))
                 return tree_new_member_expr(self->context,
                         TVK_LVALUE, tree_get_decl_type(field), loc, lhs, field, is_arrow);
@@ -427,10 +450,14 @@ static tree_type* c_sema_check_address_expr(c_sema* self, tree_expr** expr)
 static tree_type* c_sema_check_dereference_expr(c_sema* self, tree_expr** expr, tree_value_kind* vk)
 {
         tree_type* t = tree_desugar_type(c_sema_unary_conversion(self, expr));
-        if (!c_sema_require_object_pointer_expr_type(self, t, tree_get_expr_loc(*expr)))
+        tree_location loc = tree_get_expr_loc(*expr);
+        if (!c_sema_require_object_pointer_expr_type(self, t, loc))
                 return NULL;
 
         t = tree_get_pointer_target(t);
+        if (!c_sema_check_object_type(self, loc, t))
+                return NULL;
+
         *vk = TVK_LVALUE;
         return t;
 }
@@ -560,6 +587,8 @@ extern tree_expr* c_sema_new_cast_expr(
         if (!tree_type_is_void(type))
         {
                 if (!c_sema_require_scalar_expr_type(self, type, loc))
+                        return NULL;
+                if (!c_sema_check_object_type(self, loc, type))
                         return NULL;
                 if (!c_sema_require_scalar_expr_type(self, et, tree_get_expr_loc(expr)))
                         return NULL;
@@ -811,8 +840,7 @@ static tree_type* c_sema_check_assign_expr(
                 return NULL;
 
         c_assignment_conversion_result r;
-        tree_type* t = c_sema_assignment_conversion(
-                self, compound_type ? compound_type : lt, rhs, &r);
+        tree_type* t = c_sema_assignment_conversion(self, compound_type ? compound_type : lt, rhs, &r);
         if (t)
                 return t;
 

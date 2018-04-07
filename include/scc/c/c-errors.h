@@ -80,6 +80,7 @@ extern void c_error_too_many_initializer_values(c_logger* self, tree_location lo
 extern void c_error_undeclared_identifier(c_logger* self, tree_location loc, tree_id name);
 extern void c_error_multiple_storage_classes(c_logger* self, const c_decl_specs* ds);
 extern void c_error_inline_allowed_on_functions_only(c_logger* self, tree_location loc);
+extern void c_error_transaction_safe_allowed_on_functions_only(c_logger* self, tree_location loc);
 extern void c_error_invalid_parameter_storage_class(c_logger* self, const c_declarator* d);
 
 extern void c_error_function_initialized_like_a_variable(c_logger* self, const tree_decl* func);
@@ -135,7 +136,7 @@ extern void c_error_passing_argument_discards_qualifer(
 extern void c_error_passing_argument_from_incompatible_pointer_type(
         c_logger* self, tree_location loc, unsigned pos);
 
-extern void c_error_to_many_arguments(c_logger* self, const tree_expr* call);
+extern void c_error_too_many_arguments(c_logger* self, const tree_expr* call);
 extern void c_error_too_few_arguments(c_logger* self, const tree_expr* call);
 extern void c_error_operand_of_sizeof_is_function(c_logger* self, tree_location loc);
 extern void c_error_operand_of_sizeof_is_bitfield(c_logger* self, tree_location loc);
@@ -169,5 +170,9 @@ extern void c_error_array_must_be_greater_than_zero(c_logger* self, tree_locatio
 extern void c_error_function_returning_array(c_logger* self, tree_location loc);
 extern void c_error_function_returning_function(c_logger* self, tree_location loc);
 extern void c_error_invalid_use_of_restrict(c_logger* self, tree_location loc);
+
+extern void c_error_reffering_volatile_object_is_not_allowed(c_logger* self, tree_location loc, bool in_atomic_block);
+extern void c_error_volatile_param_is_not_allowed(c_logger* self, tree_location loc);
+extern void c_error_jumping_into_the_atomic_block_is_prohibited(c_logger* self, tree_location loc, c_token_kind stmt_kind);
 
 #endif
