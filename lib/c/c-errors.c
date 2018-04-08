@@ -10,6 +10,7 @@
 #include "scc/tree/tree-context.h"
 #include "scc/tree/tree-decl.h"
 #include "scc/tree/tree-stmt.h"
+#include "scc/c/c-sema-conv.h"
 #include <ctype.h> // isprint
 
 static const char* c_logger_get_id_string(c_logger* self, tree_id id)
@@ -577,6 +578,117 @@ extern void c_error_passing_argument_from_incompatible_pointer_type(
 {
         c_error(self, CES_ERROR, loc,
                 "passing argument %u from incompatible pointer type", pos);
+}
+
+extern void c_error_invalid_scalar_initialization(c_logger* self, const tree_expr* e, const c_assignment_conversion_result* r)
+{
+        switch (r->kind)
+        {
+                case CACRK_INCOMPATIBLE:
+                case CACRK_RHS_NOT_A_RECORD:
+                case CACRK_INCOMPATIBLE_RECORDS:
+                        c_error_invalid_initializer(self, e);
+                        return;
+                case CACRK_RHS_NOT_AN_ARITHMETIC:
+                        c_error_expr_must_have_arithmetic_type(self, tree_get_expr_loc(e));
+                        return;
+                case CACRK_QUAL_DISCARTION:
+                        c_error_initialization_discards_qualifer(self, e, r->discarded_quals);
+                        return;
+                case CACRK_INCOMPATIBLE_POINTERS:
+                        c_error_initialization_from_incompatible_pointer_types(self, e);
+                        return;
+                default:
+                        UNREACHABLE();
+                case CACRK_COMPATIBLE:
+                        return;
+        }
+}
+
+extern void c_error_invalid_argument_assignment(c_logger* self, tree_location loc, unsigned pos, const c_assignment_conversion_result* r)
+{
+        switch (r->kind)
+        {
+                case CACRK_RHS_NOT_AN_ARITHMETIC:
+                case CACRK_RHS_NOT_A_RECORD:
+                case CACRK_INCOMPATIBLE_RECORDS:
+                case CACRK_INCOMPATIBLE:
+                        c_error_incompatible_type_for_argument(self, loc, pos);
+                        return;
+                case CACRK_QUAL_DISCARTION:
+                        c_error_passing_argument_discards_qualifer(self, loc, pos, r->discarded_quals);
+                        return;
+                case CACRK_INCOMPATIBLE_POINTERS:
+                        c_error_passing_argument_from_incompatible_pointer_type(self, loc, pos);
+                        return;
+                default:
+                        UNREACHABLE();
+                case CACRK_COMPATIBLE:
+                        return;
+        }
+}
+
+extern void c_error_invalid_assignment(c_logger* self, tree_location op_loc,
+        const tree_expr* rhs, const c_assignment_conversion_result* r)
+{
+        tree_location rloc = tree_get_expr_loc(rhs);
+        switch (r->kind)
+        {
+                case CACRK_RHS_NOT_AN_ARITHMETIC:
+                        c_error_expr_must_have_arithmetic_type(self, rloc);
+                        return;
+                case CACRK_RHS_NOT_A_RECORD:
+                        c_error_expr_must_have_record_type(self, rloc);
+                        return;
+                case CACRK_INCOMPATIBLE_RECORDS:
+                        c_error_types_are_not_compatible(self, rloc);
+                        return;
+                case CACRK_INCOMPATIBLE:
+                        c_error_invalid_binop_operands(self, op_loc, TBK_ASSIGN);
+                        return;
+                case CACRK_QUAL_DISCARTION:
+                        c_error_assignment_discards_quals(self, op_loc, r->discarded_quals);
+                        return;
+                case CACRK_INCOMPATIBLE_POINTERS:
+                        c_error_assignment_from_incompatible_pointer_type(self, op_loc);
+                        return;
+
+                default:
+                        UNREACHABLE();
+                case CACRK_COMPATIBLE:
+                        return;
+        }
+}
+
+extern void c_error_invalid_return_type(c_logger* self, const tree_expr* e, const c_assignment_conversion_result* r)
+{
+        tree_location loc = tree_get_expr_loc(e);
+        switch (r->kind)
+        {
+                case CACRK_RHS_NOT_AN_ARITHMETIC:
+                        c_error_expr_must_have_arithmetic_type(self, loc);
+                        return;
+                case CACRK_RHS_NOT_A_RECORD:
+                        c_error_expr_must_have_record_type(self, loc);
+                        return;
+                case CACRK_INCOMPATIBLE_RECORDS:
+                        c_error_types_are_not_compatible(self, loc);
+                        return;
+                case CACRK_INCOMPATIBLE:
+                        c_error_return_type_doesnt_match(self, e);
+                        return;
+                case CACRK_QUAL_DISCARTION:
+                        c_error_return_discards_quals(self, loc, r->discarded_quals);
+                        return;
+                case CACRK_INCOMPATIBLE_POINTERS:
+                        c_error_return_from_incompatible_pointer_type(self, loc);
+                        return;
+
+                default:
+                        UNREACHABLE();
+                case CACRK_COMPATIBLE:
+                        return;
+        }
 }
 
 extern void c_error_too_many_arguments(c_logger* self, const tree_expr* call)

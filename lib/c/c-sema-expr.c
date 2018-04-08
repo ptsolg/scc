@@ -276,30 +276,12 @@ static bool c_sema_check_call_argument(
         c_sema* self, tree_type* arg_type, tree_expr** arg, uint pos)
 {
         c_assignment_conversion_result r;
-        if (c_sema_assignment_conversion(self, arg_type, arg, &r))
-                return true;
-
-        tree_location loc = tree_get_expr_loc(*arg);
-        switch (r.kind)
+        if (!c_sema_assignment_conversion(self, arg_type, arg, &r))
         {
-                case CACRK_RHS_NOT_AN_ARITHMETIC:
-                case CACRK_RHS_NOT_A_RECORD:
-                case CACRK_INCOMPATIBLE_RECORDS:
-                case CACRK_INCOMPATIBLE:
-                        c_error_incompatible_type_for_argument(self->logger, loc, pos);
-                        break;
-                case CACRK_QUAL_DISCARTION:
-                        c_error_passing_argument_discards_qualifer(
-                                self->logger, loc, pos, r.discarded_quals);
-                        break;
-                case CACRK_INCOMPATIBLE_POINTERS:
-                        c_error_passing_argument_from_incompatible_pointer_type(
-                                self->logger, loc, pos);
-                        break;
-                default:
-                        UNREACHABLE();
+                c_error_invalid_argument_assignment(self->logger, tree_get_expr_loc(*arg), pos, &r);
+                return false;
         }
-        return false;
+        return true;
 }
 
 // c99 6.5.2.2 function calls
@@ -844,21 +826,7 @@ static tree_type* c_sema_check_assign_expr(
         if (t)
                 return t;
 
-        tree_type* rt = tree_get_expr_type(*rhs);
-        tree_location rloc = tree_get_expr_loc(*rhs);
-
-        if (r.kind == CACRK_INCOMPATIBLE)
-                c_error_invalid_binop_operands(self->logger, loc, TBK_ASSIGN);
-        else if (r.kind == CACRK_RHS_NOT_AN_ARITHMETIC)
-                c_sema_require_arithmetic_expr_type(self, rt, rloc);
-        else if (r.kind == CACRK_RHS_NOT_A_RECORD)
-                c_sema_require_record_expr_type(self, rt, rloc);
-        else if (r.kind == CACRK_INCOMPATIBLE_RECORDS)
-                c_sema_require_compatible_expr_types(self, lt, rt, loc);
-        else if (r.kind == CACRK_QUAL_DISCARTION)
-                c_error_assignment_discards_quals(self->logger, loc, r.discarded_quals);
-        else if (r.kind == CACRK_INCOMPATIBLE_POINTERS)
-                c_error_assignment_from_incompatible_pointer_type(self->logger, loc);
+        c_error_invalid_assignment(self->logger, loc, *rhs, &r);
         return NULL;
 }
 
@@ -1361,30 +1329,10 @@ static bool c_sema_check_scalar_initializer(
         }
 
         c_assignment_conversion_result r;
-        c_sema_assignment_conversion(self, type, expr, &r);
-        switch (r.kind)
+        if (!c_sema_assignment_conversion(self, type, expr, &r))
         {
-                case CACRK_COMPATIBLE:
-                        break;
-
-                case CACRK_INCOMPATIBLE:
-                case CACRK_RHS_NOT_A_RECORD:
-                case CACRK_INCOMPATIBLE_RECORDS:
-                        c_error_invalid_initializer(self->logger, *expr);
-                        return false;
-                case CACRK_RHS_NOT_AN_ARITHMETIC:
-                        c_sema_require_arithmetic_expr_type(self,
-                                tree_get_expr_type(*expr), tree_get_expr_loc(*expr));
-                        return false;
-                case CACRK_QUAL_DISCARTION:
-                        c_error_initialization_discards_qualifer(self->logger, *expr, r.discarded_quals);
-                        return false;
-                case CACRK_INCOMPATIBLE_POINTERS:
-                        c_error_initialization_from_incompatible_pointer_types(self->logger, *expr);
-                        return false;
-                default:
-                        UNREACHABLE();
-                        return false;
+                c_error_invalid_scalar_initialization(self->logger, *expr, &r);
+                return false;
         }
 
         tree_eval_result eval_result;

@@ -14,6 +14,7 @@ typedef struct _tree_decl tree_decl;
 typedef struct _tree_expr tree_expr;
 typedef struct _tree_stmt tree_stmt;
 typedef struct _tree_designator tree_designator;
+typedef struct _c_assignment_conversion_result c_assignment_conversion_result;
 
 // token lexer
 extern void c_error_cannot_open_source_file(c_logger* self, tree_location loc, const char* file);
@@ -135,6 +136,14 @@ extern void c_error_passing_argument_discards_qualifer(
 
 extern void c_error_passing_argument_from_incompatible_pointer_type(
         c_logger* self, tree_location loc, unsigned pos);
+
+extern void c_error_invalid_scalar_initialization(
+        c_logger* self, const tree_expr* e, const c_assignment_conversion_result* r);
+extern void c_error_invalid_argument_assignment(
+        c_logger* self, tree_location loc, unsigned pos, const c_assignment_conversion_result* r);
+extern void c_error_invalid_assignment(c_logger* self, tree_location op_loc, 
+        const tree_expr* rhs, const c_assignment_conversion_result* r);
+extern void c_error_invalid_return_type(c_logger* self, const tree_expr* e, const c_assignment_conversion_result* r);
 
 extern void c_error_too_many_arguments(c_logger* self, const tree_expr* call);
 extern void c_error_too_few_arguments(c_logger* self, const tree_expr* call);

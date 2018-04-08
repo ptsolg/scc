@@ -308,26 +308,13 @@ extern tree_stmt* c_sema_new_return_stmt(
         }
 
         c_assignment_conversion_result r;
-        if (!value || c_sema_assignment_conversion(self, restype, &value, &r))
-                return tree_new_return_stmt(self->context,
-                        tree_create_xloc(kw_loc, semicolon_loc), value);
+        if (value && !c_sema_assignment_conversion(self, restype, &value, &r))
+        {
+                c_error_invalid_return_type(self->logger, value, &r);
+                return NULL;
+        }
 
-        tree_type* vt = tree_get_expr_type(value);
-        tree_location vloc = tree_get_expr_loc(value);
-
-        if (r.kind == CACRK_INCOMPATIBLE)
-                c_error_return_type_doesnt_match(self->logger, value);
-        else if (r.kind == CACRK_RHS_NOT_AN_ARITHMETIC)
-                c_sema_require_arithmetic_expr_type(self, vt, vloc);
-        else if (r.kind == CACRK_RHS_NOT_A_RECORD)
-                c_sema_require_record_expr_type(self, vt, vloc);
-        else if (r.kind == CACRK_INCOMPATIBLE_RECORDS)
-                c_sema_require_compatible_expr_types(self, restype, vt, vloc);
-        else if (r.kind == CACRK_QUAL_DISCARTION)
-                c_error_return_discards_quals(self->logger, vloc, r.discarded_quals);
-        else if (r.kind == CACRK_INCOMPATIBLE_POINTERS)
-                c_error_return_from_incompatible_pointer_type(self->logger, vloc);
-        return NULL;
+        return tree_new_return_stmt(self->context, tree_create_xloc(kw_loc, semicolon_loc), value);
 }
 
 static bool c_sema_check_top_level_compound_stmt(const c_sema* self, const tree_stmt* s)
