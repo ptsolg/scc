@@ -733,7 +733,7 @@ static void c_print_suffix_endings(c_printer* self, c_type_name_info* info, int 
                 {
                         c_print_lsbracket(self);
                         if (tree_array_is(t, TAK_CONSTANT))
-                                c_print_expr(self, tree_get_constant_array_size_expr(t));
+                                c_print_expr(self, tree_get_array_size_expr(t));
                         c_print_rsbracket(self);
                 }
                 else if (k == TTK_PAREN)

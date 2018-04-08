@@ -68,8 +68,7 @@ extern void c_initialized_object_init(
         {
                 self->kind = CIOK_ARRAY;
                 self->array.index = 0;
-                self->array.size = tree_array_is(type, TAK_CONSTANT)
-                        ? tree_get_constant_array_size(type) : 0;
+                self->array.size = tree_array_is(type, TAK_CONSTANT) ? tree_get_array_size(type) : 0;
         }
         else
         {

@@ -450,8 +450,8 @@ static tree_decl* c_sema_new_enumerator(
         if (!c_sema_compute_enumerator_value(self, enum_, name_loc, name, init, &value))
                 return NULL;
 
-        tree_type* t = tree_new_qual_type(self->context, TTQ_UNQUALIFIED,
-                tree_new_decl_type(self->context, enum_, true));
+        tree_type* t = tree_new_qualified_type(self->context,
+                tree_new_decl_type(self->context, enum_, true), TTQ_UNQUALIFIED);
 
         return tree_new_enumerator_decl(self->context, self->locals,
                 tree_create_xloc(name_loc, name_loc), name, t, init, &value);

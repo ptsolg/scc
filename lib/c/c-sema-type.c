@@ -70,8 +70,7 @@ extern tree_type* c_sema_get_type_for_string_literal(c_sema* self, tree_id id)
         int_value size;
         int_init(&size, 32, false, entry.size);
 
-        return tree_new_constant_array_type(self->context,
-                c_sema_get_char_type(self), NULL, &size);
+        return tree_new_constant_array_type(self->context, c_sema_get_char_type(self), NULL, &size);
 }
 
 extern tree_type* c_sema_get_builtin_type(
@@ -80,7 +79,7 @@ extern tree_type* c_sema_get_builtin_type(
         if (k == TBTK_INVALID)
                 return NULL;
 
-        return tree_new_qual_type(self->context, q, tree_new_builtin_type(self->context, k));
+        return tree_new_qualified_type(self->context, tree_new_builtin_type(self->context, k), q);
 }
 
 extern tree_type* c_sema_new_decl_type(c_sema* self, tree_decl* d, bool referenced)
@@ -93,8 +92,8 @@ extern tree_type* c_sema_new_decl_type(c_sema* self, tree_decl* d, bool referenc
         if (!referenced)
                 tree_set_decl_implicit(d, true);
 
-        return tree_new_qual_type(self->context, TTQ_UNQUALIFIED,
-                tree_new_decl_type(self->context, d, referenced));
+        return tree_new_qualified_type(self->context, 
+                tree_new_decl_type(self->context, d, referenced), TTQ_UNQUALIFIED);
 }
 
 extern tree_type* c_sema_new_typedef_name(c_sema* self, tree_location name_loc, tree_id name)
@@ -108,13 +107,12 @@ extern tree_type* c_sema_new_typedef_name(c_sema* self, tree_location name_loc, 
 
 extern tree_type* c_sema_new_pointer_type(c_sema* self, tree_type_quals quals, tree_type* target)
 {
-        return tree_new_qual_type(self->context, quals, 
-                tree_new_pointer_type(self->context, target)); 
+        return tree_new_qualified_type(self->context, tree_new_pointer_type(self->context, target), quals); 
 }
 
 extern tree_type* c_sema_new_function_type(c_sema* self, tree_type* restype)
 {
-        return tree_new_function_type(self->context, restype);
+        return tree_new_modified_type(self->context, tree_new_function_type(self->context, restype));
 }
 
 extern tree_type* c_sema_new_paren_type(c_sema* self, tree_type* next)
@@ -175,9 +173,7 @@ extern bool c_sema_check_array_type(const c_sema* self, const tree_type* t, tree
         if (!c_sema_require_complete_type(self, l, el))
                 return false;
 
-        tree_expr* size_expr = tree_array_is(t, TAK_CONSTANT)
-                ? tree_get_constant_array_size_expr(t)
-                : NULL;
+        tree_expr* size_expr = tree_array_is(t, TAK_CONSTANT) ? tree_get_array_size_expr(t) : NULL;
         if (!size_expr)
                 return true;
 
@@ -187,7 +183,7 @@ extern bool c_sema_check_array_type(const c_sema* self, const tree_type* t, tree
                 return false;
         }
 
-        const int_value* size_value = tree_get_constant_array_size_cvalue(t);
+        const int_value* size_value = tree_get_array_size_value_c(t);
         if (int_is_zero(size_value)
                 || (int_is_signed(size_value) && int_get_i64(size_value) < 0))
         {

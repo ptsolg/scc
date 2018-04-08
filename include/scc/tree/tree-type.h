@@ -15,6 +15,74 @@ extern "C" {
 typedef struct _tree_type tree_type;
 typedef struct _tree_decl tree_decl;
 
+typedef enum
+{
+        TTQ_UNQUALIFIED = 0,
+        TTQ_CONST = 1,
+        TTQ_VOLATILE = 2,
+        TTQ_RESTRICT = 4,
+} tree_type_quals;
+
+struct _tree_modified_type
+{
+        tree_type* type;
+        unsigned quals : 3;
+        unsigned transaction_safe : 1;
+};
+
+#define _TREE_MODIFIED_TYPE_BIT ((size_t)1)
+
+extern tree_type* tree_new_modified_type(tree_context* context, tree_type* type);
+
+extern tree_type* tree_new_qualified_type(
+        tree_context* context, tree_type* type, tree_type_quals quals);
+
+static TREE_INLINE bool tree_type_is_modified(const tree_type* self)
+{
+        return ((size_t)self & _TREE_MODIFIED_TYPE_BIT) != 0;
+}
+
+static TREE_INLINE struct _tree_modified_type* _tree_modified_type(tree_type* self)
+{
+        self = (tree_type*)((size_t)self & ~_TREE_MODIFIED_TYPE_BIT);
+        assert(self);
+        return (struct _tree_modified_type*)self;
+}
+
+static TREE_INLINE const struct _tree_modified_type* _tree_modified_type_c(const tree_type* self)
+{
+        self = (const tree_type*)((size_t)self & ~_TREE_MODIFIED_TYPE_BIT);
+        assert(self);
+        return (const struct _tree_modified_type*)self;
+}
+
+static TREE_INLINE const tree_type* tree_get_modified_type_c(const tree_type* self)
+{
+        return tree_type_is_modified(self) ? _tree_modified_type_c(self)->type : self;
+}
+
+static TREE_INLINE tree_type* tree_get_modified_type(tree_type* self)
+{
+        return tree_type_is_modified(self) ? _tree_modified_type(self)->type : self;
+}
+
+static TREE_INLINE tree_type_quals tree_get_type_quals(const tree_type* self)
+{
+        return tree_type_is_modified(self) ? _tree_modified_type_c(self)->quals : TTQ_UNQUALIFIED;
+}
+
+static TREE_INLINE void tree_set_type_quals(tree_type* self, tree_type_quals quals)
+{
+        assert(tree_type_is_modified(self));
+        _tree_modified_type(self)->quals = quals;
+}
+
+static TREE_INLINE void tree_add_type_quals(tree_type* self, tree_type_quals quals)
+{
+        assert(tree_type_is_modified(self));
+        _tree_modified_type(self)->quals |= quals;
+}
+
 typedef enum _tree_type_kind
 {
         TTK_UNKNOWN,
@@ -30,22 +98,79 @@ typedef enum _tree_type_kind
         TTK_SIZE,
 } tree_type_kind;
 
-#define TREE_ASSERT_TYPE_KIND(K) assert((K) > TTK_UNKNOWN && (K) < TTK_SIZE)
-
 struct _tree_type_base
 {
-        tree_type_kind kind;
+#define TREE_TYPE_KIND_BITS 3
+#define TREE_TYPE_BITS TREE_TYPE_KIND_BITS
+
+        union
+        {
+                struct
+                {
+                        unsigned kind : TREE_TYPE_KIND_BITS;
+                };
+
+                struct
+                {
+                        unsigned base : TREE_TYPE_BITS;
+                        unsigned vararg : 1;
+                } function_type_bits;
+
+                struct
+                {
+                        unsigned base : TREE_TYPE_BITS;
+                        unsigned kind : 4;
+                } builtin_type_bits;
+
+                struct
+                {
+                        unsigned base : TREE_TYPE_BITS;
+                        unsigned kind : 1;
+                } array_type_bits;
+
+                struct
+                {
+                        unsigned base : TREE_TYPE_BITS;
+                        unsigned referenced : 1;
+                } decl_type_bits;
+        };
+#undef TREE_NUM_TYPE_BITS   
+#undef TREE_TYPE_KIND_BITS
+#undef TREE_TYPE_QUALS_BITS
 };
 
 extern tree_type* tree_new_type(tree_context* context, tree_type_kind kind, size_t size);
 
-static TREE_INLINE struct _tree_type_base* _tree_type_base(tree_type* self);
-static TREE_INLINE const struct _tree_type_base* _tree_type_cbase(const tree_type* self);
+static TREE_INLINE struct _tree_type_base* _tree_type_base(tree_type* self)
+{
+        return (struct _tree_type_base*)tree_get_modified_type(self);
+}
 
-static TREE_INLINE bool tree_type_is(const tree_type* self, tree_type_kind k);
-static TREE_INLINE bool tree_type_is_qualified(const tree_type* self);
-static TREE_INLINE tree_type_kind tree_get_type_kind(const tree_type* self);
-static TREE_INLINE void tree_set_type_kind(tree_type* self, tree_type_kind k);
+static TREE_INLINE const struct _tree_type_base* _tree_type_base_c(const tree_type* self)
+{
+        return (const struct _tree_type_base*)tree_get_modified_type_c(self);
+}
+
+static TREE_INLINE tree_type_kind tree_get_type_kind(const tree_type* self)
+{
+        return _tree_type_base_c(self)->kind;
+}
+
+static TREE_INLINE bool tree_type_is(const tree_type* self, tree_type_kind k)
+{
+        return tree_get_type_kind(self) == k;
+}
+
+static TREE_INLINE bool tree_type_is_qualified(const tree_type* self)
+{
+        return tree_type_is_modified(self);
+}
+
+static TREE_INLINE void tree_set_type_kind(tree_type* self, tree_type_kind k)
+{
+        assert(k >= TTK_UNKNOWN && k < TTK_SIZE);
+        _tree_type_base(self)->kind = k;
+}
 
 struct _tree_chain_type
 {
@@ -56,11 +181,30 @@ struct _tree_chain_type
 extern tree_type* tree_new_chain_type(
         tree_context* context, tree_type_kind kind, tree_type* next, size_t size);
 
-static TREE_INLINE struct _tree_chain_type* _tree_chain_type(tree_type* self);
-static TREE_INLINE const struct _tree_chain_type* _tree_chain_ctype(const tree_type* self);
+#define _TREE_ASSERT_CHAIN_TYPE(K)\
+        assert((K) == TTK_POINTER || (K) == TTK_FUNCTION || (K) == TTK_PAREN || (K) == TTK_ARRAY)
 
-static TREE_INLINE tree_type* tree_get_chain_type_next(const tree_type* self);
-static TREE_INLINE void tree_set_chain_type_next(tree_type* self, tree_type* next);
+static TREE_INLINE struct _tree_chain_type* _tree_chain_type(tree_type* self)
+{
+        _TREE_ASSERT_CHAIN_TYPE(tree_get_type_kind(self));
+        return (struct _tree_chain_type*)_tree_type_base(self);
+}
+
+static TREE_INLINE const struct _tree_chain_type* _tree_chain_type_c(const tree_type* self)
+{
+        _TREE_ASSERT_CHAIN_TYPE(tree_get_type_kind(self));
+        return (const struct _tree_chain_type*)_tree_type_base_c(self);
+}
+
+static TREE_INLINE tree_type* tree_get_chain_type_next(const tree_type* self)
+{
+        return _tree_chain_type_c(self)->next;
+}
+
+static TREE_INLINE void tree_set_chain_type_next(tree_type* self, tree_type* next)
+{
+        _tree_chain_type(self)->next = next;
+}
 
 typedef enum
 {
@@ -82,7 +226,6 @@ typedef enum
 struct _tree_builtin_type
 {
         struct _tree_type_base base;
-        tree_builtin_type_kind kind;
 };
 
 extern void tree_init_builtin_type(tree_type* self, tree_builtin_type_kind kind);
@@ -90,36 +233,97 @@ extern tree_type* tree_new_builtin_type(tree_context* context, tree_builtin_type
 // uint32_t or uint64_t
 extern tree_type* tree_new_size_type(tree_context* context);
 
-static TREE_INLINE struct _tree_builtin_type* _tree_builtin_type(tree_type* self);
-static TREE_INLINE const struct _tree_builtin_type* _tree_builtin_ctype(const tree_type* self);
+static TREE_INLINE tree_builtin_type_kind tree_get_builtin_type_kind(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_BUILTIN));
+        return _tree_type_base_c(self)->builtin_type_bits.kind;
+}
 
-static TREE_INLINE tree_builtin_type_kind tree_get_builtin_type_kind(const tree_type* self);
-static TREE_INLINE void tree_set_builtin_type_kind(tree_type* self, tree_builtin_type_kind kind);
+static TREE_INLINE void tree_set_builtin_type_kind(tree_type* self, tree_builtin_type_kind kind)
+{
+        assert(tree_type_is(self, TTK_BUILTIN) && kind >= TBTK_INVALID && kind < TBTK_SIZE);
+        _tree_type_base(self)->builtin_type_bits.kind = kind;
+}
 
 struct _tree_function_type
 {
         struct _tree_chain_type base;
         tree_array params;
-        bool vararg;
-        bool transaction_safe;
 };
 
 extern tree_type* tree_new_function_type(tree_context* context, tree_type* restype);
 extern errcode tree_add_function_type_param(tree_type* self, tree_context* context, tree_type* param);
 
-static TREE_INLINE struct _tree_function_type* _tree_function_type(tree_type* self);
-static TREE_INLINE const struct _tree_function_type* _tree_function_ctype(const tree_type* self);
+static TREE_INLINE struct _tree_function_type* _tree_function_type(tree_type* self)
+{
+        assert(tree_type_is(self, TTK_FUNCTION));
+        return (struct _tree_function_type*)_tree_chain_type(self);
+}
 
-static TREE_INLINE size_t tree_get_function_type_params_size(const tree_type* self);
-static TREE_INLINE tree_type* tree_get_function_type_result(const tree_type* self);
-static TREE_INLINE tree_type* tree_get_function_type_param(const tree_type* self, size_t n);
-static TREE_INLINE tree_type** tree_get_function_type_params_begin(const tree_type* self);
-static TREE_INLINE tree_type** tree_get_function_type_params_end(const tree_type* self);
-static TREE_INLINE bool tree_function_type_is_vararg(const tree_type* self);
-static TREE_INLINE bool tree_function_type_is_transaction_safe(const tree_type* self);
-static TREE_INLINE void tree_set_function_type_result(tree_type* self, tree_type* restype);
-static TREE_INLINE void tree_set_function_type_vararg(tree_type* self, bool vararg);
-static TREE_INLINE void tree_set_function_type_transaction_safe(tree_type* self, bool safe);
+static TREE_INLINE const struct _tree_function_type* _tree_function_type_c(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_FUNCTION));
+        return (const struct _tree_function_type*)_tree_chain_type_c(self);
+}
+
+static TREE_INLINE tree_type* tree_get_function_type_result(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_FUNCTION));
+        return tree_get_chain_type_next(self);
+}
+
+static TREE_INLINE tree_type** tree_get_function_type_params_begin(const tree_type* self)
+{
+        return (tree_type**)_tree_function_type_c(self)->params.data;
+}
+
+static TREE_INLINE size_t tree_get_function_type_params_size(const tree_type* self)
+{
+        return _tree_function_type_c(self)->params.size;
+}
+
+static TREE_INLINE tree_type** tree_get_function_type_params_end(const tree_type* self)
+{
+        return tree_get_function_type_params_begin(self) + tree_get_function_type_params_size(self);
+}
+
+static TREE_INLINE tree_type* tree_get_function_type_param(const tree_type* self, size_t n)
+{
+        assert(n < tree_get_function_type_params_size(self));
+        return tree_get_function_type_params_begin(self)[n];
+}
+
+static TREE_INLINE bool tree_function_type_is_vararg(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_FUNCTION));
+        return _tree_type_base_c(self)->function_type_bits.vararg;
+}
+
+static TREE_INLINE bool tree_function_type_is_transaction_safe(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_FUNCTION));
+        return tree_type_is_modified(self)
+                ? _tree_modified_type_c(self)->transaction_safe : false;
+}
+
+static TREE_INLINE void tree_set_function_type_result(tree_type* self, tree_type* restype)
+{
+        assert(tree_type_is(self, TTK_FUNCTION));
+        tree_set_chain_type_next(self, restype);
+}
+
+static TREE_INLINE void tree_set_function_type_vararg(tree_type* self, bool vararg)
+{
+        assert(tree_type_is(self, TTK_FUNCTION));
+        _tree_type_base(self)->function_type_bits.vararg = vararg;
+}
+
+static TREE_INLINE void tree_set_function_type_transaction_safe(tree_type* self, bool safe)
+{
+        assert(tree_type_is_modified(self));
+        assert(tree_type_is(self, TTK_FUNCTION));
+        _tree_modified_type(self)->transaction_safe = safe;
+}
 
 #define TREE_FOREACH_FUNCTION_TYPE_PARAM(PFUNC, ITNAME) \
         for (tree_type** ITNAME = tree_get_function_type_params_begin(PFUNC); \
@@ -134,31 +338,16 @@ typedef enum _tree_array_kind
 struct _tree_array_type
 {
         struct _tree_chain_type base;
-        tree_array_kind kind;
+        tree_expr* size_expr;
+        int_value size_value;
 };
 
 extern void tree_init_array_type(tree_type* self, tree_array_kind kind, tree_type* eltype);
 extern tree_type* tree_new_array_type(
         tree_context* context, tree_array_kind kind, tree_type* eltype);
 
-extern void  tree_init_incomplete_array_type(tree_type* self, tree_type* eltype);
+extern void tree_init_incomplete_array_type(tree_type* self, tree_type* eltype);
 extern tree_type* tree_new_incomplete_array_type(tree_context* context, tree_type* eltype);
-
-static TREE_INLINE struct _tree_array_type* _tree_array_type(tree_type* self);
-static TREE_INLINE const struct _tree_array_type* _tree_array_ctype(const tree_type* self);
-
-static TREE_INLINE tree_type* tree_get_array_eltype(const tree_type* self);
-static TREE_INLINE tree_array_kind tree_get_array_kind(const tree_type* self);
-static TREE_INLINE bool tree_array_is(const tree_type* self, tree_array_kind kind);
-static TREE_INLINE void tree_set_array_eltype(tree_type* self, tree_type* eltype);
-static TREE_INLINE void tree_set_array_kind(tree_type* self, tree_array_kind kind);
-
-struct _tree_constant_array_type
-{
-        struct _tree_array_type base;
-        tree_expr* expr;
-        int_value size;
-};
 
 extern void tree_init_constant_array_type(
         tree_type* self, tree_type* eltype, tree_expr* size_expr, const int_value* size_value);
@@ -169,31 +358,113 @@ extern tree_type* tree_new_constant_array_type(
         tree_expr* size_expr,
         const int_value* size_value);
 
-static TREE_INLINE struct _tree_constant_array_type* _tree_constant_array_type(tree_type* self);
-static TREE_INLINE const struct _tree_constant_array_type* _tree_constant_array_ctype(const tree_type* self);
+static TREE_INLINE tree_type* tree_get_array_eltype(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_ARRAY));
+        return tree_get_chain_type_next(self);
+}
 
-static TREE_INLINE tree_expr* tree_get_constant_array_size_expr(const tree_type* self);
-static TREE_INLINE const int_value* tree_get_constant_array_size_cvalue(const tree_type* self);
-static TREE_INLINE uint tree_get_constant_array_size(const tree_type* self);
-static TREE_INLINE void tree_set_constant_array_size_expr(tree_type* self, tree_expr* size);
-static TREE_INLINE void tree_set_constant_array_size_value(tree_type* self, const int_value* size);
+static TREE_INLINE tree_array_kind tree_get_array_kind(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_ARRAY));
+        return _tree_type_base_c(self)->array_type_bits.kind;
+}
+
+static TREE_INLINE bool tree_array_is(const tree_type* self, tree_array_kind kind)
+{
+        return tree_get_array_kind(self) == kind;
+}
+
+static TREE_INLINE void tree_set_array_eltype(tree_type* self, tree_type* eltype)
+{
+        assert(tree_type_is(self, TTK_ARRAY));
+        tree_set_chain_type_next(self, eltype);
+}
+
+static TREE_INLINE void tree_set_array_kind(tree_type* self, tree_array_kind kind)
+{
+        assert(tree_type_is(self, TTK_ARRAY) && kind == TAK_CONSTANT || kind == TAK_INCOMPLETE);
+        _tree_type_base(self)->array_type_bits.kind = kind;
+}
+
+static TREE_INLINE struct _tree_array_type* _tree_array_type(tree_type* self)
+{
+        assert(tree_type_is(self, TTK_ARRAY));
+        return (struct _tree_array_type*)_tree_chain_type(self);
+}
+
+static TREE_INLINE const struct _tree_array_type* _tree_array_type_c(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_ARRAY));
+        return (const struct _tree_array_type*)_tree_chain_type_c(self);
+}
+
+static TREE_INLINE tree_expr* tree_get_array_size_expr(const tree_type* self)
+{
+        return _tree_array_type_c(self)->size_expr;
+}
+
+static TREE_INLINE const int_value* tree_get_array_size_value_c(const tree_type* self)
+{
+        return &_tree_array_type_c(self)->size_value;
+}
+
+static TREE_INLINE uint tree_get_array_size(const tree_type* self)
+{
+        return int_get_u32(tree_get_array_size_value_c(self));
+}
+
+static TREE_INLINE void tree_set_array_size_expr(tree_type* self, tree_expr* size)
+{
+        _tree_array_type(self)->size_expr = size;
+}
+
+static TREE_INLINE void tree_set_array_size_value(tree_type* self, const int_value* size)
+{
+        _tree_array_type(self)->size_value = *size;
+}
 
 struct _tree_decl_type
 {
         struct _tree_type_base base;
         tree_decl* entity;
-        bool referenced;
 };
 
 extern tree_type* tree_new_decl_type(tree_context* context, tree_decl* decl, bool referenced);
 
-static TREE_INLINE struct _tree_decl_type* _tree_decl_type(tree_type* self);
-static TREE_INLINE const struct _tree_decl_type* _tree_decl_ctype(const tree_type* self);
+static TREE_INLINE struct _tree_decl_type* _tree_decl_type(tree_type* self)
+{
+        assert(tree_type_is(self, TTK_DECL));
+        return (struct _tree_decl_type*)_tree_type_base(self);
+}
 
-static TREE_INLINE bool tree_decl_type_is_referenced(const tree_type* self);
-static TREE_INLINE tree_decl* tree_get_decl_type_entity(const tree_type* self);
-static TREE_INLINE void tree_set_decl_type_entity(tree_type* self, tree_decl* decl);
-static TREE_INLINE void tree_set_decl_type_referenced(tree_type* self, bool val);
+static TREE_INLINE const struct _tree_decl_type* _tree_decl_type_c(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_DECL));
+        return (const struct _tree_decl_type*)_tree_type_base_c(self);
+}
+
+static TREE_INLINE bool tree_decl_type_is_referenced(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_DECL));
+        return _tree_type_base_c(self)->decl_type_bits.referenced;
+}
+
+static TREE_INLINE tree_decl* tree_get_decl_type_entity(const tree_type* self)
+{
+        return _tree_decl_type_c(self)->entity;
+}
+
+static TREE_INLINE void tree_set_decl_type_entity(tree_type* self, tree_decl* decl)
+{
+        _tree_decl_type(self)->entity = decl;
+}
+
+static TREE_INLINE void tree_set_decl_type_referenced(tree_type* self, bool val)
+{
+        assert(tree_type_is(self, TTK_DECL));
+        _tree_type_base(self)->decl_type_bits.referenced = val;
+}
 
 struct _tree_pointer_type
 {
@@ -202,11 +473,17 @@ struct _tree_pointer_type
 
 extern tree_type* tree_new_pointer_type(tree_context* context, tree_type* target);
 
-static TREE_INLINE struct _tree_pointer_type* _tree_pointer_type(tree_type* self);
-static TREE_INLINE const struct _tree_pointer_type* _tree_pointer_ctype(const tree_type* self);
+static TREE_INLINE tree_type* tree_get_pointer_target(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_POINTER));
+        return tree_get_chain_type_next(self);
+}
 
-static TREE_INLINE tree_type* tree_get_pointer_target(const tree_type* self);
-static TREE_INLINE void tree_set_pointer_target(tree_type* self, tree_type* target);
+static TREE_INLINE void tree_set_pointer_target(tree_type* self, tree_type* target)
+{
+        assert(tree_type_is(self, TTK_POINTER));
+        tree_set_chain_type_next(self, target);
+}
 
 struct _tree_paren_type
 {
@@ -215,55 +492,29 @@ struct _tree_paren_type
 
 extern tree_type* tree_new_paren_type(tree_context* context, tree_type* next);
 
-static TREE_INLINE tree_type* tree_get_paren_type(const tree_type* self);
-static TREE_INLINE void tree_set_paren_type(tree_type* self, tree_type* next);
-
-union _tree_unqualified_type
+static TREE_INLINE tree_type* tree_get_paren_type(const tree_type* self)
 {
-        struct _tree_builtin_type builtin;
-        struct _tree_function_type func;
-        struct _tree_pointer_type pointer;
-        struct _tree_array_type array;
-        struct _tree_decl_type decl;
-        struct _tree_paren_type paren;
-};
+        assert(tree_type_is(self, TTK_PAREN));
+        return tree_get_chain_type_next(self);
+}
 
-typedef enum
+static TREE_INLINE void tree_set_paren_type(tree_type* self, tree_type* next)
 {
-        TTQ_UNQUALIFIED = 0,
-        TTQ_CONST = 1,
-        TTQ_VOLATILE = 2,
-        TTQ_RESTRICT = 4,
-} tree_type_quals;
+        assert(tree_type_is(self, TTK_PAREN));
+        tree_set_chain_type_next(self, next);
+}
 
-struct _tree_qualified_type
-{
-        union _tree_unqualified_type* type;
-        tree_type_quals quals;
-};
-
-#define _TREE_QUAL_FLAG ((size_t)1)
-#define _TREE_UNQUAL_MASK (~_TREE_QUAL_FLAG)
-
-extern tree_type* tree_new_qual_type(
-        tree_context* context, tree_type_quals quals, tree_type* type);
-
-static TREE_INLINE struct _tree_qualified_type* _tree_qualified_type(tree_type* self);
-static TREE_INLINE const struct _tree_qualified_type* _tree_qualified_ctype(const tree_type* self);
-
-static TREE_INLINE tree_type_quals tree_get_type_quals(const tree_type* self);
-static TREE_INLINE const tree_type* tree_get_unqualified_ctype(const tree_type* self);
-static TREE_INLINE tree_type* tree_get_unqualified_type(tree_type* self);
-static TREE_INLINE void tree_add_type_quals(tree_type* self, tree_type_quals q);
-static TREE_INLINE void tree_set_type_quals(tree_type* self, tree_type_quals q);
-
-// if the lowest bit of tree_type* is 1 then it is pointer to qualified type
 typedef struct _tree_type
 {
         union
         {
-                union _tree_unqualified_type unqualified;
-                struct _tree_qualified_type qualified;
+                struct _tree_builtin_type builtin;
+                struct _tree_function_type func;
+                struct _tree_pointer_type pointer;
+                struct _tree_array_type array;
+                struct _tree_decl_type decl;
+                struct _tree_paren_type paren;
+                struct _tree_modified_type modified;
         };
 } tree_type;
 
@@ -324,350 +575,9 @@ typedef enum
         TTEK_DIFFERENT_QUALS,
         // types are equal, but have different attributes
         TTEK_DIFFERENT_ATTRIBS,
-} tree_type_equal_kind;
+} tree_type_equality_kind;
 
-extern tree_type_equal_kind tree_compare_types(const tree_type* a, const tree_type* b);
-
-#define TREE_ASSERT_TYPE(T) assert(T)
-
-static TREE_INLINE struct _tree_type_base* _tree_type_base(tree_type* self)
-{
-        TREE_ASSERT_TYPE(self);
-        return (struct _tree_type_base*)tree_get_unqualified_type(self);
-}
-
-static TREE_INLINE const struct _tree_type_base* _tree_type_cbase(const tree_type* self)
-{
-        TREE_ASSERT_TYPE(self);
-        return (const struct _tree_type_base*)tree_get_unqualified_ctype(self);
-}
-
-static TREE_INLINE tree_type_kind tree_get_type_kind(const tree_type* self)
-{
-        return _tree_type_cbase(self)->kind;
-}
-
-static TREE_INLINE void tree_set_type_kind(tree_type* self, tree_type_kind k)
-{
-        _tree_type_base(self)->kind = k;
-}
-
-static TREE_INLINE struct _tree_chain_type* _tree_chain_type(tree_type* self)
-{
-        TREE_ASSERT_TYPE(self);
-        return (struct _tree_chain_type*)_tree_type_base(self);
-}
-
-static TREE_INLINE const struct _tree_chain_type* _tree_chain_ctype(const tree_type* self)
-{
-        TREE_ASSERT_TYPE(self);
-        return (const struct _tree_chain_type*)_tree_type_cbase(self);
-}
-
-static TREE_INLINE tree_type* tree_get_chain_type_next(const tree_type* self)
-{
-        return _tree_chain_ctype(self)->next;
-}
-
-static TREE_INLINE void tree_set_chain_type_next(tree_type* self, tree_type* next)
-{
-        _tree_chain_type(self)->next = next;
-}
-
-#undef TREE_ASSERT_TYPE
-#define TREE_ASSERT_TYPE(T, K) assert((T) && tree_get_type_kind(T) == (K))
-
-static TREE_INLINE struct _tree_builtin_type* _tree_builtin_type(tree_type* self)
-{
-        TREE_ASSERT_TYPE(self, TTK_BUILTIN);
-        return (struct _tree_builtin_type*)tree_get_unqualified_type(self);
-}
-
-static TREE_INLINE const struct _tree_builtin_type* _tree_builtin_ctype(const tree_type* self)
-{
-        TREE_ASSERT_TYPE(self, TTK_BUILTIN);
-        return (const struct _tree_builtin_type*)tree_get_unqualified_ctype(self);
-}
-
-static TREE_INLINE tree_builtin_type_kind tree_get_builtin_type_kind(const tree_type* self)
-{
-        return _tree_builtin_ctype(self)->kind;
-}
-
-static TREE_INLINE void tree_set_builtin_type_kind(tree_type* self, tree_builtin_type_kind kind)
-{
-        _tree_builtin_type(self)->kind = kind;
-}
-
-static TREE_INLINE struct _tree_function_type* _tree_function_type(tree_type* self)
-{
-        TREE_ASSERT_TYPE(self, TTK_FUNCTION);
-        return (struct _tree_function_type*)tree_get_unqualified_type(self);
-}
-
-static TREE_INLINE const struct _tree_function_type* _tree_function_ctype(const tree_type* self)
-{
-        TREE_ASSERT_TYPE(self, TTK_FUNCTION);
-        return (const struct _tree_function_type*)tree_get_unqualified_ctype(self);
-}
-
-static TREE_INLINE size_t tree_get_function_type_params_size(const tree_type* self)
-{
-        return _tree_function_ctype(self)->params.size;
-}
-
-static TREE_INLINE tree_type* tree_get_function_type_result(const tree_type* self)
-{
-        TREE_ASSERT_TYPE(self, TTK_FUNCTION);
-        return tree_get_chain_type_next(self);
-}
-
-static TREE_INLINE tree_type** tree_get_function_type_params_begin(const tree_type* self)
-{
-        return (tree_type**)_tree_function_ctype(self)->params.data;
-}
-
-static TREE_INLINE tree_type* tree_get_function_type_param(const tree_type* self, size_t n)
-{
-        return tree_get_function_type_params_begin(self)[n];
-}
-
-static TREE_INLINE tree_type** tree_get_function_type_params_end(const tree_type* self)
-{
-        return tree_get_function_type_params_begin(self) + _tree_function_ctype(self)->params.size;
-}
-
-static TREE_INLINE bool tree_function_type_is_vararg(const tree_type* self)
-{
-        return _tree_function_ctype(self)->vararg;
-}
-
-static TREE_INLINE bool tree_function_type_is_transaction_safe(const tree_type* self)
-{
-        return _tree_function_ctype(self)->transaction_safe;
-}
-
-static TREE_INLINE void tree_set_function_type_result(tree_type* self, tree_type* restype)
-{
-        tree_set_chain_type_next(self, restype);
-}
-
-static TREE_INLINE void tree_set_function_type_vararg(tree_type* self, bool vararg)
-{
-        _tree_function_type(self)->vararg = vararg;
-}
-
-static TREE_INLINE void tree_set_function_type_transaction_safe(tree_type* self, bool safe)
-{
-        _tree_function_type(self)->transaction_safe = safe;
-}
-
-static TREE_INLINE struct _tree_array_type* _tree_array_type(tree_type* self)
-{
-        assert(tree_type_is(self, TTK_ARRAY));
-        return (struct _tree_array_type*)tree_get_unqualified_type(self);
-}
-
-static TREE_INLINE const struct _tree_array_type* _tree_array_ctype(const tree_type* self)
-{
-        assert(tree_type_is(self, TTK_ARRAY));
-        return (const struct _tree_array_type*)tree_get_unqualified_ctype(self);
-}
-
-static TREE_INLINE tree_type* tree_get_array_eltype(const tree_type* self)
-{
-        assert(tree_type_is(self, TTK_ARRAY));
-        return tree_get_chain_type_next(self);
-}
-
-static TREE_INLINE tree_array_kind tree_get_array_kind(const tree_type* self)
-{
-        return _tree_array_ctype(self)->kind;
-}
-
-static TREE_INLINE bool tree_array_is(const tree_type* self, tree_array_kind kind)
-{
-        return tree_get_array_kind(self) == kind;
-}
-
-static TREE_INLINE void tree_set_array_eltype(tree_type* self, tree_type* eltype)
-{
-        assert(tree_type_is(self, TTK_ARRAY));
-        tree_set_chain_type_next(self, eltype);
-}
-
-static TREE_INLINE void tree_set_array_kind(tree_type* self, tree_array_kind kind)
-{
-        _tree_array_type(self)->kind = kind;
-}
-
-#define TREE_ASSERT_ARRAY(P, K) \
-        assert(tree_type_is((P), TTK_ARRAY) && tree_array_is((P), (K)))
-
-static TREE_INLINE struct _tree_constant_array_type* _tree_constant_array_type(tree_type* self)
-{
-        TREE_ASSERT_ARRAY(self, TAK_CONSTANT);
-        return (struct _tree_constant_array_type*)tree_get_unqualified_type(self);
-}
-
-static TREE_INLINE const struct _tree_constant_array_type* _tree_constant_array_ctype(const tree_type* self)
-{
-        TREE_ASSERT_ARRAY(self, TAK_CONSTANT);
-        return (const struct _tree_constant_array_type*)tree_get_unqualified_ctype(self);
-}
-
-static TREE_INLINE tree_expr* tree_get_constant_array_size_expr(const tree_type* self)
-{
-        return _tree_constant_array_ctype(self)->expr;
-}
-
-static TREE_INLINE const int_value* tree_get_constant_array_size_cvalue(const tree_type* self)
-{
-        return &_tree_constant_array_ctype(self)->size;
-}
-
-static TREE_INLINE uint tree_get_constant_array_size(const tree_type* self)
-{
-        return int_get_u32(tree_get_constant_array_size_cvalue(self));
-}
-
-static TREE_INLINE void tree_set_constant_array_size_expr(tree_type* self, tree_expr* size)
-{
-        _tree_constant_array_type(self)->expr = size;
-}
-
-static TREE_INLINE void tree_set_constant_array_size_value(tree_type* self, const int_value* size)
-{
-        _tree_constant_array_type(self)->size = *size;
-}
-
-static TREE_INLINE struct _tree_decl_type* _tree_decl_type(tree_type* self)
-{
-        TREE_ASSERT_TYPE(self, TTK_DECL);
-        return (struct _tree_decl_type*)tree_get_unqualified_type(self);
-}
-
-static TREE_INLINE const struct _tree_decl_type* _tree_decl_ctype(const tree_type* self)
-{
-        TREE_ASSERT_TYPE(self, TTK_DECL);
-        return (const struct _tree_decl_type*)tree_get_unqualified_ctype(self);
-}
-
-static TREE_INLINE bool tree_decl_type_is_referenced(const tree_type* self)
-{
-        return _tree_decl_ctype(self)->referenced;
-}
-
-static TREE_INLINE tree_decl* tree_get_decl_type_entity(const tree_type* self)
-{
-        return _tree_decl_ctype(self)->entity;
-}
-
-static TREE_INLINE void tree_set_decl_type_entity(tree_type* self, tree_decl* decl)
-{
-        _tree_decl_type(self)->entity = decl;
-}
-
-static TREE_INLINE void tree_set_decl_type_referenced(tree_type* self, bool val)
-{
-        _tree_decl_type(self)->referenced = val;
-}
-
-static TREE_INLINE struct _tree_pointer_type* _tree_pointer_type(tree_type* self)
-{
-        TREE_ASSERT_TYPE(self, TTK_POINTER);
-        return (struct _tree_pointer_type*)tree_get_unqualified_type(self);
-}
-
-static TREE_INLINE const struct _tree_pointer_type* _tree_pointer_ctype(const tree_type* self)
-{
-        TREE_ASSERT_TYPE(self, TTK_POINTER);
-        return (const struct _tree_pointer_type*)tree_get_unqualified_ctype(self);
-}
-
-static TREE_INLINE tree_type* tree_get_pointer_target(const tree_type* self)
-{
-        TREE_ASSERT_TYPE(self, TTK_POINTER);
-        return tree_get_chain_type_next(self);
-}
-
-static TREE_INLINE void tree_set_pointer_target(tree_type* self, tree_type* target)
-{
-        TREE_ASSERT_TYPE(self, TTK_POINTER);
-        tree_set_chain_type_next(self, target);
-}
-
-static TREE_INLINE tree_type* tree_get_paren_type(const tree_type* self)
-{
-        TREE_ASSERT_TYPE(self, TTK_PAREN);
-        return tree_get_chain_type_next(self);
-}
-
-static TREE_INLINE void tree_set_paren_type(tree_type* self, tree_type* next)
-{
-        TREE_ASSERT_TYPE(self, TTK_PAREN);
-        tree_set_chain_type_next(self, next);
-}
-
-static TREE_INLINE struct _tree_qualified_type* _tree_qualified_type(tree_type* self)
-{
-        assert(tree_type_is_qualified(self));
-        self = (tree_type*)((size_t)self & _TREE_UNQUAL_MASK);
-        assert(self);
-        return (struct _tree_qualified_type*)self;
-}
-
-static TREE_INLINE const struct _tree_qualified_type* _tree_qualified_ctype(const tree_type* self)
-{
-        assert(tree_type_is_qualified(self));
-        self = (const tree_type*)((const size_t)self & _TREE_UNQUAL_MASK);
-        assert(self);
-        return (const struct _tree_qualified_type*)self;
-}
-
-static TREE_INLINE tree_type_quals tree_get_type_quals(const tree_type* self)
-{
-        if (!tree_type_is_qualified(self))
-                return TTQ_UNQUALIFIED;
-
-        return _tree_qualified_ctype(self)->quals;
-}
-
-static TREE_INLINE bool tree_type_is(const tree_type* self, tree_type_kind k)
-{
-        return tree_get_type_kind(self) == k;
-}
-
-static TREE_INLINE bool tree_type_is_qualified(const tree_type* self)
-{
-        return (bool)(((const size_t)self) & _TREE_QUAL_FLAG);
-}
-
-static TREE_INLINE const tree_type* tree_get_unqualified_ctype(const tree_type* self)
-{
-        if (!tree_type_is_qualified(self))
-                return self;
-
-        return (const tree_type*)_tree_qualified_ctype(self)->type;
-}
-
-static TREE_INLINE tree_type* tree_get_unqualified_type(tree_type* self)
-{
-        if (!tree_type_is_qualified(self))
-                return self;
-
-        return (tree_type*)_tree_qualified_type(self)->type;
-}
-
-static TREE_INLINE void tree_add_type_quals(tree_type* self, tree_type_quals q)
-{
-        tree_set_type_quals(self, (tree_type_quals)(tree_get_type_quals(self) | q));
-}
-
-static TREE_INLINE void tree_set_type_quals(tree_type* self, tree_type_quals q)
-{
-        _tree_qualified_type(self)->quals = q;
-}
+extern tree_type_equality_kind tree_compare_types(const tree_type* a, const tree_type* b);
 
 #ifdef __cplusplus
 }

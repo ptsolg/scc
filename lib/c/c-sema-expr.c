@@ -1011,7 +1011,7 @@ static tree_type* c_sema_check_conditional_operator_pointer_types(
                 else if (tree_type_is_void(rtarget))
                         target = rtarget;
                 else if (c_sema_types_are_compatible(self,
-                        tree_get_unqualified_type(ltarget), tree_get_unqualified_type(rtarget)))
+                        tree_get_modified_type(ltarget), tree_get_modified_type(rtarget)))
                 {
                         target = ltarget;
                 }
@@ -1025,7 +1025,7 @@ static tree_type* c_sema_check_conditional_operator_pointer_types(
         else
                 return NULL;
 
-        target = tree_new_qual_type(self->context, quals, target);
+        target = tree_new_qualified_type(self->context, target, quals);
         return c_sema_new_pointer_type(self, TTQ_UNQUALIFIED, target);
 }
 
@@ -1152,7 +1152,7 @@ static c_initialized_object* c_sema_check_array_designator(
         uint index_val = avalue_get_u32(&eval_result.value);
         if (tree_array_is(parent->type, TAK_CONSTANT))
         {
-                if (index_val >= tree_get_constant_array_size(parent->type))
+                if (index_val >= tree_get_array_size(parent->type))
                 {
                         c_error_array_index_in_initializer_exceeds_array_bounds(self->logger, index);
                         return false;
@@ -1249,7 +1249,7 @@ static c_initializer_kind c_sema_maybe_handle_special_array_initializer(
                 num_elems += 1;
         }
       
-        if (is_constant_array && tree_get_constant_array_size(array->type) < num_elems)
+        if (is_constant_array && tree_get_array_size(array->type) < num_elems)
         {
                 c_error_initializer_string_is_too_long(self->logger, expr);
                 return CIK_INVALID;

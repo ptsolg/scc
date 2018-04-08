@@ -133,8 +133,7 @@ extern size_t tree_get_sizeof(const tree_target_info* info, const tree_type* t)
                         return tree_get_sizeof_record(info, entity);
         }
         else if (tree_type_is(t, TTK_ARRAY) && tree_array_is(t, TAK_CONSTANT))
-                return tree_get_constant_array_size(t)
-                        * tree_get_sizeof(info, tree_get_array_eltype(t));
+                return tree_get_array_size(t) * tree_get_sizeof(info, tree_get_array_eltype(t));
 
         // probably function type
         return 0;

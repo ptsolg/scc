@@ -2,6 +2,33 @@
 #include "scc/tree/tree-context.h"
 #include "scc/tree/tree-target.h"
 
+extern tree_type* tree_new_modified_type(tree_context* context, tree_type* type)
+{
+        if (tree_type_is_modified(type))
+                type = tree_get_modified_type(type);
+
+        tree_type* mt = tree_allocate_node(context, sizeof(struct _tree_modified_type));
+        if (!mt)
+                return NULL;
+
+        mt->modified.quals = TTQ_UNQUALIFIED;
+        mt->modified.transaction_safe = false;
+        mt->modified.type = type;
+        mt = (tree_type*)((size_t)mt | _TREE_MODIFIED_TYPE_BIT);
+        return mt;
+}
+
+extern tree_type* tree_new_qualified_type(
+        tree_context* context, tree_type* type, tree_type_quals quals)
+{
+        tree_type* t = tree_new_modified_type(context, type);
+        if (!t)
+                return NULL;
+
+        tree_set_type_quals(t, quals);
+        return t;
+}
+
 extern tree_type* tree_new_type(tree_context* context, tree_type_kind kind, size_t size)
 {
         tree_type* t = tree_allocate_node(context, size);
@@ -53,7 +80,6 @@ extern tree_type* tree_new_function_type(tree_context* context, tree_type* resty
                 return NULL;
 
         tree_set_function_type_vararg(t, false);
-        tree_set_function_type_transaction_safe(t, false);
         tree_init_array(&_tree_function_type(t)->params);
         return t;
 }
@@ -73,8 +99,7 @@ extern void tree_init_array_type(tree_type* self, tree_array_kind kind, tree_typ
 extern tree_type* tree_new_array_type(
         tree_context* context, tree_array_kind kind, tree_type* eltype)
 {
-        tree_type* t = tree_new_chain_type(context,
-                TTK_ARRAY, eltype, sizeof(struct _tree_constant_array_type));
+        tree_type* t = tree_new_chain_type(context, TTK_ARRAY, eltype, sizeof(struct _tree_array_type));
         if (!t)
                 return NULL;
 
@@ -96,8 +121,8 @@ extern void tree_init_constant_array_type(
         tree_type* self, tree_type* eltype, tree_expr* size_expr, const int_value* size_value)
 {
         tree_init_array_type(self, TAK_CONSTANT, eltype);
-        tree_set_constant_array_size_expr(self, size_expr);
-        tree_set_constant_array_size_value(self, size_value);
+        tree_set_array_size_expr(self, size_expr);
+        tree_set_array_size_value(self, size_value);
 }
 
 extern tree_type* tree_new_constant_array_type(
@@ -110,8 +135,8 @@ extern tree_type* tree_new_constant_array_type(
         if (!t)
                 return NULL;
 
-        tree_set_constant_array_size_expr(t, size_expr);
-        tree_set_constant_array_size_value(t, size_value);
+        tree_set_array_size_expr(t, size_expr);
+        tree_set_array_size_value(t, size_value);
         return t;
 }
 
@@ -400,23 +425,6 @@ extern tree_type* tree_get_type_next(const tree_type* self)
         }
 }
 
-extern tree_type* tree_new_qual_type(
-        tree_context* context, tree_type_quals quals, tree_type* type)
-{
-        assert(type);
-        if (tree_type_is_qualified(type))
-                type = tree_get_unqualified_type(type);
-        
-        tree_type* qt = tree_allocate_node(context, sizeof(struct _tree_qualified_type));
-        if (!qt)
-                return NULL;
-
-        qt->qualified.type = (union _tree_unqualified_type*)type;
-        qt->qualified.quals = quals;
-        qt = (tree_type*)((size_t)qt | _TREE_QUAL_FLAG);
-        return qt;
-}
-
 extern bool tree_type_is_integer(const tree_type* t)
 {
         t = tree_desugar_ctype(t);
@@ -508,14 +516,14 @@ static bool tree_array_types_are_same(const tree_type* a, const tree_type* b)
         if (tree_get_array_kind(a) != tree_get_array_kind(b))
                 return false;
         if (tree_get_array_kind(a) == TAK_CONSTANT 
-                && tree_get_constant_array_size(a) != tree_get_constant_array_size(b))
+                && tree_get_array_size(a) != tree_get_array_size(b))
         {
                 return false;
         }
         return true;
 }
 
-static tree_type_equal_kind tree_compare_function_type_params(const tree_type* a, const tree_type* b)
+static tree_type_equality_kind tree_compare_function_type_params(const tree_type* a, const tree_type* b)
 {
         if (tree_function_type_is_vararg(a) != tree_function_type_is_vararg(b))
                 return TTEK_NEQ;
@@ -524,10 +532,10 @@ static tree_type_equal_kind tree_compare_function_type_params(const tree_type* a
         if (n != tree_get_function_type_params_size(b))
                 return TTEK_NEQ;
 
-        tree_type_equal_kind k = TTEK_EQ;
+        tree_type_equality_kind k = TTEK_EQ;
         for (size_t i = 0; i < n; i++)
         {
-                tree_type_equal_kind pk = tree_compare_types(
+                tree_type_equality_kind pk = tree_compare_types(
                         tree_get_function_type_param(a, i),
                         tree_get_function_type_param(b, i));
                 if (pk == TTEK_NEQ)
@@ -539,7 +547,7 @@ static tree_type_equal_kind tree_compare_function_type_params(const tree_type* a
         return k;
 }
 
-extern tree_type_equal_kind tree_compare_types(const tree_type* a, const tree_type* b)
+extern tree_type_equality_kind tree_compare_types(const tree_type* a, const tree_type* b)
 {
         bool same_quals = true;
         while (1)
@@ -548,9 +556,9 @@ extern tree_type_equal_kind tree_compare_types(const tree_type* a, const tree_ty
                         return TTEK_EQ;
 
                 same_quals &= tree_get_type_quals(a) == tree_get_type_quals(b);
-                a = tree_desugar_ctype(tree_get_unqualified_ctype(a));
-                b = tree_desugar_ctype(tree_get_unqualified_ctype(b));
-                if (a == b)
+                a = tree_desugar_ctype(a);
+                b = tree_desugar_ctype(b);
+                if (tree_get_modified_type_c(a) == tree_get_modified_type_c(b))
                         return same_quals ? TTEK_EQ : TTEK_DIFFERENT_QUALS;
 
                 tree_type_kind k = tree_get_type_kind(a);
@@ -580,7 +588,7 @@ extern tree_type_equal_kind tree_compare_types(const tree_type* a, const tree_ty
                                 {
                                         return TTEK_DIFFERENT_ATTRIBS;
                                 }
-                                tree_type_equal_kind ek = tree_compare_function_type_params(a, b);
+                                tree_type_equality_kind ek = tree_compare_function_type_params(a, b);
                                 if (ek == TTEK_NEQ)
                                         return TTEK_NEQ;
                                 if (ek == TTEK_DIFFERENT_QUALS)

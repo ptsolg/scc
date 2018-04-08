@@ -7,11 +7,8 @@ extern tree_expr* c_sema_new_impl_cast(c_sema* self, tree_expr* e, tree_type* t)
 {
         tree_type* et = tree_desugar_type(tree_get_expr_type(e));
 
-        if (c_sema_types_are_same(self, tree_get_unqualified_type(et),
-                                       tree_get_unqualified_type(t)))
-        {
+        if (c_sema_types_are_same(self, tree_get_modified_type(et), tree_get_modified_type(t)))
                 return e;
-        }
   
         return tree_new_cast_expr(self->context,
                 tree_get_expr_value_kind(e), tree_get_expr_loc(e), t, e, true);
@@ -22,7 +19,7 @@ extern tree_type* c_sema_lvalue_conversion(c_sema* self, tree_expr** e)
         tree_type* t = tree_desugar_type(tree_get_expr_type(*e));
         if (tree_expr_is_lvalue(*e) && tree_get_type_kind(t) != TTK_ARRAY)
         {
-                t = tree_new_qual_type(self->context, TTQ_UNQUALIFIED, t);
+                t = tree_new_qualified_type(self->context, t, TTQ_UNQUALIFIED);
                 *e = c_sema_new_impl_cast(self, *e, t);
                 tree_set_expr_value_kind(*e, TVK_RVALUE);
         }
@@ -201,8 +198,8 @@ static bool c_sema_check_pointer_qualifier_discartion(
 static bool c_sema_check_pointer_assignment(
         c_sema* self, tree_type* lt, tree_type* rt, c_assignment_conversion_result* r)
 {
-        tree_type* ltarget = tree_get_unqualified_type(tree_get_pointer_target(lt));
-        tree_type* rtarget = tree_get_unqualified_type(tree_get_pointer_target(rt));
+        tree_type* ltarget = tree_get_modified_type(tree_get_pointer_target(lt));
+        tree_type* rtarget = tree_get_modified_type(tree_get_pointer_target(rt));
 
         if (c_sema_types_are_compatible(self, ltarget, rtarget)
                 || (tree_type_is_incomplete_or_object(ltarget) && tree_type_is_void(rtarget))

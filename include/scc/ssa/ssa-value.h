@@ -229,9 +229,7 @@ static inline void ssa_set_value_kind(ssa_value* self, ssa_value_kind kind)
 
 static inline void ssa_set_value_type(ssa_value* self, tree_type* type)
 {
-        _ssa_value_base(self)->_type = type
-                ? tree_get_unqualified_type(type)
-                : NULL;
+        _ssa_value_base(self)->_type = type;
 }
 
 static inline void ssa_set_value_id(ssa_value* self, ssa_id id)
