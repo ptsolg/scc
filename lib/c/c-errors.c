@@ -596,6 +596,7 @@ extern void c_error_invalid_scalar_initialization(c_logger* self, const tree_exp
                         c_error_initialization_discards_qualifer(self, e, r->discarded_quals);
                         return;
                 case CACRK_INCOMPATIBLE_POINTERS:
+                case CACRK_RHS_TRANSACTION_UNSAFE:
                         c_error_initialization_from_incompatible_pointer_types(self, e);
                         return;
                 default:
@@ -619,6 +620,7 @@ extern void c_error_invalid_argument_assignment(c_logger* self, tree_location lo
                         c_error_passing_argument_discards_qualifer(self, loc, pos, r->discarded_quals);
                         return;
                 case CACRK_INCOMPATIBLE_POINTERS:
+                case CACRK_RHS_TRANSACTION_UNSAFE:
                         c_error_passing_argument_from_incompatible_pointer_type(self, loc, pos);
                         return;
                 default:
@@ -650,9 +652,9 @@ extern void c_error_invalid_assignment(c_logger* self, tree_location op_loc,
                         c_error_assignment_discards_quals(self, op_loc, r->discarded_quals);
                         return;
                 case CACRK_INCOMPATIBLE_POINTERS:
+                case CACRK_RHS_TRANSACTION_UNSAFE:
                         c_error_assignment_from_incompatible_pointer_type(self, op_loc);
                         return;
-
                 default:
                         UNREACHABLE();
                 case CACRK_COMPATIBLE:
@@ -681,6 +683,7 @@ extern void c_error_invalid_return_type(c_logger* self, const tree_expr* e, cons
                         c_error_return_discards_quals(self, loc, r->discarded_quals);
                         return;
                 case CACRK_INCOMPATIBLE_POINTERS:
+                case CACRK_RHS_TRANSACTION_UNSAFE:
                         c_error_return_from_incompatible_pointer_type(self, loc);
                         return;
 

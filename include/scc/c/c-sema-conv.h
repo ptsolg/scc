@@ -30,12 +30,13 @@ typedef enum
         CACRK_INCOMPATIBLE,
         CACRK_RHS_NOT_AN_ARITHMETIC,
         CACRK_RHS_NOT_A_RECORD,
+        CACRK_RHS_TRANSACTION_UNSAFE,
         CACRK_INCOMPATIBLE_RECORDS,
         CACRK_QUAL_DISCARTION,
         CACRK_INCOMPATIBLE_POINTERS,
 } c_assignment_conversion_result_kind;
 
-typedef struct
+typedef struct _c_assignment_conversion_result
 {
         c_assignment_conversion_result_kind kind;
         tree_type_quals discarded_quals;

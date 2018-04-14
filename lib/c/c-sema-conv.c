@@ -167,11 +167,16 @@ extern tree_type* c_sema_default_argument_promotion(c_sema* self, tree_expr** e)
         return t;
 }
 
-static bool c_sema_check_pointer_qualifier_discartion(
+static bool c_sema_check_attribute_discartion(
         c_sema* self, tree_type* lt, tree_type* rt, c_assignment_conversion_result* r)
 {
-        lt = tree_get_pointer_target(lt);
-        rt = tree_get_pointer_target(rt);
+        if (tree_type_is(lt, TTK_FUNCTION) && tree_type_is(rt, TTK_FUNCTION)
+                && tree_function_type_is_transaction_safe(lt)
+                && !tree_function_type_is_transaction_safe(rt))
+        {
+                r->kind = CACRK_RHS_TRANSACTION_UNSAFE;
+                return false;
+        }
 
         tree_type_quals rq = tree_get_type_quals(rt);
         if (rq == TTQ_UNQUALIFIED)
@@ -198,14 +203,15 @@ static bool c_sema_check_pointer_qualifier_discartion(
 static bool c_sema_check_pointer_assignment(
         c_sema* self, tree_type* lt, tree_type* rt, c_assignment_conversion_result* r)
 {
-        tree_type* ltarget = tree_get_modified_type(tree_get_pointer_target(lt));
-        tree_type* rtarget = tree_get_modified_type(tree_get_pointer_target(rt));
+        tree_type* ltarget = tree_desugar_type(tree_get_pointer_target(lt));
+        tree_type* rtarget = tree_desugar_type(tree_get_pointer_target(rt));
 
-        if (c_sema_types_are_compatible(self, ltarget, rtarget)
+        if (c_sema_types_are_compatible(self, tree_get_modified_type(ltarget),
+                                              tree_get_modified_type(rtarget))
                 || (tree_type_is_incomplete_or_object(ltarget) && tree_type_is_void(rtarget))
                 || (tree_type_is_incomplete_or_object(rtarget) && tree_type_is_void(ltarget)))
         {
-                return c_sema_check_pointer_qualifier_discartion(self, lt, rt, r);
+                return c_sema_check_attribute_discartion(self, ltarget, rtarget, r);
         }
 
         r->kind = CACRK_INCOMPATIBLE_POINTERS;
