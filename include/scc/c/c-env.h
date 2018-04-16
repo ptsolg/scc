@@ -15,16 +15,8 @@ extern "C" {
 #include "scc/c/c-parser.h"
 #include "scc/c/c-source.h"
 
-extern errcode c_lex_source(
-        c_context* context,
-        file_entry* source,
-        FILE* error,
-        dseq* result);
-
-extern tree_module* c_parse_source(
-        c_context* context,
-        file_entry* source,
-        FILE* error);
+extern errcode c_lex_source( c_context* context, file_entry* source, FILE* error, dseq* result);
+extern tree_module* c_parse_source(c_context* context, file_entry* source, FILE* error);
 
 typedef struct _c_env
 {

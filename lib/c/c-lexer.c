@@ -6,17 +6,6 @@
 #include "scc/tree/tree-context.h"
 #include "c-numeric-literal.h"
 
-extern void c_lexer_init(c_lexer* self, c_logger* logger, c_context* context)
-{
-        c_reswords_init(&self->reswords, context);
-        c_preprocessor_init(&self->pp, &self->reswords,  logger, context);
-}
-
-extern errcode c_lexer_enter_source_file(c_lexer* self, c_source* source)
-{
-        return c_preprocessor_enter_source(&self->pp, source);
-}
-
 static_assert(CTK_TOTAL_SIZE == 111, "lexer reswords initialization needs an update");
 
 static void c_lexer_add_token(c_lexer* self, c_token_kind k, bool pp)
@@ -28,7 +17,7 @@ static void c_lexer_add_token(c_lexer* self, c_token_kind k, bool pp)
                 c_reswords_add_resword(&self->reswords, info->string, k);
 }
 
-extern void c_lexer_init_reswords(c_lexer* self)
+static void c_lexer_init_reswords(c_lexer* self)
 {
         for (c_token_kind i = CTK_CHAR; i < CTK_CONST_INT; i++)
                 c_lexer_add_token(self, i, false);
@@ -38,6 +27,18 @@ extern void c_lexer_init_reswords(c_lexer* self)
         if (self->pp.context->lang_opts.ext.tm_enabled)
                 for (c_token_kind i = CTK_ATOMIC; i < CTK_TOTAL_SIZE; i++)
                         c_lexer_add_token(self, i, false);
+}
+
+extern void c_lexer_init(c_lexer* self, c_logger* logger, c_context* context)
+{
+        c_reswords_init(&self->reswords, context);
+        c_preprocessor_init(&self->pp, &self->reswords,  logger, context);
+        c_lexer_init_reswords(self);
+}
+
+extern errcode c_lexer_enter_source_file(c_lexer* self, c_source* source)
+{
+        return c_preprocessor_enter_source(&self->pp, source);
 }
 
 extern void c_lexer_dispose(c_lexer* self)
