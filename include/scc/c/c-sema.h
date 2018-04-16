@@ -59,7 +59,7 @@ typedef struct _c_sema
 extern void c_sema_init(c_sema* self, c_context* context, c_logger* logger);
 extern void c_sema_dispose(c_sema* self);
 
-extern void c_sema_enter_module(c_sema* self, tree_module* module);
+extern tree_module* c_sema_new_module(c_sema* self);
 extern void c_sema_enter_scope(c_sema* self, tree_scope* scope);
 extern void c_sema_exit_scope(c_sema* self);
 extern void c_sema_enter_decl_scope(c_sema* self, tree_decl_scope* scope);

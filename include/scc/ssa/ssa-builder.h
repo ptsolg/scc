@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include "ssa-common.h"
+#include "ssa-instr.h" // ssa_memorder_kind ...
 
 typedef struct _ssa_context ssa_context;
 typedef struct _ssa_value ssa_value;
@@ -80,6 +81,23 @@ extern ssa_instr* ssa_build_switch_instr(ssa_builder* self, ssa_value* cond, ssa
 extern ssa_instr* ssa_build_return(ssa_builder* self, ssa_value* val);
 
 extern ssa_value* ssa_build_function_param(ssa_builder* self, tree_type* type);
+
+extern ssa_value* ssa_build_atomic_add(
+        ssa_builder* self, ssa_value* ptr, ssa_value* val, ssa_memorder_kind ordering);
+
+extern ssa_value* ssa_build_atomic_xchg(
+        ssa_builder* self, ssa_value* ptr, ssa_value* val, ssa_memorder_kind ordering);
+
+extern ssa_value* ssa_build_fence_instr(
+        ssa_builder* self, ssa_syncscope_kind syncscope, ssa_memorder_kind ordering);
+
+extern ssa_value* ssa_build_atomic_cmpxchg(
+        ssa_builder* self,
+        ssa_value* ptr,
+        ssa_value* expected,
+        ssa_value* desired,
+        ssa_memorder_kind success_ordering,
+        ssa_memorder_kind failure_ordering);
 
 static inline void ssa_builder_set_pos(ssa_builder* self, ssa_instr* pos, bool insert_after)
 {

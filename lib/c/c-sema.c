@@ -1,8 +1,10 @@
 #include "scc/c/c-sema.h"
+#include "scc/c/c-parse-decl.h"
 #include "c-misc.h"
 #include "scc/c/c-errors.h"
 #include "scc/tree/tree-decl.h"
 #include "scc/tree/tree-stmt.h"
+#include "scc/tree/tree-context.h"
 #include "scc/tree/tree-module.h"
 
 #define DSEQ_VALUE_TYPE c_switch_stmt_info
@@ -120,12 +122,62 @@ extern void c_sema_dispose(c_sema* self)
         // todo
 }
 
-extern void c_sema_enter_module(c_sema* self, tree_module* module)
+static void c_sema_init_builtin_function(c_sema* self, tree_function_builtin_kind kind, const char* name, const char* decl)
 {
-        self->module = module;
-        self->globals = tree_get_module_globals(module);
-        self->target = tree_get_module_target(module);
+        c_source* s = c_source_emulate(&self->ccontext->source_manager, name, decl);
+        c_lexer lexer;
+        c_lexer_init(&lexer, self->logger, self->ccontext);
+        if (!s || EC_FAILED(c_lexer_enter_source_file(&lexer, s)))
+                goto error;
+
+        c_parser parser;
+        c_parser_init(&parser, &lexer, self, self->logger);
+        jmp_buf on_parser_error;
+        c_parser_set_on_error(&parser, on_parser_error);
+        if (setjmp(on_parser_error))
+                goto error;
+        
+        c_parser_enter_token_stream(&parser);
+        tree_decl* func = c_parse_decl(&parser);
+        if (!func)
+                goto error;
+
+        tree_set_function_builtin_kind(func, kind);
+        tree_set_decl_implicit(func, true);
+        return;
+
+error:
+        assert(0 && "unexpected error");
+}
+
+static void c_sema_init_builtin_functions(c_sema* self)
+{
+        c_sema_init_builtin_function(self,
+                TFBK_ATOMIC_CMPXCHG_32_WEAK_SEQ_CST, "__atomic_cmpxchg_32_weak_seq_cst",
+                "static int __atomic_cmpxchg_32_weak_seq_cst("
+                        "volatile unsigned* ptr, unsigned expected, unsigned desired);");
+
+        c_sema_init_builtin_function(self,
+                TFBK_ATOMIC_ADD_FETCH_32_SEQ_CST, "__atomic_add_fetch_32_seq_cst",
+                "static void __atomic_add_fetch_32_seq_cst(unsigned* ptr, unsigned value);");
+
+        c_sema_init_builtin_function(self,
+                TFBK_ATOMIC_XCHG_32_SEQ_CST, "__atomic_xchg_32_seq_cst",
+                "static void __atomic_xchg_32_seq_cst(unsigned* ptr, unsigned value);");
+
+        c_sema_init_builtin_function(self,
+                TFBK_ATOMIC_FENCE_ST_SEQ_CST, "__atomic_fence_st_seq_cst",
+                "static void __atomic_fence_st_seq_cst();");
+}
+
+extern tree_module* c_sema_new_module(c_sema* self)
+{
+        self->module = tree_new_module(self->context);
+        self->globals = tree_get_module_globals(self->module);
+        self->target = tree_get_module_target(self->module);
         self->locals = self->globals;
+        c_sema_init_builtin_functions(self);
+        return self->module;
 }
 
 extern void c_sema_enter_scope(c_sema* self, tree_scope* scope)

@@ -139,6 +139,16 @@ static const char* ssa_binary_instr_table[] =
 static_assert(ARRAY_SIZE(ssa_binary_instr_table) == SBIK_SIZE,
         "ssa_binary_instr_table needs an update");
 
+static const char* ssa_atomic_rmw_instr_table[] =
+{
+        "",
+        "atomicrmw add",
+        "atomicrmw xchg",
+};
+
+static_assert(ARRAY_SIZE(ssa_atomic_rmw_instr_table) == SARIK_SIZE,
+        "ssa_binary_instr_table needs an update");
+
 static const char* ssa_terminator_instr_table[] =
 {
         "",
@@ -157,12 +167,15 @@ static const char* ssa_instr_table[] =
         "alloca",
         "load",
         "cast",
-        "",
+        "", // binop
         "store",
         "getfieldaddr",
         "call",
         "phi",
-        "",
+        "", // terminator
+        "",  // atomic rmw
+        "fence",
+        "cmpxchg",
 };
 
 static_assert(ARRAY_SIZE(ssa_instr_table) == SIK_SIZE,
@@ -242,6 +255,42 @@ static void ssa_print_instr_operands(ssa_printer* self, const ssa_instr* instr)
         }
 }
 
+static void ssa_print_memorder(ssa_printer* self, ssa_memorder_kind kind)
+{
+        switch (kind)
+        {
+                case SMK_MONOTONIC:
+                        ssa_prints(self, "monotonic");
+                        return;
+                case SMK_ACQUIRE:
+                        ssa_prints(self, "acq");
+                        return;
+                case SMK_RELEASE:
+                        ssa_prints(self, "rel");
+                        return;
+                case SMK_ACQUIRE_RELEASE:
+                        ssa_prints(self, "acq_rel");
+                        return;
+                case SMK_SEQ_CST:
+                        ssa_prints(self, "seq_cst");
+                        return;
+                default:
+                        return;
+        }
+}
+
+static void ssa_print_syncscope(ssa_printer* self, ssa_syncscope_kind kind)
+{
+        switch (kind)
+        {
+                case SSK_SINGLE_THREAD:
+                        ssa_prints(self, "single_thread");
+                        return;
+                default:
+                        return;
+        }
+}
+
 extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
 {
         ssa_print_endl(self);
@@ -261,6 +310,8 @@ extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
                 instr_name = ssa_binary_instr_table[ssa_get_binop_kind(instr)];
         else if (k == SIK_TERMINATOR)
                 instr_name = ssa_terminator_instr_table[ssa_get_terminator_instr_kind(instr)];
+        else if (k == SIK_ATOMIC_RMW)
+                instr_name = ssa_atomic_rmw_instr_table[ssa_get_atomic_rmw_instr_kind(instr)];
 
         ssa_printf(self, "%s ", instr_name);
 
@@ -277,6 +328,23 @@ extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
         else
                 ssa_print_instr_operands(self, instr);
        
+        if (ssa_get_instr_operands_size(instr))
+                ssa_printc(self, ' ');
+
+        if (k == SIK_ATOMIC_RMW)
+                ssa_print_memorder(self, ssa_get_atomic_rmw_instr_ordering(instr));
+        else if (k == SIK_FENCE)
+        {
+                ssa_print_syncscope(self, ssa_get_fence_instr_syncscope(instr));
+                ssa_printc(self, ' ');
+                ssa_print_memorder(self, ssa_get_fence_instr_ordering(instr));
+        }
+        else if (k == SIK_ATOMIC_CMPXCHG)
+        {
+                ssa_print_memorder(self, ssa_get_atomic_cmpxchg_instr_success_ordering(instr));
+                ssa_printc(self, ' ');
+                ssa_print_memorder(self, ssa_get_atomic_cmpxchg_instr_failure_ordering(instr));
+        }
 }
 
 extern void ssa_print_block(ssa_printer* self, const ssa_block* block)

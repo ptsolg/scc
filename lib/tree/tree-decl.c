@@ -237,6 +237,7 @@ extern tree_decl* tree_new_function_decl(
         tree_init_decl_scope(tree_get_function_labels(d), context, NULL);
         tree_set_function_inlined(d, false);
         tree_set_function_body(d, body);
+        tree_set_function_builtin_kind(d, TFBK_ORDINARY);
         return d;
 }
 

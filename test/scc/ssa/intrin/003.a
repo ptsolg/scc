@@ -1,0 +1,4 @@
+; Definition for test
+@0:
+    fence single_thread seq_cst
+    ret

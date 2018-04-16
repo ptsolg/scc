@@ -164,12 +164,22 @@ struct _tree_enum_decl
         tree_decl_scope values;
 };
 
+typedef enum
+{
+        TFBK_ORDINARY,
+        TFBK_ATOMIC_CMPXCHG_32_WEAK_SEQ_CST,
+        TFBK_ATOMIC_ADD_FETCH_32_SEQ_CST,
+        TFBK_ATOMIC_XCHG_32_SEQ_CST,
+        TFBK_ATOMIC_FENCE_ST_SEQ_CST,
+} tree_function_builtin_kind;
+
 struct _tree_function_decl
 {
         struct _tree_value_decl base;
         tree_decl_scope params;
         tree_decl_scope labels;
         tree_stmt* body;
+        tree_function_builtin_kind builtin_kind;
         bool inlined;
 };
 
@@ -517,6 +527,16 @@ static TREE_INLINE tree_stmt* tree_get_function_body(const tree_decl* self)
         return self->func.body;
 }
 
+static TREE_INLINE tree_function_builtin_kind tree_get_function_builtin_kind(const tree_decl* self)
+{
+        return self->func.builtin_kind;
+}
+
+static TREE_INLINE bool tree_function_is_builtin(const tree_decl* self)
+{
+        return tree_get_function_builtin_kind(self) != TFBK_ORDINARY;
+}
+
 static TREE_INLINE void tree_set_function_inlined(tree_decl* self, bool inlined)
 {
         self->func.inlined = inlined;
@@ -525,6 +545,11 @@ static TREE_INLINE void tree_set_function_inlined(tree_decl* self, bool inlined)
 static TREE_INLINE void tree_set_function_body(tree_decl* self, tree_stmt* body)
 {
         self->func.body = body;
+}
+
+static TREE_INLINE void tree_set_function_builtin_kind(tree_decl* self, tree_function_builtin_kind kind)
+{
+        self->func.builtin_kind = kind;
 }
 
 extern tree_decl* tree_new_var_decl(

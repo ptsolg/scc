@@ -107,6 +107,7 @@ extern bool ssa_instr_has_var(const ssa_instr* self)
         {
                 case SIK_STORE:
                 case SIK_TERMINATOR:
+                case SIK_FENCE:
                         return false;
 
                 case SIK_CALL:
@@ -355,4 +356,60 @@ extern ssa_instr* ssa_new_ret(ssa_context* context, ssa_value* value)
 
         ssa_add_instr_operand(ret, context, value);
         return ret;
+}
+
+extern ssa_instr* ssa_new_atomic_rmw_instr(
+        ssa_context* context,
+        ssa_id id,
+        tree_type* restype,
+        ssa_atomic_rmw_instr_kind kind,
+        ssa_value* ptr,
+        ssa_value* val,
+        ssa_memorder_kind ordering)
+{
+        ssa_instr* i = ssa_new_instr(context, SIK_ATOMIC_RMW, id, restype, 3,
+                sizeof(struct _ssa_atomic_rmw_instr));
+        if (!i)
+                return NULL;
+
+        ssa_set_atomic_rmw_instr_kind(i, kind);
+        ssa_add_instr_operand(i, context, ptr);
+        ssa_add_instr_operand(i, context, val);
+        ssa_set_atomic_rmw_instr_ordering(i, ordering);
+        return i;
+}
+
+extern ssa_instr* ssa_new_fence_instr(
+        ssa_context* context, ssa_syncscope_kind syncscope, ssa_memorder_kind ordering)
+{
+        ssa_instr* i = ssa_new_instr(context, SIK_FENCE, 0, NULL, 0, sizeof(struct _ssa_fence_instr));
+        if (!i)
+                return NULL;
+
+        ssa_set_fence_instr_syncscope(i, syncscope);
+        ssa_set_fence_instr_ordering(i, ordering);
+        return i;
+}
+
+extern ssa_instr* ssa_new_atomic_cmpxchg_instr(
+        ssa_context* context,
+        ssa_id id,
+        tree_type* restype,
+        ssa_value* ptr,
+        ssa_value* expected,
+        ssa_value* desired,
+        ssa_memorder_kind success_ordering,
+        ssa_memorder_kind failure_ordering)
+{
+        ssa_instr* i = ssa_new_instr(context, SIK_ATOMIC_CMPXCHG, id, restype, 3,
+                sizeof(struct _ssa_atomic_cmpxchg_instr));
+        if (!i)
+                return NULL;
+
+        ssa_add_instr_operand(i, context, ptr);
+        ssa_add_instr_operand(i, context, expected);
+        ssa_add_instr_operand(i, context, desired);
+        ssa_set_atomic_cmpxchg_instr_success_ordering(i, success_ordering);
+        ssa_set_atomic_cmpxchg_instr_failure_ordering(i, failure_ordering);
+        return i;
 }

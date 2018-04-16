@@ -3,6 +3,7 @@
 #include "scc/ssa/ssa-value.h"
 #include "scc/ssa/ssa-instr.h"
 #include "scc/ssa/ssa-context.h"
+#include "scc/tree/tree-context.h"
 
 extern void ssa_init_builder(ssa_builder* self, ssa_context* context, ssa_instr* pos)
 {
@@ -450,4 +451,67 @@ extern ssa_instr* ssa_build_return(ssa_builder* self, ssa_value* val)
 extern ssa_value* ssa_build_function_param(ssa_builder* self, tree_type* type)
 {
         return ssa_new_param(self->context, ssa_builder_gen_uid(self), type);
+}
+
+static ssa_value* ssa_build_atomic_rmw_instr(
+        ssa_builder* self,
+        ssa_atomic_rmw_instr_kind kind,
+        ssa_value* ptr,
+        ssa_value* val,
+        ssa_memorder_kind ordering)
+{
+        tree_type* ptr_type = ssa_get_value_type(ptr);
+        tree_type* val_type = ssa_get_value_type(val);
+        assert(tree_type_is_integer(val_type));
+        assert(tree_compare_types(val_type, tree_get_pointer_target(ptr_type)) != TTEK_NEQ);
+
+        ssa_instr* instr = ssa_new_atomic_rmw_instr(
+                self->context, ssa_builder_gen_uid(self), val_type, kind, ptr, val, ordering);
+        if (!instr)
+                return NULL;
+
+        return ssa_build_instr(self, instr);
+}
+
+extern ssa_value* ssa_build_atomic_add(
+        ssa_builder* self, ssa_value* ptr, ssa_value* val, ssa_memorder_kind ordering)
+{
+        return ssa_build_atomic_rmw_instr(self, SARIK_ADD, ptr, val, ordering);
+}
+
+extern ssa_value* ssa_build_atomic_xchg(
+        ssa_builder* self, ssa_value* ptr, ssa_value* val, ssa_memorder_kind ordering)
+{
+        return ssa_build_atomic_rmw_instr(self, SARIK_XCHG, ptr, val, ordering);
+}
+
+extern ssa_value* ssa_build_fence_instr(
+        ssa_builder* self, ssa_syncscope_kind syncscope, ssa_memorder_kind ordering)
+{
+        ssa_instr* fence = ssa_new_fence_instr(self->context, syncscope, ordering);
+        return fence ? ssa_build_instr(self, fence) : NULL;
+}
+
+extern ssa_value* ssa_build_atomic_cmpxchg(
+        ssa_builder* self,
+        ssa_value* ptr,
+        ssa_value* expected,
+        ssa_value* desired,
+        ssa_memorder_kind success_ordering,
+        ssa_memorder_kind failure_ordering)
+{
+        assert(tree_compare_types(
+                ssa_get_value_type(expected), ssa_get_value_type(desired)) != TTEK_NEQ);
+        assert(tree_compare_types(
+                tree_get_pointer_target(ssa_get_value_type(ptr)),  ssa_get_value_type(desired)) != TTEK_NEQ);
+
+        ssa_instr* instr = ssa_new_atomic_cmpxchg_instr(self->context,
+                ssa_builder_gen_uid(self),
+                tree_get_builtin_type(self->context->tree, TBTK_INT32),
+                ptr, expected, desired,
+                success_ordering, failure_ordering);
+        if (!instr)
+                return NULL;
+
+        return ssa_build_instr(self, instr);
 }

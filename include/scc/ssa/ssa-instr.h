@@ -30,6 +30,9 @@ typedef enum
         SIK_CALL,
         SIK_PHI,
         SIK_TERMINATOR,
+        SIK_ATOMIC_RMW,
+        SIK_FENCE,
+        SIK_ATOMIC_CMPXCHG,
         SIK_SIZE,
 } ssa_instr_kind;
 
@@ -283,6 +286,163 @@ struct _ssa_ret_instr
 extern ssa_instr* ssa_new_ret_void(ssa_context* context);
 extern ssa_instr* ssa_new_ret(ssa_context* context, ssa_value* value);
 
+typedef enum
+{
+        SARIK_INVALID,
+        SARIK_ADD,
+        SARIK_XCHG,
+        SARIK_SIZE,
+} ssa_atomic_rmw_instr_kind;
+
+typedef enum
+{
+        SMK_UNORDERED,
+        SMK_MONOTONIC,
+        SMK_ACQUIRE,
+        SMK_RELEASE,
+        SMK_ACQUIRE_RELEASE,
+        SMK_SEQ_CST,
+} ssa_memorder_kind;
+
+struct _ssa_atomic_rmw_instr
+{
+        struct _ssa_instr_base _base;
+        ssa_atomic_rmw_instr_kind _kind;
+        ssa_memorder_kind _ordering;
+};
+
+extern ssa_instr* ssa_new_atomic_rmw_instr(
+        ssa_context* context,
+        ssa_id id,
+        tree_type* restype,
+        ssa_atomic_rmw_instr_kind kind,
+        ssa_value* ptr,
+        ssa_value* val,
+        ssa_memorder_kind ordering);
+
+static inline struct _ssa_atomic_rmw_instr* _ssa_atomic_rmw_instr(ssa_instr* self)
+{
+        return (struct _ssa_atomic_rmw_instr*)self;
+}
+
+static inline const struct _ssa_atomic_rmw_instr* _ssa_atomic_rmw_cinstr(const ssa_instr* self)
+{
+        return (const struct _ssa_atomic_rmw_instr*)self;
+}
+
+static inline ssa_atomic_rmw_instr_kind ssa_get_atomic_rmw_instr_kind(const ssa_instr* self)
+{
+        return _ssa_atomic_rmw_cinstr(self)->_kind;
+}
+
+static inline void ssa_set_atomic_rmw_instr_kind(ssa_instr* self, ssa_atomic_rmw_instr_kind kind)
+{
+        _ssa_atomic_rmw_instr(self)->_kind = kind;
+}
+
+static inline ssa_memorder_kind ssa_get_atomic_rmw_instr_ordering(const ssa_instr* self)
+{
+        return _ssa_atomic_rmw_cinstr(self)->_ordering;
+}
+
+static inline void ssa_set_atomic_rmw_instr_ordering(ssa_instr* self, ssa_memorder_kind ordering)
+{
+        _ssa_atomic_rmw_instr(self)->_ordering = ordering;
+}
+
+typedef enum
+{
+        SSK_NONE,
+        SSK_SINGLE_THREAD,
+} ssa_syncscope_kind;
+
+struct _ssa_fence_instr
+{
+        struct _ssa_instr_base _base;
+        ssa_syncscope_kind _syncscope;
+        ssa_memorder_kind _ordering;
+};
+
+extern ssa_instr* ssa_new_fence_instr(
+        ssa_context* context, ssa_syncscope_kind syncscope, ssa_memorder_kind ordering);
+
+static inline struct _ssa_fence_instr* _ssa_fence_instr(ssa_instr* self)
+{
+        return (struct _ssa_fence_instr*)self;
+}
+
+static inline const struct _ssa_fence_instr* _ssa_fence_cinstr(const ssa_instr* self)
+{
+        return (const struct _ssa_fence_instr*)self;
+}
+
+static inline ssa_syncscope_kind ssa_get_fence_instr_syncscope(const ssa_instr* self)
+{
+        return _ssa_fence_cinstr(self)->_syncscope;
+}
+
+static inline void ssa_set_fence_instr_syncscope(ssa_instr* self, ssa_syncscope_kind syncscope)
+{
+        _ssa_fence_instr(self)->_syncscope = syncscope;
+}
+
+static inline ssa_memorder_kind ssa_get_fence_instr_ordering(const ssa_instr* self)
+{
+        return _ssa_fence_cinstr(self)->_ordering;
+}
+
+static inline void ssa_set_fence_instr_ordering(ssa_instr* self, ssa_memorder_kind ordering)
+{
+        _ssa_fence_instr(self)->_ordering = ordering;
+}
+
+struct _ssa_atomic_cmpxchg_instr
+{
+        struct _ssa_instr_base _base;
+        ssa_memorder_kind _success_ordering;
+        ssa_memorder_kind _failure_ordering;
+};
+
+extern ssa_instr* ssa_new_atomic_cmpxchg_instr(
+        ssa_context* context,
+        ssa_id id,
+        tree_type* restype,
+        ssa_value* ptr,
+        ssa_value* expected,
+        ssa_value* desired,
+        ssa_memorder_kind success_ordering,
+        ssa_memorder_kind failure_ordering);
+
+static inline struct _ssa_atomic_cmpxchg_instr* _ssa_atomic_cmpxchg_instr(ssa_instr* self)
+{
+        return (struct _ssa_atomic_cmpxchg_instr*)self;
+}
+
+static inline const struct _ssa_atomic_cmpxchg_instr* _ssa_atomic_cmpxchg_cinstr(const ssa_instr* self)
+{
+        return (const struct _ssa_atomic_cmpxchg_instr*)self;
+}
+
+static inline ssa_memorder_kind ssa_get_atomic_cmpxchg_instr_success_ordering(const ssa_instr* self)
+{
+        return _ssa_atomic_cmpxchg_cinstr(self)->_success_ordering;
+}
+
+static inline ssa_memorder_kind ssa_get_atomic_cmpxchg_instr_failure_ordering(const ssa_instr* self)
+{
+        return _ssa_atomic_cmpxchg_cinstr(self)->_failure_ordering;
+}
+
+static inline void ssa_set_atomic_cmpxchg_instr_success_ordering(ssa_instr* self, ssa_memorder_kind ordering)
+{
+        _ssa_atomic_cmpxchg_instr(self)->_success_ordering = ordering;
+}
+
+static inline void ssa_set_atomic_cmpxchg_instr_failure_ordering(ssa_instr* self, ssa_memorder_kind ordering)
+{
+        _ssa_atomic_cmpxchg_instr(self)->_failure_ordering = ordering;
+}
+
 typedef struct _ssa_instr
 {
         union
@@ -296,6 +456,9 @@ typedef struct _ssa_instr
                 struct _ssa_call _call;
                 struct _ssa_phi _phi;
                 struct _ssa_terminator_instr _terminator;
+                struct _ssa_atomic_rmw_instr _atomic_rmw;
+                struct _ssa_fence_instr _fence;
+                struct _ssa_atomic_cmpxchg_instr _atomic_cmpxchg;
         };
 } ssa_instr;
 

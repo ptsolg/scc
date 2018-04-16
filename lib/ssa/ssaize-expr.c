@@ -320,9 +320,49 @@ extern ssa_value* ssaize_unary_expr(ssaizer* self, const tree_expr* expr)
         }
 }
 
+static ssa_value* ssaize_intrin_call_expr(ssaizer* self, const tree_expr* expr, const tree_decl* intrin)
+{
+        ssa_value* args[32];
+        size_t num_args = tree_get_call_args_size(expr);
+        assert(num_args< 32 && "update args size");
+
+        for (size_t i = 0; i < num_args; i++)
+                if (!(args[i] = ssaize_expr(self, tree_get_call_arg(expr, i))))
+                        return NULL;
+
+        switch (tree_get_function_builtin_kind(intrin))
+        {
+                case TFBK_ATOMIC_CMPXCHG_32_WEAK_SEQ_CST:
+                        return ssa_build_atomic_cmpxchg(&self->builder,
+                                args[0], args[1], args[2], SMK_SEQ_CST, SMK_SEQ_CST);
+             
+                case TFBK_ATOMIC_ADD_FETCH_32_SEQ_CST:
+                        return ssa_build_atomic_add(&self->builder, args[0], args[1], SMK_SEQ_CST);
+
+                case TFBK_ATOMIC_XCHG_32_SEQ_CST:
+                        return ssa_build_atomic_xchg(&self->builder, args[0], args[1], SMK_SEQ_CST);
+
+                case TFBK_ATOMIC_FENCE_ST_SEQ_CST:
+                        return ssa_build_fence_instr(&self->builder, SSK_SINGLE_THREAD, SMK_SEQ_CST);
+
+                default:
+                        assert(0 && "unknown intrin");
+                        return NULL;
+        }
+}
+
 extern ssa_value* ssaize_call_expr(ssaizer* self, const tree_expr* expr)
 {
-        ssa_value* func = ssaize_expr(self, tree_get_call_lhs(expr));
+        tree_expr* lhs = tree_get_call_lhs(expr);
+        tree_expr* lhs_base = tree_desugar_expr(lhs);
+        if (tree_expr_is(lhs_base, TEK_DECL))
+        {
+                tree_decl* func = tree_get_decl_expr_entity(lhs_base);
+                if (tree_function_is_builtin(func))
+                        return ssaize_intrin_call_expr(self, expr, func);
+        }
+
+        ssa_value* func = ssaize_expr(self, lhs);
         if (!func)
                 return NULL;
 
