@@ -220,6 +220,7 @@ extern bool c_sema_finish_declarator(c_sema* self, c_declarator* declarator, c_t
 extern void c_decl_specs_init(c_decl_specs* self)
 {
         self->class_ = TDSC_NONE;
+        self->duration = TDSD_AUTOMATIC;
         self->typespec = NULL;
         self->loc.val = TREE_INVALID_XLOC;
         self->has_inline = false;
@@ -282,6 +283,16 @@ extern bool c_sema_set_decl_storage_class(c_sema* self, c_decl_specs* ds, tree_d
         }
 
         ds->class_ = sc;
+
+        if ((ds->class_ == TDSC_EXTERN || ds->class_ == TDSC_STATIC) && ds->duration == TDSD_AUTOMATIC)
+                ds->duration = TDSD_STATIC;
+
+        return true;
+}
+
+extern bool c_sema_set_thread_storage_duration(c_sema* self, c_decl_specs* ds)
+{
+        ds->duration = TDSD_THREAD;
         return true;
 }
 
@@ -332,7 +343,7 @@ extern tree_xlocation c_param_get_loc(const c_param* self)
         return self->specs.loc;
 }
 
-extern c_param* c_sema_new_param(c_sema* self)
+extern c_param* c_sema_start_param(c_sema* self)
 {
         c_param* p = c_context_allocate_node(self->ccontext, sizeof(c_param));
         c_decl_specs_init(&p->specs);
@@ -351,35 +362,70 @@ static tree_type* c_sema_finish_decl_type(
                 c_declarator_get_name_loc_or_begin(declarator)) ? dt : NULL;
 }
 
-static bool c_sema_check_specifiers(
-        const c_sema* self, const c_decl_specs* specs, const c_declarator* d, bool function)
+static bool c_sema_check_decl_specs(
+        const c_sema* self, const c_decl_specs* specs, const c_declarator* d, tree_decl_kind dk)
 {
-        if (specs->has_inline && !function)
-        {
-                tree_location loc = c_declarator_get_name_loc_or_begin(d);
-                if (loc == TREE_INVALID_LOC)
-                        loc = c_decl_specs_get_loc_begin(specs);
+        tree_location loc = c_declarator_get_name_loc_or_begin(d);
+        if (loc == TREE_INVALID_LOC)
+                loc = c_decl_specs_get_loc_begin(specs);
 
-                c_error_inline_allowed_on_functions_only(self->logger, loc);
+        if (specs->has_inline && dk != TDK_FUNCTION)
+        {
+                c_error_invalid_specifier(self->logger, loc, CTK_INLINE, TDK_FUNCTION);
                 return false;
         }
+
+        if (dk == TDK_FIELD && (specs->class_ != TDSC_NONE || specs->duration != TDSD_AUTOMATIC))
+        {
+                c_error_field_declared_with_storage_specifier(self->logger, d);
+                return false;
+        }
+
+        if (specs->duration == TDSD_THREAD)
+        {
+                if (dk != TDK_VAR)
+                {
+                        c_error_invalid_specifier(self->logger, loc, CTK_THREAD_LOCAL, TDK_VAR);
+                        return false;
+                }
+                if (specs->class_ == TDSC_NONE && !c_sema_at_file_scope(self))
+                {
+                        c_error_variable_declared_thread_local_at_function_scope(self->logger, d);
+                        return false;
+                }
+        }
+
+        if (specs->class_ == TDSC_REGISTER)
+        {
+                if (dk != TDK_VAR)
+                {
+                        c_error_invalid_specifier(self->logger, loc, CTK_REGISTER, TDK_VAR);
+                        return false;
+                }
+                if (c_sema_at_file_scope(self))
+                {
+                        c_error_variable_declared_register_at_file_scope(self->logger, d);
+                        return false;
+                }
+        }
+
+        if ((specs->class_ == TDSC_EXTERN || specs->class_ == TDSC_STATIC) && dk == TDK_PARAM)
+        {
+                c_error_invalid_parameter_storage_class(self->logger, d);
+                return false;
+
+        }
+
         return true;
 }
 
 extern c_param* c_sema_finish_param(c_sema* self, c_param* p)
 {
         c_declarator* d = &p->declarator;
-        if (!c_sema_check_specifiers(self, &p->specs, d, false))
+        if (!c_sema_check_decl_specs(self, &p->specs, d, TDK_PARAM))
                 return NULL;
         if (!c_sema_finish_decl_type(self, &p->specs, d))
                 return NULL;
-
-        if (p->specs.class_ != TDSC_REGISTER && p->specs.class_ != TDSC_NONE)
-        {
-                c_error_invalid_parameter_storage_class(self->logger, d);
-                return NULL;
-        }
-
         return p;
 }
 
@@ -641,7 +687,7 @@ static bool c_sema_check_field_decl(const c_sema* self, const tree_decl* field)
 static tree_decl* c_sema_new_field_decl(
         c_sema* self, c_decl_specs* ds, c_declarator* d, tree_expr* bit_width)
 {
-        if (!c_sema_check_specifiers(self, ds, d, false))
+        if (!c_sema_check_decl_specs(self, ds, d, TDK_FIELD))
                 return NULL;
 
         tree_type* t = c_sema_finish_decl_type(self, ds, d);
@@ -759,30 +805,21 @@ extern bool csema_require_function_decl_kind(const c_sema* self, const tree_decl
 
 static tree_decl* c_sema_new_typedef_decl(c_sema* self, c_decl_specs* ds, c_declarator* d)
 {
-        if (!c_sema_check_specifiers(self, ds, d, false))
+        if (!c_sema_check_decl_specs(self, ds, d, TDK_TYPEDEF))
                 return NULL;
 
         return tree_new_typedef_decl(
                 self->context, self->locals, ds->loc, d->name, d->type.head);
 }
 
-static tree_decl* c_sema_new_param_decl(c_sema* self, c_param* p)
+static tree_decl* c_sema_define_param_decl(c_sema* self, c_param* p)
 {
-        return tree_new_var_decl(
+        tree_decl* d = tree_new_param_decl(
                 self->context,
                 self->locals,
                 c_param_get_loc(p),
                 p->declarator.name,
-                TDSC_NONE,
-                p->declarator.type.head,
-                NULL);
-}
-
-static tree_decl* c_sema_define_param_decl(c_sema* self, c_param* p)
-{
-        tree_decl* d = c_sema_new_param_decl(self, p);
-        if (!d)
-                return NULL;
+                p->declarator.type.head);
 
         return csema_add_decl_to_scope(self, self->locals, d);
 }
@@ -805,6 +842,8 @@ static bool c_sema_set_function_params(c_sema* self, tree_decl* func, dseq* para
 static tree_decl* c_sema_new_function_decl(
         c_sema* self, c_decl_specs* specs, c_declarator* d)
 {
+        if (!c_sema_check_decl_specs(self, specs, d, TDK_FUNCTION))
+                return NULL;
         // c99 6.2.2.5
         // If the declaration of an identifier for a function has no storage - class specifier,
         // its linkage is external
@@ -846,7 +885,7 @@ static bool c_sema_check_var_decl(const c_sema* self, const tree_decl* var, bool
 static tree_decl* c_sema_new_var_decl(
         c_sema* self, c_decl_specs* specs, c_declarator* d, bool has_init)
 {
-        if (!c_sema_check_specifiers(self, specs, d, false))
+        if (!c_sema_check_decl_specs(self, specs, d, TDK_VAR))
                 return NULL;
 
         // c99 6.2.2.5
@@ -857,7 +896,7 @@ static tree_decl* c_sema_new_var_decl(
                 sc = TDSC_IMPL_EXTERN;
 
         tree_decl* v = tree_new_var_decl(
-                self->context, self->locals, specs->loc, d->name, sc, d->type.head, NULL);
+                self->context, self->locals, specs->loc, d->name, sc, specs->duration, d->type.head, NULL);
 
         return c_sema_check_var_decl(self, v, has_init) ? v : NULL;
 }

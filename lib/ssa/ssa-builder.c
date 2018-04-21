@@ -257,8 +257,9 @@ extern ssa_value* ssa_build_getfieldaddr(
 {
         assert(tree_type_is(ssa_get_value_type(record), TTK_POINTER));
         assert(tree_get_field_record(field) == 
-                tree_get_decl_type_entity(tree_get_pointer_target(ssa_get_value_type(record))));
-
+                tree_get_decl_type_entity(tree_desugar_type(
+                        tree_get_pointer_target(ssa_get_value_type(record)))));
+  
         tree_type* field_ptr = tree_new_pointer_type(
                 ssa_get_tree(self->context), tree_get_decl_type(field));
 

@@ -76,6 +76,7 @@ extern bool c_sema_finish_declarator(c_sema* self, c_declarator* declarator, c_t
 typedef struct _c_decl_specs
 {
         tree_decl_storage_class class_;
+        tree_decl_storage_duration duration;
         tree_type* typespec;
         tree_xlocation loc;
         bool has_inline;
@@ -92,6 +93,7 @@ extern bool c_sema_set_type_specifier(c_sema* self, c_decl_specs* ds, tree_type*
 extern bool c_sema_set_typedef_specified(c_sema* self, c_decl_specs* ds);
 extern bool c_sema_set_inline_specified(c_sema* self, c_decl_specs* ds);
 extern bool c_sema_set_decl_storage_class(c_sema* self, c_decl_specs* ds, tree_decl_storage_class sc);
+extern bool c_sema_set_thread_storage_duration(c_sema* self, c_decl_specs* ds);
 extern tree_decl* c_sema_handle_unused_decl_specs(c_sema* self, c_decl_specs* ds);
 
 typedef struct _c_param
@@ -103,7 +105,7 @@ typedef struct _c_param
 extern tree_type* c_param_get_type(const c_param* self);
 extern tree_xlocation c_param_get_loc(const c_param* self);
 
-extern c_param* c_sema_new_param(c_sema* self);
+extern c_param* c_sema_start_param(c_sema* self);
 extern c_param* c_sema_finish_param(c_sema* self, c_param* p);
 
 extern tree_type* c_sema_new_type_name(c_sema* self, c_declarator* d, tree_type* typespec);

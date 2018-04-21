@@ -152,6 +152,7 @@ extern tree_decl* tree_new_value_decl(
         tree_xlocation loc,
         tree_id name,
         tree_decl_storage_class class_,
+        tree_decl_storage_duration duration,
         tree_type* type,
         size_t size)
 {
@@ -160,6 +161,7 @@ extern tree_decl* tree_new_value_decl(
                 return NULL;
 
         tree_set_decl_storage_class(d, class_);
+        tree_set_decl_storage_duration(d, duration);
         return d;
 }
 
@@ -229,7 +231,7 @@ extern tree_decl* tree_new_function_decl(
         tree_stmt* body)
 {
         tree_decl* d = tree_new_value_decl(context,
-                TDK_FUNCTION, scope, loc, name, class_, type, sizeof(struct _tree_function_decl));
+                TDK_FUNCTION, scope, loc, name, class_, TDSD_AUTOMATIC, type, sizeof(struct _tree_function_decl));
         if (!d)
                 return NULL;
 
@@ -247,16 +249,28 @@ extern tree_decl* tree_new_var_decl(
         tree_xlocation loc,
         tree_id name,
         tree_decl_storage_class class_,
+        tree_decl_storage_duration duration,
         tree_type* type,
         tree_expr* init)
 {
         tree_decl* d = tree_new_value_decl(context,
-                TDK_VAR, scope, loc, name, class_, type, sizeof(struct _tree_var_decl));
+                TDK_VAR, scope, loc, name, class_, duration, type, sizeof(struct _tree_var_decl));
         if (!d)
                 return NULL;
 
         tree_set_var_init(d, init);
         return d;
+}
+
+extern tree_decl* tree_new_param_decl(
+        tree_context* context,
+        tree_decl_scope* scope,
+        tree_xlocation loc,
+        tree_id name,
+        tree_type* type)
+{
+        return tree_new_value_decl(context,
+                TDK_PARAM, scope, loc, name, TDSC_NONE, TDSD_AUTOMATIC, type, sizeof(struct _tree_var_decl));
 }
 
 extern tree_decl* tree_new_field_decl(
@@ -268,7 +282,7 @@ extern tree_decl* tree_new_field_decl(
         tree_expr* bit_width)
 {
         tree_decl* d = tree_new_value_decl(context,
-                TDK_FIELD, scope, loc, name, TDSC_NONE, type, sizeof(struct _tree_field_decl));
+                TDK_FIELD, scope, loc, name, TDSC_NONE, TDSD_AUTOMATIC, type, sizeof(struct _tree_field_decl));
         if (!d)
                 return NULL;
 
@@ -304,7 +318,7 @@ extern tree_decl* tree_new_indirect_field_decl(
         tree_decl* anon_record)
 {
         tree_decl* d = tree_new_value_decl(context, TDK_INDIRECT_FIELD, scope, loc, name, 
-                TDSC_NONE, type, sizeof(struct _tree_indirect_field_decl));
+                TDSC_NONE, TDSD_AUTOMATIC, type, sizeof(struct _tree_indirect_field_decl));
         if (!d)
                 return NULL;
 

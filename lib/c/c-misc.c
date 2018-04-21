@@ -358,15 +358,13 @@ extern bool c_token_is_type_qualifier(const c_token* self)
 
 extern tree_decl_storage_class c_token_to_decl_storage_class(const c_token* self)
 {
-        c_token_kind k = c_token_get_kind(self);
-        if (k == CTK_EXTERN)
-                return TDSC_EXTERN;
-        else if (k == CTK_STATIC)
-                return TDSC_STATIC;
-        else if (k == CTK_REGISTER)
-                return TDSC_REGISTER;
-
-        return TDSC_NONE;
+        switch (c_token_get_kind(self))
+        {
+                case CTK_EXTERN:   return TDSC_EXTERN;
+                case CTK_STATIC:   return TDSC_STATIC;
+                case CTK_REGISTER: return TDSC_REGISTER;
+                default:           return TDSC_NONE;
+        }
 }
 
 extern bool c_token_is_decl_storage_class(const c_token* self)

@@ -358,7 +358,7 @@ extern ssa_value* ssaize_call_expr(ssaizer* self, const tree_expr* expr)
         if (tree_expr_is(lhs_base, TEK_DECL))
         {
                 tree_decl* func = tree_get_decl_expr_entity(lhs_base);
-                if (tree_function_is_builtin(func))
+                if (tree_decl_is(func, TDK_FUNCTION) && tree_function_is_builtin(func))
                         return ssaize_intrin_call_expr(self, expr, func);
         }
 

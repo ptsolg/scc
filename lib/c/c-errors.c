@@ -305,22 +305,42 @@ extern void c_error_multiple_storage_classes(c_logger* self, const c_decl_specs*
                 "multiple storage classes in declaration specifiers");
 }
 
-extern void c_error_inline_allowed_on_functions_only(c_logger* self, tree_location loc)
+extern void c_error_invalid_specifier(c_logger* self, tree_location loc, c_token_kind spec, int allowed_decl)
 {
-        c_error(self, CES_ERROR, loc,
-                "'inline' specifier allowed on function declarations only");
-}
+        const char* decl = "<unknown decl>";
+        if (allowed_decl == TDK_VAR)
+                decl = "variable";
+        else if (allowed_decl == TDK_FUNCTION)
+                decl = "function";
 
-extern void c_error_transaction_safe_allowed_on_functions_only(c_logger* self, tree_location loc)
-{
-        c_error(self, CES_ERROR, loc,
-                "'_Transaction_safe' specifier allowed on functions only");
+        c_error(self, CES_ERROR, loc, "%s specifier allowed on %s declarations only",
+                c_get_token_kind_info(spec)->desription, decl);
 }
 
 extern void c_error_invalid_parameter_storage_class(c_logger* self, const c_declarator* d)
 {       
         c_error(self, CES_ERROR, d->name_loc, "invalid storage class for parameter '%s'",
                 c_logger_get_id_string(self, d->name));
+}
+
+extern void c_error_variable_declared_thread_local_at_function_scope(c_logger* self, const c_declarator* d)
+{
+        c_error(self, CES_ERROR, c_declarator_get_name_loc_or_begin(d),
+                "variable '%s' declared '_Thread_local' at function scope",
+                c_logger_get_id_string(self, d->name));
+}
+
+extern void c_error_variable_declared_register_at_file_scope(c_logger* self, const c_declarator* d)
+{
+        c_error(self, CES_ERROR, c_declarator_get_name_loc_or_begin(d),
+                "variable '%s' declared 'register' at file scope",
+                c_logger_get_id_string(self, d->name));
+}
+
+extern void c_error_field_declared_with_storage_specifier(c_logger* self, const c_declarator* d)
+{
+        c_error(self, CES_ERROR, c_declarator_get_name_loc_or_begin(d),
+                "field '%s' declared with storage specifier", c_logger_get_id_string(self, d->name));
 }
 
 extern void c_error_function_initialized_like_a_variable(c_logger* self, const tree_decl* func)

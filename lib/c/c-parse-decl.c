@@ -148,7 +148,8 @@ extern bool c_parser_at_declaration(c_parser* self)
         c_token* t = c_parser_get_token(self);
         return c_parser_token_starts_type_name(self, t)
                 || c_token_is_decl_storage_class(t)
-                || c_token_is(t, CTK_TYPEDEF);
+                || c_token_is(t, CTK_TYPEDEF)
+                || c_token_is(t, CTK_THREAD_LOCAL);
 }
 
 extern bool c_parse_decl_specs(c_parser* self, c_decl_specs* result)
@@ -172,6 +173,12 @@ extern bool c_parse_decl_specs(c_parser* self, c_decl_specs* result)
                 {
                         tree_decl_storage_class c = c_token_to_decl_storage_class(t);
                         if (!c_sema_set_decl_storage_class(self->sema, result, c))
+                                return false;
+                        c_parser_consume_token(self);
+                }
+                else if (c_parser_at(self, CTK_THREAD_LOCAL))
+                {
+                        if (!c_sema_set_thread_storage_duration(self->sema, result))
                                 return false;
                         c_parser_consume_token(self);
                 }
@@ -526,7 +533,7 @@ static bool c_parse_pointer_opt(c_parser* self, c_type_chain* result)
 
 static c_param* c_parse_param_declaration(c_parser* self)
 {
-        c_param* p = c_sema_new_param(self->sema);
+        c_param* p = c_sema_start_param(self->sema);
         if (!c_parse_decl_specs(self, &p->specs))
                 return NULL;
 

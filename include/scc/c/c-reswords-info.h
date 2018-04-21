@@ -12,7 +12,7 @@ extern "C" {
 #include "scc/core/common.h"
 #include "c-token-kind.h"
 
-static_assert(CTK_TOTAL_SIZE == 111, "Should update _c_resword_infos table.");
+static_assert(CTK_TOTAL_SIZE == 112, "Should update _c_resword_infos table.");
 
 typedef struct _c_resword_info
 {
@@ -67,6 +67,7 @@ static const c_resword_info _c_resword_infos[CTK_TOTAL_SIZE] =
         C_RESWORD("register", "'register'", CRK_TOKEN),
         C_RESWORD("static", "'static'", CRK_TOKEN),
         C_RESWORD("extern", "'extern'", CRK_TOKEN),
+        C_RESWORD("_Thread_local", "'_Thread_local'", CRK_TOKEN),
         C_RESWORD("inline", "'inline'", CRK_TOKEN),
         C_RESWORD("const", "'const'", CRK_TOKEN),
         C_RESWORD("volatile", "'volatile'", CRK_TOKEN),

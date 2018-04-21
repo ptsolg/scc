@@ -820,19 +820,28 @@ static void c_print_enum_specifier(c_printer* self, const tree_decl* enum_, int 
         c_print_decl_scope(self, tree_get_enum_cvalues(enum_), true, CPRINT_OPTS_NONE);
 }
 
-static void c_print_decl_storage_class(c_printer* self, tree_decl_storage_class c)
+static void c_print_decl_storage_specs(c_printer* self, const tree_decl* d)
 {
-        if (c == TDSC_AUTO)
-                c_printrw(self, CTK_AUTO);
-        else if (c == TDSC_REGISTER)
-                c_printrw(self, CTK_REGISTER);
-        else if (c == TDSC_EXTERN)
-                c_printrw(self, CTK_EXTERN);
-        else if (c == TDSC_STATIC)
-                c_printrw(self, CTK_STATIC);
-        else
-                return;
-        c_print_space(self);
+        tree_decl_storage_class sc = tree_get_decl_storage_class(d);
+        if (sc != TDSC_NONE || sc != TDSC_IMPL_EXTERN)
+        {
+                if (sc == TDSC_AUTO)
+                        c_printrw(self, CTK_AUTO);
+                else if (sc == TDSC_REGISTER)
+                        c_printrw(self, CTK_REGISTER);
+                else if (sc == TDSC_EXTERN)
+                        c_printrw(self, CTK_EXTERN);
+                else if (sc == TDSC_STATIC)
+                        c_printrw(self, CTK_STATIC);
+                c_print_space(self);
+        }
+
+        tree_decl_storage_class sd = tree_get_decl_storage_duration(d);
+        if (sd == TDSD_THREAD)
+        {
+                c_printrw(self, CTK_THREAD_LOCAL);
+                c_print_space(self);
+        }
 }
 
 static void c_print_function(c_printer* self, const tree_decl* f, int opts)
@@ -844,7 +853,7 @@ static void c_print_function(c_printer* self, const tree_decl* f, int opts)
         }
 
         if (!(opts & CPRINTER_IGNORE_STORAGE_SPECS))
-                c_print_decl_storage_class(self, tree_get_decl_storage_class(f));
+                c_print_decl_storage_specs(self, f);
 
         if (tree_function_is_inlined(f))
         {
@@ -890,7 +899,7 @@ static void c_print_var_decl(c_printer* self, const tree_decl* v, int opts)
                 return;
         }
 
-        c_print_decl_storage_class(self, tree_get_decl_storage_class(v));
+        c_print_decl_storage_specs(self, v);
         _c_print_type_name(self, tree_get_decl_type(v), v, opts);
 
         const tree_expr* init = tree_get_var_init(v);
@@ -903,6 +912,16 @@ static void c_print_var_decl(c_printer* self, const tree_decl* v, int opts)
         }
         if (!(opts & CPRINTER_IGNORE_DECL_ENDING))
                 c_printrw(self, CTK_SEMICOLON);
+}
+
+static void c_print_param_decl(c_printer* self, const tree_decl* p, int opts)
+{
+        if (opts & CPRINT_DECL_NAME)
+        {
+                c_print_decl_name(self, p);
+                return;
+        }
+        _c_print_type_name(self, tree_get_decl_type(p), p, opts);
 }
 
 static void c_print_enumerator(c_printer* self, const tree_decl* e, int opts)
@@ -950,6 +969,7 @@ extern void c_print_decl(c_printer* self, const tree_decl* d, int opts)
                 case TDK_FUNCTION: c_print_function(self, d, opts); break;
                 case TDK_FIELD: c_print_field(self, d, opts); break;
                 case TDK_VAR: c_print_var_decl(self, d, opts); break;
+                case TDK_PARAM: c_print_param_decl(self, d, opts); break;
                 case TDK_ENUMERATOR: c_print_enumerator(self, d, opts); break;
                 case TDK_GROUP: c_print_decl_group(self, d, opts); break;
                 default: break;

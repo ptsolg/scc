@@ -194,8 +194,6 @@ extern tree_expr* c_sema_new_decl_expr(c_sema* self, tree_id id, tree_location i
 
         if (dk == TDK_ENUMERATOR || dk == TDK_FUNCTION)
                 vk = TVK_RVALUE;
-        else if (dk != TDK_VAR)
-                return NULL; // unknown decl kind
 
         return tree_new_decl_expr(self->context, vk, t, id_loc, d);
 }

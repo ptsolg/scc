@@ -54,6 +54,7 @@ extern tree_decl* c_parse_decl(c_parser* self);
 //      static
 //      auto
 //      register
+//      _Thread_local
 extern bool c_parser_at_declaration(c_parser* self);
 extern bool c_parse_decl_specs(c_parser* self, c_decl_specs* result);
 

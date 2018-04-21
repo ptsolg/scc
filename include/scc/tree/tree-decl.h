@@ -93,6 +93,13 @@ typedef enum
         TDSC_REGISTER,
 } tree_decl_storage_class;
 
+typedef enum
+{
+        TDSD_AUTOMATIC,
+        TDSD_THREAD,
+        TDSD_STATIC,
+} tree_decl_storage_duration;
+
 typedef enum _tree_decl_kind
 {
         TDK_UNKNOWN,
@@ -103,6 +110,7 @@ typedef enum _tree_decl_kind
         TDK_FIELD,
         TDK_INDIRECT_FIELD,
         TDK_VAR,
+        TDK_PARAM,
         TDK_ENUMERATOR,
         TDK_LABEL,
 
@@ -138,6 +146,7 @@ struct _tree_value_decl
 {
         struct _tree_typed_decl base;
         tree_decl_storage_class storage_class;
+        tree_decl_storage_duration storage_duration;
 };
 
 struct _tree_typedef_decl
@@ -390,6 +399,7 @@ extern tree_decl* tree_new_value_decl(
         tree_xlocation loc,
         tree_id name,
         tree_decl_storage_class class_,
+        tree_decl_storage_duration duration,
         tree_type* type,
         size_t size);
 
@@ -398,9 +408,19 @@ static TREE_INLINE tree_decl_storage_class tree_get_decl_storage_class(const tre
         return self->value.storage_class;
 }
 
+static TREE_INLINE tree_decl_storage_duration tree_get_decl_storage_duration(const tree_decl* self)
+{
+        return self->value.storage_duration;
+}
+
 static TREE_INLINE void tree_set_decl_storage_class(tree_decl* self, tree_decl_storage_class class_)
 {
         self->value.storage_class = class_;
+}
+
+static TREE_INLINE void tree_set_decl_storage_duration(tree_decl* self, tree_decl_storage_duration duration)
+{
+        self->value.storage_duration = duration;
 }
 
 extern tree_decl* tree_new_typedef_decl(
@@ -558,8 +578,16 @@ extern tree_decl* tree_new_var_decl(
         tree_xlocation loc,
         tree_id name, 
         tree_decl_storage_class class_,
+        tree_decl_storage_duration duration,
         tree_type* type,
         tree_expr* init);
+
+extern tree_decl* tree_new_param_decl(
+        tree_context* context,
+        tree_decl_scope* scope,
+        tree_xlocation loc,
+        tree_id name,
+        tree_type* type);
 
 static TREE_INLINE tree_expr* tree_get_var_init(const tree_decl* self)
 {

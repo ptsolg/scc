@@ -80,9 +80,11 @@ extern void c_error_too_many_initializer_values(c_logger* self, tree_location lo
 // sema
 extern void c_error_undeclared_identifier(c_logger* self, tree_location loc, tree_id name);
 extern void c_error_multiple_storage_classes(c_logger* self, const c_decl_specs* ds);
-extern void c_error_inline_allowed_on_functions_only(c_logger* self, tree_location loc);
-extern void c_error_transaction_safe_allowed_on_functions_only(c_logger* self, tree_location loc);
+extern void c_error_invalid_specifier(c_logger* self, tree_location loc, c_token_kind spec, int allowed_decl);
 extern void c_error_invalid_parameter_storage_class(c_logger* self, const c_declarator* d);
+extern void c_error_variable_declared_thread_local_at_function_scope(c_logger* self, const c_declarator* d);
+extern void c_error_variable_declared_register_at_file_scope(c_logger* self, const c_declarator* d);
+extern void c_error_field_declared_with_storage_specifier(c_logger* self, const c_declarator* d);
 
 extern void c_error_function_initialized_like_a_variable(c_logger* self, const tree_decl* func);
 extern void c_error_invalid_initializer(c_logger* self, const tree_expr* init);
