@@ -1,0 +1,1 @@
+077.t:3:23: error: variable 'a' declared '_Thread_local' at function scope

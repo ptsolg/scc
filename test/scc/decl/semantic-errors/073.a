@@ -1,0 +1,1 @@
+073.t:1:14: error: variable 'a' declared 'register' at file scope

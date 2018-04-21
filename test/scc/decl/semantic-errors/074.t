@@ -1,0 +1,3 @@
+register void foo()
+{
+}

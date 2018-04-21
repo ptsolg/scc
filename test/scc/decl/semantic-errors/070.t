@@ -1,0 +1,4 @@
+struct
+{
+    static int a;
+};

@@ -1,0 +1,1 @@
+078.t:1:20: error: '_Thread_local' specifier allowed on variable declarations only

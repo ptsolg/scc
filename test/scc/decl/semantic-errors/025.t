@@ -1,4 +1,4 @@
 struct A
 {
-    extern void foo();
+    void foo();
 };
