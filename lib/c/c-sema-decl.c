@@ -3,6 +3,7 @@
 #include "scc/c/c-sema-conv.h"
 #include "scc/c/c-sema-expr.h"
 #include "scc/c/c-errors.h"
+#include "scc/tree/tree-context.h"
 #include "scc/tree/tree-eval.h"
 #include "scc/tree/tree-target.h"
 #include "scc/core/dseq-instance.h"
@@ -166,6 +167,13 @@ extern void c_sema_add_direct_declarator_transaction_safe_attribute(c_sema* self
 {
         assert(d->type.tail && tree_type_is(d->type.tail, TTK_FUNCTION));
         tree_set_function_type_transaction_safe(d->type.tail, true);
+}
+
+extern void c_sema_add_direct_declarator_stdcall_attribute(c_sema* self, c_declarator* d)
+{
+        assert(d->type.tail && tree_type_is(d->type.tail, TTK_FUNCTION));
+        if (self->context->target->kind == TTAK_X86_32)
+                tree_set_function_type_cc(d->type.tail, TCC_STDCALL);
 }
 
 extern bool c_sema_add_direct_declarator_parens(c_sema* self, c_declarator* d)

@@ -80,6 +80,7 @@ extern tree_type* tree_new_function_type(tree_context* context, tree_type* resty
                 return NULL;
 
         tree_set_function_type_vararg(t, false);
+        tree_set_function_type_cc(t, TCC_DEFAULT);
         tree_init_array(&_tree_function_type(t)->params);
         return t;
 }

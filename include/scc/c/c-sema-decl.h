@@ -68,6 +68,7 @@ extern bool c_sema_add_direct_declarator_function_suffix(c_sema* self, c_declara
 extern bool c_sema_add_direct_declarator_array_suffix(
         c_sema* self, c_declarator* d, tree_type_quals q, tree_expr* size_expr);
 extern void c_sema_add_direct_declarator_transaction_safe_attribute(c_sema* self, c_declarator* d);
+extern void c_sema_add_direct_declarator_stdcall_attribute(c_sema* self, c_declarator* d);
 extern bool c_sema_add_direct_declarator_parens(c_sema* self, c_declarator* d);
 extern void c_sema_add_declarator_param(c_sema* self, c_declarator* d, c_param* p);
 extern bool c_sema_set_declarator_has_vararg(c_sema* self, c_declarator* d, tree_location ellipsis_loc);

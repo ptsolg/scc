@@ -631,6 +631,21 @@ static void c_print_decl_type(c_printer* self, const tree_type* t, int opts)
         c_print_decl(self, tree_get_decl_type_entity(t), opts);
 }
 
+static void c_print_function_type_attributes(c_printer* self, const tree_type* t)
+{
+        if (tree_function_type_is_transaction_safe(t))
+        {
+                c_print_space(self);
+                c_printrw(self, CTK_TRANSACTION_SAFE);
+        }
+        tree_calling_convention cc = tree_get_function_type_cc(t);
+        if (cc == TCC_STDCALL)
+        {
+                c_print_space(self);
+                c_printrw(self, CTK_STDCALL);
+        }
+}
+
 static void c_print_type_parts(c_printer* self, c_type_name_info* info, int opts)
 {
         int part_it = info->n_type_parts;
@@ -689,11 +704,7 @@ static void c_print_type_parts(c_printer* self, c_type_name_info* info, int opts
                                 c_printrw(self, CTK_ELLIPSIS);
                         }
                         c_print_rbracket(self);
-                        if (tree_function_type_is_transaction_safe(func_type))
-                        {
-                                c_print_space(self);
-                                c_printrw(self, CTK_TRANSACTION_SAFE);
-                        }
+                        c_print_function_type_attributes(self, func_type);
                 }
         }
 }
@@ -723,11 +734,7 @@ static void c_print_suffix_endings(c_printer* self, c_type_name_info* info, int 
                                 c_printrw(self, CTK_ELLIPSIS);
                         }
                         c_print_rbracket(self);
-                        if (tree_function_type_is_transaction_safe(t))
-                        {
-                                c_print_space(self);
-                                c_printrw(self, CTK_TRANSACTION_SAFE);
-                        }
+                        c_print_function_type_attributes(self, t);
                 }
                 else if (k == TTK_ARRAY)
                 {

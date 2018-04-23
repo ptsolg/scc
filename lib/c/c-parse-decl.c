@@ -582,6 +582,25 @@ static bool c_parse_parameter_type_list_opt(c_parser* self, c_declarator* result
         return false;
 }
 
+static void c_parse_direct_declarator_attribute_list_opt(c_parser* self, c_declarator* result)
+{
+        while (1)
+        {
+                if (c_parser_at(self, CTK_TRANSACTION_SAFE))
+                {
+                        c_parser_consume_token(self);
+                        c_sema_add_direct_declarator_transaction_safe_attribute(self->sema, result);
+                }
+                else if (c_parser_at(self, CTK_STDCALL))
+                {
+                        c_parser_consume_token(self);
+                        c_sema_add_direct_declarator_stdcall_attribute(self->sema, result);
+                }
+                else
+                        break;
+        }
+}
+
 static bool c_parse_direct_declarator_suffix_opt(c_parser* self, c_declarator* result)
 {
         while (1)
@@ -595,11 +614,7 @@ static bool c_parse_direct_declarator_suffix_opt(c_parser* self, c_declarator* r
                                 return false;
                         if (!c_parser_require(self, CTK_RBRACKET))
                                 return false;
-                        if (c_parser_at(self, CTK_TRANSACTION_SAFE))
-                        {
-                                c_parser_consume_token(self);
-                                c_sema_add_direct_declarator_transaction_safe_attribute(self->sema, result);
-                        }
+                        c_parse_direct_declarator_attribute_list_opt(self, result);
                 }
                 else if (c_parser_at(self, CTK_LSBRACKET))
                 {

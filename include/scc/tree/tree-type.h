@@ -114,6 +114,7 @@ struct _tree_type_base
                 {
                         unsigned base : TREE_TYPE_BITS;
                         unsigned vararg : 1;
+                        unsigned cc : 3;
                 } function_type_bits;
 
                 struct
@@ -245,6 +246,12 @@ static TREE_INLINE void tree_set_builtin_type_kind(tree_type* self, tree_builtin
         _tree_type_base(self)->builtin_type_bits.kind = kind;
 }
 
+typedef enum
+{
+        TCC_DEFAULT,
+        TCC_STDCALL,
+} tree_calling_convention;
+
 struct _tree_function_type
 {
         struct _tree_chain_type base;
@@ -299,6 +306,12 @@ static TREE_INLINE bool tree_function_type_is_vararg(const tree_type* self)
         return _tree_type_base_c(self)->function_type_bits.vararg;
 }
 
+static TREE_INLINE tree_calling_convention tree_get_function_type_cc(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_FUNCTION));
+        return _tree_type_base_c(self)->function_type_bits.cc;
+}
+
 static TREE_INLINE bool tree_function_type_is_transaction_safe(const tree_type* self)
 {
         assert(tree_type_is(self, TTK_FUNCTION));
@@ -316,6 +329,12 @@ static TREE_INLINE void tree_set_function_type_vararg(tree_type* self, bool vara
 {
         assert(tree_type_is(self, TTK_FUNCTION));
         _tree_type_base(self)->function_type_bits.vararg = vararg;
+}
+
+static TREE_INLINE void tree_set_function_type_cc(tree_type* self, tree_calling_convention cc)
+{
+        assert(tree_type_is(self, TTK_FUNCTION));
+        _tree_type_base(self)->function_type_bits.cc = cc;
 }
 
 static TREE_INLINE void tree_set_function_type_transaction_safe(tree_type* self, bool safe)
