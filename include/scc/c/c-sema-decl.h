@@ -76,8 +76,8 @@ extern bool c_sema_finish_declarator(c_sema* self, c_declarator* declarator, c_t
 
 typedef struct _c_decl_specs
 {
-        tree_decl_storage_class class_;
-        tree_decl_storage_duration duration;
+        tree_storage_class class_;
+        tree_storage_duration duration;
         tree_type* typespec;
         tree_xlocation loc;
         bool has_inline;
@@ -93,7 +93,7 @@ extern tree_location c_decl_specs_get_loc_end(const c_decl_specs* self);
 extern bool c_sema_set_type_specifier(c_sema* self, c_decl_specs* ds, tree_type* ts);
 extern bool c_sema_set_typedef_specified(c_sema* self, c_decl_specs* ds);
 extern bool c_sema_set_inline_specified(c_sema* self, c_decl_specs* ds);
-extern bool c_sema_set_decl_storage_class(c_sema* self, c_decl_specs* ds, tree_decl_storage_class sc);
+extern bool c_sema_set_decl_storage_class(c_sema* self, c_decl_specs* ds, tree_storage_class sc);
 extern bool c_sema_set_thread_storage_duration(c_sema* self, c_decl_specs* ds);
 extern tree_decl* c_sema_handle_unused_decl_specs(c_sema* self, c_decl_specs* ds);
 

@@ -55,7 +55,7 @@ static inline ssa_function* ssa_get_next_function(const ssa_function* self)
 
 static inline tree_type* ssa_get_function_result_type(const ssa_function* self)
 {
-        return tree_get_function_type_result(
+        return tree_get_func_type_result(
                 tree_get_decl_type(ssa_get_function_entity(self)));
 }
 

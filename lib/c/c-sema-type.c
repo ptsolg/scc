@@ -112,7 +112,7 @@ extern tree_type* c_sema_new_pointer_type(c_sema* self, tree_type_quals quals, t
 
 extern tree_type* c_sema_new_function_type(c_sema* self, tree_type* restype)
 {
-        return tree_new_modified_type(self->context, tree_new_function_type(self->context, restype));
+        return tree_new_modified_type(self->context, tree_new_func_type(self->context, restype));
 }
 
 extern tree_type* c_sema_new_paren_type(c_sema* self, tree_type* next)
@@ -198,7 +198,7 @@ extern bool c_sema_check_function_type(const c_sema* self, const tree_type* t, t
 {
         assert(tree_type_is(t, TTK_FUNCTION));
 
-        tree_type* r = tree_desugar_type(tree_get_function_type_result(t));
+        tree_type* r = tree_desugar_type(tree_get_func_type_result(t));
         if (tree_type_is(r, TTK_ARRAY))
         {
                 c_error_function_returning_array(self->logger, l);
@@ -240,7 +240,7 @@ extern bool c_sema_check_type(const c_sema* self, const tree_type* t, tree_locat
                 {
                         if (!c_sema_check_function_type(self, t, l))
                                 return false;
-                        t = tree_get_function_type_result(t);
+                        t = tree_get_func_type_result(t);
                 }
                 else if (k == TTK_ARRAY)
                 {

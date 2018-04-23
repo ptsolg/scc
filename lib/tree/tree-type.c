@@ -72,22 +72,22 @@ extern tree_type* tree_new_size_type(tree_context* context)
         return tree_new_builtin_type(context, x32 ? TBTK_UINT32 : TBTK_UINT64);
 }
 
-extern tree_type* tree_new_function_type(tree_context* context, tree_type* restype)
+extern tree_type* tree_new_func_type(tree_context* context, tree_type* restype)
 {
         tree_type* t = tree_new_chain_type(context, TTK_FUNCTION, restype, 
-                sizeof(struct _tree_function_type));
+                sizeof(struct _tree_func_type));
         if (!t)
                 return NULL;
 
-        tree_set_function_type_vararg(t, false);
-        tree_set_function_type_cc(t, TCC_DEFAULT);
-        tree_init_array(&_tree_function_type(t)->params);
+        tree_set_func_type_vararg(t, false);
+        tree_set_func_type_cc(t, TCC_DEFAULT);
+        tree_init_array(&_tree_func_type(t)->params);
         return t;
 }
 
-extern errcode tree_add_function_type_param(tree_type* self, tree_context* context, tree_type* param)
+extern errcode tree_add_func_type_param(tree_type* self, tree_context* context, tree_type* param)
 {
-        return tree_array_append_ptr(context, &_tree_function_type(self)->params, param);
+        return tree_array_append_ptr(context, &_tree_func_type(self)->params, param);
 }
 
 extern void tree_init_array_type(tree_type* self, tree_array_kind kind, tree_type* eltype)
@@ -526,19 +526,19 @@ static bool tree_array_types_are_same(const tree_type* a, const tree_type* b)
 
 static tree_type_equality_kind tree_compare_function_type_params(const tree_type* a, const tree_type* b)
 {
-        if (tree_function_type_is_vararg(a) != tree_function_type_is_vararg(b))
+        if (tree_func_type_is_vararg(a) != tree_func_type_is_vararg(b))
                 return TTEK_NEQ;
 
-        size_t n = tree_get_function_type_params_size(a);
-        if (n != tree_get_function_type_params_size(b))
+        size_t n = tree_get_func_type_params_size(a);
+        if (n != tree_get_func_type_params_size(b))
                 return TTEK_NEQ;
 
         tree_type_equality_kind k = TTEK_EQ;
         for (size_t i = 0; i < n; i++)
         {
                 tree_type_equality_kind pk = tree_compare_types(
-                        tree_get_function_type_param(a, i),
-                        tree_get_function_type_param(b, i));
+                        tree_get_func_type_param(a, i),
+                        tree_get_func_type_param(b, i));
                 if (pk == TTEK_NEQ)
                         return TTEK_NEQ;
                 if (pk > k)
@@ -584,8 +584,8 @@ extern tree_type_equality_kind tree_compare_types(const tree_type* a, const tree
                                 break;
                         case TTK_FUNCTION:
                         {
-                                if (tree_function_type_is_transaction_safe(a)
-                                        != tree_function_type_is_transaction_safe(b))
+                                if (tree_func_type_is_transaction_safe(a)
+                                        != tree_func_type_is_transaction_safe(b))
                                 {
                                         return TTEK_DIFFERENT_ATTRIBS;
                                 }
@@ -594,8 +594,8 @@ extern tree_type_equality_kind tree_compare_types(const tree_type* a, const tree
                                         return TTEK_NEQ;
                                 if (ek == TTEK_DIFFERENT_QUALS)
                                         same_quals = false;
-                                a = tree_get_function_type_result(a);
-                                b = tree_get_function_type_result(b);
+                                a = tree_get_func_type_result(a);
+                                b = tree_get_func_type_result(b);
                                 break;
                         }
                         case TTK_DECL:

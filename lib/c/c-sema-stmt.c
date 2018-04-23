@@ -225,8 +225,8 @@ static bool _c_sema_check_iteration_stmt_decl(const c_sema* self, const tree_dec
                 return false;
         }
 
-        tree_decl_storage_class sc = tree_get_decl_storage_class(d);
-        if (sc != TDSC_NONE && sc != TDSC_AUTO && sc != TDSC_REGISTER)
+        tree_storage_class sc = tree_get_decl_storage_class(d);
+        if (sc != TSC_NONE && sc != TSC_AUTO && sc != TSC_REGISTER)
         {
                 c_error_invalid_storage_class_for_loop_decl(self->logger, d);
                 return false;
@@ -300,7 +300,7 @@ extern tree_stmt* c_sema_new_break_stmt(
 extern tree_stmt* c_sema_new_return_stmt(
         c_sema* self, tree_location kw_loc, tree_location semicolon_loc, tree_expr* value)
 {
-        tree_type* restype = tree_get_function_type_result(tree_get_decl_type(self->function));
+        tree_type* restype = tree_get_func_type_result(tree_get_decl_type(self->function));
         if (tree_type_is_void(restype) && value)
         {
                 c_error_return_non_void(self->logger, value);

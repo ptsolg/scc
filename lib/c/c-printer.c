@@ -601,7 +601,7 @@ static void c_type_name_info_init(
 
         const tree_type* it = type;
         if (decl && tree_decl_is(decl, TDK_FUNCTION))
-                it = tree_get_function_type_result(tree_get_decl_type(decl));
+                it = tree_get_func_type_result(tree_get_decl_type(decl));
 
         while (it)
         {
@@ -633,12 +633,12 @@ static void c_print_decl_type(c_printer* self, const tree_type* t, int opts)
 
 static void c_print_function_type_attributes(c_printer* self, const tree_type* t)
 {
-        if (tree_function_type_is_transaction_safe(t))
+        if (tree_func_type_is_transaction_safe(t))
         {
                 c_print_space(self);
                 c_printrw(self, CTK_TRANSACTION_SAFE);
         }
-        tree_calling_convention cc = tree_get_function_type_cc(t);
+        tree_calling_convention cc = tree_get_func_type_cc(t);
         if (cc == TCC_STDCALL)
         {
                 c_print_space(self);
@@ -686,7 +686,7 @@ static void c_print_type_parts(c_printer* self, c_type_name_info* info, int opts
                         if (!tree_decl_is(info->decl, TDK_FUNCTION))
                                 continue;
 
-                        const tree_decl_scope* params = tree_get_function_cparams(info->decl);
+                        const tree_decl_scope* params = tree_get_func_cparams(info->decl);
 
                         c_print_lbracket(self);
                         TREE_FOREACH_DECL_IN_SCOPE(params, param)
@@ -698,7 +698,7 @@ static void c_print_type_parts(c_printer* self, c_type_name_info* info, int opts
                         }
 
                         tree_type* func_type = tree_get_decl_type(info->decl);
-                        if (tree_function_type_is_vararg(func_type))
+                        if (tree_func_type_is_vararg(func_type))
                         {
                                 c_print_comma(self);
                                 c_printrw(self, CTK_ELLIPSIS);
@@ -722,13 +722,13 @@ static void c_print_suffix_endings(c_printer* self, c_type_name_info* info, int 
                 if (k == TTK_FUNCTION)
                 {
                         c_print_lbracket(self);
-                        TREE_FOREACH_FUNCTION_TYPE_PARAM(t, param)
+                        TREE_FOREACH_FUNC_TYPE_PARAM(t, param)
                         {
                                 c_print_type_name(self, *param, CPRINT_OPTS_NONE);
-                                if (param + 1 != tree_get_function_type_params_end(t))
+                                if (param + 1 != tree_get_func_type_params_end(t))
                                         c_print_comma(self);
                         }
-                        if (tree_function_type_is_vararg(t))
+                        if (tree_func_type_is_vararg(t))
                         {
                                 c_print_comma(self);
                                 c_printrw(self, CTK_ELLIPSIS);
@@ -829,22 +829,22 @@ static void c_print_enum_specifier(c_printer* self, const tree_decl* enum_, int 
 
 static void c_print_decl_storage_specs(c_printer* self, const tree_decl* d)
 {
-        tree_decl_storage_class sc = tree_get_decl_storage_class(d);
-        if (sc != TDSC_NONE || sc != TDSC_IMPL_EXTERN)
+        tree_storage_class sc = tree_get_decl_storage_class(d);
+        if (sc != TSC_NONE || sc != TSC_IMPL_EXTERN)
         {
-                if (sc == TDSC_AUTO)
+                if (sc == TSC_AUTO)
                         c_printrw(self, CTK_AUTO);
-                else if (sc == TDSC_REGISTER)
+                else if (sc == TSC_REGISTER)
                         c_printrw(self, CTK_REGISTER);
-                else if (sc == TDSC_EXTERN)
+                else if (sc == TSC_EXTERN)
                         c_printrw(self, CTK_EXTERN);
-                else if (sc == TDSC_STATIC)
+                else if (sc == TSC_STATIC)
                         c_printrw(self, CTK_STATIC);
                 c_print_space(self);
         }
 
-        tree_decl_storage_class sd = tree_get_decl_storage_duration(d);
-        if (sd == TDSD_THREAD)
+        tree_storage_class sd = tree_get_decl_storage_duration(d);
+        if (sd == TSD_THREAD)
         {
                 c_printrw(self, CTK_THREAD_LOCAL);
                 c_print_space(self);
@@ -862,7 +862,7 @@ static void c_print_function(c_printer* self, const tree_decl* f, int opts)
         if (!(opts & CPRINTER_IGNORE_STORAGE_SPECS))
                 c_print_decl_storage_specs(self, f);
 
-        if (tree_function_is_inlined(f))
+        if (tree_func_is_inlined(f))
         {
                 c_printrw(self, CTK_INLINE);
                 c_print_space(self);
@@ -870,7 +870,7 @@ static void c_print_function(c_printer* self, const tree_decl* f, int opts)
 
         _c_print_type_name(self, tree_get_decl_type(f), f, opts);
 
-        const tree_stmt* body = tree_get_function_body(f);
+        const tree_stmt* body = tree_get_func_body(f);
         if (body)
                 c_print_stmt(self, body);
         else if (!(opts & CPRINTER_IGNORE_DECL_ENDING))

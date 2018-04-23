@@ -61,7 +61,7 @@ extern int c_get_operator_precedence(const c_token* self);
 extern int c_get_binop_precedence(tree_binop_kind k);
 extern const char* c_get_binop_string(tree_binop_kind k);
 extern const char* c_get_unop_string(tree_unop_kind k);
-extern const char* c_get_decl_storage_class_string(tree_decl_storage_class sc);
+extern const char* c_get_decl_storage_class_string(tree_storage_class sc);
 extern void c_get_qual_string(tree_type_quals q, char* buf);
 
 extern tree_binop_kind c_token_to_binop(const c_token* self);
@@ -70,7 +70,7 @@ extern bool c_token_is_builtin_type_specifier(const c_token* self);
 extern bool c_token_is_type_specifier(const c_token* self);
 extern tree_type_quals c_token_to_type_qualifier(const c_token* self);
 extern bool c_token_is_type_qualifier(const c_token* self);
-extern tree_decl_storage_class c_token_to_decl_storage_class(const c_token* self);
+extern tree_storage_class c_token_to_decl_storage_class(const c_token* self);
 extern bool c_token_is_decl_storage_class(const c_token* self);
 extern bool c_token_starts_declarator(const c_token* self);
 

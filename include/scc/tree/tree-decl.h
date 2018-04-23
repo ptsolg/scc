@@ -85,22 +85,22 @@ static TREE_INLINE bool tree_decl_scope_is_empty(const tree_decl_scope* self)
 
 typedef enum
 {
-        TDSC_NONE,
-        TDSC_EXTERN,
-        TDSC_IMPL_EXTERN,
-        TDSC_STATIC,
-        TDSC_AUTO,
-        TDSC_REGISTER,
-} tree_decl_storage_class;
+        TSC_NONE,
+        TSC_EXTERN,
+        TSC_IMPL_EXTERN,
+        TSC_STATIC,
+        TSC_AUTO,
+        TSC_REGISTER,
+} tree_storage_class;
 
 typedef enum
 {
-        TDSD_AUTOMATIC,
-        TDSD_THREAD,
-        TDSD_STATIC,
-} tree_decl_storage_duration;
+        TSD_AUTOMATIC,
+        TSD_THREAD,
+        TSD_STATIC,
+} tree_storage_duration;
 
-typedef enum _tree_decl_kind
+typedef enum
 {
         TDK_UNKNOWN,
         TDK_TYPEDEF,
@@ -145,8 +145,8 @@ struct _tree_typed_decl
 struct _tree_value_decl
 {
         struct _tree_typed_decl base;
-        tree_decl_storage_class storage_class;
-        tree_decl_storage_duration storage_duration;
+        tree_storage_class storage_class;
+        tree_storage_duration storage_duration;
 };
 
 struct _tree_typedef_decl
@@ -398,27 +398,27 @@ extern tree_decl* tree_new_value_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
-        tree_decl_storage_class class_,
-        tree_decl_storage_duration duration,
+        tree_storage_class class_,
+        tree_storage_duration duration,
         tree_type* type,
         size_t size);
 
-static TREE_INLINE tree_decl_storage_class tree_get_decl_storage_class(const tree_decl* self)
+static TREE_INLINE tree_storage_class tree_get_decl_storage_class(const tree_decl* self)
 {
         return self->value.storage_class;
 }
 
-static TREE_INLINE tree_decl_storage_duration tree_get_decl_storage_duration(const tree_decl* self)
+static TREE_INLINE tree_storage_duration tree_get_decl_storage_duration(const tree_decl* self)
 {
         return self->value.storage_duration;
 }
 
-static TREE_INLINE void tree_set_decl_storage_class(tree_decl* self, tree_decl_storage_class class_)
+static TREE_INLINE void tree_set_decl_storage_class(tree_decl* self, tree_storage_class class_)
 {
         self->value.storage_class = class_;
 }
 
-static TREE_INLINE void tree_set_decl_storage_duration(tree_decl* self, tree_decl_storage_duration duration)
+static TREE_INLINE void tree_set_decl_storage_duration(tree_decl* self, tree_storage_duration duration)
 {
         self->value.storage_duration = duration;
 }
@@ -508,66 +508,66 @@ static TREE_INLINE const tree_decl_scope* tree_get_enum_cvalues(const tree_decl*
         return &self->enum_decl.values;
 }
 
-extern tree_decl* tree_new_function_decl(
+extern tree_decl* tree_new_func_decl(
         tree_context* context,
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
-        tree_decl_storage_class class_,
+        tree_storage_class class_,
         tree_type* type,
         tree_stmt* body);
 
-static TREE_INLINE bool tree_function_is_inlined(const tree_decl* self)
+static TREE_INLINE bool tree_func_is_inlined(const tree_decl* self)
 {
         return self->func.inlined;
 }
 
-static TREE_INLINE tree_decl_scope* tree_get_function_params(tree_decl* self)
+static TREE_INLINE tree_decl_scope* tree_get_func_params(tree_decl* self)
 {
         return &self->func.params;
 }
 
-static TREE_INLINE const tree_decl_scope* tree_get_function_cparams(const tree_decl* self)
+static TREE_INLINE const tree_decl_scope* tree_get_func_cparams(const tree_decl* self)
 {
         return &self->func.params;
 }
 
-static TREE_INLINE tree_decl_scope* tree_get_function_labels(tree_decl* self)
+static TREE_INLINE tree_decl_scope* tree_get_func_labels(tree_decl* self)
 {
         return &self->func.labels;
 }
 
-static TREE_INLINE const tree_decl_scope* tree_get_function_clabels(const tree_decl* self)
+static TREE_INLINE const tree_decl_scope* tree_get_func_clabels(const tree_decl* self)
 {
         return &self->func.labels;
 }
 
-static TREE_INLINE tree_stmt* tree_get_function_body(const tree_decl* self)
+static TREE_INLINE tree_stmt* tree_get_func_body(const tree_decl* self)
 {
         return self->func.body;
 }
 
-static TREE_INLINE tree_function_builtin_kind tree_get_function_builtin_kind(const tree_decl* self)
+static TREE_INLINE tree_function_builtin_kind tree_get_func_builtin_kind(const tree_decl* self)
 {
         return self->func.builtin_kind;
 }
 
-static TREE_INLINE bool tree_function_is_builtin(const tree_decl* self)
+static TREE_INLINE bool tree_func_is_builtin(const tree_decl* self)
 {
-        return tree_get_function_builtin_kind(self) != TFBK_ORDINARY;
+        return tree_get_func_builtin_kind(self) != TFBK_ORDINARY;
 }
 
-static TREE_INLINE void tree_set_function_inlined(tree_decl* self, bool inlined)
+static TREE_INLINE void tree_set_func_inlined(tree_decl* self, bool inlined)
 {
         self->func.inlined = inlined;
 }
 
-static TREE_INLINE void tree_set_function_body(tree_decl* self, tree_stmt* body)
+static TREE_INLINE void tree_set_func_body(tree_decl* self, tree_stmt* body)
 {
         self->func.body = body;
 }
 
-static TREE_INLINE void tree_set_function_builtin_kind(tree_decl* self, tree_function_builtin_kind kind)
+static TREE_INLINE void tree_set_func_builtin_kind(tree_decl* self, tree_function_builtin_kind kind)
 {
         self->func.builtin_kind = kind;
 }
@@ -577,8 +577,8 @@ extern tree_decl* tree_new_var_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name, 
-        tree_decl_storage_class class_,
-        tree_decl_storage_duration duration,
+        tree_storage_class class_,
+        tree_storage_duration duration,
         tree_type* type,
         tree_expr* init);
 

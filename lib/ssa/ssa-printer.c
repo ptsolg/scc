@@ -268,7 +268,7 @@ static void ssa_print_memorder(ssa_printer* self, ssa_memorder_kind kind)
                 case SMK_RELEASE:
                         ssa_prints(self, "rel");
                         return;
-                case SMK_ACQUIRE_RELEASE:
+                case SMK_ACQ_REL:
                         ssa_prints(self, "acq_rel");
                         return;
                 case SMK_SEQ_CST:

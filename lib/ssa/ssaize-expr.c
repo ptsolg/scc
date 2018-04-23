@@ -330,7 +330,7 @@ static ssa_value* ssaize_intrin_call_expr(ssaizer* self, const tree_expr* expr, 
                 if (!(args[i] = ssaize_expr(self, tree_get_call_arg(expr, i))))
                         return NULL;
 
-        switch (tree_get_function_builtin_kind(intrin))
+        switch (tree_get_func_builtin_kind(intrin))
         {
                 case TFBK_ATOMIC_CMPXCHG_32_WEAK_SEQ_CST:
                         return ssa_build_atomic_cmpxchg(&self->builder,
@@ -358,7 +358,7 @@ extern ssa_value* ssaize_call_expr(ssaizer* self, const tree_expr* expr)
         if (tree_expr_is(lhs_base, TEK_DECL))
         {
                 tree_decl* func = tree_get_decl_expr_entity(lhs_base);
-                if (tree_decl_is(func, TDK_FUNCTION) && tree_function_is_builtin(func))
+                if (tree_decl_is(func, TDK_FUNCTION) && tree_func_is_builtin(func))
                         return ssaize_intrin_call_expr(self, expr, func);
         }
 

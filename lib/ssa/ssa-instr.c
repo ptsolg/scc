@@ -248,7 +248,7 @@ extern bool ssa_call_returns_void(const ssa_instr* self)
         ssa_value* func = ssa_get_called_func(self);
         tree_type* func_type = tree_desugar_type(
                 tree_get_pointer_target(ssa_get_value_type(func)));
-        return tree_type_is_void(tree_get_function_type_result(func_type));
+        return tree_type_is_void(tree_get_func_type_result(func_type));
 }
 
 extern ssa_instr* ssa_new_phi(ssa_context* context, ssa_id id, tree_type* restype)

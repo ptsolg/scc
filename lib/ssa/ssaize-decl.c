@@ -62,7 +62,7 @@ static bool ssaize_function_args(ssaizer* self, ssa_function* func, tree_decl* d
 {
         ssaizer_push_scope(self);
 
-        tree_decl_scope* params = tree_get_function_params(decl);
+        tree_decl_scope* params = tree_get_func_params(decl);
         TREE_FOREACH_DECL_IN_SCOPE(params, it)
         {
                 tree_type* param_type = tree_get_decl_type(it);
@@ -82,7 +82,7 @@ static bool ssaize_function_args(ssaizer* self, ssa_function* func, tree_decl* d
 
 extern bool ssaize_function_decl(ssaizer* self, tree_decl* func)
 {
-        tree_stmt* body = tree_get_function_body(func);
+        tree_stmt* body = tree_get_func_body(func);
         if (!body)
                 return true;
 

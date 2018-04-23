@@ -171,7 +171,7 @@ extern bool c_parse_decl_specs(c_parser* self, c_decl_specs* result)
                         quals |= c_parse_type_qualifier_list_opt(self);
                 else if (c_token_is_decl_storage_class(t))
                 {
-                        tree_decl_storage_class c = c_token_to_decl_storage_class(t);
+                        tree_storage_class c = c_token_to_decl_storage_class(t);
                         if (!c_sema_set_decl_storage_class(self->sema, result, c))
                                 return false;
                         c_parser_consume_token(self);

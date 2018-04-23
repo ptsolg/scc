@@ -300,7 +300,7 @@ typedef enum
         SMK_MONOTONIC,
         SMK_ACQUIRE,
         SMK_RELEASE,
-        SMK_ACQUIRE_RELEASE,
+        SMK_ACQ_REL,
         SMK_SEQ_CST,
 } ssa_memorder_kind;
 

@@ -151,8 +151,8 @@ extern tree_decl* tree_new_value_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
-        tree_decl_storage_class class_,
-        tree_decl_storage_duration duration,
+        tree_storage_class class_,
+        tree_storage_duration duration,
         tree_type* type,
         size_t size)
 {
@@ -221,25 +221,25 @@ extern tree_decl* tree_new_enum_decl(
         return d;
 }
 
-extern tree_decl* tree_new_function_decl(
+extern tree_decl* tree_new_func_decl(
         tree_context* context,
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
-        tree_decl_storage_class class_,
+        tree_storage_class class_,
         tree_type* type,
         tree_stmt* body)
 {
         tree_decl* d = tree_new_value_decl(context,
-                TDK_FUNCTION, scope, loc, name, class_, TDSD_AUTOMATIC, type, sizeof(struct _tree_function_decl));
+                TDK_FUNCTION, scope, loc, name, class_, TSD_AUTOMATIC, type, sizeof(struct _tree_function_decl));
         if (!d)
                 return NULL;
 
-        tree_init_decl_scope(tree_get_function_params(d), context, scope);
-        tree_init_decl_scope(tree_get_function_labels(d), context, NULL);
-        tree_set_function_inlined(d, false);
-        tree_set_function_body(d, body);
-        tree_set_function_builtin_kind(d, TFBK_ORDINARY);
+        tree_init_decl_scope(tree_get_func_params(d), context, scope);
+        tree_init_decl_scope(tree_get_func_labels(d), context, NULL);
+        tree_set_func_inlined(d, false);
+        tree_set_func_body(d, body);
+        tree_set_func_builtin_kind(d, TFBK_ORDINARY);
         return d;
 }
 
@@ -248,8 +248,8 @@ extern tree_decl* tree_new_var_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
-        tree_decl_storage_class class_,
-        tree_decl_storage_duration duration,
+        tree_storage_class class_,
+        tree_storage_duration duration,
         tree_type* type,
         tree_expr* init)
 {
@@ -270,7 +270,7 @@ extern tree_decl* tree_new_param_decl(
         tree_type* type)
 {
         return tree_new_value_decl(context,
-                TDK_PARAM, scope, loc, name, TDSC_NONE, TDSD_AUTOMATIC, type, sizeof(struct _tree_var_decl));
+                TDK_PARAM, scope, loc, name, TSC_NONE, TSD_AUTOMATIC, type, sizeof(struct _tree_var_decl));
 }
 
 extern tree_decl* tree_new_field_decl(
@@ -282,7 +282,7 @@ extern tree_decl* tree_new_field_decl(
         tree_expr* bit_width)
 {
         tree_decl* d = tree_new_value_decl(context,
-                TDK_FIELD, scope, loc, name, TDSC_NONE, TDSD_AUTOMATIC, type, sizeof(struct _tree_field_decl));
+                TDK_FIELD, scope, loc, name, TSC_NONE, TSD_AUTOMATIC, type, sizeof(struct _tree_field_decl));
         if (!d)
                 return NULL;
 
@@ -318,7 +318,7 @@ extern tree_decl* tree_new_indirect_field_decl(
         tree_decl* anon_record)
 {
         tree_decl* d = tree_new_value_decl(context, TDK_INDIRECT_FIELD, scope, loc, name, 
-                TDSC_NONE, TDSD_AUTOMATIC, type, sizeof(struct _tree_indirect_field_decl));
+                TSC_NONE, TSD_AUTOMATIC, type, sizeof(struct _tree_indirect_field_decl));
         if (!d)
                 return NULL;
 
@@ -391,11 +391,11 @@ extern bool tree_decls_have_same_name(const tree_decl* a, const tree_decl* b)
 
 extern bool tree_decls_have_same_linkage(const tree_decl* a, const tree_decl* b)
 {
-        tree_decl_storage_class asc = tree_get_decl_storage_class(a);
-        tree_decl_storage_class bsc = tree_get_decl_storage_class(b);
-        if (asc == TDSC_EXTERN && bsc == TDSC_IMPL_EXTERN)
+        tree_storage_class asc = tree_get_decl_storage_class(a);
+        tree_storage_class bsc = tree_get_decl_storage_class(b);
+        if (asc == TSC_EXTERN && bsc == TSC_IMPL_EXTERN)
                 return true;
-        if (bsc == TDSC_EXTERN && asc == TDSC_IMPL_EXTERN)
+        if (bsc == TSC_EXTERN && asc == TSC_IMPL_EXTERN)
                 return true;
         return asc == bsc;
 }

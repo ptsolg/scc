@@ -252,101 +252,101 @@ typedef enum
         TCC_STDCALL,
 } tree_calling_convention;
 
-struct _tree_function_type
+struct _tree_func_type
 {
         struct _tree_chain_type base;
         tree_array params;
 };
 
-extern tree_type* tree_new_function_type(tree_context* context, tree_type* restype);
-extern errcode tree_add_function_type_param(tree_type* self, tree_context* context, tree_type* param);
+extern tree_type* tree_new_func_type(tree_context* context, tree_type* restype);
+extern errcode tree_add_func_type_param(tree_type* self, tree_context* context, tree_type* param);
 
-static TREE_INLINE struct _tree_function_type* _tree_function_type(tree_type* self)
+static TREE_INLINE struct _tree_func_type* _tree_func_type(tree_type* self)
 {
         assert(tree_type_is(self, TTK_FUNCTION));
-        return (struct _tree_function_type*)_tree_chain_type(self);
+        return (struct _tree_func_type*)_tree_chain_type(self);
 }
 
-static TREE_INLINE const struct _tree_function_type* _tree_function_type_c(const tree_type* self)
+static TREE_INLINE const struct _tree_func_type* _tree_func_type_c(const tree_type* self)
 {
         assert(tree_type_is(self, TTK_FUNCTION));
-        return (const struct _tree_function_type*)_tree_chain_type_c(self);
+        return (const struct _tree_func_type*)_tree_chain_type_c(self);
 }
 
-static TREE_INLINE tree_type* tree_get_function_type_result(const tree_type* self)
+static TREE_INLINE tree_type* tree_get_func_type_result(const tree_type* self)
 {
         assert(tree_type_is(self, TTK_FUNCTION));
         return tree_get_chain_type_next(self);
 }
 
-static TREE_INLINE tree_type** tree_get_function_type_params_begin(const tree_type* self)
+static TREE_INLINE tree_type** tree_get_func_type_params_begin(const tree_type* self)
 {
-        return (tree_type**)_tree_function_type_c(self)->params.data;
+        return (tree_type**)_tree_func_type_c(self)->params.data;
 }
 
-static TREE_INLINE size_t tree_get_function_type_params_size(const tree_type* self)
+static TREE_INLINE size_t tree_get_func_type_params_size(const tree_type* self)
 {
-        return _tree_function_type_c(self)->params.size;
+        return _tree_func_type_c(self)->params.size;
 }
 
-static TREE_INLINE tree_type** tree_get_function_type_params_end(const tree_type* self)
+static TREE_INLINE tree_type** tree_get_func_type_params_end(const tree_type* self)
 {
-        return tree_get_function_type_params_begin(self) + tree_get_function_type_params_size(self);
+        return tree_get_func_type_params_begin(self) + tree_get_func_type_params_size(self);
 }
 
-static TREE_INLINE tree_type* tree_get_function_type_param(const tree_type* self, size_t n)
+static TREE_INLINE tree_type* tree_get_func_type_param(const tree_type* self, size_t n)
 {
-        assert(n < tree_get_function_type_params_size(self));
-        return tree_get_function_type_params_begin(self)[n];
+        assert(n < tree_get_func_type_params_size(self));
+        return tree_get_func_type_params_begin(self)[n];
 }
 
-static TREE_INLINE bool tree_function_type_is_vararg(const tree_type* self)
+static TREE_INLINE bool tree_func_type_is_vararg(const tree_type* self)
 {
         assert(tree_type_is(self, TTK_FUNCTION));
         return _tree_type_base_c(self)->function_type_bits.vararg;
 }
 
-static TREE_INLINE tree_calling_convention tree_get_function_type_cc(const tree_type* self)
+static TREE_INLINE tree_calling_convention tree_get_func_type_cc(const tree_type* self)
 {
         assert(tree_type_is(self, TTK_FUNCTION));
         return _tree_type_base_c(self)->function_type_bits.cc;
 }
 
-static TREE_INLINE bool tree_function_type_is_transaction_safe(const tree_type* self)
+static TREE_INLINE bool tree_func_type_is_transaction_safe(const tree_type* self)
 {
         assert(tree_type_is(self, TTK_FUNCTION));
         return tree_type_is_modified(self)
                 ? _tree_modified_type_c(self)->transaction_safe : false;
 }
 
-static TREE_INLINE void tree_set_function_type_result(tree_type* self, tree_type* restype)
+static TREE_INLINE void tree_set_func_type_result(tree_type* self, tree_type* restype)
 {
         assert(tree_type_is(self, TTK_FUNCTION));
         tree_set_chain_type_next(self, restype);
 }
 
-static TREE_INLINE void tree_set_function_type_vararg(tree_type* self, bool vararg)
+static TREE_INLINE void tree_set_func_type_vararg(tree_type* self, bool vararg)
 {
         assert(tree_type_is(self, TTK_FUNCTION));
         _tree_type_base(self)->function_type_bits.vararg = vararg;
 }
 
-static TREE_INLINE void tree_set_function_type_cc(tree_type* self, tree_calling_convention cc)
+static TREE_INLINE void tree_set_func_type_cc(tree_type* self, tree_calling_convention cc)
 {
         assert(tree_type_is(self, TTK_FUNCTION));
         _tree_type_base(self)->function_type_bits.cc = cc;
 }
 
-static TREE_INLINE void tree_set_function_type_transaction_safe(tree_type* self, bool safe)
+static TREE_INLINE void tree_set_func_type_transaction_safe(tree_type* self, bool safe)
 {
         assert(tree_type_is_modified(self));
         assert(tree_type_is(self, TTK_FUNCTION));
         _tree_modified_type(self)->transaction_safe = safe;
 }
 
-#define TREE_FOREACH_FUNCTION_TYPE_PARAM(PFUNC, ITNAME) \
-        for (tree_type** ITNAME = tree_get_function_type_params_begin(PFUNC); \
-                ITNAME != tree_get_function_type_params_end(PFUNC); ITNAME++)
+#define TREE_FOREACH_FUNC_TYPE_PARAM(PFUNC, ITNAME) \
+        for (tree_type** ITNAME = tree_get_func_type_params_begin(PFUNC); \
+                ITNAME != tree_get_func_type_params_end(PFUNC); ITNAME++)
 
 typedef enum _tree_array_kind
 {
@@ -528,7 +528,7 @@ typedef struct _tree_type
         union
         {
                 struct _tree_builtin_type builtin;
-                struct _tree_function_type func;
+                struct _tree_func_type func;
                 struct _tree_pointer_type pointer;
                 struct _tree_array_type array;
                 struct _tree_decl_type decl;

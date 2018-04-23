@@ -171,8 +171,8 @@ static bool c_sema_check_attribute_discartion(
         c_sema* self, tree_type* lt, tree_type* rt, c_assignment_conversion_result* r)
 {
         if (tree_type_is(lt, TTK_FUNCTION) && tree_type_is(rt, TTK_FUNCTION)
-                && tree_function_type_is_transaction_safe(lt)
-                && !tree_function_type_is_transaction_safe(rt))
+                && tree_func_type_is_transaction_safe(lt)
+                && !tree_func_type_is_transaction_safe(rt))
         {
                 r->kind = CACRK_RHS_TRANSACTION_UNSAFE;
                 return false;

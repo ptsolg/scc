@@ -228,15 +228,15 @@ extern const char* c_get_unop_string(tree_unop_kind k)
         return c_get_unop_info(k)->string;
 }
 
-extern const char* c_get_decl_storage_class_string(tree_decl_storage_class sc)
+extern const char* c_get_decl_storage_class_string(tree_storage_class sc)
 {
-        if (sc == TDSC_NONE || sc == TDSC_IMPL_EXTERN)
+        if (sc == TSC_NONE || sc == TSC_IMPL_EXTERN)
                 return "";
-        else if (sc == TDSC_EXTERN)
+        else if (sc == TSC_EXTERN)
                 return "extern";
-        else if (sc == TDSC_REGISTER)
+        else if (sc == TSC_REGISTER)
                 return "register";
-        else if (sc == TDSC_STATIC)
+        else if (sc == TSC_STATIC)
                 return "static";
         return "";
 }
@@ -356,20 +356,20 @@ extern bool c_token_is_type_qualifier(const c_token* self)
         return c_token_to_type_qualifier(self) != TTQ_UNQUALIFIED;
 }
 
-extern tree_decl_storage_class c_token_to_decl_storage_class(const c_token* self)
+extern tree_storage_class c_token_to_decl_storage_class(const c_token* self)
 {
         switch (c_token_get_kind(self))
         {
-                case CTK_EXTERN:   return TDSC_EXTERN;
-                case CTK_STATIC:   return TDSC_STATIC;
-                case CTK_REGISTER: return TDSC_REGISTER;
-                default:           return TDSC_NONE;
+                case CTK_EXTERN:   return TSC_EXTERN;
+                case CTK_STATIC:   return TSC_STATIC;
+                case CTK_REGISTER: return TSC_REGISTER;
+                default:           return TSC_NONE;
         }
 }
 
 extern bool c_token_is_decl_storage_class(const c_token* self)
 {
-        return c_token_to_decl_storage_class(self) != TDSC_NONE;
+        return c_token_to_decl_storage_class(self) != TSC_NONE;
 }
 
 extern bool c_token_starts_declarator(const c_token* self)

@@ -801,7 +801,7 @@ extern void c_error_non_variable_decl_in_for_loop(c_logger* self, const tree_dec
 
 extern void c_error_invalid_storage_class_for_loop_decl(c_logger* self, const tree_decl* decl)
 {
-        tree_decl_storage_class sc = tree_get_decl_storage_class(decl);
+        tree_storage_class sc = tree_get_decl_storage_class(decl);
         c_error(self, CES_ERROR,
                 tree_get_decl_loc_begin(decl),
                 "declaration of '%s' variable '%s' in 'for' loop initial declaration",

@@ -300,7 +300,7 @@ extern tree_expr* c_sema_new_call_expr(
                 return NULL;
 
         t = tree_desugar_type(tree_get_pointer_target(tree_desugar_ctype(t)));
-        tree_type* restype = tree_get_function_type_result(t);
+        tree_type* restype = tree_get_func_type_result(t);
         if (!c_sema_check_object_type(self, loc, restype))
                 return NULL;
 
@@ -319,7 +319,7 @@ extern tree_expr* c_sema_check_call_expr_args(c_sema* self, tree_expr* call)
 
         tree_expr* lhs = tree_get_call_lhs(call);
         tree_type* ft = tree_desugar_type(tree_get_pointer_target(tree_get_expr_type(lhs)));
-        size_t num_params = tree_get_function_type_params_size(ft);
+        size_t num_params = tree_get_func_type_params_size(ft);
         size_t num_args = tree_get_call_args_size(call);
 
         if (num_args < num_params)
@@ -327,7 +327,7 @@ extern tree_expr* c_sema_check_call_expr_args(c_sema* self, tree_expr* call)
                 c_error_too_few_arguments(self->logger, lhs);
                 return NULL;
         }
-        if (!tree_function_type_is_vararg(ft) && num_args > num_params)
+        if (!tree_func_type_is_vararg(ft) && num_args > num_params)
         {
                 c_error_too_many_arguments(self->logger, lhs);
                 return NULL;
@@ -337,7 +337,7 @@ extern tree_expr* c_sema_check_call_expr_args(c_sema* self, tree_expr* call)
         for (; i < num_params; i++)
         {
                 tree_expr** parg = tree_get_call_args_begin(call) + i;
-                tree_type* arg_type = tree_get_function_type_param(ft, i);
+                tree_type* arg_type = tree_get_func_type_param(ft, i);
                 if (!c_sema_check_call_argument(self, arg_type, parg, i + 1))
                         return NULL;
         }

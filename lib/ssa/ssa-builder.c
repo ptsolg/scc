@@ -202,7 +202,7 @@ extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const ssa_a
         assert(tree_type_is(func_type, TTK_FUNCTION));
 
         ssa_instr* call = ssa_new_call(self->context,
-                ssa_builder_gen_uid(self), tree_get_function_type_result(func_type), func);
+                ssa_builder_gen_uid(self), tree_get_func_type_result(func_type), func);
         if (!call)
                 return NULL;
 

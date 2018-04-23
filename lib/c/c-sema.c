@@ -142,7 +142,7 @@ static void c_sema_init_builtin_function(c_sema* self, tree_function_builtin_kin
         if (!func)
                 goto error;
 
-        tree_set_function_builtin_kind(func, kind);
+        tree_set_func_builtin_kind(func, kind);
         tree_set_decl_implicit(func, true);
         return;
 
@@ -211,9 +211,9 @@ extern void c_sema_exit_decl_scope(c_sema* self)
 
 extern void c_sema_enter_function(c_sema* self, tree_decl* func)
 {
-        self->labels = tree_get_function_labels(func);
+        self->labels = tree_get_func_labels(func);
         self->function = func;
-        c_sema_enter_decl_scope(self, tree_get_function_params(func));
+        c_sema_enter_decl_scope(self, tree_get_func_params(func));
 }
 
 extern void c_sema_exit_function(c_sema* self)
@@ -322,7 +322,7 @@ extern bool c_sema_in_atomic_block(const c_sema* self)
 extern bool c_sema_in_transaction_safe_function(const c_sema* self)
 {
         return self->function
-                && tree_function_type_is_transaction_safe(
+                && tree_func_type_is_transaction_safe(
                         tree_desugar_type(tree_get_decl_type(self->function)));
 }
 
