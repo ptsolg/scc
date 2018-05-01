@@ -584,8 +584,8 @@ extern tree_type_equality_kind tree_compare_types(const tree_type* a, const tree
                                 break;
                         case TTK_FUNCTION:
                         {
-                                if (tree_func_type_is_transaction_safe(a)
-                                        != tree_func_type_is_transaction_safe(b))
+                                if (tree_func_type_is_transaction_safe(a) != tree_func_type_is_transaction_safe(b)
+                                        || tree_get_func_type_cc(a) != tree_get_func_type_cc(b))
                                 {
                                         return TTEK_DIFFERENT_ATTRIBS;
                                 }
