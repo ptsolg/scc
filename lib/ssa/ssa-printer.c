@@ -3,7 +3,6 @@
 #include "scc/ssa/ssa-instr.h"
 #include "scc/ssa/ssa-value.h"
 #include "scc/ssa/ssa-context.h"
-#include "scc/ssa/ssa-function.h"
 #include "scc/ssa/ssa-module.h"
 #include "scc/tree/tree-context.h"
 #include <stdio.h>
@@ -87,7 +86,7 @@ static inline void ssa_print_value_ref(ssa_printer* self, const ssa_value* val)
                 return;
 
         ssa_value_kind k = ssa_get_value_kind(val);
-        if (k == SVK_VARIABLE || k == SVK_PARAM)
+        if (k == SVK_LOCAL_VAR || k == SVK_PARAM)
         {
                 ssa_printc(self, '$');
                 ssa_print_id(self, ssa_get_value_id(val));
@@ -103,10 +102,12 @@ static inline void ssa_print_value_ref(ssa_printer* self, const ssa_value* val)
                 avalue_print(ssa_get_constant_cvalue(val), buf, 64, 4);
                 ssa_prints(self, buf);
         }
-        else if (k == SVK_DECL)
+        else if (k == SVK_FUNCTION || k == SVK_GLOBAL_VAR)
         {
                 ssa_printc(self, '%');
-                tree_decl* entity = ssa_get_decl_entity(val);
+                tree_decl* entity = k == SVK_FUNCTION 
+                        ? ssa_get_function_entity(val)
+                        : ssa_get_global_var_entity(val);
                 ssa_prints(self, tree_get_id_string(ssa_get_tree(self->context),
                         tree_get_decl_name(entity)));
         }
@@ -357,9 +358,12 @@ extern void ssa_print_block(ssa_printer* self, const ssa_block* block)
         ssa_print_endl(self);
 }
 
-extern void ssa_print_function(ssa_printer* self, const ssa_function* func)
+extern void ssa_print_function(ssa_printer* self, const ssa_value* func)
 {
         tree_decl* entity = ssa_get_function_entity(func);
+        if (!tree_get_func_body(entity))
+                return;
+
         const char* name = tree_get_id_string(
                 ssa_get_tree(self->context), tree_get_decl_name(entity));
         ssa_printf(self, "; Definition for %s", name);
@@ -371,6 +375,7 @@ extern void ssa_print_function(ssa_printer* self, const ssa_function* func)
 
 extern void ssa_print_module(ssa_printer* self, const ssa_module* module)
 {
-        SSA_FOREACH_MODULE_DEF(module, def)
-                ssa_print_function(self, def);
+        SSA_FOREACH_MODULE_GLOBAL(module, it, end)
+                if (ssa_get_value_kind(*it) == SVK_FUNCTION)
+                        ssa_print_function(self, *it);
 }

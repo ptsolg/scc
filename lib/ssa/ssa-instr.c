@@ -13,7 +13,7 @@ extern ssa_instr* ssa_new_instr(
         if (!instr)
                 return NULL;
 
-        ssa_init_variable(ssa_get_instr_var(instr), id, type);
+        ssa_init_local_var(ssa_get_instr_var(instr), id, type);
         ssa_set_instr_kind(instr, kind);
 
         ssa_array* ops = &_ssa_instr_base(instr)->_operands;

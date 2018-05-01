@@ -13,7 +13,6 @@ extern "C" {
 #include "ssa-builder.h"
 #include "ssa-common.h"
 #include "ssa-context.h"
-#include "ssa-function.h"
 #include "ssa-instr.h"
 #include "ssaizer.h"
 #include "ssa-module.h"

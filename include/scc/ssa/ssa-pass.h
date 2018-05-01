@@ -7,7 +7,6 @@ typedef struct _ssa_pass ssa_pass;
 typedef struct _ssa_module ssa_module;
 typedef struct _ssa_instr ssa_instr;
 typedef struct _ssa_block ssa_block;
-typedef struct _ssa_function ssa_function;
 typedef struct _ssa_value ssa_value;
 
 typedef enum _ssa_pass_kind
@@ -23,7 +22,7 @@ typedef struct _ssa_pass
         ssa_pass_kind kind;
         union
         {
-                void(*run_on_function)(ssa_pass*, ssa_function*);
+                void(*run_on_function)(ssa_pass*, ssa_value*);
                 void(*run_on_module)(ssa_pass*, ssa_module*);
                 void* run_fn;
         };
@@ -31,7 +30,7 @@ typedef struct _ssa_pass
 
 extern void ssa_init_pass(ssa_pass* self, ssa_pass_kind kind, void* run_fn);
 
-extern void ssa_run_pass_on_function(ssa_pass* self, ssa_function* function);
+extern void ssa_run_pass_on_function(ssa_pass* self, ssa_value* function);
 extern void ssa_run_pass_on_module(ssa_pass* self, ssa_module* module);
 
 typedef struct _ssa_pass_manager

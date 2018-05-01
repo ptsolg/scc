@@ -1,7 +1,7 @@
 #include "scc/ssa/ssa-opt.h"
 #include "scc/ssa/ssa-context.h"
 #include "scc/ssa/ssa-module.h"
-#include "scc/ssa/ssa-function.h"
+#include "scc/ssa/ssa-block.h"
 
 static op_result ssa_eval_cmp(cmp_result r1, cmp_result r2, avalue* l, avalue* r)
 {
@@ -95,7 +95,7 @@ static void ssa_constant_fold_instr(ssa_context* context, ssa_instr* instr)
         ssa_remove_instr(instr);
 }
 
-extern void ssa_fold_constants(ssa_context* context, ssa_function* function)
+extern void ssa_fold_constants(ssa_context* context, ssa_value* function)
 {
         SSA_FOREACH_FUNCTION_BLOCK(function, block)
         {
@@ -111,7 +111,7 @@ extern void ssa_fold_constants(ssa_context* context, ssa_function* function)
         }
 }
 
-static void ssa_constant_fold_conditional_jumps(ssa_context* context, ssa_function* func)
+static void ssa_constant_fold_conditional_jumps(ssa_context* context, ssa_value* func)
 {
         SSA_FOREACH_FUNCTION_BLOCK(func, block)
         {
@@ -136,7 +136,7 @@ static void ssa_constant_fold_conditional_jumps(ssa_context* context, ssa_functi
         }
 }
 
-static void ssa_remove_unused_blocks(ssa_function* func)
+static void ssa_remove_unused_blocks(ssa_value* func)
 {
         ssa_block* it = ssa_get_function_blocks_begin(func);
         ssa_block* end = ssa_get_function_blocks_end(func);
@@ -153,13 +153,13 @@ static void ssa_remove_unused_blocks(ssa_function* func)
         }
 }
 
-extern void ssa_eliminate_dead_code(ssa_context* context, ssa_function* function)
+extern void ssa_eliminate_dead_code(ssa_context* context, ssa_value* function)
 {
         ssa_constant_fold_conditional_jumps(context, function);
         ssa_remove_unused_blocks(function);
 }
 
-static void ssa_run_constant_fold_pass(ssa_pass* pass, ssa_function* function)
+static void ssa_run_constant_fold_pass(ssa_pass* pass, ssa_value* function)
 {
         ssa_constant_fold_pass* self = (ssa_constant_fold_pass*)(
                 (char*)pass - offsetof(ssa_constant_fold_pass, pass));
@@ -172,7 +172,7 @@ extern void ssa_init_constant_fold_pass(ssa_constant_fold_pass* self, ssa_contex
         self->context = context;
 }
 
-static void ssa_run_dead_code_elimination_pass(ssa_pass* pass, ssa_function* function)
+static void ssa_run_dead_code_elimination_pass(ssa_pass* pass, ssa_value* function)
 {
         ssa_dead_code_elimination_pass* self = (ssa_dead_code_elimination_pass*)(
                 (char*)pass - offsetof(ssa_dead_code_elimination_pass, pass));
@@ -210,6 +210,7 @@ extern void ssa_optimize(ssa_context* context,
 
         ssa_pass_manager_run(&pm, module);
 
-        SSA_FOREACH_MODULE_DEF(module, func)
-                ssa_fix_function_content_uids(func);
+        SSA_FOREACH_MODULE_GLOBAL(module, it, end)
+                if (ssa_get_value_kind(*it) == SVK_FUNCTION)
+                        ssa_fix_function_content_uids(*it);
 }

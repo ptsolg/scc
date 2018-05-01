@@ -4,8 +4,8 @@
 #include "ssa-instr.h"
 #include "ssa-pass.h"
 
-extern void ssa_fold_constants(ssa_context* context, ssa_function* function);
-extern void ssa_eliminate_dead_code(ssa_context* context, ssa_function* function);
+extern void ssa_fold_constants(ssa_context* context, ssa_value* function);
+extern void ssa_eliminate_dead_code(ssa_context* context, ssa_value* function);
 
 typedef struct
 {

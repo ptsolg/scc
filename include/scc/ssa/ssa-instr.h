@@ -42,7 +42,7 @@ struct _ssa_instr_base
 {
         list_node _node;
         ssa_instr_kind _kind;
-        struct _ssa_variable _val;
+        struct _ssa_local_var _val;
         ssa_array _operands;
 };
 
