@@ -230,7 +230,9 @@ extern tree_type* c_sema_assignment_conversion(
 {
         assert(r);
 
+        lt = tree_desugar_type(lt);
         tree_type* rt = c_sema_unary_conversion(self, rhs);
+
         if (tree_type_is_arithmetic(lt))
         {
                 if (!tree_type_is_arithmetic(rt))
