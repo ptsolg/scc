@@ -18,6 +18,11 @@
 #endif
 #define ASM_EXT "s"
 
+static errcode cc_handle_pragma_link(void* cc, const char* lib)
+{
+        return cc_add_lib(cc, lib);
+}
+
 typedef struct
 {
         tree_target_info target;
@@ -30,9 +35,14 @@ static void cc_context_init(cc_context* self, cc_instance* cc, jmp_buf on_fatal_
 {
         tree_init_target_info(&self->target,
                 cc->opts.target == CTK_X86_32 ? TTAK_X86_32 : TTAK_X86_64);
+
         tree_init(&self->tree, &self->target);
+
         c_context_init(&self->c, &self->tree, &cc->input.source_lookup, on_fatal_error);
+        self->c.pragma_handlers.data = cc;
+        self->c.pragma_handlers.on_link = cc_handle_pragma_link;
         self->c.lang_opts.ext.tm_enabled = cc->opts.ext.enable_tm;
+
         ssa_init(&self->ssa, &self->tree, on_fatal_error);
 }
 
