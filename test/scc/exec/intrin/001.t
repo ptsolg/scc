@@ -13,7 +13,6 @@ void entry(void* data)
 
 int main()
 {
-	c = 0;
 	struct thread ths[NTHREADS];
 
 	for (int i = 0; i < NTHREADS; i++)

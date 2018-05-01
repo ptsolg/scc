@@ -39,7 +39,6 @@ void entry(void* data)
 
 int main()
 {
-	c = 0;
 	mutex_init(&m);
 
 	struct thread ths[NTHREADS];

@@ -7,7 +7,6 @@ _Thread_local int c;
 
 void entry(void* data)
 {
-	c = 0;
 	for (int i = 0; i < NITER; i++)
 		c++;
 	*(int*)data = c;
