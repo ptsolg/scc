@@ -7,37 +7,31 @@
 #include <stdio.h>
 #include <ctype.h> // isprint
 
-typedef struct
-{
-        uint id : 31;
-        bool declared : 1;
-} record_info;
-
-#define HTAB_TYPE record_info_map
-#define HTAB_IMPL_FN_GENERATOR(NAME) _record_info_map_##NAME
+#define HTAB_TYPE recmap
+#define HTAB_IMPL_FN_GENERATOR(NAME) _recmap_##NAME
 #define HTAB_KEY_TYPE const void*
 #define HTAB_DELETED_KEY ((const void*)0)
 #define HTAB_EMPTY_KEY ((const void*)1)
-#define HTAB_VALUE_TYPE record_info
-#define HTAB_INIT record_info_map_init
-#define HTAB_INIT_ALLOC record_info_map_init_alloc
-#define HTAB_DISPOSE record_info_map_dispose
-#define HTAB_GET_SIZE record_info_map_size
-#define HTAB_GET_ALLOCATOR record_info_map_alloc
-#define HTAB_RESERVE record_info_map_reserve
-#define HTAB_CLEAR record_info_map_clear
-#define HTAB_ERASE record_info_map_erase
-#define HTAB_GROW record_info_map_grow
-#define HTAB_INSERT record_info_map_insert
-#define HTAB_FIND record_info_map_find
+#define HTAB_VALUE_TYPE ssa_id
+#define HTAB_INIT recmap_init
+#define HTAB_INIT_ALLOC recmap_init_alloc
+#define HTAB_DISPOSE recmap_dispose
+#define HTAB_GET_SIZE recmap_size
+#define HTAB_GET_ALLOCATOR recmap_alloc
+#define HTAB_RESERVE recmap_reserve
+#define HTAB_CLEAR recmap_clear
+#define HTAB_ERASE recmap_erase
+#define HTAB_GROW recmap_grow
+#define HTAB_INSERT recmap_insert
+#define HTAB_FIND recmap_find
 
-#define HTAB_ITERATOR_TYPE record_info_map_iter
-#define HTAB_ITERATOR_GET_KEY record_info_map_iter_key
-#define HTAB_ITERATOR_ADVANCE record_info_map_iter_advance
-#define HTAB_ITERATOR_INIT record_info_map_iter_init
-#define HTAB_ITERATOR_CREATE record_info_map_iter_create
-#define HTAB_ITERATOR_IS_VALID record_info_map_iter_valid
-#define HTAB_ITERATOR_GET_VALUE record_info_map_iter_value
+#define HTAB_ITERATOR_TYPE recmap_iter
+#define HTAB_ITERATOR_GET_KEY recmap_iter_key
+#define HTAB_ITERATOR_ADVANCE recmap_iter_advance
+#define HTAB_ITERATOR_INIT recmap_iter_init
+#define HTAB_ITERATOR_CREATE recmap_iter_create
+#define HTAB_ITERATOR_IS_VALID recmap_iter_valid
+#define HTAB_ITERATOR_GET_VALUE recmap_iter_value
 
 #include "scc/core/htab.h"
 
@@ -70,10 +64,10 @@ extern void llvm_printer_init(llvm_printer* self, write_cb* write, ssa_context* 
 {
         self->ssa = ssa;
         self->tree = ssa_get_tree(ssa);
-        self->tmp_uid = 0;
+        self->tmp_id = 0;
         self->indent_lvl = 0;
-        self->record_uid = 0;
-        record_info_map_init_alloc(&self->recs_info, ssa_get_alloc(ssa));
+        self->rec_id = 0;
+        recmap_init_alloc(&self->rec_to_id, ssa_get_alloc(ssa));
         writebuf_init(&self->buf, write);
 }
 
@@ -158,20 +152,20 @@ static void llvm_printer_emit_pointer_type(llvm_printer* self, const tree_type* 
 static void llvm_printer_emit_function_type_params(llvm_printer* self, const tree_type* type)
 {
         llvm_printc(self, '(');
-        TREE_FOREACH_FUNCTION_TYPE_PARAM(type, it)
+        TREE_FOREACH_FUNC_TYPE_PARAM(type, it)
         {
                 llvm_printer_emit_type(self, *it);
-                if (it + 1 != tree_get_function_type_params_end(type))
+                if (it + 1 != tree_get_func_type_params_end(type))
                         llvm_prints(self, ", ");
         }
-        if (tree_function_type_is_vararg(type))
+        if (tree_func_type_is_vararg(type))
                 llvm_prints(self, ", ...");
         llvm_printc(self, ')');
 }
 
 static void llvm_printer_emit_function_type(llvm_printer* self, const tree_type* type)
 {
-        llvm_printer_emit_type(self, tree_get_function_type_result(type));
+        llvm_printer_emit_type(self, tree_get_func_type_result(type));
         llvm_print_wspace(self);
         llvm_printer_emit_function_type_params(self, type);
 }
@@ -186,24 +180,12 @@ static void llvm_printer_emit_array_type(llvm_printer* self, const tree_type* ty
         llvm_printc(self, ']');
 }
 
-static void llvm_printer_emit_record_type(llvm_printer* self, const tree_type* type, bool declared)
+static void llvm_printer_emit_record_decl_name(llvm_printer* self, const tree_decl* rec)
 {
-        uint id;
-        record_info_map_iter it;
-        if (!record_info_map_find(&self->recs_info, type, &it))
-        {
-                id = self->record_uid++;
-                record_info info = { id, declared };
-                record_info_map_insert(&self->recs_info, type, info);
-        }
-        else
-        {
-                record_info* info = record_info_map_iter_value(&it);
-                id = info->id;
-                info->declared = declared;
-        }
-
-        llvm_printf(self, "%%record.%d", id);
+        recmap_iter it;
+        bool found = recmap_find(&self->rec_to_id, rec, &it);
+        assert(found && "Id for record was not found.");
+        llvm_printf(self, "%%record.%d", *recmap_iter_value(&it));
 }
 
 extern void llvm_printer_emit_type(llvm_printer* self, const tree_type* type)
@@ -220,7 +202,7 @@ extern void llvm_printer_emit_type(llvm_printer* self, const tree_type* type)
         else if (k == TTK_ARRAY)
                 llvm_printer_emit_array_type(self, type);
         else if (tree_declared_type_is(type, TDK_RECORD))
-                llvm_printer_emit_record_type(self, type, false);
+                llvm_printer_emit_record_decl_name(self, tree_get_decl_type_entity(type));
         
 }
 
@@ -264,13 +246,17 @@ extern void llvm_printer_emit_value(
         }
 
         ssa_value_kind k = ssa_get_value_kind(value);
-        if (k == SVK_VARIABLE || k == SVK_PARAM)
+        if (k == SVK_LOCAL_VAR || k == SVK_PARAM)
                 llvm_printf(self, "%%%u", ssa_get_value_id(value));
         else if (k == SVK_CONSTANT)
                 llvm_printer_emit_constant(self, value);
-        else if (k == SVK_DECL)
-                llvm_printf(self, "@%s", tree_get_id_string(self->tree,
-                        tree_get_decl_name(ssa_get_decl_entity(value))));
+        else if (k == SVK_GLOBAL_VAR || k == SVK_FUNCTION)
+        {
+                tree_decl* entity = k == SVK_FUNCTION
+                        ? ssa_get_function_entity(value)
+                        : ssa_get_global_var_entity(value);
+                llvm_printf(self, "@%s", tree_get_id_string(self->tree, tree_get_decl_name(entity)));
+        }
         else if (k == SVK_STRING)
                 llvm_printf(self, "@.str.%u", ssa_get_value_id(value));
         else if (k == SVK_LABEL)
@@ -392,14 +378,27 @@ static void llvm_printer_emit_alloca_instr(llvm_printer* self, const ssa_instr* 
         llvm_printer_emit_type(self, ssa_get_allocated_type(instr));
 }
 
+static void llvm_printer_emit_volatile(llvm_printer* self, const tree_type* type)
+{
+        type = tree_desugar_type(type);
+        if (!tree_type_is(type, TTK_POINTER))
+                return;
+
+        type = tree_get_pointer_target(type);
+        if (tree_get_type_quals(type) & TTQ_VOLATILE)
+                llvm_prints(self, "volatile ");
+}
+
 static void llvm_printer_emit_load_instr(llvm_printer* self, const ssa_instr* instr)
 {
         const ssa_value* result = ssa_get_instr_cvar(instr);
         llvm_printer_emit_value(self, result, false);
         llvm_prints(self, " = load ");
+        ssa_value* from = ssa_get_instr_operand_value(instr, 0);
+        llvm_printer_emit_volatile(self, ssa_get_value_type(from));
         llvm_printer_emit_type(self, ssa_get_value_type(result));
         llvm_prints(self, ", ");
-        llvm_printer_emit_value(self, ssa_get_instr_operand_value(instr, 0), true);
+        llvm_printer_emit_value(self, from, true);
 }
 
 static void llvm_printer_emit_cast_instr(llvm_printer* self, const ssa_instr* instr)
@@ -447,7 +446,7 @@ static void _llvm_printer_emit_binary_instr(llvm_printer* self, const ssa_instr*
 
 static void llvm_printer_generate_tmp_var(llvm_printer* self, char* buffer)
 {
-        sprintf(buffer, "%%tmp.%u", self->tmp_uid++);
+        sprintf(buffer, "%%tmp.%u", self->tmp_id++);
 }
 
 static void llvm_printer_emit_cmp_instr(llvm_printer* self, const ssa_instr* instr)
@@ -485,6 +484,8 @@ static void llvm_printer_emit_binary_instr(llvm_printer* self, const ssa_instr* 
 static void llvm_printer_emit_store_instr(llvm_printer* self, const ssa_instr* instr)
 {
         llvm_prints(self, "store ");
+        ssa_value* where = ssa_get_instr_operand_value(instr, 1);
+        llvm_printer_emit_volatile(self, ssa_get_value_type(where));
         llvm_printer_emit_value(self, ssa_get_instr_operand_value(instr, 0), true);
         llvm_prints(self, ", ");
         llvm_printer_emit_value(self, ssa_get_instr_operand_value(instr, 1), true);
@@ -501,6 +502,13 @@ static void llvm_printer_emit_getfieldaddr_instr(llvm_printer* self, const ssa_i
         llvm_printf(self, ", i32 0, i32 %u", ssa_get_getfieldaddr_index(instr));
 }
 
+static void llvm_printer_emit_cc(llvm_printer* self, const tree_type* func)
+{
+        tree_calling_convention cc = tree_get_func_type_cc(func);
+        if (cc == TCC_STDCALL && self->ssa->target->kind == TTAK_X86_32)
+                llvm_prints(self, "x86_stdcallcc ");
+}
+
 static void llvm_printer_emit_call_instr(llvm_printer* self, const ssa_instr* instr)
 {
         if (ssa_instr_has_var(instr))
@@ -511,6 +519,9 @@ static void llvm_printer_emit_call_instr(llvm_printer* self, const ssa_instr* in
         llvm_prints(self, "call ");
 
         ssa_value* func = ssa_get_called_func(instr);
+        tree_type* func_type = tree_desugar_type(tree_get_pointer_target(ssa_get_value_type(func)));
+        llvm_printer_emit_cc(self, func_type);
+
         llvm_printer_emit_type(self, tree_get_pointer_target(ssa_get_value_type(func)));
         llvm_print_wspace(self);
         llvm_printer_emit_value(self, ssa_get_called_func(instr), false);
@@ -621,6 +632,88 @@ static void llvm_printer_emit_terminator_instr(llvm_printer* self, const ssa_ins
                 llvm_printer_emit_switch(self, instr);
 }
 
+static void llvm_printer_emit_ordering(llvm_printer* self, ssa_memorder_kind k)
+{
+        if (k == SMK_UNORDERED)
+                llvm_prints(self, "unordered ");
+        else if (k == SMK_MONOTONIC)
+                llvm_prints(self, "monotonic ");
+        else if (k == SMK_ACQUIRE)
+                llvm_prints(self, "acquire ");
+        else if (k == SMK_RELEASE)
+                llvm_prints(self, "release ");
+        else if (k == SMK_ACQ_REL)
+                llvm_prints(self, "acq_rel ");
+        else if (k == SMK_SEQ_CST)
+                llvm_prints(self, "seq_cst ");
+}
+
+static void llvm_printer_emit_syncscope(llvm_printer* self, ssa_syncscope_kind k)
+{
+        if (k == SSK_SINGLE_THREAD)
+                llvm_prints(self, "syncscope(\"singlethread\") ");
+}
+
+static const char* llvm_atomicrmw_instr_table[] = 
+{
+        "",
+        "add",
+        "xchg",
+};
+
+static void llvm_printer_emit_atomicrmw_instr(llvm_printer* self, const ssa_instr* instr)
+{
+        llvm_printer_emit_value(self, ssa_get_instr_cvar(instr), false);
+        llvm_prints(self, " = atomicrmw ");
+        ssa_value* pointer = ssa_get_instr_operand_value(instr, 0);
+        llvm_printer_emit_volatile(self, ssa_get_value_type(pointer));
+        llvm_prints(self, llvm_atomicrmw_instr_table[ssa_get_atomic_rmw_instr_kind(instr)]);
+        llvm_printc(self, ' ');
+        llvm_printer_emit_value(self, pointer, true);
+        llvm_prints(self, ", ");
+        llvm_printer_emit_value(self, ssa_get_instr_operand_value(instr, 1), true);
+        llvm_printc(self, ' ');
+        llvm_printer_emit_ordering(self, ssa_get_atomic_rmw_instr_ordering(instr));
+}
+
+static void llvm_printer_emit_fence_instr(llvm_printer* self, const ssa_instr* instr)
+{
+        llvm_prints(self, "fence ");
+        if (ssa_get_fence_instr_syncscope(instr) == SSK_SINGLE_THREAD)
+                llvm_prints(self, "syncscope(\"singlethread\") ");
+        llvm_printer_emit_ordering(self, ssa_get_fence_instr_ordering(instr));
+}
+
+static void llvm_printer_emit_cmpxchg_instr(llvm_printer* self, const ssa_instr* instr)
+{
+        char result[64];
+        llvm_printer_generate_tmp_var(self, result);
+        llvm_printf(self, "%s = cmpxchg weak ", result);
+        ssa_value* pointer = ssa_get_instr_operand_value(instr, 0);
+        llvm_printer_emit_volatile(self, ssa_get_value_type(pointer));
+        llvm_printer_emit_value(self, pointer, true);
+        llvm_prints(self, ", ");
+        llvm_printer_emit_value(self, ssa_get_instr_operand_value(instr, 1), true);
+        llvm_prints(self, ", ");
+        llvm_printer_emit_value(self, ssa_get_instr_operand_value(instr, 2), true);
+        llvm_print_wspace(self);
+        llvm_printer_emit_ordering(self, ssa_get_atomic_cmpxchg_instr_success_ordering(instr));
+        llvm_printer_emit_ordering(self, ssa_get_atomic_cmpxchg_instr_failure_ordering(instr));
+        llvm_print_endl(self);
+        llvm_print_indent(self);
+
+        char loaded[64];
+        llvm_printer_generate_tmp_var(self, loaded);
+        llvm_printf(self, "%s = extractvalue { i32, i1 } %s, 1", loaded, result);
+        llvm_print_endl(self);
+        llvm_print_indent(self);
+
+        const ssa_value* var = ssa_get_instr_cvar(instr);
+        llvm_printer_emit_value(self, var, false);
+        assert(tree_builtin_type_is(ssa_get_value_type(var), TBTK_INT32));
+        llvm_printf(self, " = zext i1 %s to i32", loaded);
+}
+
 extern void llvm_printer_emit_instr(llvm_printer* self, const ssa_instr* instr)
 {
         llvm_print_endl(self);
@@ -645,6 +738,12 @@ extern void llvm_printer_emit_instr(llvm_printer* self, const ssa_instr* instr)
                 llvm_printer_emit_phi_instr(self, instr);
         else if (k == SIK_TERMINATOR)
                 llvm_printer_emit_terminator_instr(self, instr);
+        else if (k == SIK_ATOMIC_RMW)
+                llvm_printer_emit_atomicrmw_instr(self, instr);
+        else if (k == SIK_FENCE)
+                llvm_printer_emit_fence_instr(self, instr);
+        else if (k == SIK_ATOMIC_CMPXCHG)
+                llvm_printer_emit_cmpxchg_instr(self, instr);
 }
 
 extern void llvm_printer_emit_block(llvm_printer* self, const ssa_block* block)
@@ -656,45 +755,9 @@ extern void llvm_printer_emit_block(llvm_printer* self, const ssa_block* block)
         llvm_print_endl(self);
 }
 
-static void llvm_printer_emit_function_header(
-        llvm_printer* self, const char* prefix, const tree_decl* func)
+static void llvm_printer_emit_struct_fields(llvm_printer* self, const tree_decl* rec)
 {
-        llvm_prints(self, prefix);
-        tree_type* t = tree_get_decl_type(func);
-        llvm_printer_emit_type(self, tree_get_function_type_result(t));
-        llvm_printf(self, " @%s", tree_get_id_string(self->tree, tree_get_decl_name(func)));
-        llvm_printer_emit_function_type_params(self, t);
-}
-
-extern void llvm_printer_emit_decl(llvm_printer* self, const tree_decl* decl)
-{
-        llvm_print_endl(self);
-        tree_decl_kind k = tree_get_decl_kind(decl);
-        if (k == TDK_FUNCTION)
-                llvm_printer_emit_function_header(self, "declare ", decl);
-}
-
-extern void llvm_printer_emit_function_decl(llvm_printer* self, const ssa_function* func)
-{
-        self->tmp_uid = 0;
-        llvm_print_endl(self);
-        llvm_printer_emit_function_header(self, "define ", ssa_get_function_entity(func));
-        llvm_print_endl(self);
-
-        llvm_printc(self, '{');
-        self->indent_lvl++;
-        SSA_FOREACH_FUNCTION_BLOCK(func, block)
-                llvm_printer_emit_block(self, block);
-        self->indent_lvl--;
-        llvm_print_endl(self);
-        llvm_printc(self, '}');
-
-        llvm_print_endl(self);
-}
-
-static void llvm_printer_emit_struct_fields(llvm_printer* self, tree_type* type, dseq* recs_to_print)
-{
-        tree_decl_scope* fields = tree_get_record_fields(tree_get_decl_type_entity(type));
+        const tree_decl_scope* fields = tree_get_record_cfields(rec);
         bool first = true;
         TREE_FOREACH_DECL_IN_SCOPE(fields, field)
         {
@@ -705,30 +768,21 @@ static void llvm_printer_emit_struct_fields(llvm_printer* self, tree_type* type,
                         llvm_prints(self, ", ");
                 first = false;
 
-                tree_type* field_type = tree_get_decl_type(field);
-                tree_type* unchained = tree_ignore_chain_types(field_type);
-
-                if (tree_declared_type_is(unchained, TDK_RECORD))
-                        dseq_append(recs_to_print, unchained);
-
-                llvm_printer_emit_type(self, field_type);
+                llvm_printer_emit_type(self, tree_get_decl_type(field));
         }
 }
 
-static void llvm_printer_emit_union_fields(llvm_printer* self, tree_type* type, dseq* recs_to_print)
+static void llvm_printer_emit_union_fields(llvm_printer* self, const tree_decl* rec)
 {
-        tree_decl_scope* fields = tree_get_record_fields(tree_get_decl_type_entity(type));
+        const tree_decl_scope* fields = tree_get_record_cfields(rec);
         tree_type* largest_type = NULL;
+
         TREE_FOREACH_DECL_IN_SCOPE(fields, field)
         {
                 if (!tree_decl_is(field, TDK_FIELD))
                         continue;
 
                 tree_type* field_type = tree_get_decl_type(field);
-                tree_type* unchained = tree_ignore_chain_types(field_type);
-                if (tree_declared_type_is(unchained, TDK_RECORD))
-                        dseq_append(recs_to_print, unchained);
-
                 if (!largest_type || tree_get_sizeof(self->tree->target, field_type)
                         > tree_get_sizeof(self->tree->target, largest_type))
                 {
@@ -739,72 +793,39 @@ static void llvm_printer_emit_union_fields(llvm_printer* self, tree_type* type, 
         llvm_printer_emit_type(self, largest_type);
 }
 
-static void llvm_printer_emit_record_fields(llvm_printer* self, tree_type* type, dseq* recs_to_print)
+static void llvm_printer_emit_record_fields(llvm_printer* self, const tree_decl* rec)
 {
         llvm_prints(self, "<{ ");
-        if (tree_record_is_union(tree_get_decl_type_entity(type)))
-                llvm_printer_emit_union_fields(self, type, recs_to_print);
+        if (tree_record_is_union(rec))
+                llvm_printer_emit_union_fields(self, rec);
         else
-                llvm_printer_emit_struct_fields(self, type, recs_to_print);
+                llvm_printer_emit_struct_fields(self, rec);
         llvm_prints(self, " }>");
 }
 
-static void llvm_printer_emit_record_decl(llvm_printer* self, tree_type* record, dseq* recs_to_print)
+static void llvm_printer_emit_record(llvm_printer* self, const tree_decl* rec)
 {
-        record_info_map_iter it;
-        if (record_info_map_find(&self->recs_info, record, &it))
-        {
-                record_info* ii = record_info_map_iter_value(&it);
-                if (record_info_map_iter_value(&it)->declared)
-                        return;
-        }
+        recmap_iter it;
+        if (recmap_find(&self->rec_to_id, rec, &it))
+                return;
+
+        recmap_insert(&self->rec_to_id, rec, self->rec_id++);
 
         llvm_print_endl(self);
-        llvm_printer_emit_record_type(self, record, true);
+        llvm_printer_emit_record_decl_name(self, rec);
         llvm_prints(self, " = type ");
-        llvm_printer_emit_record_fields(self, record, recs_to_print);
+        llvm_printer_emit_record_fields(self, rec);
 }
 
-extern void llvm_printer_emit_record_decls(llvm_printer* self, const ssa_module* sm)
-{
-        // alloca(local vars) cast foo_param global_vars
-        dseq recs_to_print;
-        dseq_init_alloc(&recs_to_print, ssa_get_alloc(self->ssa));
-
-        SSA_FOREACH_MODULE_DEF(sm, func)
-        {
-                SSA_FOREACH_FUNCTION_BLOCK(func, block)
-                {
-                        SSA_FOREACH_BLOCK_INSTR(block, instr)
-                        {
-                                if (ssa_get_instr_kind(instr) != SIK_ALLOCA)
-                                        continue;
-
-                                tree_type* t = tree_ignore_chain_types(ssa_get_allocated_type(instr));
-                                if (!tree_declared_type_is(t, TDK_RECORD))
-                                        continue;
-
-                                llvm_printer_emit_record_decl(self, t, &recs_to_print);
-                        }
-                }
-        }
-
-        for (size_t i = 0; i < dseq_size(&recs_to_print); i++)
-                llvm_printer_emit_record_decl(self, dseq_get(&recs_to_print, i), &recs_to_print);
-}
-
-static void llvm_printer_emit_global(llvm_printer* self, ssa_value* global)
+static void llvm_printer_emit_string(llvm_printer* self, const ssa_value* val)
 {
         llvm_print_endl(self);
-        if (ssa_get_value_kind(global) != SVK_STRING)
-                UNREACHABLE();
-
-        llvm_printer_emit_value(self, global, false);
+        llvm_printer_emit_value(self, val, false);
         llvm_prints(self, " = private constant ");
-        llvm_printer_emit_type(self, ssa_get_value_type(global));
+        llvm_printer_emit_type(self, ssa_get_value_type(val));
 
         strentry entry;
-        if (!tree_get_id_strentry(self->tree, ssa_get_string_value(global), &entry))
+        if (!tree_get_id_strentry(self->tree, ssa_get_string_value(val), &entry))
                 return;
 
         llvm_prints(self, " c\"");
@@ -817,26 +838,94 @@ static void llvm_printer_emit_global(llvm_printer* self, ssa_value* global)
         llvm_printc(self, '"');
 }
 
-extern void llvm_printer_emit_module(
-        llvm_printer* self, const ssa_module* sm, const tree_module* tm)
+static void llvm_printer_emit_dll_storage_class(llvm_printer* self, const tree_decl* decl)
 {
-        SSA_FOREACH_MODULE_GLOBAL(sm, it, end)
-                llvm_printer_emit_global(self, *it);
+        if (tree_get_decl_dll_storage_class(decl) == TDSC_IMPORT)
+                llvm_prints(self, "dllimport ");
+}
 
-        llvm_printer_emit_record_decls(self, sm);
+static void llvm_printer_emit_linkage(llvm_printer* self, const tree_decl* decl)
+{
+        tree_storage_class sc = tree_get_decl_storage_class(decl);
+        if (sc == TSC_STATIC)
+                llvm_prints(self, "internal ");
 
-        const tree_decl_scope* globals = tree_get_module_cglobals(tm);
-        TREE_FOREACH_DECL_IN_SCOPE(globals, decl)
+        if (tree_decl_is(decl, TDK_FUNCTION))
+                return;
+
+        if (sc == TSC_EXTERN)
+                llvm_prints(self, "external ");
+
+        if (tree_get_decl_storage_duration(decl) == TSD_THREAD)
+                llvm_prints(self, "thread_local ");
+
+}
+
+static void llvm_printer_emit_function(llvm_printer* self, const ssa_value* val)
+{
+        self->tmp_id = 0;
+        llvm_print_endl(self);
+        bool defined = ssa_get_function_blocks_begin(val) != ssa_get_function_blocks_cend(val);
+
+        tree_decl* func = ssa_get_function_entity(val);
+        tree_type* func_type = tree_get_decl_type(func);
+        llvm_prints(self, defined ? "define " : "declare ");
+        llvm_printer_emit_linkage(self, func);
+        llvm_printer_emit_dll_storage_class(self, func);
+        llvm_printer_emit_cc(self, func_type);
+        llvm_printer_emit_type(self, tree_get_func_type_result(func_type));
+        llvm_printf(self, " @%s", tree_get_id_string(self->tree, tree_get_decl_name(func)));
+        llvm_printer_emit_function_type_params(self, func_type);
+
+        if (!defined)
+                return;
+
+        llvm_print_endl(self);
+        llvm_printc(self, '{');
+        self->indent_lvl++;
+        SSA_FOREACH_FUNCTION_BLOCK(val, block)
+                llvm_printer_emit_block(self, block);
+        self->indent_lvl--;
+        llvm_print_endl(self);
+        llvm_printc(self, '}');
+        llvm_print_endl(self);
+}
+
+static void llvm_printer_emit_global_var(llvm_printer* self, const ssa_value* val)
+{
+        llvm_print_endl(self);
+        tree_decl* decl = ssa_get_global_var_entity(val);
+        llvm_printer_emit_value(self, val, false);
+        llvm_prints(self, " = ");
+        llvm_printer_emit_linkage(self, decl);
+        llvm_prints(self, "global ");
+        llvm_printer_emit_type(self, tree_get_decl_type(decl));
+        llvm_prints(self, " undef");
+}
+
+static void llvm_printer_emit_global_value(llvm_printer* self, const ssa_value* val)
+{
+        switch (ssa_get_value_kind(val))
         {
-                ssa_function* func;
-                if (tree_decl_is(decl, TDK_FUNCTION) && (func = ssa_module_lookup(sm, decl)))
-                {
-                        if (!tree_get_function_body(decl))
-                                continue;
-
-                        llvm_printer_emit_function_decl(self, func);
-                }
-                else
-                        llvm_printer_emit_decl(self, decl);
+                case SVK_STRING:
+                        llvm_printer_emit_string(self, val);
+                        return;
+                case SVK_GLOBAL_VAR:
+                        llvm_printer_emit_global_var(self, val);
+                        return;
+                case SVK_FUNCTION:
+                        llvm_printer_emit_function(self, val);
+                        return;
+                default:
+                        return;
         }
+}
+
+extern void llvm_printer_emit_module(llvm_printer* self, const ssa_module* module)
+{
+        SSA_FOREACH_MODULE_TYPE_DECL(module, it, end)
+                if (tree_decl_is(*it, TDK_RECORD))
+                        llvm_printer_emit_record(self, *it);
+        SSA_FOREACH_MODULE_GLOBAL(module, it, end)
+                llvm_printer_emit_global_value(self, *it);
 }

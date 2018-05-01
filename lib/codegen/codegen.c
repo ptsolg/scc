@@ -30,7 +30,7 @@ extern errcode codegen_module(
         {
                 llvm_printer printer;
                 llvm_printer_init(&printer, write, context);
-                llvm_printer_emit_module(&printer, sm, module);
+                llvm_printer_emit_module(&printer, sm);
                 llvm_printer_dispose(&printer);
         }
         else
