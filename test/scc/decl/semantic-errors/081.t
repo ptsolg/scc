@@ -1,0 +1,3 @@
+_Dllimport void foo()
+{
+}

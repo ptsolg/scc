@@ -1,0 +1,1 @@
+_Dllimport int a = 0;

@@ -1,0 +1,1 @@
+extern _Dllimport int var;
