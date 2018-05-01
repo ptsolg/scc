@@ -30,5 +30,6 @@ add_scc_target_sources(c
 	c-macro-lexer.h
 	c-printer.h
 	c-env.h
+	c-pragma.h
 	c-token-kind.inc
 )

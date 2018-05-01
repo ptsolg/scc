@@ -36,6 +36,7 @@ add_scc_lib(c
 	c-builtin-type.c
 	c-initializer.h
 	c-initializer.c
+	c-pragma.c
 
 	DEPENDS
 	tree
