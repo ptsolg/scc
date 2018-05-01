@@ -6,7 +6,7 @@
 #include "scc/tree/tree-context.h"
 #include "c-numeric-literal.h"
 
-static_assert(CTK_TOTAL_SIZE == 113, "lexer reswords initialization needs an update");
+static_assert(CTK_TOTAL_SIZE == 114, "lexer reswords initialization needs an update");
 
 static void c_lexer_add_token(c_lexer* self, c_token_kind k, bool pp)
 {
@@ -21,7 +21,7 @@ static void c_lexer_init_reswords(c_lexer* self)
 {
         for (c_token_kind i = CTK_CHAR; i < CTK_CONST_INT; i++)
                 c_lexer_add_token(self, i, false);
-        for (c_token_kind i = CTK_PP_IF; i < CTK_PP_PRAGMA; i++)
+        for (c_token_kind i = CTK_PP_IF; i <= CTK_PP_PRAGMA; i++)
                 c_lexer_add_token(self, i, true);
 
         if (self->pp.context->lang_opts.ext.tm_enabled)

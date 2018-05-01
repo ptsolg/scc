@@ -843,7 +843,14 @@ static void c_print_decl_storage_specs(c_printer* self, const tree_decl* d)
                 c_print_space(self);
         }
 
-        tree_storage_class sd = tree_get_decl_storage_duration(d);
+        tree_dll_storage_class dsc = tree_get_decl_dll_storage_class(d);
+        if (dsc == TDSC_IMPORT)
+        {
+                c_printrw(self, CTK_DLLIMPORT);
+                c_print_space(self);
+        }
+
+        tree_storage_duration sd = tree_get_decl_storage_duration(d);
         if (sd == TSD_THREAD)
         {
                 c_printrw(self, CTK_THREAD_LOCAL);

@@ -76,8 +76,9 @@ extern bool c_sema_finish_declarator(c_sema* self, c_declarator* declarator, c_t
 
 typedef struct _c_decl_specs
 {
-        tree_storage_class class_;
-        tree_storage_duration duration;
+        tree_storage_class storage_class;
+        tree_storage_duration storage_duration;
+        tree_dll_storage_class dll_storage_class;
         tree_type* typespec;
         tree_xlocation loc;
         bool has_inline;
@@ -93,8 +94,9 @@ extern tree_location c_decl_specs_get_loc_end(const c_decl_specs* self);
 extern bool c_sema_set_type_specifier(c_sema* self, c_decl_specs* ds, tree_type* ts);
 extern bool c_sema_set_typedef_specified(c_sema* self, c_decl_specs* ds);
 extern bool c_sema_set_inline_specified(c_sema* self, c_decl_specs* ds);
-extern bool c_sema_set_decl_storage_class(c_sema* self, c_decl_specs* ds, tree_storage_class sc);
+extern bool c_sema_set_storage_class(c_sema* self, c_decl_specs* ds, tree_storage_class sc);
 extern bool c_sema_set_thread_storage_duration(c_sema* self, c_decl_specs* ds);
+extern bool c_sema_set_dll_storage_class(c_sema* self, c_decl_specs* ds, tree_dll_storage_class sc);
 extern tree_decl* c_sema_handle_unused_decl_specs(c_sema* self, c_decl_specs* ds);
 
 typedef struct _c_param
@@ -132,10 +134,10 @@ extern tree_decl* c_sema_define_label_decl(
         c_sema* self, tree_location name_loc, tree_id name, tree_location colon_loc, tree_stmt* stmt);
 extern tree_decl* c_sema_declare_label_decl(c_sema* self, tree_location name_loc, tree_id name);
 
-extern tree_decl* c_sema_declare_external_decl(c_sema* self, c_decl_specs* ds, c_declarator* d, bool has_init);
-extern tree_decl* c_sema_define_var_decl(c_sema* self, tree_decl* var, tree_expr* init);
-extern tree_decl* c_sema_define_func_decl(c_sema* self, tree_decl* func, tree_stmt* body);
-extern bool c_sema_check_func_def_loc(c_sema* self, const tree_decl* func);
+extern tree_decl* c_sema_declare_external_decl(
+        c_sema* self, c_decl_specs* ds, c_declarator* d, bool has_init_or_body);
+extern void c_sema_set_var_init(c_sema* self, tree_decl* var, tree_expr* init);
+extern void c_sema_set_func_body(c_sema* self, tree_decl* func, tree_stmt* body);
 
 #ifdef __cplusplus
 }

@@ -19,7 +19,8 @@ static tree_decl* c_parse_function_or_init_declarator(
                 return NULL;
         }
 
-        tree_decl* decl = c_sema_declare_external_decl(self->sema, specs, &d, c_parser_at(self, CTK_EQ));
+        tree_decl* decl = c_sema_declare_external_decl(self->sema, specs, &d,
+                c_parser_at(self, CTK_EQ) || c_parser_at(self, CTK_LBRACE));
         c_declarator_dispose(&d);
         if (!decl)
                 return NULL;
@@ -39,13 +40,10 @@ static tree_decl* c_parse_function_or_init_declarator(
                 if (!init)
                         return NULL;
 
-                return c_sema_define_var_decl(self->sema, decl, init);
+                c_sema_set_var_init(self->sema, decl, init);
         }
         else if (func_def_expected && dk == TDK_FUNCTION && c_parser_at(self, CTK_LBRACE))
         {
-                if (!c_sema_check_func_def_loc(self->sema, decl))
-                        return NULL;
-
                 c_sema_enter_function(self->sema, decl);
                 tree_stmt* body = c_parse_stmt(self);
                 c_sema_exit_function(self->sema);
@@ -54,7 +52,7 @@ static tree_decl* c_parse_function_or_init_declarator(
                         return NULL;
 
                 *func_has_def = true;
-                return c_sema_define_func_decl(self->sema, decl, body);
+                c_sema_set_func_body(self->sema, decl, body);
         }
         return decl;
 }
@@ -149,7 +147,8 @@ extern bool c_parser_at_declaration(c_parser* self)
         return c_parser_token_starts_type_name(self, t)
                 || c_token_is_decl_storage_class(t)
                 || c_token_is(t, CTK_TYPEDEF)
-                || c_token_is(t, CTK_THREAD_LOCAL);
+                || c_token_is(t, CTK_THREAD_LOCAL)
+                || c_token_is(t, CTK_DLLIMPORT);
 }
 
 extern bool c_parse_decl_specs(c_parser* self, c_decl_specs* result)
@@ -172,13 +171,19 @@ extern bool c_parse_decl_specs(c_parser* self, c_decl_specs* result)
                 else if (c_token_is_decl_storage_class(t))
                 {
                         tree_storage_class c = c_token_to_decl_storage_class(t);
-                        if (!c_sema_set_decl_storage_class(self->sema, result, c))
+                        if (!c_sema_set_storage_class(self->sema, result, c))
                                 return false;
                         c_parser_consume_token(self);
                 }
                 else if (c_parser_at(self, CTK_THREAD_LOCAL))
                 {
                         if (!c_sema_set_thread_storage_duration(self->sema, result))
+                                return false;
+                        c_parser_consume_token(self);
+                }
+                else if (c_parser_at(self, CTK_DLLIMPORT))
+                {
+                        if (!c_sema_set_dll_storage_class(self->sema, result, TDSC_IMPORT))
                                 return false;
                         c_parser_consume_token(self);
                 }
