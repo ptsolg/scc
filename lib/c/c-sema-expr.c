@@ -186,6 +186,12 @@ extern tree_expr* c_sema_new_decl_expr(c_sema* self, tree_id id, tree_location i
                 return NULL; // unknown decl
 
         tree_decl_kind dk = tree_get_decl_kind(d);
+        if (dk != TDK_VAR && dk != TDK_FUNCTION && dk != TDK_ENUMERATOR && dk != TDK_PARAM)
+        {
+                c_error_undeclared_identifier(self->logger, id_loc, id);
+                return NULL;
+        }
+
         tree_value_kind vk = TVK_LVALUE;
         tree_type* t = tree_desugar_type(tree_get_decl_type(d));
 
