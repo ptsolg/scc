@@ -428,7 +428,33 @@ extern bool c_preprocessor_handle_error_directive(c_preprocessor* self, c_token*
 
 extern bool c_preprocessor_handle_pragma_directive(c_preprocessor* self)
 {
-        return false;
+        c_token* t = c_preprocess_non_wspace(self);
+        if (!t)
+                return false;
+
+        if (!c_token_is(t, CTK_ID) || c_token_get_string(t) != self->id.link)
+        {
+                c_error_unknown_pragma(self->logger, c_token_get_loc(t));
+                return false;
+        }
+        if (!(t = c_preprocess_non_macro(self)))
+                return false;
+
+        tree_location loc = c_token_get_loc(t);
+        if (!c_token_is(t, CTK_CONST_STRING))
+        {
+                c_error_expected_library_name(self->logger,  loc);
+                return false;
+        }
+
+        const char* lib = tree_get_id_string(self->context->tree, c_token_get_string(t));
+        if (!*lib)
+        {
+                c_error_empty_library_name(self->logger, loc);
+                return false;
+        }
+
+        return EC_SUCCEEDED(c_pragma_handles_on_link(&self->context->pragma_handlers, lib));
 }
 
 extern bool c_preprocessor_handle_undef_directive(c_preprocessor* self, c_token* tok)

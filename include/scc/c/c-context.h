@@ -11,6 +11,7 @@ extern "C" {
 
 #include "scc/c/c-source.h"
 #include "scc/c/c-lang-opts.h"
+#include "scc/c/c-pragma.h"
 #include <setjmp.h>
 
 typedef struct _tree_context tree_context;
@@ -22,6 +23,7 @@ typedef struct _c_context
         tree_context* tree;
         c_source_manager source_manager;
         c_lang_opts lang_opts;
+        c_pragma_handlers pragma_handlers;
 } c_context;
 
 extern void c_context_init(

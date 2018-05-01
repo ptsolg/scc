@@ -25,6 +25,7 @@ extern void c_context_init_ex(
         obstack_init_ex(&self->nodes, c_context_get_allocator(self));
         c_source_manager_init(&self->source_manager, lookup, self);
         c_lang_opts_init(&self->lang_opts);
+        c_pragma_handlers_init(&self->pragma_handlers, NULL);
 }
 
 extern void c_context_dispose(c_context* self)
