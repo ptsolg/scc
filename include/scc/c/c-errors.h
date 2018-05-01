@@ -53,6 +53,9 @@ extern void c_error_unterminated_directive(c_logger* self, const c_token* direct
 extern void c_error_directive_after_else(c_logger* self, const c_token* directive);
 extern void c_error_token_is_not_valid_in_preprocessor_expressions(c_logger* self, const c_token* tok);
 extern void c_error_error_directive(c_logger* self, tree_location loc, const char* msg);
+extern void c_error_unknown_pragma(c_logger* self, tree_location loc);
+extern void c_error_expected_library_name(c_logger* self, tree_location loc);
+extern void c_error_empty_library_name(c_logger* self, tree_location loc);
 
 // lexer
 extern void c_error_invalid_integer_literal(c_logger* self, tree_location loc, const char* num);
@@ -85,6 +88,8 @@ extern void c_error_invalid_parameter_storage_class(c_logger* self, const c_decl
 extern void c_error_variable_declared_thread_local_at_function_scope(c_logger* self, const c_declarator* d);
 extern void c_error_variable_declared_register_at_file_scope(c_logger* self, const c_declarator* d);
 extern void c_error_field_declared_with_storage_specifier(c_logger* self, const c_declarator* d);
+extern void c_error_dllimport_cannot_be_applied_to_definition(c_logger* self, const c_decl_specs* specs, int decl_kind);
+extern void c_error_dllimport_applied_to_wrong_decl(c_logger* self, tree_location loc);
 
 extern void c_error_function_initialized_like_a_variable(c_logger* self, const tree_decl* func);
 extern void c_error_invalid_initializer(c_logger* self, const tree_expr* init);
@@ -112,12 +117,12 @@ extern void c_error_bitfield_width_isnt_constant(c_logger* self, const tree_decl
 extern void c_error_bitfield_width_is_zero(c_logger* self, const tree_decl* field);
 extern void c_error_negative_bitfield_width(c_logger* self, const tree_decl* field);
 extern void c_error_bitfield_width_exceeds_type(c_logger* self, const tree_decl* field);
-extern void c_error_invalid_storage_class(c_logger* self, const tree_decl* decl);
+extern void c_error_invalid_storage_class(c_logger* self, tree_location loc, tree_id name);
 extern void c_error_different_kind_of_symbol(c_logger* self, const tree_decl* decl);
 extern void c_error_different_storage_class(c_logger* self, const tree_decl* decl);
 extern void c_error_conflicting_types(c_logger* self, const tree_decl* decl);
-extern void c_error_parameter_name_omitted(c_logger* self, const tree_decl* param);
-extern void c_error_function_isnt_allowed_here(c_logger* self, const tree_decl* func);
+extern void c_error_parameter_name_omitted(c_logger* self, tree_location loc);
+extern void c_error_function_isnt_allowed_here(c_logger* self, tree_location loc);
 
 extern void c_error_expr_must_have_pointer_to_object_type(c_logger* self, tree_location loc);
 extern void c_error_expr_must_have_pointer_to_function_type(c_logger* self, tree_location loc);

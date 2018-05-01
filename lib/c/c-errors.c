@@ -208,6 +208,21 @@ extern void c_error_error_directive(c_logger* self, tree_location loc, const cha
         c_error(self, CES_ERROR, loc, "#error %s", msg);
 }
 
+extern void c_error_unknown_pragma(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "unknown #pragma directive");
+}
+
+extern void c_error_expected_library_name(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "expected a library name");
+}
+
+extern void c_error_empty_library_name(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "empty library name");
+}
+
 extern void c_error_invalid_integer_literal(c_logger* self, tree_location loc, const char* num)
 {
         c_error(self, CES_ERROR, loc, "invalid integer literal '%s'", num);
@@ -341,6 +356,20 @@ extern void c_error_field_declared_with_storage_specifier(c_logger* self, const 
 {
         c_error(self, CES_ERROR, c_declarator_get_name_loc_or_begin(d),
                 "field '%s' declared with storage specifier", c_logger_get_id_string(self, d->name));
+}
+
+extern void c_error_dllimport_cannot_be_applied_to_definition(c_logger* self, const c_decl_specs* specs, int decl_kind)
+{
+        assert(decl_kind == TDK_FUNCTION || decl_kind == TDK_VAR);
+        const char* decl = decl_kind == TDK_FUNCTION ? "function" : "variable";
+        c_error(self, CES_ERROR, specs->loc.begin,
+                "'_Dllimport' specifier cannot be applied to %s definition", decl);
+}
+
+extern void c_error_dllimport_applied_to_wrong_decl(c_logger* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, 
+                "'_Dllimport' specifier allowed on function or variable declarations only");
 }
 
 extern void c_error_function_initialized_like_a_variable(c_logger* self, const tree_decl* func)
@@ -481,9 +510,9 @@ extern void c_error_bitfield_width_exceeds_type(c_logger* self, const tree_decl*
         c_error_decl(self, "width of '%s' exceeds its type", field);
 }
 
-extern void c_error_invalid_storage_class(c_logger* self, const tree_decl* decl)
+extern void c_error_invalid_storage_class(c_logger* self, tree_location loc, tree_id name)
 {
-        c_error_decl(self, "invalid storage class for '%s'", decl);
+        c_error(self, CES_ERROR, loc, "invalid storage class for '%s'", c_logger_get_id_string(self, name));
 }
 
 extern void c_error_different_kind_of_symbol(c_logger* self, const tree_decl* decl)
@@ -501,15 +530,14 @@ extern void c_error_conflicting_types(c_logger* self, const tree_decl* decl)
         c_error_decl(self, "conflicting types for '%s'", decl);
 }
 
-extern void c_error_parameter_name_omitted(c_logger* self, const tree_decl* param)
+extern void c_error_parameter_name_omitted(c_logger* self, tree_location loc)
 {
-        c_error(self, CES_ERROR, tree_get_decl_loc_begin(param), "parameter name omitted");
+        c_error(self, CES_ERROR, loc, "parameter name omitted");
 }
 
-extern void c_error_function_isnt_allowed_here(c_logger* self, const tree_decl* func)
+extern void c_error_function_isnt_allowed_here(c_logger* self, tree_location loc)
 {
-        c_error(self, CES_ERROR, tree_get_decl_loc_begin(func),
-                "function definition is not allowed here");
+        c_error(self, CES_ERROR, loc, "function definition is not allowed here");
 }
 
 extern void c_error_expr_must_have_pointer_to_object_type(c_logger* self, tree_location loc)
