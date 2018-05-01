@@ -24,7 +24,12 @@ typedef struct _c_preprocessor
         const c_reswords* reswords;
         c_logger* logger;
         c_context* context;
-        tree_id defined_id;
+
+        struct
+        {
+                tree_id defined;
+                tree_id link;
+        } id;
 
         struct
         {

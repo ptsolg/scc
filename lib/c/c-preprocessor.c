@@ -102,7 +102,8 @@ extern void c_preprocessor_init(
         self->reswords = reswords;
         self->logger = logger;
         self->context = context;
-        self->defined_id = tree_get_id_for_string(self->context->tree, "defined");
+        self->id.defined = tree_get_id_for_string(self->context->tree, "defined");
+        self->id.link = tree_get_id_for_string(self->context->tree, "link");
         c_preprocessor_init_builtin_macro(self);
 }
 
