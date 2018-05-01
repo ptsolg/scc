@@ -95,6 +95,12 @@ typedef enum
 
 typedef enum
 {
+        TDSC_NONE,
+        TDSC_IMPORT,
+} tree_dll_storage_class;
+
+typedef enum
+{
         TSD_AUTOMATIC,
         TSD_THREAD,
         TSD_STATIC,
@@ -147,6 +153,7 @@ struct _tree_value_decl
         struct _tree_typed_decl base;
         tree_storage_class storage_class;
         tree_storage_duration storage_duration;
+        tree_dll_storage_class dll_storage_class;
 };
 
 struct _tree_typedef_decl
@@ -398,8 +405,9 @@ extern tree_decl* tree_new_value_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
-        tree_storage_class class_,
-        tree_storage_duration duration,
+        tree_storage_class sc,
+        tree_storage_duration sd,
+        tree_dll_storage_class dll_sc,
         tree_type* type,
         size_t size);
 
@@ -408,19 +416,29 @@ static TREE_INLINE tree_storage_class tree_get_decl_storage_class(const tree_dec
         return self->value.storage_class;
 }
 
+static TREE_INLINE tree_dll_storage_class tree_get_decl_dll_storage_class(const tree_decl* self)
+{
+        return self->value.dll_storage_class;
+}
+
 static TREE_INLINE tree_storage_duration tree_get_decl_storage_duration(const tree_decl* self)
 {
         return self->value.storage_duration;
 }
 
-static TREE_INLINE void tree_set_decl_storage_class(tree_decl* self, tree_storage_class class_)
+static TREE_INLINE void tree_set_decl_storage_class(tree_decl* self, tree_storage_class sc)
 {
-        self->value.storage_class = class_;
+        self->value.storage_class = sc;
 }
 
-static TREE_INLINE void tree_set_decl_storage_duration(tree_decl* self, tree_storage_duration duration)
+static TREE_INLINE void tree_set_decl_dll_storage_class(tree_decl* self, tree_dll_storage_class sc)
 {
-        self->value.storage_duration = duration;
+        self->value.dll_storage_class = sc;
+}
+
+static TREE_INLINE void tree_set_decl_storage_duration(tree_decl* self, tree_storage_duration sd)
+{
+        self->value.storage_duration = sd;
 }
 
 extern tree_decl* tree_new_typedef_decl(
@@ -513,7 +531,8 @@ extern tree_decl* tree_new_func_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
-        tree_storage_class class_,
+        tree_storage_class sc,
+        tree_dll_storage_class dll_sc,
         tree_type* type,
         tree_stmt* body);
 
@@ -577,8 +596,9 @@ extern tree_decl* tree_new_var_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name, 
-        tree_storage_class class_,
-        tree_storage_duration duration,
+        tree_storage_class sc,
+        tree_storage_duration sd,
+        tree_dll_storage_class dll_sc,
         tree_type* type,
         tree_expr* init);
 
