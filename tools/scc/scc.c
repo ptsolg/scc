@@ -97,11 +97,9 @@ static errcode scc_env_setup_llc_lld(scc_env* self, const char* exec_path)
 extern errcode scc_env_setup(scc_env* self, int argc, const char** argv)
 {
         extern errcode scc_parse_opts(scc_env*, int, const char**);
+
         if (EC_FAILED(scc_parse_opts(self, argc, argv)))
                 return EC_ERROR;
-
-        if (self->mode != SRM_COMPILE && self->mode != SRM_LINK)
-                self->link_stdlib = false;
 
 #if OS_WIN
         self->cc.input.entry = self->link_stdlib ? NULL : "main";
