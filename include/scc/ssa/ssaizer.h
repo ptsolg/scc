@@ -11,7 +11,6 @@ extern "C" {
 
 #include "ssa-common.h"
 #include "ssa-builder.h"
-#include "ssa-function.h"
 #include "scc/core/dseq-common.h"
 
 typedef struct _ssa_context ssa_context;
@@ -25,12 +24,13 @@ typedef struct _tree_module tree_module;
 typedef struct _ssa_value ssa_value;
 typedef struct _dseq strmap_stack;
 typedef struct _dseq dseq;
+typedef struct _htab ptrset;
 
 typedef struct _ssaizer
 {
         ssa_context* context;
         ssa_block* block;
-        ssa_function* function;
+        ssa_value* function;
         ssa_module* module;
         ssa_builder builder;
 
@@ -38,6 +38,7 @@ typedef struct _ssaizer
         strmap_stack defs;
         strmap labels;
         strmap globals;
+        ptrset emitted_records;
 
         dseq continue_stack;
         dseq break_stack;
@@ -59,8 +60,11 @@ extern void ssaizer_pop_scope(ssaizer* self);
 
 extern void ssaizer_set_def(ssaizer* self, const tree_decl* var, ssa_value* def);
 extern ssa_value* ssaizer_get_def(ssaizer* self, const tree_decl* var);
-extern void ssaizer_set_global_decl(ssaizer* self, const tree_decl* var, ssa_value* decl);
-extern ssa_value* ssaizer_get_global_decl(ssaizer* self, const tree_decl* var);
+
+extern void ssaizer_set_global_decl(ssaizer* self, tree_decl* decl, ssa_value* val);
+extern ssa_value* ssaizer_get_global_decl(ssaizer* self, const tree_decl* decl);
+extern bool ssaizer_record_is_emitted(const ssaizer* self, const tree_decl* record);
+extern void ssaizer_set_record_emitted(ssaizer* self, const tree_decl* record);
 
 extern ssa_block* ssaizer_get_label_block(ssaizer* self, const tree_decl* label);
 

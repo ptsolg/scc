@@ -1,6 +1,7 @@
 #include "scc/ssa/ssaize-stmt.h"
 #include "scc/ssa/ssaize-expr.h"
 #include "scc/ssa/ssa-instr.h"
+#include "scc/ssa/ssa-block.h"
 #include "scc/ssa/ssaize-decl.h"
 #include "scc/tree/tree-stmt.h"
 

@@ -11,9 +11,12 @@ extern "C" {
 
 #include "ssaizer.h"
 
-extern bool ssaize_var_decl(ssaizer* self, const tree_decl* decl);
+extern void ssaize_type(ssaizer* self, tree_type* type);
+
+extern bool ssaize_var_decl(ssaizer* self, tree_decl* decl);
 extern bool ssaize_decl_group(ssaizer* self, const tree_decl* decl);
 extern bool ssaize_function_decl(ssaizer* self, tree_decl* decl);
+extern bool ssaize_param_decl(ssaizer* self, tree_decl* param);
 extern bool ssaize_decl(ssaizer* self, tree_decl* decl);
 
 #ifdef __cplusplus

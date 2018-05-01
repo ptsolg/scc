@@ -6,7 +6,6 @@ add_scc_lib(ssa
 	ssa-value.c
 	ssa-block.c
 	ssa-module.c
-	ssa-function.c
 	ssaizer.c
 	ssaize-expr.c
 	ssaize-stmt.c

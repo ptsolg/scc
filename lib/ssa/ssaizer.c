@@ -41,6 +41,59 @@
 #undef DSEQ_SET 
 #undef DSEQ_APPEND
 
+#define HTAB_TYPE ptrset
+#define HTAB_IMPL_FN_GENERATOR(NAME) _ptrset_##NAME
+#define HTAB_KEY_TYPE const void*
+#define HTAB_DELETED_KEY ((const void*)0)
+#define HTAB_EMPTY_KEY ((const void*)1)
+#define HTAB_VALUE_TYPE uint8_t
+#define HTAB_INIT ptrset_init
+#define HTAB_INIT_ALLOC ptrset_init_alloc
+#define HTAB_DISPOSE ptrset_dispose
+#define HTAB_GET_SIZE ptrset_size
+#define HTAB_GET_ALLOCATOR ptrset_alloc
+#define HTAB_RESERVE ptrset_reserve
+#define HTAB_CLEAR ptrset_clear
+#define HTAB_ERASE ptrset_erase
+#define HTAB_GROW ptrset_grow
+#define HTAB_INSERT ptrset_insert
+#define HTAB_FIND ptrset_find
+
+#define HTAB_ITERATOR_TYPE ptrset_iter
+#define HTAB_ITERATOR_GET_KEY ptrset_iter_key
+#define HTAB_ITERATOR_ADVANCE ptrset_iter_advance
+#define HTAB_ITERATOR_INIT ptrset_iter_init
+#define HTAB_ITERATOR_CREATE ptrset_iter_create
+#define HTAB_ITERATOR_IS_VALID ptrset_iter_valid
+#define HTAB_ITERATOR_GET_VALUE ptrset_iter_value
+
+#include "scc/core/htab.h"
+
+#undef HTAB_TYPE
+#undef HTAB_IMPL_FN_GENERATOR
+#undef HTAB_KEY_TYPE 
+#undef HTAB_DELETED_KEY
+#undef HTAB_EMPTY_KEY
+#undef HTAB_VALUE_TYPE
+#undef HTAB_INIT
+#undef HTAB_INIT_ALLOC
+#undef HTAB_DISPOSE
+#undef HTAB_GET_SIZE
+#undef HTAB_GET_ALLOCATOR
+#undef HTAB_RESERVE
+#undef HTAB_CLEAR
+#undef HTAB_ERASE
+#undef HTAB_GROW
+#undef HTAB_INSERT
+#undef HTAB_FIND
+#undef HTAB_ITERATOR_TYPE
+#undef HTAB_ITERATOR_GET_KEY
+#undef HTAB_ITERATOR_ADVANCE
+#undef HTAB_ITERATOR_INIT
+#undef HTAB_ITERATOR_CREATE
+#undef HTAB_ITERATOR_IS_VALID
+#undef HTAB_ITERATOR_GET_VALUE
+
 extern void ssaizer_init(ssaizer* self, ssa_context* context)
 {
         self->context = context;
@@ -54,6 +107,7 @@ extern void ssaizer_init(ssaizer* self, ssa_context* context)
         strmap_stack_init(&self->defs);
         strmap_init_alloc(&self->labels, alloc);
         strmap_init_alloc(&self->globals, alloc);
+        ptrset_init_alloc(&self->emitted_records, alloc);
         dseq_init_alloc(&self->continue_stack, alloc);
         dseq_init_alloc(&self->break_stack, alloc);
         dseq_init_alloc(&self->switch_stack, alloc);
@@ -138,18 +192,30 @@ extern ssa_value* ssaizer_get_def(ssaizer* self, const tree_decl* var)
         return ssaizer_get_global_decl(self, var);
 }
 
-extern void ssaizer_set_global_decl(ssaizer* self, const tree_decl* var, ssa_value* decl)
-{
-        assert(decl);
-        strmap_insert(&self->globals, tree_get_decl_name(var), decl);
-}
-
-extern ssa_value* ssaizer_get_global_decl(ssaizer* self, const tree_decl* var)
+extern ssa_value* ssaizer_get_global_decl(ssaizer* self, const tree_decl* decl)
 {
         strmap_iter res;
-        return strmap_find(&self->globals, tree_get_decl_name(var), &res)
+        return strmap_find(&self->globals, tree_get_decl_name(decl), &res)
                 ? *strmap_iter_value(&res)
                 : NULL;
+}
+
+extern void ssaizer_set_global_decl(ssaizer* self, tree_decl* decl, ssa_value* val)
+{
+        assert(decl);
+        strmap_insert(&self->globals, tree_get_decl_name(decl), val);
+}
+
+extern bool ssaizer_record_is_emitted(const ssaizer* self, const tree_decl* record)
+{
+        ptrset_iter i;
+        return ptrset_find(&self->emitted_records, record, &i);
+}
+
+extern void ssaizer_set_record_emitted(ssaizer* self, const tree_decl* record)
+{
+        assert(record);
+        ptrset_insert(&self->emitted_records, record, 0);
 }
 
 extern ssa_block* ssaizer_get_label_block(ssaizer* self, const tree_decl* label)
@@ -220,11 +286,7 @@ extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module)
         self->module = ssa_new_module(self->context);
         const tree_decl_scope* globals = tree_get_module_cglobals(module);
         TREE_FOREACH_DECL_IN_SCOPE(globals, decl)
-        {
-                if (!tree_decl_is(decl, TDK_FUNCTION))
-                        continue;
-                if (!ssaize_function_decl(self, decl))
+                if (!ssaize_decl(self, decl))
                         return NULL;
-        }
         return self->module;
 }

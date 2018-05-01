@@ -1,9 +1,9 @@
 #include "scc/ssa/ssaize-expr.h"
 #include "scc/ssa/ssaize-stmt.h"
+#include "scc/ssa/ssaize-decl.h"
 #include "scc/ssa/ssa-context.h"
 #include "scc/ssa/ssa-instr.h"
 #include "scc/ssa/ssa-block.h"
-#include "scc/ssa/ssa-function.h"
 #include "scc/ssa/ssa-module.h"
 #include "scc/tree/tree-expr.h"
 
@@ -483,22 +483,16 @@ extern ssa_value* ssaize_string_literal(ssaizer* self, const tree_expr* expr)
         if (!string)
                 return NULL;
 
-        ssa_module_add_global_value(self->module, string);
+        ssa_add_module_global(self->module, string);
         return string;
 }
 
 static ssa_value* ssaizer_get_global_decl_ptr(ssaizer* self, tree_decl* decl)
 {
         ssa_value* global = ssaizer_get_global_decl(self, decl);
-        if (!global)
-        {
-                tree_type* type = tree_get_decl_type(decl);
-                if (!tree_type_is(type, TTK_FUNCTION) && !tree_type_is(type, TTK_ARRAY))
-                        type = tree_new_pointer_type(ssa_get_tree(self->context), type);
-                global = ssa_new_decl(self->context, type, decl);
-                ssaizer_set_global_decl(self, decl, global);
-        }
-        return global;
+        return global
+                ? global
+                : ssaize_decl(self, decl) ? ssaizer_get_global_decl(self, decl) : NULL;
 }
 
 extern ssa_value* ssaize_decl_expr(ssaizer* self, const tree_expr* expr)
@@ -552,7 +546,9 @@ extern ssa_value* ssaize_cast_expr(ssaizer* self, const tree_expr* expr)
         if (!operand)
                 return NULL;
 
-        return ssa_build_cast(&self->builder, tree_get_expr_type(expr), operand);
+        tree_type* t = tree_get_expr_type(expr);
+        ssaize_type(self, t);
+        return ssa_build_cast(&self->builder, t, operand);
 }
 
 extern ssa_value* ssaize_sizeof_expr(ssaizer* self, const tree_expr* expr)
@@ -606,7 +602,7 @@ extern ssa_value* ssaize_expr_as_condition(ssaizer* self, const tree_expr* cond)
         if (!v)
                 return NULL;
         
-        if (ssa_get_value_kind(v) != SVK_VARIABLE)
+        if (ssa_get_value_kind(v) != SVK_LOCAL_VAR)
                 return ssa_build_neq_zero(&self->builder, v);
 
         ssa_instr* i = ssa_get_var_instr(v);
