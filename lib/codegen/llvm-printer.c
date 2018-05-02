@@ -900,7 +900,8 @@ static void llvm_printer_emit_global_var(llvm_printer* self, const ssa_value* va
         llvm_printer_emit_linkage(self, decl);
         llvm_prints(self, "global ");
         llvm_printer_emit_type(self, tree_get_decl_type(decl));
-        llvm_prints(self, " zeroinitializer");
+        if (tree_get_decl_storage_class(decl) != TSC_EXTERN)
+                llvm_prints(self, " zeroinitializer");
 }
 
 static void llvm_printer_emit_global_value(llvm_printer* self, const ssa_value* val)
