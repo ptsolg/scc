@@ -45,9 +45,7 @@ extern ssa_value* ssa_new_global_var(ssa_context* context, tree_decl* var)
 {
         assert(var);
         tree_type* t = tree_desugar_type(tree_get_decl_type(var));
-        if (!tree_type_is(t, TTK_ARRAY))
-                t = tree_new_pointer_type(context->tree, t);
-
+        t = tree_new_pointer_type(context->tree, t);
         ssa_value* v = ssa_new_value(context, SVK_GLOBAL_VAR, 0, t, sizeof(struct _ssa_global_var));
         if (!v)
                 return NULL;
