@@ -19,6 +19,9 @@ extern tree_type* c_sema_lvalue_conversion(c_sema* self, tree_expr** e)
         tree_type* t = tree_desugar_type(tree_get_expr_type(*e));
         if (tree_expr_is_lvalue(*e) && tree_get_type_kind(t) != TTK_ARRAY)
         {
+                // the desugared expressions can be still lvalues,
+                // but we don't need them in value-checking
+                tree_set_expr_value_kind(tree_desugar_expr(*e), TVK_RVALUE);
                 t = tree_new_qualified_type(self->context, t, TTQ_UNQUALIFIED);
                 *e = c_sema_new_impl_cast(self, *e, t);
                 tree_set_expr_value_kind(*e, TVK_RVALUE);
@@ -64,7 +67,7 @@ static tree_type* c_sema_get_type_for_integer_promotion(c_sema* self, tree_type*
         if (btk == TBTK_INT8 || btk == TBTK_INT16)
                 return c_sema_get_builtin_type(self, quals, TBTK_INT32);
         else if (btk == TBTK_UINT8 || btk == TBTK_UINT16)
-                return  c_sema_get_builtin_type(self, quals, TBTK_UINT32);
+                return c_sema_get_builtin_type(self, quals, TBTK_UINT32);
         return t;
 }
 
