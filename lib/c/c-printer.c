@@ -628,6 +628,7 @@ static void c_print_decl_type(c_printer* self, const tree_type* t, int opts)
         if (tree_decl_type_is_referenced(t))
                 opts |= CPRINT_DECL_NAME;
 
+        c_print_type_quals(self, tree_get_type_quals(t));
         c_print_decl(self, tree_get_decl_type_entity(t), opts);
 }
 
