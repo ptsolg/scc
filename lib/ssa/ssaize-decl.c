@@ -12,6 +12,8 @@ static void ssaize_record_decl(ssaizer* self, tree_decl* decl)
         if (ssaizer_record_is_emitted(self, decl))
                 return;
 
+        ssaizer_set_record_emitted(self, decl);
+
         tree_decl_scope* fields = tree_get_record_fields(decl);
         TREE_FOREACH_DECL_IN_SCOPE(fields, it)
         {
@@ -21,7 +23,6 @@ static void ssaize_record_decl(ssaizer* self, tree_decl* decl)
                 ssaize_type(self, tree_get_decl_type(it));
         }
 
-        ssaizer_set_record_emitted(self, decl);
         ssa_add_module_type_decl(self->module, decl);
 }
 
