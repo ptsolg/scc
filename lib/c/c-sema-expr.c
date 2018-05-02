@@ -706,8 +706,11 @@ static tree_type* c_sema_check_compare_expr(
                         c_error_cmp_of_distinct_pointers(self->logger, loc);
                         return NULL;
                 }
-                else if (!c_sema_require_compatible_expr_types(self, lt, rt, loc))
+                else if (!c_sema_require_compatible_expr_types(self,
+                        tree_get_modified_type(ltarget), tree_get_modified_type(rtarget), loc))
+                {
                         return NULL;
+                }
         }
         else
         {
@@ -943,6 +946,9 @@ static inline tree_type* c_sema_check_binop(
 extern tree_expr* c_sema_new_binary_expr(
         c_sema* self, tree_location loc, tree_binop_kind opcode, tree_expr* lhs, tree_expr* rhs)
 {
+        if (!lhs || !rhs)
+                return NULL;
+
         tree_type* t = c_sema_check_binop(self, opcode, loc, &lhs, &rhs);
         if (!t)
                 return NULL;
