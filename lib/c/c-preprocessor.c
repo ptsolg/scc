@@ -85,6 +85,11 @@ static void c_preprocessor_init_builtin_macro(c_preprocessor* self)
 #else
 #error todo
 #endif
+
+        if (self->context->tree->target->kind == TTAK_X86_32)
+                _c_preprocessor_init_builtin_macro(self, "_M32", CTK_PP_NUM, "1");
+        else
+                _c_preprocessor_init_builtin_macro(self, "_M64", CTK_PP_NUM, "1");
 }
 
 extern void c_preprocessor_init(
