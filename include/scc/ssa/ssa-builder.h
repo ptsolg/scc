@@ -53,6 +53,7 @@ extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* to, ssa_value* op
 extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const ssa_array* args);
 
 extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type);
+extern ssa_value* ssa_build_alloca_after(ssa_builder* self, tree_type* type, ssa_instr* instr);
 extern ssa_value* ssa_build_load(ssa_builder* self, ssa_value* what);
 extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value* where);
 extern ssa_value* ssa_build_getfieldaddr(

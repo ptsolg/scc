@@ -4,6 +4,7 @@
 #include "scc/ssa/ssa-instr.h"
 #include "scc/ssa/ssa-module.h"
 #include "scc/ssa/ssa-context.h"
+#include "scc/ssa/ssa-block.h"
 #include "scc/tree/tree-decl.h"
 
 static void ssaize_record_decl(ssaizer* self, tree_decl* decl)
@@ -53,6 +54,14 @@ extern void ssaize_type(ssaizer* self, tree_type* type)
         }
 }
 
+static ssa_value* ssaize_alloca(ssaizer* self, tree_type* t)
+{
+        ssa_value* v = ssa_build_alloca_after(&self->builder, t, self->alloca_insertion_pos);
+        if (v)
+                self->alloca_insertion_pos = ssa_get_var_instr(v);
+        return v;
+}
+
 extern bool ssaize_var_decl(ssaizer* self, tree_decl* decl)
 {
         if (tree_decl_is_anon(decl))
@@ -73,7 +82,7 @@ extern bool ssaize_var_decl(ssaizer* self, tree_decl* decl)
         }
         else if (sd == TSD_AUTOMATIC)
         {
-                if (!(val = ssa_build_alloca(&self->builder, t)))
+                if (!(val = ssaize_alloca(self, t)))
                         return false;
 
                 tree_expr* init = tree_get_var_init(decl);
@@ -112,7 +121,7 @@ static bool ssaizer_maybe_insert_return(ssaizer* self)
         ssa_value* val = NULL;
         if (!tree_type_is_void(restype))
         {
-                ssa_value* alloca = ssa_build_alloca(&self->builder, restype);
+                ssa_value* alloca = ssaize_alloca(self, restype);
                 val = ssa_build_load(&self->builder, alloca);
         }
 
@@ -130,8 +139,10 @@ static void ssaizer_function_cleanup(ssaizer* self)
 static bool ssaize_function_decl_body(ssaizer* self, ssa_value* func, tree_stmt* body)
 {
         self->function = func;
+
         ssaizer_enter_block(self, ssaizer_new_block(self));
         ssa_builder_set_uid(&self->builder, 0);
+        self->alloca_insertion_pos = ssa_get_block_instrs_end(self->block);
 
         ssaizer_push_scope(self); // params
 
@@ -176,7 +187,7 @@ extern bool ssaize_param_decl(ssaizer* self, tree_decl* param)
                 return false;
 
         ssa_add_function_param(self->function, self->context, param_value);
-        ssa_value* loaded_param = ssa_build_alloca(&self->builder, param_type);
+        ssa_value* loaded_param = ssaize_alloca(self, param_type);
         if (!loaded_param || !ssa_build_store(&self->builder, param_value, loaded_param))
                 return false;
 

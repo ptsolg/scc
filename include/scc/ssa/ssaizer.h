@@ -31,6 +31,7 @@ typedef struct _ssaizer
         ssa_context* context;
         ssa_block* block;
         ssa_value* function;
+        ssa_instr* alloca_insertion_pos;
         ssa_module* module;
         ssa_builder builder;
 

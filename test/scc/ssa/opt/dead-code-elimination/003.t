@@ -1,7 +1,8 @@
 void test()
 {
+	int a;
 label:
 	goto label;
 
-	int a = 10;
+	a = 10;
 }

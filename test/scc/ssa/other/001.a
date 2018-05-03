@@ -1,0 +1,14 @@
+; Definition for test
+@0:
+    $1 = alloca 5000
+    br @2
+
+@2:
+    $3 = cmp neq 1, 0
+    br $3, @4, @5
+
+@4:
+    br @2
+
+@5:
+    ret

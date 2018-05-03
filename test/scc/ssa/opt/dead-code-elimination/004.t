@@ -6,5 +6,5 @@ void test()
 	else
 		return;
 
-	int b = 10;
+	a = 10;
 }

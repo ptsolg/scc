@@ -1,5 +1,6 @@
 void test()
 {
+	int a;
 	return;
-	int a = 10;
+	a = 10;
 }

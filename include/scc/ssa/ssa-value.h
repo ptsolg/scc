@@ -66,6 +66,7 @@ static inline const struct _ssa_value_base* _ssa_value_cbase(const ssa_value* se
 
 static inline ssa_value_use* ssa_get_value_uses_begin(const ssa_value* self);
 static inline ssa_value_use* ssa_get_value_uses_end(ssa_value* self);
+static inline size_t ssa_get_value_uses_size(ssa_value* self);
 static inline const ssa_value_use* ssa_get_value_uses_cend(const ssa_value* self);
 static inline ssa_value_kind ssa_get_value_kind(const ssa_value* self);
 static inline ssa_id ssa_get_value_id(const ssa_value* self);
@@ -232,6 +233,11 @@ static inline ssa_value_use* ssa_get_value_uses_begin(const ssa_value* self)
 static inline ssa_value_use* ssa_get_value_uses_end(ssa_value* self)
 {
         return (ssa_value_use*)list_end(&_ssa_value_base(self)->_use_list);
+}
+
+static inline size_t ssa_get_value_uses_size(ssa_value* self)
+{
+        return ssa_get_value_uses_end(self) - ssa_get_value_uses_begin(self);
 }
 
 static inline const ssa_value_use* ssa_get_value_uses_cend(const ssa_value* self)

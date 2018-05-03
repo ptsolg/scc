@@ -225,6 +225,20 @@ extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type)
         return ssa_build_instr(self, i);
 }
 
+extern ssa_value* ssa_build_alloca_after(ssa_builder* self, tree_type* type, ssa_instr* instr)
+{
+        tree_type* p = tree_new_pointer_type(ssa_get_tree(self->context), type);
+        if (!p)
+                return NULL;
+
+        ssa_instr* i = ssa_new_alloca(self->context, ssa_builder_gen_uid(self), p);
+        if (!i)
+                return NULL;
+
+        ssa_add_instr_after(i, instr);
+        return ssa_get_instr_var(i);
+}
+
 extern ssa_value* ssa_build_load(ssa_builder* self, ssa_value* what)
 {
         tree_type* what_type = ssa_get_value_type(what);
