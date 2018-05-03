@@ -380,7 +380,7 @@ static void llvm_printer_emit_alloca_instr(llvm_printer* self, const ssa_instr* 
 
 static void llvm_printer_emit_volatile(llvm_printer* self, const tree_type* type)
 {
-        type = tree_desugar_type(type);
+        type = tree_desugar_ctype(type);
         if (!tree_type_is(type, TTK_POINTER))
                 return;
 
