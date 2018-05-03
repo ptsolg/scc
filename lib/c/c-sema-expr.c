@@ -957,23 +957,23 @@ extern tree_expr* c_sema_new_binary_expr(
 }
 
 static tree_type* c_sema_check_conditional_operator_pointer_types(
-        c_sema* self, tree_expr* lhs, tree_expr* rhs, tree_location loc)
+        c_sema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc)
 {
-        tree_type* lt = tree_get_expr_type(lhs);
-        tree_type* rt = tree_get_expr_type(rhs);
+        tree_type* lt = tree_get_expr_type(*lhs);
+        tree_type* rt = tree_get_expr_type(*rhs);
         bool lpointer = tree_type_is_object_pointer(lt);
         bool rpointer = tree_type_is_object_pointer(rt);
 
         tree_type* target = NULL;
         tree_type_quals quals = TTQ_UNQUALIFIED;
-        if (rpointer && tree_expr_is_null_pointer_constant(self->context, lhs))
+        if (rpointer && tree_expr_is_null_pointer_constant(self->context, *lhs))
         {
                 target = tree_get_pointer_target(rt);
                 quals = tree_get_type_quals(target);
                 if (lpointer)
                         quals |= tree_get_type_quals(tree_get_pointer_target(lt));
         }
-        else if (lpointer && tree_expr_is_null_pointer_constant(self->context, rhs))
+        else if (lpointer && tree_expr_is_null_pointer_constant(self->context, *rhs))
         {
                 target = tree_get_pointer_target(lt);
                 quals = tree_get_type_quals(target);
@@ -1004,7 +1004,11 @@ static tree_type* c_sema_check_conditional_operator_pointer_types(
                 return NULL;
 
         target = tree_new_qualified_type(self->context, target, quals);
-        return c_sema_new_pointer_type(self, TTQ_UNQUALIFIED, target);
+        tree_type* result = c_sema_new_pointer_type(self, TTQ_UNQUALIFIED, target);
+        *lhs = c_sema_new_impl_cast(self, *lhs, result);
+        *rhs = c_sema_new_impl_cast(self, *rhs, result);
+
+        return result;
 }
 
 // 6.5.15 Conditional operator
@@ -1044,7 +1048,7 @@ extern tree_expr* c_sema_new_conditional_expr(
         }
         else if (tree_type_is_void(lt) && tree_type_is_void(rt))
                 t = lt;
-        else if ((t = c_sema_check_conditional_operator_pointer_types(self, lhs, rhs, loc)))
+        else if ((t = c_sema_check_conditional_operator_pointer_types(self, &lhs, &rhs, loc)))
                 ;
         else
         {
