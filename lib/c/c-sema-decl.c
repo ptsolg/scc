@@ -963,6 +963,11 @@ static bool c_sema_check_var_decl(const c_sema* self,
                 else
                         return c_sema_require_complete_type(self, specs->loc.begin, t);
         }
+        else if (sc == TSC_EXTERN && has_init)
+        {
+                c_error_extern_variable_has_an_initializer(self->logger, d);
+                return false;
+        }
         return true;
 }
 
@@ -1057,8 +1062,11 @@ extern tree_decl* c_sema_declare_external_decl(
                 return NULL;
 
         tree_decl_scope_add_hidden_decl(self->locals, decl);
-        if (has_init_or_body)
+        if (has_init_or_body
+                || (dk == TDK_VAR && tree_get_decl_storage_class(decl) == TSC_IMPL_EXTERN))
+        {
                 tree_decl_scope_update_lookup(self->locals, self->context, decl);
+        }
 
         return decl;
 }

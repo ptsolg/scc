@@ -372,6 +372,12 @@ extern void c_error_dllimport_applied_to_wrong_decl(c_logger* self, tree_locatio
                 "'_Dllimport' specifier allowed on function or variable declarations only");
 }
 
+extern void c_error_extern_variable_has_an_initializer(c_logger* self, const c_declarator* d)
+{
+        c_error(self, CES_ERROR, c_declarator_get_name_loc_or_begin(d),
+                "'extern' variable has an initializer");
+}
+
 extern void c_error_function_initialized_like_a_variable(c_logger* self, const tree_decl* func)
 {
         c_error(self, CES_ERROR, tree_get_decl_loc_begin(func),

@@ -90,6 +90,7 @@ extern void c_error_variable_declared_register_at_file_scope(c_logger* self, con
 extern void c_error_field_declared_with_storage_specifier(c_logger* self, const c_declarator* d);
 extern void c_error_dllimport_cannot_be_applied_to_definition(c_logger* self, const c_decl_specs* specs, int decl_kind);
 extern void c_error_dllimport_applied_to_wrong_decl(c_logger* self, tree_location loc);
+extern void c_error_extern_variable_has_an_initializer(c_logger* self, const c_declarator* d);
 
 extern void c_error_function_initialized_like_a_variable(c_logger* self, const tree_decl* func);
 extern void c_error_invalid_initializer(c_logger* self, const tree_expr* init);
