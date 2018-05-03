@@ -102,6 +102,7 @@ static inline struct _ssa_global_var* _ssa_global_var(ssa_value* self);
 static inline const struct _ssa_global_var* _ssa_global_cvar(const ssa_value* self);
 
 static inline tree_decl* ssa_get_global_var_entity(const ssa_value* self);
+static inline void ssa_set_global_var_entity(ssa_value* self, tree_decl* var);
 
 struct _ssa_constant
 {
@@ -167,6 +168,9 @@ static inline ssa_block* ssa_get_function_blocks_end(ssa_value* self);
 static inline ssa_block* ssa_get_function_blocks_cend(const ssa_value* self);
 static inline ssa_value** ssa_get_function_params_begin(const ssa_value* self);
 static inline ssa_value** ssa_get_function_params_end(const ssa_value* self);
+static inline bool ssa_function_has_body(const ssa_value* self);
+
+static inline void ssa_set_function_entity(ssa_value* self, tree_decl* func);
 
 #define SSA_FOREACH_FUNCTION_BLOCK(PFUNC, ITNAME)\
         for (ssa_block* ITNAME = ssa_get_function_blocks_begin(PFUNC);\
@@ -299,6 +303,11 @@ static inline tree_decl* ssa_get_global_var_entity(const ssa_value* self)
         return _ssa_global_cvar(self)->_entity;
 }
 
+static inline void ssa_set_global_var_entity(ssa_value* self, tree_decl* var)
+{
+        _ssa_global_var(self)->_entity = var;
+}
+
 static inline struct _ssa_constant* _ssa_constant(ssa_value* self)
 {
         SSA_ASSERT_VALUE(self, SVK_CONSTANT);
@@ -394,6 +403,16 @@ static inline ssa_value** ssa_get_function_params_begin(const ssa_value* self)
 static inline ssa_value** ssa_get_function_params_end(const ssa_value* self)
 {
         return ssa_get_function_params_begin(self) + _ssa_cfunction(self)->_params.size;
+}
+
+static inline bool ssa_function_has_body(const ssa_value* self)
+{
+        return !list_empty(&_ssa_cfunction(self)->_blocks);
+}
+
+static inline void ssa_set_function_entity(ssa_value* self, tree_decl* func)
+{
+        _ssa_function(self)->_entity = func;
 }
 
 #ifdef __cplusplus

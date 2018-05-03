@@ -62,46 +62,71 @@ static ssa_value* ssaize_alloca(ssaizer* self, tree_type* t)
         return v;
 }
 
+static bool ssaize_global_var_decl(ssaizer* self, tree_decl* decl)
+{
+        ssa_value* val;
+        if (!tree_decl_is_global(decl))
+        {
+                // probably static variable inside function
+                if (!(val = ssa_new_global_var(self->context, decl)))
+                        return false;
+
+                ssaizer_set_def(self, decl, val);
+                return true;
+        }
+
+        if (!(val = ssaizer_get_global_decl(self, decl)))
+        {
+                val = ssa_new_global_var(self->context, decl);
+                ssa_add_module_global(self->module, val);
+                ssaizer_set_global_decl(self, decl, val);
+        }
+        else
+        {
+                tree_decl* e = ssa_get_global_var_entity(val);
+                if (tree_get_var_init(e) || tree_get_decl_storage_class(e) == TSC_IMPL_EXTERN)
+                        return true;
+        }
+
+        // todo: initializer
+
+        ssa_set_global_var_entity(val, decl);
+        return true;
+}
+
+static bool ssaize_local_var_decl(ssaizer* self, tree_decl* decl)
+{
+        ssa_value* val = ssaize_alloca(self, tree_get_decl_type(decl));
+        if (!val)
+                return false;
+
+        tree_expr* init = tree_get_var_init(decl);
+        ssa_value* init_value = NULL;
+
+        if (init && !(init_value = ssaize_expr(self, init)))
+                return false;
+        if (init && !ssa_build_store(&self->builder, init_value, val))
+                return false;
+
+        ssaizer_set_def(self, decl, val);
+        return true;
+}
+
 extern bool ssaize_var_decl(ssaizer* self, tree_decl* decl)
 {
         if (tree_decl_is_anon(decl))
                 return true;
 
-        tree_type* t = tree_get_decl_type(decl);
-        ssaize_type(self, t);
+        ssaize_type(self, tree_get_decl_type(decl));
 
-        ssa_value* val;
         tree_storage_duration sd = tree_get_decl_storage_duration(decl);
         if (sd == TSD_STATIC || sd == TSD_THREAD)
-        {
-                if (!(val = ssa_new_global_var(self->context, decl)))
-                        return false;
-
-                // todo: initializer
-                ssa_add_module_global(self->module, val);
-        }
+                return ssaize_global_var_decl(self, decl);
         else if (sd == TSD_AUTOMATIC)
-        {
-                if (!(val = ssaize_alloca(self, t)))
-                        return false;
-
-                tree_expr* init = tree_get_var_init(decl);
-                ssa_value* init_value = NULL;
-
-                if (init && !(init_value = ssaize_expr(self, init)))
-                        return false;
-                if (init && !ssa_build_store(&self->builder, init_value, val))
-                        return false;
-        }
-        else
-                UNREACHABLE();
-
-        if (tree_decl_is_global(decl))
-                ssaizer_set_global_decl(self, decl, val);
-        else
-                ssaizer_set_def(self, decl, val);
-
-        return true;
+                return ssaize_local_var_decl(self, decl);
+        
+        UNREACHABLE();
+        return false;
 }
 
 extern bool ssaize_decl_group(ssaizer* self, const tree_decl* decl)
@@ -130,36 +155,29 @@ static bool ssaizer_maybe_insert_return(ssaizer* self)
         return true;
 }
 
-static void ssaizer_function_cleanup(ssaizer* self)
-{
-        strmap_clear(&self->labels);
-        ssaizer_pop_scope(self); // params
-}
-
 static bool ssaize_function_decl_body(ssaizer* self, ssa_value* func, tree_stmt* body)
 {
-        self->function = func;
-
         ssaizer_enter_block(self, ssaizer_new_block(self));
         ssa_builder_set_uid(&self->builder, 0);
+        self->function = func;
         self->alloca_insertion_pos = ssa_get_block_instrs_end(self->block);
 
         ssaizer_push_scope(self); // params
 
+        bool result = false;
         tree_decl_scope* params = tree_get_func_params(ssa_get_function_entity(func));
         TREE_FOREACH_DECL_IN_SCOPE(params, it)
                 if (!ssaize_decl(self, it))
-                        goto error;
+                        goto cleanup;
         if (!ssaize_compound_stmt(self, body) || !ssaizer_maybe_insert_return(self))
-                goto error;
+                goto cleanup;
 
+        result = true;
         ssa_fix_function_content_uids(self->function);
-        ssaizer_function_cleanup(self);
-        return true;
-
-error:
-        ssaizer_function_cleanup(self);
-        return false;
+cleanup:
+        strmap_clear(&self->labels);
+        ssaizer_pop_scope(self); // params
+        return result;
 }
 
 extern bool ssaize_function_decl(ssaizer* self, tree_decl* func)
@@ -167,16 +185,19 @@ extern bool ssaize_function_decl(ssaizer* self, tree_decl* func)
         if (tree_get_func_builtin_kind(func) != TFBK_ORDINARY)
                 return true;
 
-        ssaize_type(self, tree_get_decl_type(func));
+        ssa_value* val = ssaizer_get_global_decl(self, func);
+        if (!val)
+        {
+                val = ssa_new_function(self->context, func);
+                ssa_add_module_global(self->module, val);
+                ssaizer_set_global_decl(self, func, val);
+        }
+        else if (ssa_function_has_body(val))
+                return true;
 
-        ssa_value* ssa_func = ssa_new_function(self->context, func);
+        ssa_set_function_entity(val, func);
         tree_stmt* body = tree_get_func_body(func);
-        if (body && !ssaize_function_decl_body(self, ssa_func, body))
-                return false;
-
-        ssa_add_module_global(self->module, ssa_func);
-        ssaizer_set_global_decl(self, func, ssa_func);
-        return true;
+        return body ? ssaize_function_decl_body(self, val, body) : true;
 }
 
 extern bool ssaize_param_decl(ssaizer* self, tree_decl* param)
