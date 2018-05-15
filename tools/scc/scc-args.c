@@ -227,10 +227,16 @@ static void scc_m64(scc_env* self, aparser* parser)
 static void scc_source_file(scc_env* self, aparser* parser)
 {
         const char* file = aparser_get_string(parser);
-        if (!file)
+        if (!file || EC_FAILED(cc_add_source_file(&self->cc, file, false)))
                 return;
 
-        cc_add_source_file(&self->cc, file);
+        char dir[MAX_PATH_LEN];
+        strncpy(dir, file, MAX_PATH_LEN);
+        path_strip_file(dir);
+        if (!*dir)
+                return;
+
+        cc_add_source_dir(&self->cc, dir);
 }
 
 extern errcode scc_parse_opts(scc_env* self, int argc, const char** argv)
