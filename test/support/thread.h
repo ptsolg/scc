@@ -35,4 +35,17 @@ static void thread_wait(const struct thread* self)
         WaitForSingleObject(self->handle, INFINITE);
 }
 
+#define CREATE_THREADS(N, ENTRY, DATA) \
+        do \
+        { \
+                struct thread ths[N]; \
+                for (int i = 0; i < N; i++) \
+                { \
+                        thread_init(ths + i, ENTRY, DATA); \
+                        thread_start(ths + i); \
+                } \
+                for (int i = 0; i < N; i++) \
+                        thread_wait(ths + i); \
+        } while (0)
+
 #endif

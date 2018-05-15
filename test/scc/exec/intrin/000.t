@@ -1,8 +1,5 @@
 #include <thread.h>
 
-#define NTHREADS 10
-#define NITER 100000
-
 struct mutex
 {
 	unsigned val;
@@ -29,7 +26,7 @@ int c;
 
 void entry(void* data)
 {
-	for (int i = 0; i < NITER; i++)
+	for (int i = 0; i < 100000; i++)
 	{
 		mutex_lock(&m);
 		c++;
@@ -40,15 +37,6 @@ void entry(void* data)
 int main()
 {
 	mutex_init(&m);
-
-	struct thread ths[NTHREADS];
-	for (int i = 0; i < NTHREADS; i++)
-	{
-		thread_init(ths + i, entry, 0);
-		thread_start(ths + i);
-	}
-	for (int i = 0; i < NTHREADS; i++)
-		thread_wait(ths + i);
-
-	return !(c == NTHREADS * NITER);
+	CREATE_THREADS(2, entry, 0);
+	return !(c == 200000);
 }
