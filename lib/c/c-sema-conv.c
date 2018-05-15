@@ -206,8 +206,8 @@ static bool c_sema_check_attribute_discartion(
 static bool c_sema_check_pointer_assignment(
         c_sema* self, tree_type* lt, tree_type* rt, c_assignment_conversion_result* r)
 {
-        tree_type* ltarget = tree_desugar_type(tree_get_pointer_target(lt));
-        tree_type* rtarget = tree_desugar_type(tree_get_pointer_target(rt));
+        tree_type* ltarget = tree_ignore_paren_types(tree_get_pointer_target(lt));
+        tree_type* rtarget = tree_ignore_paren_types(tree_get_pointer_target(rt));
 
         if (c_sema_types_are_compatible(self, tree_get_modified_type(ltarget),
                                               tree_get_modified_type(rtarget))
