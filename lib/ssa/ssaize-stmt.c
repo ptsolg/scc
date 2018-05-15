@@ -36,6 +36,31 @@ extern bool ssaizer_build_if(ssaizer* self,
         return true;
 }
 
+extern bool ssaizer_commit_last_transaction(ssaizer* self)
+{
+        return ssaizer_commit_transaction(self, ssaizer_get_last_tm_info(self));
+}
+
+extern bool ssaizer_commit_transaction(ssaizer* self, ssa_tm_info* info)
+{
+        ssa_value* result = ssa_build_call_1(&self->builder, self->tm.commit, info->transaction);
+        if (!result)
+                return false;
+        if (!(result = ssa_build_neq_zero(&self->builder, result)))
+                return false;
+
+        ssa_block* on_success = ssaizer_new_block(self);
+        ssa_block* on_fail = ssaizer_new_block(self);
+        if (!ssaizer_build_if(self, result, on_success, on_fail))
+                return false;
+
+        ssaizer_enter_block(self, on_fail);
+        ssaizer_build_jmp(self, info->entry);
+
+        ssaizer_enter_block(self, on_success);
+        return true;
+}
+
 extern bool ssaize_labeled_stmt(ssaizer* self, const tree_stmt* stmt)
 {
         tree_decl* label_decl = tree_get_label_stmt_decl(stmt);
@@ -331,18 +356,79 @@ extern bool ssaize_decl_stmt(ssaizer* self, const tree_stmt* stmt)
         return ssaize_decl(self, tree_get_decl_stmt_entity(stmt));
 }
 
+static bool ssaizer_commit_all_transactions(ssaizer* self)
+{
+        for (size_t i = ssaizer_get_tm_info_size(self) - 1; i != -1; i--)
+                if (!ssaizer_commit_transaction(self, ssaizer_get_tm_info(self, i)))
+                        return false;
+        return true;
+}
+
 extern bool ssaize_return_stmt(ssaizer* self, const tree_stmt* stmt)
 {
         ssa_value* val = NULL;
         tree_expr* expr = tree_get_return_value(stmt);
         if (expr && !(val = ssaize_expr(self, expr)))
                 return false;
-
+        if (!ssaizer_commit_all_transactions(self))
+                return false;
         if (!ssa_build_return(&self->builder, val))
                 return false;
         
         ssaizer_finish_current_block(self);
         return true;
+}
+
+extern bool ssaize_stmt_as_atomic(ssaizer* self, const tree_stmt* stmt)
+{
+        ssa_block* body = ssaizer_new_block(self);
+        ssa_block* exit = ssaizer_new_block(self);
+        ssa_block* reset = ssaizer_new_block(self);
+        if (!ssaizer_maybe_build_jmp(self, body))
+                return false;
+
+        ssaizer_enter_block(self, body);
+
+        ssa_value* transaction = ssaize_alloca(self, self->tm.transaction_type);
+        if (!transaction)
+                return false;
+        if (!ssa_build_call_1(&self->builder, self->tm.init, transaction))
+                return false;
+
+        bool result = false;
+        ssaizer_push_break_dest(self, exit);
+        ssaizer_push_tm_info(self, transaction, body, reset);
+
+        if (!ssaize_stmt(self, stmt))
+                goto cleanup;
+
+        if (self->block && !ssaizer_current_block_is_terminated(self))
+        {
+                if (!ssaizer_commit_last_transaction(self))
+                        goto cleanup;
+                if (!ssaizer_build_jmp(self, exit))
+                        goto cleanup;
+        }
+
+        assert(!self->block);
+
+        ssaizer_enter_block(self, reset);
+        if (!ssa_build_call_1(&self->builder, self->tm.reset, transaction))
+                goto cleanup;
+        if (!ssaizer_build_jmp(self, body))
+                goto cleanup;
+
+        ssaizer_enter_block(self, exit);
+        result = true;
+cleanup:
+        ssaizer_pop_break_dest(self);
+        ssaizer_pop_tm_info(self);
+        return result;
+}
+
+extern bool ssaize_atomic_stmt(ssaizer* self, const tree_stmt* stmt)
+{
+        return ssaize_stmt_as_atomic(self, tree_get_atomic_body(stmt));
 }
 
 extern bool ssaize_stmt(ssaizer* self, const tree_stmt* stmt)
@@ -367,6 +453,7 @@ extern bool ssaize_stmt(ssaizer* self, const tree_stmt* stmt)
                 case TSK_BREAK:    return ssaize_break_stmt(self, stmt);
                 case TSK_DECL:     return ssaize_decl_stmt(self, stmt);
                 case TSK_RETURN:   return ssaize_return_stmt(self, stmt);
+                case TSK_ATOMIC:   return ssaize_atomic_stmt(self, stmt);
 
                 case TSK_UNKNOWN:
                 default:

@@ -16,6 +16,9 @@ extern bool ssaizer_maybe_build_jmp(ssaizer* self, ssa_block* dest);
 extern bool ssaizer_build_if(ssaizer* self,
         ssa_value* cond, ssa_block* on_true, ssa_block* on_false);
 
+extern bool ssaizer_commit_last_transaction(ssaizer* self);
+extern bool ssaizer_commit_transaction(ssaizer* self, ssa_tm_info* info);
+
 extern bool ssaize_labeled_stmt(ssaizer* self, const tree_stmt* stmt);
 extern bool ssaize_default_stmt(ssaizer* self, const tree_stmt* stmt);
 extern bool ssaize_case_stmt(ssaizer* self, const tree_stmt* stmt);
@@ -31,6 +34,8 @@ extern bool ssaize_continue_stmt(ssaizer* self, const tree_stmt* stmt);
 extern bool ssaize_break_stmt(ssaizer* self, const tree_stmt* stmt);
 extern bool ssaize_decl_stmt(ssaizer* self, const tree_stmt* stmt);
 extern bool ssaize_return_stmt(ssaizer* self, const tree_stmt* stmt);
+extern bool ssaize_stmt_as_atomic(ssaizer* self, const tree_stmt* stmt);
+extern bool ssaize_atomic_stmt(ssaizer* self, const tree_stmt* stmt);
 extern bool ssaize_stmt(ssaizer* self, const tree_stmt* stmt);
 
 #ifdef __cplusplus

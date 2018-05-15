@@ -67,6 +67,20 @@ static file_entry** cc_sources_end(cc_instance* self)
         for(file_entry** ITNAME = cc_sources_begin(PCC),\
                 **ENDNAME = cc_sources_end(PCC); ITNAME != ENDNAME; ITNAME++)
 
+static file_entry** cc_builtin_sources_begin(cc_instance* self)
+{
+        return (file_entry**)dseq_begin(&self->input.builtin_sources);
+}
+
+static file_entry** cc_builtin_sources_end(cc_instance* self)
+{
+        return (file_entry**)dseq_end(&self->input.builtin_sources);
+}
+
+#define CC_FOREACH_BUILTIN_SOURCE(PCC, ITNAME, ENDNAME) \
+        for(file_entry** ITNAME = cc_builtin_sources_begin(PCC),\
+                **ENDNAME = cc_builtin_sources_end(PCC); ITNAME != ENDNAME; ITNAME++)
+
 static file_entry** cc_libs_begin(cc_instance* self)
 {
         return (file_entry**)dseq_begin(&self->input.libs);
@@ -253,6 +267,11 @@ static errcode cc_codegen_file_ex(cc_instance* self,
         if (!module)
                 goto cleanup;
 
+        tree_module* tm_decls = NULL;
+        if (self->opts.ext.enable_tm)
+                if (!(tm_decls = cc_parse_file(self, &context, self->input.tm_decls)))
+                        goto cleanup;
+
         fwrite_cb write;
         fwrite_cb_init(&write, output);
 
@@ -264,7 +283,7 @@ static errcode cc_codegen_file_ex(cc_instance* self,
                 opts.eliminate_dead_code = true;
         }
 
-        result = codegen_module(fwrite_cb_base(&write), &context.ssa, module, kind, &opts);
+        result = codegen_module(fwrite_cb_base(&write), &context.ssa, module, tm_decls, kind, &opts);
 
 cleanup:
         cc_context_dispose(&context);
@@ -277,8 +296,7 @@ static errcode get_file_as(char* buffer, const file_entry* file, const char* ext
         return path_change_ext(buffer, ext);
 }
 
-static errcode cc_codegen_file(cc_instance* self,
-        codegen_output_kind kind, file_entry* file)
+static errcode cc_codegen_file(cc_instance* self, codegen_output_kind kind, file_entry* file)
 {
         const char* ext = kind == CGOK_SSA ? SSA_EXT : LL_EXT;
         char out[MAX_PATH_LEN + 1];
@@ -305,17 +323,31 @@ static void cc_cleanup_codegen(cc_instance* self, codegen_output_kind kind)
 
                 path_delete_file(file);
         }
+        CC_FOREACH_BUILTIN_SOURCE(self, it, end)
+        {
+                const char* ext = kind == CGOK_SSA ? SSA_EXT : LL_EXT;
+                char file[MAX_PATH_LEN + 1];
+                if (EC_FAILED(get_file_as(file, *it, ext)))
+                        return;
+
+                path_delete_file(file);
+        }
 }
 
 static errcode cc_codegen(cc_instance* self, codegen_output_kind kind)
 {
         CC_FOREACH_SOURCE(self, it, end)
                 if (EC_FAILED(cc_codegen_file(self, kind, *it)))
-                {
-                        cc_cleanup_codegen(self, kind);
-                        return EC_ERROR;
-                }
+                        goto cleanup;
+        CC_FOREACH_BUILTIN_SOURCE(self, it, end)
+                if (EC_FAILED(cc_codegen_file(self, kind, *it)))
+                        goto cleanup;
+
         return EC_NO_ERROR;
+
+cleanup:
+        cc_cleanup_codegen(self, kind);
+        return EC_ERROR;
 }
 
 static errcode cc_check_return_code(cc_instance* self, const char* tool, int code)
@@ -367,11 +399,26 @@ static void cc_cleanup_compilation(cc_instance* self, llvm_compiler_output_kind 
 
                 path_delete_file(file);
         }
+        CC_FOREACH_BUILTIN_SOURCE(self, it, end)
+        {
+                char file[MAX_PATH_LEN + 1];
+                strncpy(file, file_get_path(*it), MAX_PATH_LEN);
+                if (EC_FAILED(path_change_ext(file, ext)))
+                        continue;
+
+                path_delete_file(file);
+        }
 }
 
 static errcode cc_compile(cc_instance* self, llvm_compiler_output_kind output_kind)
 {
         CC_FOREACH_SOURCE(self, it, end)
+                if (EC_FAILED(cc_compile_file(self, *it, output_kind, NULL)))
+                {
+                        cc_cleanup_compilation(self, output_kind);
+                        return EC_ERROR;
+                }
+        CC_FOREACH_BUILTIN_SOURCE(self, it, end)
                 if (EC_FAILED(cc_compile_file(self, *it, output_kind, NULL)))
                 {
                         cc_cleanup_compilation(self, output_kind);
@@ -451,6 +498,13 @@ static errcode cc_link(cc_instance* self, llvm_linker* lld)
 {
         char obj_file[MAX_PATH_LEN + 1];
         CC_FOREACH_SOURCE(self, it, end)
+        {
+                if (EC_FAILED(get_file_as(obj_file, *it, OBJ_EXT)))
+                        return EC_ERROR;
+                if (EC_FAILED(llvm_linker_add_file(lld, obj_file)))
+                        return EC_ERROR;
+        }
+        CC_FOREACH_BUILTIN_SOURCE(self, it, end)
         {
                 if (EC_FAILED(get_file_as(obj_file, *it, OBJ_EXT)))
                         return EC_ERROR;

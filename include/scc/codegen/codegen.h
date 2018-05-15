@@ -18,6 +18,7 @@ extern errcode codegen_module(
         write_cb* write,
         ssa_context* context,
         const tree_module* module,
+        const tree_module* tm_decls,
         codegen_output_kind output,
         const ssa_optimizer_opts* opts);
 

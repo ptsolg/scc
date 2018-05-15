@@ -194,9 +194,27 @@ extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* to, ssa_value* op
         return ssa_build_instr(self, c);
 }
 
-extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const ssa_array* args)
+extern ssa_value* ssa_build_call_1(ssa_builder* self, ssa_value* func, ssa_value* a1)
 {
-        assert(func && args);
+        ssa_value* args[1] = { a1 };
+        return ssa_build_call_n(self, func, args, 1);
+}
+
+extern ssa_value* ssa_build_call_2(ssa_builder* self, ssa_value* func, ssa_value* a1, ssa_value* a2)
+{
+        ssa_value* args[2] = { a1, a2 };
+        return ssa_build_call_n(self, func, args, 2);
+}
+
+extern ssa_value* ssa_build_call_3(ssa_builder* self, ssa_value* func, ssa_value* a1, ssa_value* a2, ssa_value* a3)
+{
+        ssa_value* args[3] = { a1, a2, a3 };
+        return ssa_build_call_n(self, func, args, 3);
+}
+
+extern ssa_value* ssa_build_call_n(ssa_builder* self, ssa_value* func, ssa_value** args, size_t n)
+{
+        assert(func);
         tree_type* func_type = tree_desugar_type(
                 tree_get_pointer_target(ssa_get_value_type(func)));
         assert(tree_type_is(func_type, TTK_FUNCTION));
@@ -206,8 +224,8 @@ extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const ssa_a
         if (!call)
                 return NULL;
 
-        for (size_t i = 0; i < args->size; i++)
-                ssa_add_instr_operand(call, self->context, *((ssa_value**)args->data + i));
+        for (size_t i = 0; i < n; i++)
+                ssa_add_instr_operand(call, self->context, args[i]);
        
         return ssa_build_instr(self, call);
 }
@@ -303,6 +321,15 @@ extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, uin
         avalue_init_int(&v, bits, tree_type_is_signed_integer(type), val);
 
         return ssa_new_constant(self->context, type, &v);
+}
+
+extern ssa_value* ssa_build_u32_constant(ssa_builder* self, unsigned val)
+{
+        tree_type* u32 = tree_new_builtin_type(ssa_get_tree(self->context), TBTK_UINT32);
+        if (!u32)
+                return NULL;
+
+        return ssa_build_int_constant(self, u32, val);
 }
 
 extern ssa_value* ssa_build_size_t_constant(ssa_builder* self, size_t val)

@@ -54,7 +54,7 @@ extern void ssaize_type(ssaizer* self, tree_type* type)
         }
 }
 
-static ssa_value* ssaize_alloca(ssaizer* self, tree_type* t)
+extern ssa_value* ssaize_alloca(ssaizer* self, tree_type* t)
 {
         ssa_value* v = ssa_build_alloca_after(&self->builder, t, self->alloca_insertion_pos);
         if (v)
@@ -105,7 +105,7 @@ static bool ssaize_local_var_decl(ssaizer* self, tree_decl* decl)
 
         if (init && !(init_value = ssaize_expr(self, init)))
                 return false;
-        if (init && !ssa_build_store(&self->builder, init_value, val))
+        if (init && !ssaize_store(self, init_value, val))
                 return false;
 
         ssaizer_set_def(self, decl, val);
@@ -147,7 +147,7 @@ static bool ssaizer_maybe_insert_return(ssaizer* self)
         if (!tree_type_is_void(restype))
         {
                 ssa_value* alloca = ssaize_alloca(self, restype);
-                val = ssa_build_load(&self->builder, alloca);
+                val = ssaize_load(self, alloca);
         }
 
         ssa_build_return(&self->builder, val);
@@ -157,6 +157,9 @@ static bool ssaizer_maybe_insert_return(ssaizer* self)
 
 static bool ssaize_function_decl_body(ssaizer* self, ssa_value* func, tree_stmt* body)
 {
+        assert(!self->function && !self->block &&
+                "cannot generate function body while the other one is generating");
+
         ssaizer_enter_block(self, ssaizer_new_block(self));
         ssa_builder_set_uid(&self->builder, 0);
         self->function = func;
@@ -169,6 +172,31 @@ static bool ssaize_function_decl_body(ssaizer* self, ssa_value* func, tree_stmt*
         TREE_FOREACH_DECL_IN_SCOPE(params, it)
                 if (!ssaize_decl(self, it))
                         goto cleanup;
+
+        tree_type* func_type = tree_get_pointer_target(ssa_get_value_type(func));
+        if (tree_func_type_is_transaction_safe(func_type))
+        {
+                ssa_value* transaction_id = ssaize_load(self, self->tm.transaction_id);
+                if (!transaction_id)
+                        goto cleanup;
+
+                ssa_value* in_transaction = ssa_build_neq_zero(&self->builder, transaction_id);
+                if (!in_transaction)
+                        goto cleanup;
+
+                ssa_block* on_transaction = ssaizer_new_block(self);
+                ssa_block* otherwise = ssaizer_new_block(self);
+
+                if (!ssaizer_build_if(self, in_transaction, on_transaction, otherwise))
+                        goto cleanup;
+
+                ssaizer_enter_block(self, on_transaction);
+                if (!ssaize_stmt_as_atomic(self, body) || !ssaizer_maybe_insert_return(self))
+                        goto cleanup;
+
+                ssaizer_enter_block(self, otherwise);          
+        }
+
         if (!ssaize_compound_stmt(self, body) || !ssaizer_maybe_insert_return(self))
                 goto cleanup;
 
@@ -177,6 +205,8 @@ static bool ssaize_function_decl_body(ssaizer* self, ssa_value* func, tree_stmt*
 cleanup:
         strmap_clear(&self->labels);
         ssaizer_pop_scope(self); // params
+        self->function = NULL;
+        self->block = NULL;
         return result;
 }
 
@@ -197,7 +227,7 @@ extern bool ssaize_function_decl(ssaizer* self, tree_decl* func)
 
         ssa_set_function_entity(val, func);
         tree_stmt* body = tree_get_func_body(func);
-        return body ? ssaize_function_decl_body(self, val, body) : true;
+        return !self->function && body ? ssaize_function_decl_body(self, val, body) : true;
 }
 
 extern bool ssaize_param_decl(ssaizer* self, tree_decl* param)
@@ -209,7 +239,7 @@ extern bool ssaize_param_decl(ssaizer* self, tree_decl* param)
 
         ssa_add_function_param(self->function, self->context, param_value);
         ssa_value* loaded_param = ssaize_alloca(self, param_type);
-        if (!loaded_param || !ssa_build_store(&self->builder, param_value, loaded_param))
+        if (!loaded_param || !ssaize_store(self, param_value, loaded_param))
                 return false;
 
         ssaizer_set_def(self, param, loaded_param);
@@ -237,4 +267,12 @@ extern bool ssaize_decl(ssaizer* self, tree_decl* decl)
                         // just ignore unknown decl
                         return true;
         }
+}
+
+extern bool ssaize_decl_n(ssaizer* self, tree_decl** decls, size_t n)
+{
+        for (size_t i = 0; i < n; i++)
+                if (!ssaize_decl(self, decls[i]))
+                        return false;
+        return true;
 }

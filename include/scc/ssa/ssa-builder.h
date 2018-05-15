@@ -50,7 +50,10 @@ extern ssa_value* ssa_build_geq(ssa_builder* self, ssa_value* lhs, ssa_value* rh
 extern ssa_value* ssa_build_eq(ssa_builder* self, ssa_value* lhs, ssa_value* rhs);
 extern ssa_value* ssa_build_neq(ssa_builder* self, ssa_value* lhs, ssa_value* rhs);
 extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* to, ssa_value* operand);
-extern ssa_value* ssa_build_call(ssa_builder* self, ssa_value* func, const ssa_array* args);
+extern ssa_value* ssa_build_call_1(ssa_builder* self, ssa_value* func, ssa_value* a1);
+extern ssa_value* ssa_build_call_2(ssa_builder* self, ssa_value* func, ssa_value* a1, ssa_value* a2);
+extern ssa_value* ssa_build_call_3(ssa_builder* self, ssa_value* func, ssa_value* a1, ssa_value* a2, ssa_value* a3);
+extern ssa_value* ssa_build_call_n(ssa_builder* self, ssa_value* func, ssa_value** args, size_t n);
 
 extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type);
 extern ssa_value* ssa_build_alloca_after(ssa_builder* self, tree_type* type, ssa_instr* instr);
@@ -61,6 +64,7 @@ extern ssa_value* ssa_build_getfieldaddr(
 
 extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id id);
 extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, uint64_t val);
+extern ssa_value* ssa_build_u32_constant(ssa_builder* self, unsigned val);
 extern ssa_value* ssa_build_size_t_constant(ssa_builder* self, size_t val);
 extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, float val);
 extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, double val);

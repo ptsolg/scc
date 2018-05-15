@@ -24,7 +24,15 @@ typedef struct _tree_module tree_module;
 typedef struct _ssa_value ssa_value;
 typedef struct _dseq strmap_stack;
 typedef struct _dseq dseq;
+typedef struct _dseq ssa_tm_info_stack;
 typedef struct _htab ptrset;
+
+typedef struct
+{
+        ssa_value* transaction;
+        ssa_block* entry;
+        ssa_block* reset;
+} ssa_tm_info;
 
 typedef struct _ssaizer
 {
@@ -35,6 +43,18 @@ typedef struct _ssaizer
         ssa_module* module;
         ssa_builder builder;
 
+        struct
+        {
+                ssa_value* read;
+                ssa_value* write;
+                ssa_value* init;
+                ssa_value* commit;
+                ssa_value* cancel;
+                ssa_value* reset;
+                ssa_value* transaction_id;
+                tree_type* transaction_type;
+        } tm;
+
         // stack of strmap's used for tracking the last definition of the variable
         strmap_stack defs;
         strmap labels;
@@ -44,6 +64,7 @@ typedef struct _ssaizer
         dseq continue_stack;
         dseq break_stack;
         dseq switch_stack;
+        ssa_tm_info_stack tm_info_stack;
 } ssaizer;
 
 extern void ssaizer_init(ssaizer* self, ssa_context* context);
@@ -72,14 +93,21 @@ extern ssa_block* ssaizer_get_label_block(ssaizer* self, const tree_decl* label)
 extern void ssaizer_push_continue_dest(ssaizer* self, ssa_block* block);
 extern void ssaizer_push_break_dest(ssaizer* self, ssa_block* block);
 extern void ssaizer_push_switch_instr(ssaizer* self, ssa_instr* switch_instr);
+extern void ssaizer_push_tm_info(ssaizer* self, ssa_value* transaction, ssa_block* entry, ssa_block* reset);
 extern void ssaizer_pop_continue_dest(ssaizer* self);
 extern void ssaizer_pop_break_dest(ssaizer* self);
 extern void ssaizer_pop_switch_instr(ssaizer* self);
+extern void ssaizer_pop_tm_info(ssaizer* self);
 extern ssa_block* ssaizer_get_continue_dest(ssaizer* self);
 extern ssa_block* ssaizer_get_break_dest(ssaizer* self);
 extern ssa_instr* ssaizer_get_switch_instr(ssaizer* self);
+extern ssa_tm_info* ssaizer_get_last_tm_info(ssaizer* self);
+extern ssa_tm_info* ssaizer_get_tm_info(ssaizer* self, size_t i);
+extern size_t ssaizer_get_tm_info_size(ssaizer* self);
 
-extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module);
+extern bool ssaizer_in_atomic_block(const ssaizer* self);
+
+extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module, const tree_module* tm_decls);
 
 #ifdef __cplusplus
 }

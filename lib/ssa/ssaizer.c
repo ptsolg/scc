@@ -94,6 +94,40 @@
 #undef HTAB_ITERATOR_IS_VALID
 #undef HTAB_ITERATOR_GET_VALUE
 
+#define DSEQ_VALUE_TYPE ssa_tm_info
+#define DSEQ_TYPE ssa_tm_info_stack
+#define DSEQ_INIT ssa_tm_info_stack_init
+#define DSEQ_INIT_ALLOC ssa_tm_info_stack_init_alloc
+#define DSEQ_DISPOSE ssa_tm_info_stack_dispose
+#define DSEQ_GET_SIZE ssa_tm_info_stack_size
+#define DSEQ_GET_CAPACITY ssa_tm_info_stack_capacity
+#define DSEQ_GET_ALLOCATOR ssa_tm_info_stack_allocator
+#define DSEQ_RESERVE ssa_tm_info_stack_reserve
+#define DSEQ_RESIZE ssa_tm_info_stack_resize
+#define DSEQ_GET_BEGIN ssa_tm_info_stack_begin
+#define DSEQ_GET_END ssa_tm_info_stack_end
+#define DSEQ_GET ssa_tm_info_stack_get
+#define DSEQ_SET ssa_tm_info_stack_set
+#define DSEQ_APPEND ssa_tm_info_stack_append
+
+#include "scc/core/dseq.h"
+
+#undef DSEQ_VALUE_TYPE
+#undef DSEQ_TYPE 
+#undef DSEQ_INIT 
+#undef DSEQ_INIT_ALLOC 
+#undef DSEQ_DISPOSE 
+#undef DSEQ_GET_SIZE 
+#undef DSEQ_GET_CAPACITY 
+#undef DSEQ_GET_ALLOCATOR 
+#undef DSEQ_RESERVE 
+#undef DSEQ_RESIZE 
+#undef DSEQ_GET_BEGIN 
+#undef DSEQ_GET_END 
+#undef DSEQ_GET 
+#undef DSEQ_SET 
+#undef DSEQ_APPEND
+
 extern void ssaizer_init(ssaizer* self, ssa_context* context)
 {
         self->context = context;
@@ -103,6 +137,14 @@ extern void ssaizer_init(ssaizer* self, ssa_context* context)
         self->block = NULL;
         ssa_init_builder(&self->builder, self->context, NULL);
 
+        self->tm.read = NULL;
+        self->tm.write = NULL;
+        self->tm.transaction_type = NULL;
+        self->tm.init = NULL;
+        self->tm.commit = NULL;
+        self->tm.cancel = NULL;
+        self->tm.reset = NULL;
+
         allocator* alloc = ssa_get_alloc(context);
         strmap_stack_init(&self->defs);
         strmap_init_alloc(&self->labels, alloc);
@@ -111,6 +153,7 @@ extern void ssaizer_init(ssaizer* self, ssa_context* context)
         dseq_init_alloc(&self->continue_stack, alloc);
         dseq_init_alloc(&self->break_stack, alloc);
         dseq_init_alloc(&self->switch_stack, alloc);
+        ssa_tm_info_stack_init_alloc(&self->tm_info_stack, alloc);
 }
 
 extern void ssaizer_dispose(ssaizer* self)
@@ -245,6 +288,12 @@ extern void ssaizer_push_switch_instr(ssaizer* self, ssa_instr* switch_instr)
         dseq_append(&self->switch_stack, switch_instr);
 }
 
+extern void ssaizer_push_tm_info(ssaizer* self, ssa_value* transaction, ssa_block* entry, ssa_block* reset)
+{
+        ssa_tm_info i = { transaction, entry, reset };
+        ssa_tm_info_stack_append(&self->tm_info_stack, i);
+}
+
 extern void ssaizer_pop_continue_dest(ssaizer* self)
 {
         size_t size = dseq_size(&self->continue_stack);
@@ -266,6 +315,13 @@ extern void ssaizer_pop_switch_instr(ssaizer* self)
         dseq_resize(&self->switch_stack, size - 1);
 }
 
+extern void ssaizer_pop_tm_info(ssaizer* self)
+{
+        size_t size = ssa_tm_info_stack_size(&self->tm_info_stack);
+        assert(size);
+        ssa_tm_info_stack_resize(&self->tm_info_stack, size - 1);
+}
+
 extern ssa_block* ssaizer_get_continue_dest(ssaizer* self)
 {
         return *(dseq_end(&self->continue_stack) - 1);
@@ -281,12 +337,96 @@ extern ssa_instr* ssaizer_get_switch_instr(ssaizer* self)
         return *(dseq_end(&self->switch_stack) - 1);
 }
 
-extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module)
+extern ssa_tm_info* ssaizer_get_last_tm_info(ssaizer* self)
+{
+        return ssa_tm_info_stack_end(&self->tm_info_stack) - 1;
+}
+
+extern ssa_tm_info* ssaizer_get_tm_info(ssaizer* self, size_t i)
+{
+        return ssa_tm_info_stack_begin(&self->tm_info_stack) + i;
+}
+
+extern size_t ssaizer_get_tm_info_size(ssaizer* self)
+{
+        return ssa_tm_info_stack_size(&self->tm_info_stack);
+}
+
+extern bool ssaizer_in_atomic_block(const ssaizer* self)
+{
+        return ssa_tm_info_stack_size(&self->tm_info_stack) != 0;
+}
+
+static bool ssaize_tm_decls(ssaizer* self, const tree_module* module, const tree_module* tm_decls)
+{
+        tree_context* context = self->context->tree;
+
+        enum
+        {
+                READ_IDX,
+                WRITE_IDX,
+                INIT_IDX,
+                COMMIT_IDX,
+                CANCEL_IDX,
+                RESET_IDX,
+                TRANSACTION_ID_IDX,
+                SIZE,
+        };
+
+        const char* decl_names[] =
+        {
+                "_tm_read",
+                "_tm_write",
+                "_tm_transaction_init",
+                "_tm_transaction_commit",
+                "_tm_transaction_cancel",
+                "_tm_transaction_reset",
+                "_tm_transaction_id",
+        };
+
+        tree_decl* decls[SIZE];
+
+        // todo: merge modules?
+        for (int i = 0; i < SIZE; i++)
+                if (!(decls[i] = tree_module_lookup_s(module, TLK_DECL, decl_names[i])))
+                        if (!(decls[i] = tree_module_lookup_s(tm_decls, TLK_DECL, decl_names[i])))
+                                return false;
+
+        tree_decl* transaction;
+        if (!(transaction = tree_module_lookup_s(module, TLK_TAG, "_tm_transaction")))
+                if (!(transaction = tree_module_lookup_s(tm_decls, TLK_TAG, "_tm_transaction")))
+                        return false;
+        if (!tree_decl_is(transaction, TDK_RECORD))
+                return false;
+
+        for (int i = 0; i < SIZE; i++)
+                if (!ssaize_decl(self, decls[i]))
+                        return false;
+        if (!ssaize_decl(self, transaction))
+                return false;
+
+        self->tm.read = ssaizer_get_global_decl(self, decls[READ_IDX]);
+        self->tm.write = ssaizer_get_global_decl(self, decls[WRITE_IDX]);
+        self->tm.init = ssaizer_get_global_decl(self, decls[INIT_IDX]);
+        self->tm.commit = ssaizer_get_global_decl(self, decls[COMMIT_IDX]);
+        self->tm.cancel = ssaizer_get_global_decl(self, decls[CANCEL_IDX]);
+        self->tm.reset = ssaizer_get_global_decl(self, decls[RESET_IDX]);
+        self->tm.transaction_id = ssaizer_get_global_decl(self, decls[TRANSACTION_ID_IDX]);
+        self->tm.transaction_type = tree_new_decl_type(context, transaction, true);
+        return true;
+}
+
+extern ssa_module* ssaize_module(ssaizer* self, const tree_module* module, const tree_module* tm_decls)
 {
         self->module = ssa_new_module(self->context);
+
+        if (tm_decls && !ssaize_tm_decls(self, module, tm_decls))
+                return NULL;
+
         const tree_decl_scope* globals = tree_get_module_cglobals(module);
         TREE_FOREACH_DECL_IN_SCOPE(globals, decl)
                 if (!ssaize_decl(self, decl))
                         return NULL;
+
         return self->module;
 }

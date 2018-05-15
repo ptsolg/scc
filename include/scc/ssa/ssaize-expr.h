@@ -11,6 +11,9 @@ extern "C" {
 
 #include "ssaizer.h"
 
+extern ssa_value* ssaize_load(ssaizer* self, ssa_value* what);
+extern ssa_value* ssaize_store(ssaizer* self, ssa_value* what, ssa_value* where);
+
 extern ssa_value* ssaize_binary_expr(ssaizer* self, const tree_expr* expr);
 extern ssa_value* ssaize_unary_expr(ssaizer* self, const tree_expr* expr);
 extern ssa_value* ssaize_call_expr(ssaizer* self, const tree_expr* expr);

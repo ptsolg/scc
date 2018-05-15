@@ -24,9 +24,11 @@ typedef enum
 typedef struct
 {
         dseq sources;
+        dseq builtin_sources;
         dseq libs;
         file_lookup source_lookup;
         file_lookup lib_lookup;
+        file_entry* tm_decls;
         const char* llc_path;
         const char* lld_path;
         const char* entry;
@@ -84,9 +86,9 @@ extern errcode cc_set_output_file(cc_instance* self, const char* file);
 extern errcode cc_add_lib_dir(cc_instance* self, const char* dir);
 extern errcode cc_add_lib(cc_instance* self, const char* lib);
 extern errcode cc_add_source_dir(cc_instance* self, const char* dir);
-extern errcode cc_add_source_file(cc_instance* self, const char* file);
+extern errcode cc_add_source_file(cc_instance* self, const char* file, bool builtin);
 extern errcode cc_emulate_source_file(
-        cc_instance* self, const char* file, const char* content, bool add_to_input);
+        cc_instance* self, const char* file, const char* content, bool builtin, bool add_to_input);
 
 extern errcode cc_run(cc_instance* self);
 

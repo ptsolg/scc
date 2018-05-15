@@ -8,12 +8,13 @@ extern errcode codegen_module(
         write_cb* write,
         ssa_context* context,
         const tree_module* module,
+        const tree_module* tm_decls,
         codegen_output_kind output,
         const ssa_optimizer_opts* opts)
 {
         ssaizer sr;
         ssaizer_init(&sr, context);
-        ssa_module* sm = ssaize_module(&sr, module);
+        ssa_module* sm = ssaize_module(&sr, module, tm_decls);
         ssaizer_dispose(&sr);
         if (!sm)
                 return EC_ERROR;

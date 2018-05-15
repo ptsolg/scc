@@ -48,11 +48,10 @@ static errcode scc_env_add_stdlibc_dir(scc_env* self, const char* exec_path)
         return cc_add_source_dir(&self->cc, dir);
 }
 
-static errcode scc_env_add_stdlibc_libs(scc_env* self, const char* exec_path)
+static errcode scc_env_add_stdlibc_libs(scc_env* self, const char* exec_dir)
 {
         char dir[MAX_PATH_LEN];
-        strncpy(dir, exec_path, MAX_PATH_LEN);
-        path_strip_file(dir);
+        strncpy(dir, exec_dir, MAX_PATH_LEN);
 
 #if OS_WIN
         if (EC_FAILED(path_join(dir,
@@ -72,11 +71,30 @@ static errcode scc_env_add_stdlibc_libs(scc_env* self, const char* exec_path)
         return EC_NO_ERROR;
 }
 
-static errcode scc_env_setup_llc_lld(scc_env* self, const char* exec_path)
+static errcode scc_env_add_tm_sources(scc_env* self, const char* exec_dir)
+{
+        char path[MAX_PATH_LEN];
+        strncpy(path, exec_dir, MAX_PATH_LEN);
+        path_goto_parent_dir(path);
+
+        if (EC_FAILED(path_join(path, "libtm")))
+                return EC_ERROR;
+        if (EC_FAILED(cc_add_source_dir(&self->cc, path)))
+                return EC_ERROR;
+        if (EC_FAILED(path_join(path, "_tm.h")))
+                return EC_ERROR;
+        if (!(self->cc.input.tm_decls = file_get(&self->cc.input.source_lookup, path)))
+                return EC_ERROR;
+        if (EC_FAILED(path_change_ext(path, "c")))
+                return EC_ERROR;
+        
+        return cc_add_source_file(&self->cc, path, true);
+}
+
+static errcode scc_env_setup_llc_lld(scc_env* self, const char* exec_dir)
 {
         char dir[MAX_PATH_LEN];
-        strncpy(dir, exec_path, MAX_PATH_LEN);
-        path_strip_file(dir);
+        strncpy(dir, exec_dir, MAX_PATH_LEN);
         strcpy(self->llc_path, dir);
         strcpy(self->lld_path, dir);
 
@@ -108,13 +126,16 @@ extern errcode scc_env_setup(scc_env* self, int argc, const char** argv)
 #else
 #error
 #endif
-        char exec_path[MAX_PATH_LEN];
-        if (EC_FAILED(path_get_abs(exec_path, argv[0])))
+        char exec_dir[MAX_PATH_LEN];
+        if (EC_FAILED(path_get_abs(exec_dir, argv[0])))
                 return EC_ERROR;
+        path_strip_file(exec_dir);
+
 
         return EC_FAILED(scc_env_add_cd_dir(self))
-                || EC_FAILED(scc_env_add_stdlibc_dir(self, exec_path))
-                || (self->link_stdlib && EC_FAILED(scc_env_add_stdlibc_libs(self, exec_path)))
-                || EC_FAILED(scc_env_setup_llc_lld(self, exec_path))
+                || EC_FAILED(scc_env_add_stdlibc_dir(self, exec_dir))
+                || (self->link_stdlib && EC_FAILED(scc_env_add_stdlibc_libs(self, exec_dir)))
+                || EC_FAILED(scc_env_setup_llc_lld(self, exec_dir))
+                || (self->cc.opts.ext.enable_tm && EC_FAILED(scc_env_add_tm_sources(self, exec_dir)))
                 ? EC_ERROR : EC_NO_ERROR;
 }

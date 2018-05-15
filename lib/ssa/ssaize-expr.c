@@ -7,6 +7,97 @@
 #include "scc/ssa/ssa-module.h"
 #include "scc/tree/tree-expr.h"
 
+static ssa_value* ssaizer_get_addresof(ssaizer* self, ssa_value* value)
+{
+        ssa_value_kind vk = ssa_get_value_kind(value);
+        if (vk == SVK_GLOBAL_VAR
+                || (vk == SVK_LOCAL_VAR && ssa_get_instr_kind(ssa_get_var_instr(value)) == SIK_ALLOCA))
+        {
+                return value;
+        }
+
+        ssa_value* storage = ssaize_alloca(self, ssa_get_value_type(value));
+        return storage && ssa_build_store(&self->builder, value, storage) ? storage : NULL;
+}
+
+static ssa_value* ssaizer_cast_to_pvoid(ssaizer* self, ssa_value* val)
+{
+        tree_type* pvoid = tree_new_pointer_type(self->context->tree,
+                tree_new_builtin_type(self->context->tree, TBTK_VOID));
+        return ssa_build_cast(&self->builder, pvoid, val);
+}
+
+static ssa_value* ssaize_tm_read(ssaizer* self, ssa_value* what, ssa_value** load_result)
+{
+        tree_type* loaded_type = tree_get_pointer_target(ssa_get_value_type(what));
+        if (!(*load_result = ssaize_alloca(self, loaded_type)))
+                return NULL;
+
+        ssa_value* where = ssaizer_cast_to_pvoid(self, *load_result);
+        if (!where)
+                return NULL;
+        if (!(what = ssaizer_cast_to_pvoid(self, what)))
+                return NULL;
+
+        unsigned n = (unsigned)tree_get_sizeof(self->context->tree->target, loaded_type);
+        ssa_value* nval = ssa_build_u32_constant(&self->builder, n);
+        if (!nval)
+                return NULL;
+
+        ssa_value* result = ssa_build_call_3(&self->builder, self->tm.read, what, where, nval);
+        return result && ssa_build_neq_zero(&self->builder, result) ? result : NULL;
+}
+
+extern ssa_value* ssaize_load(ssaizer* self, ssa_value* what)
+{
+        if (ssaizer_in_atomic_block(self))
+        {
+                ssa_value* load_result;
+                ssa_value* result = ssaize_tm_read(self, what, &load_result);
+                if (!result)
+                        return NULL;
+
+                ssa_block* on_success = ssaizer_new_block(self);
+                ssa_block* on_fail = ssaizer_new_block(self);
+
+                if (!ssaizer_build_if(self, result, on_success, on_fail))
+                        return NULL;
+
+                ssaizer_enter_block(self, on_fail);
+                if (!ssaizer_build_jmp(self, ssaizer_get_last_tm_info(self)->reset))
+                        return NULL;
+
+                ssaizer_enter_block(self, on_success);
+                return ssa_build_load(&self->builder, load_result);
+        }
+        return ssa_build_load(&self->builder, what);
+}
+
+static ssa_value* ssaize_tm_write(ssaizer* self, ssa_value* what, ssa_value* where)
+{
+        if (!(what = ssaizer_get_addresof(self, what)))
+                return NULL;
+        if (!(what = ssaizer_cast_to_pvoid(self, what)))
+                return NULL;
+        if (!(where = ssaizer_cast_to_pvoid(self, where)))
+                return NULL;
+
+        unsigned n = (unsigned)tree_get_sizeof(
+                self->context->tree->target, ssa_get_value_type(what));
+        ssa_value* nval = ssa_build_u32_constant(&self->builder, n);
+        if (!nval)
+                return NULL;
+
+        return ssa_build_call_3(&self->builder, self->tm.write, what, where, nval);
+}
+
+extern ssa_value* ssaize_store(ssaizer* self, ssa_value* what, ssa_value* where)
+{
+        return ssaizer_in_atomic_block(self)
+                ? ssaize_tm_write(self, what, where)
+                : ssa_build_store(&self->builder, what, where);
+}
+
 static ssa_value* ssaize_add(ssaizer* self, ssa_value* lhs, ssa_value* rhs)
 {
         tree_type* lt = ssa_get_value_type(lhs);
@@ -39,8 +130,7 @@ static ssa_value* ssaize_sub(ssaizer* self, ssa_value* lhs, ssa_value* rhs)
 
 static inline ssa_value* ssaize_assign(ssaizer* self, ssa_value* lhs, ssa_value* rhs)
 {
-        return ssa_build_store(&self->builder, rhs, lhs)
-                ? rhs : NULL;
+        return ssaize_store(self, rhs, lhs) ? rhs : NULL;
 }
 
 static inline ssa_value* _ssaize_binary_expr(ssaizer*, tree_binop_kind, ssa_value*, ssa_value*);
@@ -48,7 +138,7 @@ static inline ssa_value* _ssaize_binary_expr(ssaizer*, tree_binop_kind, ssa_valu
 static inline ssa_value* ssaize_compound_assign(ssaizer* self,
         tree_binop_kind prefix, ssa_value* lhs, ssa_value* rhs)
 {
-        ssa_value* val = ssa_build_load(&self->builder, lhs);
+        ssa_value* val = ssaize_load(self, lhs);
         if (!val)
                 return NULL;
 
@@ -247,7 +337,7 @@ extern ssa_value* ssaize_binary_expr(ssaizer* self, const tree_expr* expr)
 
 static ssa_value* ssaize_inc(ssaizer* self, ssa_value* operand, bool prefix)
 {
-        ssa_value* val = ssa_build_load(&self->builder, operand);
+        ssa_value* val = ssaize_load(self, operand);
         if (!val)
                 return NULL;
 
@@ -267,7 +357,7 @@ static ssa_value* ssaize_inc(ssaizer* self, ssa_value* operand, bool prefix)
 
 static ssa_value* ssaize_dec(ssaizer* self, ssa_value* operand, bool prefix)
 {
-        ssa_value* val = ssa_build_load(&self->builder, operand);
+        ssa_value* val = ssaize_load(self, operand);
         if (!val)
                 return NULL;
 
@@ -307,9 +397,7 @@ extern ssa_value* ssaize_unary_expr(ssaizer* self, const tree_expr* expr)
                 case TUK_LOG_NOT:
                         return ssa_build_log_not(&self->builder, operand);
                 case TUK_DEREFERENCE:
-                        return tree_expr_is_lvalue(expr)
-                                ? operand
-                                : ssa_build_load(&self->builder, operand);
+                        return tree_expr_is_lvalue(expr) ? operand : ssaize_load(self, operand);
                 case TUK_ADDRESS:
                 case TUK_PLUS:
                         return operand;
@@ -381,7 +469,7 @@ extern ssa_value* ssaize_call_expr(ssaizer* self, const tree_expr* expr)
                 *last = arg;
         }
 
-        ssa_value* call = ssa_build_call(&self->builder, func, &args);
+        ssa_value* call = ssa_build_call_n(&self->builder, func, (ssa_value**)args.data, args.size);
         ssa_dispose_array(self->context, &args);
         return call;
 }
@@ -413,7 +501,7 @@ extern ssa_value* ssaize_subscript_expr(ssaizer* self, const tree_expr* expr)
 
         return tree_expr_is_lvalue(expr)
                 ? element_ptr
-                : ssa_build_load(&self->builder, element_ptr);
+                : ssaize_load(self, element_ptr);
 }
 
 static bool ssaize_conditional_expr_branch(
@@ -509,7 +597,7 @@ extern ssa_value* ssaize_decl_expr(ssaizer* self, const tree_expr* expr)
 
         return tree_expr_is_lvalue(expr) || tree_decl_is(decl, TDK_FUNCTION)
                 ? def
-                : ssa_build_load(&self->builder, def);
+                : ssaize_load(self, def);
 }
 
 extern ssa_value* ssaize_member_expr(ssaizer* self, const tree_expr* expr)
@@ -521,7 +609,7 @@ extern ssa_value* ssaize_member_expr(ssaizer* self, const tree_expr* expr)
         ssa_value* field_addr;
         tree_decl* member = tree_get_member_expr_decl(expr);
         tree_decl* rec = tree_get_decl_type_entity(
-                tree_get_pointer_target(ssa_get_value_type(lhs)));
+                tree_desugar_type(tree_get_pointer_target(ssa_get_value_type(lhs))));
 
         if (tree_record_is_union(rec))
         {
@@ -537,7 +625,7 @@ extern ssa_value* ssaize_member_expr(ssaizer* self, const tree_expr* expr)
 
         return tree_expr_is_lvalue(expr)
                 ? field_addr
-                : ssa_build_load(&self->builder, field_addr);
+                : ssaize_load(self, field_addr);
 }
 
 extern ssa_value* ssaize_cast_expr(ssaizer* self, const tree_expr* expr)
