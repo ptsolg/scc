@@ -10,8 +10,7 @@ typedef enum
         CCK_LETTER = 1,
         CCK_DIGIT = 2,
         CCK_PUNCTUATOR = 4,
-        CCK_NEWLINE = 8,
-        CCK_SPACE = 16,
+        CCK_SPACE = 8,
 } c_char_kind;
 
 extern const int c_char_info_table[256];
@@ -42,11 +41,6 @@ static inline bool c_char_is_punctuator(int c)
         return c_char_is(c, CCK_PUNCTUATOR);
 }
 
-static inline bool c_char_is_newline(int c)
-{
-        return c_char_is(c, CCK_NEWLINE);
-}
-
 static inline bool c_char_is_space(int c)
 {
         return c_char_is(c, CCK_SPACE);
@@ -58,6 +52,7 @@ static inline bool c_char_is_escape(int c)
         {
                 case '\n':
                 case '\t':
+                case '\r':
                 case '\0':
                 case '\'':
                 case '\"':
@@ -75,6 +70,7 @@ static inline int c_char_to_escape(int c)
         {
                 case 'n': return '\n';
                 case 't': return '\t';
+                case 'r': return '\r';
                 case '0': return '\0';
                 case '\'': return '\'';
                 case '\"': return '\"';
@@ -91,6 +87,7 @@ static inline int c_char_from_escape(int c)
         {
                 case '\n': return 'n';
                 case '\t': return 't';
+                case '\r': return 'r';
                 case '\0': return '0';
                 case '\'': return '\'';
                 case '\"': return '\"';

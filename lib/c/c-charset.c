@@ -5,9 +5,9 @@ const int c_char_info_table[256] =
         CCK_UNKNOWN,    CCK_UNKNOWN,    CCK_UNKNOWN,    CCK_UNKNOWN,
         CCK_UNKNOWN,    CCK_UNKNOWN,    CCK_UNKNOWN,    CCK_UNKNOWN,
         //              \t              \n              
-        CCK_UNKNOWN,    CCK_SPACE,      CCK_NEWLINE,    CCK_UNKNOWN,
+        CCK_UNKNOWN,    CCK_SPACE,      CCK_UNKNOWN,    CCK_UNKNOWN,
         //              \r                              
-        CCK_UNKNOWN,    CCK_NEWLINE,    CCK_UNKNOWN,    CCK_UNKNOWN,
+        CCK_UNKNOWN,    CCK_UNKNOWN,    CCK_UNKNOWN,    CCK_UNKNOWN,
         CCK_UNKNOWN,    CCK_UNKNOWN,    CCK_UNKNOWN,    CCK_UNKNOWN,
         CCK_UNKNOWN,    CCK_UNKNOWN,    CCK_UNKNOWN,    CCK_UNKNOWN,
         CCK_UNKNOWN,    CCK_UNKNOWN,    CCK_UNKNOWN,    CCK_UNKNOWN,

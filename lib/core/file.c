@@ -324,7 +324,7 @@ extern readbuf* file_open(file_entry* entry)
         }
         else
         {
-                if (!(entry->_file = fopen(entry->_path, "r")))
+                if (!(entry->_file = fopen(entry->_path, "rb")))
                         return NULL;
 
                 fread_cb_init(&entry->_fread, entry->_file);
@@ -343,7 +343,10 @@ extern void file_close(file_entry* entry)
 
         entry->_opened = false;
         if (!file_emulated(entry) && entry->_file)
+        {
                 fclose(entry->_file);
+                entry->_file = NULL;
+        }
 }
 
 extern bool file_opened(const file_entry* entry)

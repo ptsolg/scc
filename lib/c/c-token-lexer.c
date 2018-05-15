@@ -67,17 +67,32 @@ extern void c_token_lexer_init(c_token_lexer* self, c_context* context, c_logger
         self->tab_to_space = 4;
 }
 
-static inline int c_token_lexer_readc(c_token_lexer* self)
+static inline void _c_token_lexer_readc(c_token_lexer* self)
 {
         self->c = self->nextc;
         self->nextc = readbuf_readc(self->input);
         self->loc++;
 
-        if (self->c == '\\' && c_char_is_newline(self->nextc))
+        if (self->c == '\r')
         {
-                self->c = readbuf_readc(self->input);
-                self->nextc = readbuf_readc(self->input);
-                self->loc += 2;
+                if (self->nextc == '\n')
+                {
+                        self->c = self->nextc;
+                        self->nextc = readbuf_readc(self->input);
+                }
+                else
+                        self->c = '\n';
+        }
+}
+
+static inline int c_token_lexer_readc(c_token_lexer* self)
+{
+        _c_token_lexer_readc(self);
+
+        while (self->c == '\\' && (self->nextc == '\n' || self->nextc == '\r'))
+        {
+                _c_token_lexer_readc(self);
+                _c_token_lexer_readc(self);
         }
 
         if (self->c == '\n')
@@ -167,7 +182,7 @@ static bool c_token_lexer_read_till_quote(c_token_lexer* self, c_sequence* seq, 
         while (1)
         {
                 int c = c_token_lexer_readc(self);
-                if (c_token_lexer_at_eof(self) || c_char_is_newline(c))
+                if (c_token_lexer_at_eof(self) || c == '\n')
                 {
                         c_error_missing_closing_quote(self->logger, seq->loc);
                         return false;
@@ -259,7 +274,7 @@ static c_token* c_token_lexer_lex_comment(c_token_lexer* self, tree_location sta
 {
         if (self->c == '/')
         {
-                while (!c_token_lexer_at_eof(self) && !c_char_is_newline(self->c))
+                while (!c_token_lexer_at_eof(self) && self->c != '\n')
                         c_token_lexer_readc(self);
         }
         else if (self->c == '*')
