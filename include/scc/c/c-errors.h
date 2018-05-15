@@ -189,6 +189,7 @@ extern void c_error_function_returning_function(c_logger* self, tree_location lo
 extern void c_error_invalid_use_of_restrict(c_logger* self, tree_location loc);
 
 extern void c_error_reffering_volatile_object_is_not_allowed(c_logger* self, tree_location loc, bool in_atomic_block);
+extern void c_error_transaction_unsafe_function_is_not_allowed(c_logger* self, tree_location loc, bool in_atomic_block);
 extern void c_error_volatile_param_is_not_allowed(c_logger* self, tree_location loc);
 extern void c_error_jumping_into_the_atomic_block_is_prohibited(c_logger* self, tree_location loc, c_token_kind stmt_kind);
 

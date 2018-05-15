@@ -1,0 +1,1 @@
+024.t:7:8: error: calling transaction-unsafe functions is not allowed within _Transaction_safe function

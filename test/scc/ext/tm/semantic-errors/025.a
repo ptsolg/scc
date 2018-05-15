@@ -1,0 +1,1 @@
+025.t:8:12: error: calling transaction-unsafe functions is not allowed within _Atomic block

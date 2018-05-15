@@ -305,8 +305,15 @@ extern tree_expr* c_sema_new_call_expr(
         if (!c_sema_require_function_pointer_expr_type(self, t, tree_get_expr_loc(lhs)))
                 return NULL;
 
-        t = tree_desugar_type(tree_get_pointer_target(tree_desugar_ctype(t)));
-        tree_type* restype = tree_get_func_type_result(t);
+        tree_type* ft = tree_desugar_type(tree_get_pointer_target(tree_desugar_ctype(t)));
+        if (c_sema_in_transaction_safe_block(self) && !tree_func_type_is_transaction_safe(ft))
+        {
+                c_error_transaction_unsafe_function_is_not_allowed(
+                        self->logger, loc, c_sema_in_atomic_block(self));
+                return NULL;
+        }
+
+        tree_type* restype = tree_get_func_type_result(ft);
         if (!c_sema_check_object_type(self, loc, restype))
                 return NULL;
 

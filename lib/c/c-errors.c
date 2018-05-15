@@ -936,6 +936,12 @@ extern void c_error_reffering_volatile_object_is_not_allowed(c_logger* self, tre
         c_error(self, CES_ERROR, loc, "volatile objects cannot be used within %s", context);
 }
 
+extern void c_error_transaction_unsafe_function_is_not_allowed(c_logger* self, tree_location loc, bool in_atomic_block)
+{
+        const char* context = in_atomic_block ? "_Atomic block" : "_Transaction_safe function";
+        c_error(self, CES_ERROR, loc, "calling transaction-unsafe functions is not allowed within %s", context);
+}
+
 extern void c_error_volatile_param_is_not_allowed(c_logger* self, tree_location loc)
 {
         c_error(self, CES_ERROR, loc, "volatile parameter cannot appear in _Transaction_safe function");
