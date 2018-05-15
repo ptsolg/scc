@@ -1,0 +1,11 @@
+; Definition for test
+@2:
+    $3 = alloca 4
+    $4 = alloca 4
+    store $0, $3
+    store $1, $4
+    $5 = load $3
+    $6 = getfieldaddr $5, 0
+    $7 = load $4
+    store $7, $6
+    ret
