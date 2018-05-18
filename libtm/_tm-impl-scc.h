@@ -3,11 +3,11 @@
 
 typedef unsigned tm_versioned_lock;
 
-// todo: add thread-fence?
-
 static inline unsigned tm_sample_lock(const tm_versioned_lock* lock)
 {
-        return *(const volatile tm_versioned_lock*)lock;
+        unsigned v = *(const volatile tm_versioned_lock*)lock;
+        __atomic_fence_st_seq_cst();
+        return v;
 }
 
 static inline unsigned tm_inc_version(tm_versioned_lock* lock)
