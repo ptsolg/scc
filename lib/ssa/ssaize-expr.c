@@ -273,11 +273,11 @@ static void ssa_br_expr_info_add_phi_var(
 static inline ssa_value* ssaize_log_expr_lhs(
         ssaizer* self, ssa_br_expr_info* info, const tree_expr* expr)
 {
-        if (!tree_expr_is(expr, TEK_BINARY))
+        if (!tree_expr_is(expr, TEK_BINARY)
+                || !tree_binop_is(expr, TBK_LOG_AND) && !tree_binop_is(expr, TBK_LOG_OR))
+        {
                 return ssaize_expr_as_condition(self, expr);
-
-        tree_binop_kind kind = tree_get_binop_kind(expr);
-        assert(kind == TBK_LOG_AND || kind == TBK_LOG_OR);
+        }
 
         ssa_value* lhs_cond = ssaize_log_expr_lhs(self, info, tree_get_binop_lhs(expr));
         ssa_block* lhs_cond_block = self->block;
@@ -288,8 +288,8 @@ static inline ssa_value* ssaize_log_expr_lhs(
         ssa_block* exit = ssa_br_expr_info_get_exit(info);
 
         // finish prev block
-        ssa_block* on_true = kind == TBK_LOG_OR ? exit : current;
-        ssa_block* on_false = kind == TBK_LOG_OR ? current : exit;
+        ssa_block* on_true = tree_binop_is(expr, TBK_LOG_OR) ? exit : current;
+        ssa_block* on_false = tree_binop_is(expr, TBK_LOG_OR) ? current : exit;
         if (!ssaizer_build_if(self, lhs_cond, on_true, on_false))
                 return false;
 
