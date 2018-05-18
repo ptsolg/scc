@@ -37,10 +37,17 @@ static inline tm_versioned_lock* tm_get_lock(const void* block)
 static inline int tm_read(const tm_block* source, tm_block* dest, unsigned block_mask)
 {
         struct tm_writeset_entry* entry = tm_writemap_find(&writemap, source);
-        if (entry && (entry->block_mask & block_mask) == block_mask)
+        if (entry)
         {
-                tm_write_block(dest, &entry->block, block_mask);
-                return 1;
+                unsigned intersection = entry->block_mask & block_mask;
+                if (intersection)
+                {
+                        tm_write_block(dest, &entry->block, intersection);
+                        if (intersection == block_mask)
+                                return 1;
+
+                        block_mask ^= intersection;
+                }
         }
 
         tm_versioned_lock* lock = tm_get_lock(source);
@@ -94,8 +101,15 @@ static inline void tm_write(tm_block* dest, const tm_block* block, unsigned bloc
         entry->lock = tm_get_lock(dest);
         entry->address = dest;
         entry->transaction_id = _tm_transaction_id;
-        entry->block = *block;
-        entry->block_mask = block_mask;
+
+        if (prev)
+        {
+                entry->block = prev->block;
+                entry->block_mask = prev->block_mask | block_mask;
+        }
+        else
+                entry->block_mask = block_mask;
+        tm_write_block(&entry->block, block, block_mask);
 
         entry->top_level = 1;
         if (prev)

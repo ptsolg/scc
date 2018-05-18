@@ -2,6 +2,7 @@
 #define _TM_IMPL_H
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #ifndef TM_READSET_SIZE
 #define TM_READSET_SIZE 8192
@@ -30,7 +31,7 @@ typedef unsigned long long size_t;
 
 typedef struct
 {
-        unsigned long long v[1];
+        size_t v[1];
 } tm_block;
 
 #define TM_MAX_BLOCK_MASK ((1 << sizeof(tm_block)) - 1)
