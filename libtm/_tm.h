@@ -14,13 +14,12 @@ struct _tm_transaction
 {
         unsigned readset_pos;
         unsigned writeset_pos;
-        unsigned locks_acquired;
+        unsigned writeset_entries_locked;
         unsigned read_version;
 };
 
 extern void _tm_transaction_init(struct _tm_transaction* self);
 extern int _tm_transaction_commit(struct _tm_transaction* self);
 extern void _tm_transaction_reset(struct _tm_transaction* self);
-extern void _tm_transaction_cancel(struct _tm_transaction* self);
 
 #endif
