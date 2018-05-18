@@ -1,6 +1,8 @@
 #ifndef _TM_IMPL_H
 #define _TM_IMPL_H
 
+#include <stdlib.h>
+
 #ifndef TM_READSET_SIZE
 #define TM_READSET_SIZE 8192
 #endif
@@ -26,7 +28,12 @@ typedef unsigned long long size_t;
 #error unknown compiler
 #endif 
 
-typedef unsigned tm_block;
+typedef struct
+{
+        unsigned long long v[1];
+} tm_block;
+
+#define TM_MAX_BLOCK_MASK ((1 << sizeof(tm_block)) - 1)
 
 struct tm_readset
 {
@@ -67,7 +74,7 @@ struct tm_memcutter
         unsigned mask;
         unsigned pos;
         unsigned num_blocks;
-        unsigned off;
+        unsigned last_block_mask;
 };
 
 static inline tm_block* tm_get_block_ptr(void* ptr)
@@ -82,8 +89,13 @@ static inline const tm_block* tm_get_block_ptr_c(const void* ptr)
 
 static inline void tm_write_block(tm_block* dest, const tm_block* source, unsigned block_mask)
 {
+        if (block_mask == TM_MAX_BLOCK_MASK)
+        {
+                *dest = *source;
+                return;
+        }
         // todo: optimize?
-        for (unsigned i = 0; i < 4; i++)
+        for (unsigned i = 0; i < sizeof(tm_block); i++)
         {
                 const char* source_byte = (const char*)source + i;
                 char* dest_byte = (char*)dest + i;
@@ -117,13 +129,25 @@ static inline void tm_writeset_entry_add_block(
         // todo: optimize?
         self->block_mask |= block_mask;
 
-        for (unsigned i = 0; i < 4; i++)
+        if (block_mask == TM_MAX_BLOCK_MASK)
+        {
+                self->block = *source;
+                return;
+        }
+
+        for (unsigned i = 0; i < sizeof(tm_block); i++)
         {
                 const char* source_byte = (const char*)source + i;
                 char* dest_byte = (char*)&self->block + i;
                 if (block_mask & (1 << i))
                         *dest_byte = *source_byte;
         }
+}
+
+static void tm_fatal_error(int code)
+{
+        printf("libtm fatal error: %d\n", code);
+        exit(code);
 }
 
 static inline struct tm_writeset_entry** tm_writemap_find_bucket(
@@ -154,45 +178,48 @@ static inline struct tm_writeset_entry* tm_writemap_find(
         struct tm_writemap* self, const tm_block* block)
 {
         struct tm_writeset_entry** bucket = tm_writemap_find_bucket(self, block);
-        return *bucket && (*bucket)->address == block ? *bucket : 0;
-}
-
-static void tm_fatal_error()
-{
-        // todo
+        return bucket && *bucket && (*bucket)->address == block ? *bucket : 0;
 }
 
 static void tm_memcutter_init(
         struct tm_memcutter* self, const void* source, void* dest, unsigned n, int init_for_write)
 {
+        size_t offset;
+        self->last_block_mask = TM_MAX_BLOCK_MASK;
         if (init_for_write)
         {
-                self->off = (size_t)dest & (sizeof(tm_block) - 1);
+                offset = (size_t)dest & (sizeof(tm_block) - 1);
                 self->dest_pos = tm_get_block_ptr(dest);
-                self->source_pos = (const tm_block*)((const char*)source - self->off);
+                self->source_pos = (const tm_block*)((const char*)source - offset);
                 // todo: fix this -=V=-
                 self->num_blocks = ((unsigned)tm_get_block_ptr((char*)dest + n) 
                         - (unsigned)self->dest_pos) / sizeof(tm_block);
         }
         else
         {
-                self->off = (size_t)source & (sizeof(tm_block) - 1);
+                offset = (size_t)source & (sizeof(tm_block) - 1);
                 self->source_pos = tm_get_block_ptr_c(source);
-                self->dest_pos = (tm_block*)((char*)dest - self->off);
+                self->dest_pos = (tm_block*)((char*)dest - offset);
                 // todo: fix this -=V=-
                 self->num_blocks = ((unsigned)tm_get_block_ptr_c((const char*)source + n) 
                         - (unsigned)self->source_pos) / sizeof(tm_block);
         }
 
+        if (!self->num_blocks)
+                self->num_blocks = 1;
+
         self->pos = 0;
 
-        if (self->off)
+        if (offset + n > sizeof(tm_block))
         {
                 self->num_blocks++;
-                self->mask = (15 << self->off) & 15;
+                unsigned rem = self->num_blocks * sizeof(tm_block) - (offset + n);
+                self->last_block_mask = (TM_MAX_BLOCK_MASK >> rem) & TM_MAX_BLOCK_MASK;
+                self->mask = (TM_MAX_BLOCK_MASK << offset) & TM_MAX_BLOCK_MASK;
         }
         else
-                self->mask = 15;
+                self->mask = (TM_MAX_BLOCK_MASK << offset)
+                        & (TM_MAX_BLOCK_MASK >> (sizeof(tm_block) - (offset + n)));
 }
 
 static int tm_memcutter_advance(struct tm_memcutter* self)
@@ -203,11 +230,8 @@ static int tm_memcutter_advance(struct tm_memcutter* self)
         self->source_pos++;
         self->pos++;
         self->dest_pos++;
-
-        if (self->off && self->pos == self->num_blocks - 1)
-                self->mask = (15 >> (4 - self->off)) & 15;
-        else
-                self->mask = 15;
+        self->mask = self->pos == self->num_blocks - 1
+                ? self->last_block_mask : TM_MAX_BLOCK_MASK;
 
         return 1;
 }
