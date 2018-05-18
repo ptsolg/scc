@@ -49,7 +49,6 @@ typedef struct _ssaizer
                 ssa_value* write;
                 ssa_value* init;
                 ssa_value* commit;
-                ssa_value* cancel;
                 ssa_value* reset;
                 ssa_value* transaction_id;
                 tree_type* transaction_type;

@@ -142,7 +142,6 @@ extern void ssaizer_init(ssaizer* self, ssa_context* context)
         self->tm.transaction_type = NULL;
         self->tm.init = NULL;
         self->tm.commit = NULL;
-        self->tm.cancel = NULL;
         self->tm.reset = NULL;
 
         allocator* alloc = ssa_get_alloc(context);
@@ -367,7 +366,6 @@ static bool ssaize_tm_decls(ssaizer* self, const tree_module* module, const tree
                 WRITE_IDX,
                 INIT_IDX,
                 COMMIT_IDX,
-                CANCEL_IDX,
                 RESET_IDX,
                 TRANSACTION_ID_IDX,
                 SIZE,
@@ -379,7 +377,6 @@ static bool ssaize_tm_decls(ssaizer* self, const tree_module* module, const tree
                 "_tm_write",
                 "_tm_transaction_init",
                 "_tm_transaction_commit",
-                "_tm_transaction_cancel",
                 "_tm_transaction_reset",
                 "_tm_transaction_id",
         };
@@ -409,7 +406,6 @@ static bool ssaize_tm_decls(ssaizer* self, const tree_module* module, const tree
         self->tm.write = ssaizer_get_global_decl(self, decls[WRITE_IDX]);
         self->tm.init = ssaizer_get_global_decl(self, decls[INIT_IDX]);
         self->tm.commit = ssaizer_get_global_decl(self, decls[COMMIT_IDX]);
-        self->tm.cancel = ssaizer_get_global_decl(self, decls[CANCEL_IDX]);
         self->tm.reset = ssaizer_get_global_decl(self, decls[RESET_IDX]);
         self->tm.transaction_id = ssaizer_get_global_decl(self, decls[TRANSACTION_ID_IDX]);
         self->tm.transaction_type = tree_new_decl_type(context, transaction, true);
