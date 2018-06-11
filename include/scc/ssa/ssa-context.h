@@ -33,9 +33,19 @@ extern void ssa_init_ex(ssa_context* self,
 extern void ssa_dispose(ssa_context* self);
 extern tree_type* ssa_get_type_for_label(ssa_context* self);
 
-static inline void* ssa_allocate(ssa_context* self, size_t bytes)
+static inline void* ssa_allocate_node(ssa_context* self, size_t bytes)
 {
         return obstack_allocate(&self->nodes, bytes);
+}
+
+static inline void* ssa_allocate(ssa_context* self, size_t bytes)
+{
+        return mempool_allocate(&self->memory, bytes);
+}
+
+static inline void ssa_deallocate(ssa_context* self, void* block)
+{
+        mempool_deallocate(&self->memory, block);
 }
 
 static inline allocator* ssa_get_alloc(ssa_context* self)
