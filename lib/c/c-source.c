@@ -8,7 +8,7 @@ static c_source* c_source_new(c_source_manager* manager, file_entry* entry)
         s->end = TREE_INVALID_LOC;
         s->file = entry;
         list_node_init(&s->node);
-        dseq_u32_init_alloc(&s->lines, c_context_get_allocator(manager->context));
+        u32vec_init_ex(&s->lines, c_context_get_allocator(manager->context));
         return s;
 }
 
@@ -29,16 +29,16 @@ extern bool c_source_has(const c_source* self, tree_location loc)
 extern int c_source_get_line(const c_source* self, tree_location loc)
 {
         // todo: log(n) search
-        size_t nlines = dseq_u32_size(&self->lines);
+        size_t nlines = self->lines.size;
         if (!nlines)
                 return 0;
 
         for (size_t i = 0; i < nlines; i++)
         {
-                tree_location cur = dseq_u32_get(&self->lines, i);
+                tree_location cur = u32vec_get(&self->lines, i);
                 tree_location next = c_source_get_loc_end(self);
                 if (i + 1 < nlines)
-                        next = dseq_u32_get(&self->lines, i + 1);
+                        next = u32vec_get(&self->lines, i + 1);
 
                 if (loc >= cur && loc < next)
                         return (int)(i + 1);
@@ -53,13 +53,13 @@ extern int c_source_get_col(const c_source* self, tree_location loc)
         if (line == 0)
                 return 0;
 
-        tree_location line_loc = dseq_u32_get(&self->lines, (size_t)(line - 1));
+        tree_location line_loc = u32vec_get(&self->lines, (size_t)(line - 1));
         return loc - line_loc + 1;
 }
 
 extern errcode c_source_save_line_loc(c_source* self, tree_location loc)
 {
-        return dseq_u32_append(&self->lines, loc);
+        return u32vec_push(&self->lines, loc);
 }
 
 extern const char* c_source_get_name(const c_source* self)
@@ -84,7 +84,7 @@ extern tree_location c_source_get_loc_end(const c_source* self)
 
 extern readbuf* c_source_open(c_source* self)
 {
-        dseq_u32_dispose(&self->lines);
+        u32vec_dispose(&self->lines);
         return file_open(self->file);
 }
 
@@ -99,17 +99,17 @@ extern void c_source_manager_init(
         self->context = context;
         self->lookup = lookup;
         allocator* alloc = c_context_get_allocator(context);
-        dseq_init_alloc(&self->sources, alloc);
-        strmap_init_alloc(&self->file_to_source, alloc);
+        ptrvec_init_ex(&self->sources, alloc);
+        strmap_init_ex(&self->file_to_source, alloc);
 }
 
 extern void c_source_manager_dispose(c_source_manager* self)
 {
         STRMAP_FOREACH(&self->file_to_source, it)
-                c_source_delete(self, *strmap_iter_value(&it));
+                c_source_delete(self, it->value);
 
         strmap_dispose(&self->file_to_source);
-        dseq_dispose(&self->sources);
+        ptrvec_dispose(&self->sources);
 }
 
 extern bool c_source_exists(c_source_manager* self, const char* path)
@@ -123,17 +123,17 @@ extern c_source* c_source_get_from_file(c_source_manager* self, file_entry* file
                 return NULL;
 
         strref ref = STRREF(file_get_path(file));
-        strmap_iter res;
-        if (strmap_find(&self->file_to_source, ref, &res))
-                return *strmap_iter_value(&res);
+        strmap_entry* entry = strmap_lookup(&self->file_to_source, ref);
+        if (entry)
+                return entry->value;
 
         c_source* source = c_source_new(self, file);
         source->begin = 0;
-        if (dseq_size(&self->sources))
-                source->begin = c_source_get_loc_end(*(dseq_end(&self->sources) - 1));
+        if (self->sources.size)
+                source->begin = c_source_get_loc_end(ptrvec_last(&self->sources));
 
         source->end = source->begin + (tree_location)file_size(file) + 1; // space for eof
-        dseq_append(&self->sources, source);
+        ptrvec_push(&self->sources, source);
         strmap_insert(&self->file_to_source, ref, source);
         return source;
 }
@@ -152,9 +152,9 @@ extern errcode c_source_find_loc(const c_source_manager* self, c_location* res, 
 {
         //todo: log(n) search
 
-        for (size_t i = 0; i < dseq_size(&self->sources); i++)
+        for (size_t i = 0; i < self->sources.size; i++)
         {
-                c_source* s = dseq_get(&self->sources, i);
+                c_source* s = ptrvec_get(&self->sources, i);
                 if (c_source_has(s, loc))
                 {
                         res->file = c_source_get_name(s);

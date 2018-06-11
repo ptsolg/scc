@@ -6,7 +6,6 @@
 #include "scc/tree/tree-context.h"
 #include "scc/tree/tree-eval.h"
 #include "scc/tree/tree-target.h"
-#include "scc/core/dseq-instance.h"
 
 extern tree_decl* c_sema_local_lookup(const c_sema* self, tree_id name, tree_lookup_kind lk)
 {
@@ -76,13 +75,13 @@ extern void c_declarator_init(c_declarator* self, c_sema* sema, c_declarator_kin
         self->context = sema->ccontext;
 
         c_type_chain_init(&self->type);
-        dseq_init_alloc(&self->params, c_context_get_allocator(sema->ccontext));
+        ptrvec_init_ex(&self->params, c_context_get_allocator(sema->ccontext));
 }
 
 extern void c_declarator_dispose(c_declarator* self)
 {
-        for (void** p = dseq_begin(&self->params);
-                p != dseq_end(&self->params); p++)
+        for (void** p = ptrvec_begin(&self->params);
+                p != ptrvec_end(&self->params); p++)
         {
                 // todo: delete(*p)
         }
@@ -188,7 +187,7 @@ extern void c_sema_add_declarator_param(c_sema* self, c_declarator* d, c_param* 
 
         tree_add_func_type_param(t, self->context, c_param_get_type(p));
         if (!d->params_initialized)
-                dseq_append(&d->params, p);
+                ptrvec_push(&d->params, p);
         else
                 ;// todo delete(p)
 }
@@ -198,7 +197,7 @@ extern bool c_sema_set_declarator_has_vararg(c_sema* self, c_declarator* d, tree
         tree_type* t = d->type.tail;
         assert(t && tree_get_type_kind(t) == TTK_FUNCTION);
 
-        if (dseq_size(&d->params) == 0)
+        if (d->params.size == 0)
         {
                 c_error_named_argument_before_ellipsis_required(self->logger, ellipsis_loc);
                 return false;
@@ -868,12 +867,12 @@ static tree_decl* c_sema_define_param_decl(c_sema* self, c_param* p)
         return csema_add_decl_to_scope(self, self->locals, d);
 }
 
-static bool c_sema_set_function_params(c_sema* self, tree_decl* func, dseq* params)
+static bool c_sema_set_function_params(c_sema* self, tree_decl* func, ptrvec* params)
 {
         c_sema_enter_decl_scope(self, tree_get_func_params(func));
 
-        for (size_t i = 0; i < dseq_size(params); i++)
-                if (!c_sema_define_param_decl(self, dseq_get(params, i)))
+        for (size_t i = 0; i < params->size; i++)
+                if (!c_sema_define_param_decl(self, ptrvec_get(params, i)))
                 {
                         c_sema_exit_decl_scope(self);
                         return false;
@@ -904,10 +903,10 @@ static bool c_sema_check_function_decl(
         if (!tree_type_is_void(restype) && !c_sema_require_complete_type(self, func_loc, restype))
                 return false;
 
-        const dseq* params = &d->params;
-        for (size_t i = 0; i < dseq_size(params); i++)
+        const ptrvec* params = &d->params;
+        for (size_t i = 0; i < params->size; i++)
         {
-                c_param* param = dseq_get(params, i);
+                c_param* param = ptrvec_get(params, i);
                 tree_location param_loc = param->specs.loc.begin;
 
                 if (param->declarator.name == TREE_EMPTY_ID)

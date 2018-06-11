@@ -21,7 +21,7 @@ typedef struct _c_source
         file_entry* file;
         tree_location begin;
         tree_location end;
-        dseq_u32 lines;
+        u32vec lines;
 } c_source;
 
 extern bool c_source_has(const c_source* self, tree_location loc);
@@ -43,7 +43,7 @@ typedef struct _c_source_manager
 {
         file_lookup* lookup;
         strmap file_to_source;
-        dseq sources;
+        ptrvec sources;
         c_context* context;
 } c_source_manager;
 

@@ -280,7 +280,7 @@ extern tree_stmt* c_sema_new_goto_stmt(
         tree_stmt* goto_stmt = tree_new_goto_stmt(
                 self->context, tree_create_xloc(kw_loc, semicolon_loc), l);
         if (!(scope_flags & CSF_ATOMIC))
-                dseq_append(&self->tm_info.non_atomic_gotos, goto_stmt);
+                ptrvec_push(&self->tm_info.non_atomic_gotos, goto_stmt);
 
         return goto_stmt;
 }
@@ -326,12 +326,11 @@ static bool c_sema_check_top_level_compound_stmt(const c_sema* self, const tree_
                         return false;
                 }
 
-        for (void** it = dseq_begin(&self->tm_info.non_atomic_gotos),
-                **end = dseq_end(&self->tm_info.non_atomic_gotos); it != end; it++)
+        for (void** it = ptrvec_begin(&self->tm_info.non_atomic_gotos),
+                **end = ptrvec_end(&self->tm_info.non_atomic_gotos); it != end; it++)
         {
                 tree_decl* goto_dest = tree_get_goto_label(*it);
-                strmap_iter result;
-                if (!strmap_find(&self->tm_info.atomic_labels, tree_get_decl_name(goto_dest), &result))
+                if (!strmap_has(&self->tm_info.atomic_labels, tree_get_decl_name(goto_dest)))
                         continue;
 
                 c_error_jumping_into_the_atomic_block_is_prohibited(

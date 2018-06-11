@@ -2,7 +2,7 @@
 #define C_MACRO_LEXER_H
 
 #include "scc/tree/tree-common.h"
-#include "scc/core/dseq-common.h"
+#include "scc/core/vec.h"
 
 typedef struct _c_context c_context;
 typedef struct _c_macro c_macro;
@@ -10,12 +10,11 @@ typedef struct _c_macro_args c_macro_args;
 typedef struct _c_token c_token;
 typedef struct _c_logger c_logger;
 typedef struct _c_reswords c_reswords;
-typedef struct _dseq dseq;
 
 typedef struct _c_macro_lexer
 {
         c_token** pos;
-        dseq tokens;
+        ptrvec tokens;
         c_context* context;
         c_macro* macro;
         c_logger* logger;

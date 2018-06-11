@@ -41,8 +41,6 @@ typedef enum
         CDK_MEMBER,
 } c_declarator_kind;
 
-typedef struct _dseq dseq;
-
 typedef struct _c_declarator
 {
         c_declarator_kind kind;
@@ -50,7 +48,7 @@ typedef struct _c_declarator
         tree_id name;
         tree_location name_loc;
         tree_xlocation loc;
-        dseq params;
+        ptrvec params;
         bool params_initialized;
         c_context* context;
 } c_declarator;

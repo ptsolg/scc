@@ -9,7 +9,6 @@
 #include "scc/c/c-macro.h"
 #include "scc/c/c-source.h"
 #include "scc/c/c-limits.h"
-#include "scc/core/dseq-instance.h"
 #include "scc/tree/tree-context.h"
 #include "scc/tree/tree-target.h"
 #include <time.h>
@@ -43,7 +42,7 @@ static void c_preprocessor_set_file(c_preprocessor* self, const c_source* source
 
 static void c_preprocessor_update_line(c_preprocessor* self)
 {
-        c_preprocessor_lexer* lexer = c_preprocessor_lexer_stack_get(&self->lexer_stack, self->token_lexer_depth);
+        c_pp_lexer* lexer = c_lexer_stack_get(&self->lexer_stack, self->token_lexer_depth);
         char num[100];
         snprintf(num, ARRAY_SIZE(num), "%d", lexer->token_lexer.line);
         c_token* t = c_macro_get_token(self->builtin_macro.line, 0);
@@ -100,10 +99,10 @@ extern void c_preprocessor_init(
 {
         self->lexer = NULL;
         self->token_lexer_depth = -1;
-        c_preprocessor_lexer_stack_init(&self->lexer_stack, context);
+        c_init_lexer_stack(&self->lexer_stack, context);
         self->lookahead.next_unexpanded_token = NULL;
         self->lookahead.next_expanded_token = NULL;
-        strmap_init_alloc(&self->macro_lookup, c_context_get_allocator(context));
+        strmap_init_ex(&self->macro_lookup, c_context_get_allocator(context));
         self->reswords = reswords;
         self->logger = logger;
         self->context = context;
@@ -114,9 +113,9 @@ extern void c_preprocessor_init(
 
 extern void c_preprocessor_dispose(c_preprocessor* self)
 {
-        while (c_preprocessor_lexer_stack_depth(&self->lexer_stack))
+        while (c_lexer_stack_depth(&self->lexer_stack))
                 c_preprocessor_exit(self);
-        c_preprocessor_lexer_stack_dispose(&self->lexer_stack);
+        c_dispose_lexer_stack(&self->lexer_stack);
         strmap_dispose(&self->macro_lookup);
 }
 
@@ -124,10 +123,10 @@ extern errcode c_preprocessor_enter_source(c_preprocessor* self, c_source* sourc
 {
         assert(source);
 
-        self->lexer = c_preprocessor_lexer_stack_push_token_lexer(
+        self->lexer = c_push_token_lexer(
                 &self->lexer_stack, self->logger, self->context);
         c_preprocessor_set_file(self, source);
-        self->token_lexer_depth = c_preprocessor_lexer_stack_depth(&self->lexer_stack) - 1;
+        self->token_lexer_depth = c_lexer_stack_depth(&self->lexer_stack) - 1;
         return c_token_lexer_enter(&self->lexer->token_lexer, source);
 }
 
@@ -136,7 +135,7 @@ static void c_preprocessor_enter_macro(
 {
         assert(macro);
         macro->used = true;
-        self->lexer = c_preprocessor_lexer_stack_push_macro_lexer(
+        self->lexer = c_push_macro_lexer(
                 &self->lexer_stack, self->context, macro, self->logger, loc);
 }
 
@@ -149,25 +148,25 @@ extern void c_preprocessor_exit(c_preprocessor* self)
         else
                 UNREACHABLE();
 
-        c_preprocessor_lexer_stack_pop_lexer(&self->lexer_stack);
-        if (!c_preprocessor_lexer_stack_depth(&self->lexer_stack))
+        c_pop_lexer(&self->lexer_stack);
+        if (!c_lexer_stack_depth(&self->lexer_stack))
         {
                 self->lexer = NULL;
                 return;
         }
 
-        self->lexer = c_preprocessor_lexer_stack_top(&self->lexer_stack);
+        self->lexer = c_lexer_stack_top(&self->lexer_stack);
         if (self->lexer->kind == CPLK_TOKEN)
         {
                 c_preprocessor_set_file(self, self->lexer->token_lexer.source);
-                self->token_lexer_depth = c_preprocessor_lexer_stack_depth(&self->lexer_stack) - 1;
+                self->token_lexer_depth = c_lexer_stack_depth(&self->lexer_stack) - 1;
         }
 }
 
 extern c_macro* c_preprocessor_get_macro(const c_preprocessor* self, tree_id name)
 {
-        strmap_iter it;
-        return strmap_find(&self->macro_lookup, name, &it) ? *strmap_iter_value(&it) : NULL;
+        strmap_entry* entry = strmap_lookup(&self->macro_lookup, name);
+        return entry ? entry->value : NULL;
 }
 
 extern bool c_preprocessor_define_macro(c_preprocessor* self, c_macro* macro)
@@ -195,7 +194,7 @@ extern c_token* c_preprocess_non_comment(c_preprocessor* self)
 {
         while (1)
         {
-                c_token* t = c_preprocessor_lexer_lex_token(self->lexer);
+                c_token* t = c_pp_lex(self->lexer);
                 if (!t)
                         return NULL;
 
@@ -209,13 +208,13 @@ extern c_token* c_preprocess_non_comment(c_preprocessor* self)
                         return t;
                 }
 
-                if (c_preprocessor_lexer_get_conditional_directive_stack_depth(self->lexer))
+                if (c_cond_stack_depth(self->lexer))
                 {
                         c_error_unterminated_directive(self->logger, 
-                                c_preprocessor_lexer_get_conditional_directive(self->lexer)->token);
+                                c_get_cond_directive(self->lexer)->token);
                         return NULL;
                 }
-                if (c_preprocessor_lexer_stack_depth(&self->lexer_stack) > 1)
+                if (c_lexer_stack_depth(&self->lexer_stack) > 1)
                 {
                         c_preprocessor_exit(self);
                         continue; // consume eof of included file
@@ -438,7 +437,7 @@ extern c_token* c_preprocess_non_macro(c_preprocessor* self)
         }
 }
 
-static bool c_preprocessor_collect_adjacent_strings(c_preprocessor* self, dseq* result)
+static bool c_preprocessor_collect_adjacent_strings(c_preprocessor* self, ptrvec* result)
 {
         while (1)
         {
@@ -452,31 +451,31 @@ static bool c_preprocessor_collect_adjacent_strings(c_preprocessor* self, dseq* 
                         return true;
                 }
 
-                dseq_append(result, t);
+                ptrvec_push(result, t);
         }
 }
 
-static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, dseq* strings)
+static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, ptrvec* strings)
 {
-        assert(dseq_size(strings));
+        assert(strings->size);
 
-        dseq_u8 concat;
-        dseq_u8_init_alloc(&concat, c_context_get_allocator(self->context));
-        for (size_t i = 0; i < dseq_size(strings); i++)
+        u8vec concat;
+        u8vec_init_ex(&concat, c_context_get_allocator(self->context));
+        for (size_t i = 0; i < strings->size; i++)
         {
-                c_token* t = dseq_get(strings, i);
+                c_token* t = ptrvec_get(strings, i);
                 const char* string = tree_get_id_string(self->context->tree, c_token_get_string(t));
                 char escaped[C_MAX_LINE_LENGTH + 1];
                 size_t size = c_get_escaped_string(escaped, ARRAY_SIZE(escaped), string, strlen(string) + 1);
                 for (size_t j = 0; j < size - 1; j++)
-                        dseq_u8_append(&concat, escaped[j]);
+                        u8vec_push(&concat, escaped[j]);
         }
-        dseq_u8_append(&concat, '\0');
+        u8vec_push(&concat, '\0');
 
         tree_id concat_ref = tree_get_id_for_string_s(self->context->tree,
-                (char*)dseq_u8_begin(&concat), dseq_u8_size(&concat));
-        tree_location loc = c_token_get_loc(dseq_get(strings, 0));
-        dseq_u8_dispose(&concat);
+                (char*)u8vec_begin(&concat), concat.size);
+        tree_location loc = c_token_get_loc(ptrvec_get(strings, 0));
+        u8vec_dispose(&concat);
 
         return c_token_new_string(self->context, loc, concat_ref);
 }
@@ -492,14 +491,14 @@ extern c_token* c_preprocess(c_preprocessor* self)
         if (!c_token_is(t, CTK_CONST_STRING))
                 return t;
 
-        dseq adjacent_strings;
-        dseq_init_alloc(&adjacent_strings, c_context_get_allocator(self->context));
-        dseq_append(&adjacent_strings, t);
+        ptrvec adjacent_strings;
+        ptrvec_init_ex(&adjacent_strings, c_context_get_allocator(self->context));
+        ptrvec_push(&adjacent_strings, t);
 
         c_token* result = c_preprocessor_collect_adjacent_strings(self, &adjacent_strings)
                 ? c_preprocessor_concat_and_escape_strings(self, &adjacent_strings)
                 : NULL;
 
-        dseq_dispose(&adjacent_strings);
+        ptrvec_dispose(&adjacent_strings);
         return result;
 }

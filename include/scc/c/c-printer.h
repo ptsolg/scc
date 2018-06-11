@@ -11,7 +11,7 @@ extern "C" {
 
 #include <stdio.h>
 #include "scc/core/read-write.h"
-#include "scc/core/dseq-instance.h"
+#include "scc/core/vec.h"
 
 typedef struct _c_token c_token;
 typedef struct _c_context c_context;
@@ -65,7 +65,7 @@ typedef struct
 extern void c_token_print_info_init(c_token_print_info* self);
 
 extern void c_print_token(c_printer* self, const c_token* token, const c_token_print_info* info);
-extern void c_print_tokens(c_printer* self, const dseq* tokens);
+extern void c_print_tokens(c_printer* self, const ptrvec* tokens);
 
 extern void c_print_expr(c_printer* self, const tree_expr* expr);
 

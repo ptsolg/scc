@@ -9,17 +9,15 @@
 extern "C" {
 #endif
 
-#include "scc/core/dseq-common.h"
 #include "c-preprocessor-lexer.h"
 
 typedef struct _c_macro c_macro;
-typedef struct _dseq dseq;
 
 typedef struct _c_preprocessor
 {
-        c_preprocessor_lexer* lexer;
+        c_pp_lexer* lexer;
         size_t token_lexer_depth;
-        c_preprocessor_lexer_stack lexer_stack;
+        c_lexer_stack lexer_stack;
         strmap macro_lookup;
         const c_reswords* reswords;
         c_logger* logger;

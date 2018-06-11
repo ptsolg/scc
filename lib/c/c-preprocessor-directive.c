@@ -51,11 +51,11 @@ static bool _c_preprocessor_handle_directive(c_preprocessor* self, c_token* tok)
 
 extern bool c_preprocessor_handle_directive(c_preprocessor* self, c_token* tok)
 {
-        size_t current_depth = c_preprocessor_lexer_stack_depth(&self->lexer_stack) - 1;
+        size_t current_depth = c_lexer_stack_depth(&self->lexer_stack) - 1;
         assert(self->lexer->kind == CPLK_TOKEN);
         self->lexer->token_lexer.in_directive = true;
         bool result = _c_preprocessor_handle_directive(self, tok);
-        c_preprocessor_lexer_stack_get(
+        c_lexer_stack_get(
                 &self->lexer_stack, current_depth)->token_lexer.in_directive = false;
         return result;
 }
@@ -66,13 +66,13 @@ static bool c_preprocessor_skip_conditional_directive_body(c_preprocessor* self)
         int nesting = 1; // assuming we are already in directive' body
         while (1)
         {
-                c_token* t = c_preprocessor_lexer_lex_token(self->lexer);
+                c_token* t = c_pp_lex(self->lexer);
                 if (!t)
                         continue;
                 if (c_token_is(t, CTK_EOF))
                 {
-                        c_cond_directive_info* info 
-                                = c_preprocessor_lexer_get_conditional_directive(self->lexer);
+                        c_cond_directive* info 
+                                = c_get_cond_directive(self->lexer);
                         c_logger_set_enabled(self->logger);
                         c_error_unterminated_directive(self->logger, info->token);
                         return false;
@@ -101,12 +101,14 @@ static bool c_preprocessor_skip_conditional_directive_body(c_preprocessor* self)
                         case CTK_PP_ELIF:
                         case CTK_PP_ELSE:
                         case CTK_PP_ENDIF:
-                                nesting--;
+                                if (directive == CTK_PP_ENDIF || nesting == 1)
+                                        nesting--;
                                 if (nesting == 0)
                                 {
                                         c_logger_set_enabled(self->logger);
                                         return c_preprocessor_handle_directive(self, t);
                                 }
+                                break;
                         default:
                                 break;
 
@@ -116,12 +118,12 @@ static bool c_preprocessor_skip_conditional_directive_body(c_preprocessor* self)
 
 static void c_preprocessor_push_conditional_directive(c_preprocessor* self, c_token* token)
 {
-        c_preprocessor_lexer_push_conditional_directive(self->lexer, token, false);
+        c_push_cond_directive(self->lexer, token, false);
 }
 
 static bool c_preprocessor_finish_conditional_directive(c_preprocessor* self, bool condition)
 {
-        c_cond_directive_info* info = c_preprocessor_lexer_get_conditional_directive(self->lexer);
+        c_cond_directive* info = c_get_cond_directive(self->lexer);
         info->condition = !info->has_body && condition;
         if (info->condition)
                 info->has_body = true;
@@ -207,14 +209,14 @@ extern bool c_preprocessor_handle_ifndef_directive(c_preprocessor* self, c_token
 
 static bool c_preprocessor_check_else_of_endif_directive(c_preprocessor* self, c_token* tok)
 {
-        if (!c_preprocessor_lexer_get_conditional_directive_stack_depth(self->lexer))
+        if (!c_cond_stack_depth(self->lexer))
         {
                 c_error_ending_directive_without_if(self->logger, tok);
                 return false;
         }
         if (c_token_is(tok, CTK_PP_ELIF) || c_token_is(tok, CTK_PP_ELSE))
         {
-                c_cond_directive_info* info = c_preprocessor_lexer_get_conditional_directive(self->lexer);
+                c_cond_directive* info = c_get_cond_directive(self->lexer);
                 if (c_token_is(info->token, CTK_PP_ELSE))
                 {
                         c_error_directive_after_else(self->logger, tok);
@@ -229,7 +231,7 @@ extern bool c_preprocessor_handle_elif_directive(c_preprocessor* self, c_token* 
         if (!c_preprocessor_check_else_of_endif_directive(self, tok))
                 return false;
 
-        c_cond_directive_info* info = c_preprocessor_lexer_get_conditional_directive(self->lexer);
+        c_cond_directive* info = c_get_cond_directive(self->lexer);
         info->token = tok;
 
         c_token* last;
@@ -250,7 +252,7 @@ extern bool c_preprocessor_handle_else_directive(c_preprocessor* self, c_token* 
         if (!c_preprocessor_check_else_of_endif_directive(self, tok))
                 return false;
 
-        c_cond_directive_info* info = c_preprocessor_lexer_get_conditional_directive(self->lexer);
+        c_cond_directive* info = c_get_cond_directive(self->lexer);
         info->token = tok;
 
         if (!c_preprocessor_require_end_of_directive(self, CTK_PP_ELSE))
@@ -263,7 +265,7 @@ extern bool c_preprocessor_handle_endif_directive(c_preprocessor* self, c_token*
 {
         if (!c_preprocessor_check_else_of_endif_directive(self, tok))
                 return false;
-        c_preprocessor_lexer_pop_conditional_directive(self->lexer);
+        c_pop_cond_directive(self->lexer);
         return c_preprocessor_require_end_of_directive(self, CTK_PP_ENDIF);
 }
 

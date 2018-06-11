@@ -2,7 +2,7 @@
 #include "scc/c/c-parse-module.h"
 #include "scc/tree/tree-module.h"
 
-extern errcode c_lex_source(c_context* context, file_entry* source, FILE* error, dseq* result)
+extern errcode c_lex_source(c_context* context, file_entry* source, FILE* error, ptrvec* result)
 {
         c_env env;
         c_env_init(&env, context, error);
@@ -36,7 +36,7 @@ extern void c_env_dispose(c_env* self)
         c_lexer_dispose(&self->lexer);
 }
 
-extern errcode c_env_lex_source(c_env* self, file_entry* source, dseq* result)
+extern errcode c_env_lex_source(c_env* self, file_entry* source, ptrvec* result)
 {
         c_source* s = c_source_get_from_file(&self->context->source_manager, source);
         if (!source || EC_FAILED(c_lexer_enter_source_file(&self->lexer, s)))
@@ -45,7 +45,7 @@ extern errcode c_env_lex_source(c_env* self, file_entry* source, dseq* result)
         while (1)
         {
                 c_token* t = c_lex(&self->lexer);
-                if (!t || EC_FAILED(dseq_append(result, t)))
+                if (!t || EC_FAILED(ptrvec_push(result, t)))
                         return EC_ERROR;
 
                 if (c_token_is(t, CTK_EOF))

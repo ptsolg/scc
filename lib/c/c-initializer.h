@@ -7,7 +7,6 @@ typedef struct _tree_expr tree_expr;
 typedef struct _tree_type tree_type;
 typedef struct _tree_decl tree_decl;
 typedef struct _c_context c_context;
-typedef struct _dseq dseq;
 
 typedef struct
 {

@@ -7,77 +7,86 @@ extern "C" {
 
 #include "c-token-lexer.h"
 #include "c-macro-lexer.h"
-#include "scc/core/dseq-common.h"
 
 typedef struct
 {
         c_token* token;
         bool condition;
         bool has_body;
-} c_cond_directive_info;
+} c_cond_directive;
 
-extern void c_cond_directive_info_init(
-        c_cond_directive_info* self, c_token* token, bool condition, bool has_body);
+extern void c_init_cond_directive(
+        c_cond_directive* self, c_token* token, bool condition, bool has_body);
 
 typedef enum
 {
         CPLK_TOKEN,
         CPLK_MACRO,
-} c_preprocessor_lexer_kind;
+} c_pp_lexer_kind;
 
-typedef struct _c_preprocessor_lexer
+#define VEC_FN(N) c_cond_stack_##N
+#define VEC_TP    c_cond_stack
+#define VEC_VTP   c_cond_directive
+#include "scc/core/vec-type.h"
+
+typedef struct _c_pp_lexer
 {
-        c_preprocessor_lexer_kind kind;
+        c_pp_lexer_kind kind;
         union
         {
                 struct
                 {
                         c_token_lexer token_lexer;
-                        struct _dseq cond_stack;
+                        c_cond_stack cond_stack;
                 };
                 c_macro_lexer macro_lexer;
         };
-} c_preprocessor_lexer;
+} c_pp_lexer;
 
-extern void c_preprocessor_lexer_init_token(
-        c_preprocessor_lexer* self, c_logger* logger, c_context* context);
+extern void c_init_pp_token_lexer(
+        c_pp_lexer* self, c_logger* logger, c_context* context);
 
-extern void c_preprocessor_lexer_init_macro(
-        c_preprocessor_lexer* self,
+extern void c_init_pp_macro_token_lexer(
+        c_pp_lexer* self,
         c_context* context,
         c_macro* macro,
         c_logger* logger,
         tree_location loc);
 
-extern void c_preprocessor_lexer_dispose(c_preprocessor_lexer* self);
+extern void c_dispose_pp_lexer(c_pp_lexer* self);
 
-extern c_token* c_preprocessor_lexer_lex_token(c_preprocessor_lexer* self);
+extern c_token* c_pp_lex(c_pp_lexer* self);
 
-extern c_cond_directive_info* c_preprocessor_lexer_push_conditional_directive(
-        c_preprocessor_lexer* self, c_token* token, bool condition);
+extern c_cond_directive* c_push_cond_directive(
+        c_pp_lexer* self, c_token* token, bool condition);
 
-extern c_cond_directive_info* c_preprocessor_lexer_get_conditional_directive(const c_preprocessor_lexer* self);
-extern void c_preprocessor_lexer_pop_conditional_directive(c_preprocessor_lexer* self);
-extern size_t c_preprocessor_lexer_get_conditional_directive_stack_depth(const c_preprocessor_lexer* self);
+extern c_cond_directive* c_get_cond_directive(const c_pp_lexer* self);
+extern void c_pop_cond_directive(c_pp_lexer* self);
+extern size_t c_cond_stack_depth(const c_pp_lexer* self);
 
-typedef struct _c_preprocessor_lexer_stack
+#define VEC_FN(N) c_pp_lexer_stack_##N
+#define VEC_TP    c_pp_lexer_stack
+#define VEC_VTP   c_pp_lexer
+#include "scc/core/vec-type.h"
+
+typedef struct _c_lexer_stack
 {
-        struct _dseq stack;
-} c_preprocessor_lexer_stack;
+        c_pp_lexer_stack lexers;
+} c_lexer_stack;
 
-extern void c_preprocessor_lexer_stack_init(c_preprocessor_lexer_stack* self, c_context* context);
-extern void c_preprocessor_lexer_stack_dispose(c_preprocessor_lexer_stack* self);
-extern void c_preprocessor_lexer_stack_pop_lexer(c_preprocessor_lexer_stack* self);
-extern size_t c_preprocessor_lexer_stack_depth(const c_preprocessor_lexer_stack* self);
-extern c_preprocessor_lexer* c_preprocessor_lexer_stack_top(const c_preprocessor_lexer_stack* self);
-extern c_preprocessor_lexer* c_preprocessor_lexer_stack_get(
-        const c_preprocessor_lexer_stack* self, size_t depth);
+extern void c_init_lexer_stack(c_lexer_stack* self, c_context* context);
+extern void c_dispose_lexer_stack(c_lexer_stack* self);
+extern void c_pop_lexer(c_lexer_stack* self);
+extern size_t c_lexer_stack_depth(const c_lexer_stack* self);
+extern c_pp_lexer* c_lexer_stack_top(const c_lexer_stack* self);
+extern c_pp_lexer* c_lexer_stack_get(
+        const c_lexer_stack* self, size_t depth);
 
-extern c_preprocessor_lexer* c_preprocessor_lexer_stack_push_token_lexer(
-        c_preprocessor_lexer_stack* self, c_logger* logger, c_context* context);
+extern c_pp_lexer* c_push_token_lexer(
+        c_lexer_stack* self, c_logger* logger, c_context* context);
 
-extern c_preprocessor_lexer* c_preprocessor_lexer_stack_push_macro_lexer(
-        c_preprocessor_lexer_stack* self,
+extern c_pp_lexer* c_push_macro_lexer(
+        c_lexer_stack* self,
         c_context* context,
         c_macro* macro,
         c_logger* logger,

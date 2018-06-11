@@ -1,59 +1,24 @@
 #include "scc/c/c-preprocessor-lexer.h"
 #include "scc/c/c-context.h"
-#include "scc/core/dseq-instance.h"
 
-#define DSEQ_VALUE_TYPE    c_cond_directive_info
-#define DSEQ_TYPE          c_pp_cond_stack
-#define DSEQ_INIT          c_pp_cond_stack_init
-#define DSEQ_INIT_ALLOC    c_pp_cond_stack_init_alloc
-#define DSEQ_DISPOSE       c_pp_cond_stack_dispose
-#define DSEQ_GET_SIZE      c_pp_cond_stack_size
-#define DSEQ_GET_CAPACITY  c_pp_cond_stack_capacity
-#define DSEQ_GET_ALLOCATOR c_pp_cond_stack_allocator
-#define DSEQ_RESERVE       c_pp_cond_stack_reserve
-#define DSEQ_RESIZE        c_pp_cond_stack_resize
-#define DSEQ_GET_BEGIN     c_pp_cond_stack_begin
-#define DSEQ_GET_END       c_pp_cond_stack_end
-#define DSEQ_GET           c_pp_cond_stack_get
-#define DSEQ_SET           c_pp_cond_stack_set
-#define DSEQ_APPEND        c_pp_cond_stack_append
-
-#include "scc/core/dseq.h"
-
-#undef DSEQ_VALUE_TYPE
-#undef DSEQ_TYPE 
-#undef DSEQ_INIT 
-#undef DSEQ_INIT_ALLOC 
-#undef DSEQ_DISPOSE 
-#undef DSEQ_GET_SIZE 
-#undef DSEQ_GET_CAPACITY 
-#undef DSEQ_GET_ALLOCATOR 
-#undef DSEQ_RESERVE 
-#undef DSEQ_RESIZE 
-#undef DSEQ_GET_BEGIN 
-#undef DSEQ_GET_END 
-#undef DSEQ_GET 
-#undef DSEQ_SET 
-#undef DSEQ_APPEND
-
-extern void c_cond_directive_info_init(
-        c_cond_directive_info* self, c_token* token, bool condition, bool has_body)
+extern void c_init_cond_directive(
+        c_cond_directive* self, c_token* token, bool condition, bool has_body)
 {
         self->token = token;
         self->condition = condition;
         self->has_body = has_body;
 }
 
-extern void c_preprocessor_lexer_init_token(
-        c_preprocessor_lexer* self, c_logger* logger, c_context* context)
+extern void c_init_pp_token_lexer(
+        c_pp_lexer* self, c_logger* logger, c_context* context)
 {
         self->kind = CPLK_TOKEN;
         c_token_lexer_init(&self->token_lexer, context, logger);
-        c_pp_cond_stack_init_alloc(&self->cond_stack, c_context_get_allocator(context));
+        c_cond_stack_init_ex(&self->cond_stack, c_context_get_allocator(context));
 }
 
-extern void c_preprocessor_lexer_init_macro(
-        c_preprocessor_lexer* self,
+extern void c_init_pp_macro_token_lexer(
+        c_pp_lexer* self,
         c_context* context,
         c_macro* macro,
         c_logger* logger,
@@ -63,13 +28,13 @@ extern void c_preprocessor_lexer_init_macro(
         c_macro_lexer_init(&self->macro_lexer, context, macro, logger, loc);
 }
 
-extern void c_preprocessor_lexer_dispose(c_preprocessor_lexer* self)
+extern void c_dispose_pp_lexer(c_pp_lexer* self)
 {
         if (self->kind == CPLK_TOKEN)
-                c_pp_cond_stack_dispose(&self->cond_stack);
+                c_cond_stack_dispose(&self->cond_stack);
 }
 
-extern c_token* c_preprocessor_lexer_lex_token(c_preprocessor_lexer* self)
+extern c_token* c_pp_lex(c_pp_lexer* self)
 {
         switch (self->kind)
         {
@@ -84,131 +49,79 @@ extern c_token* c_preprocessor_lexer_lex_token(c_preprocessor_lexer* self)
         }
 }
 
-extern c_cond_directive_info* c_preprocessor_lexer_push_conditional_directive(
-        c_preprocessor_lexer* self, c_token* token, bool condition)
+extern c_cond_directive* c_push_cond_directive(
+        c_pp_lexer* self, c_token* token, bool condition)
 {
-        size_t depth = c_preprocessor_lexer_get_conditional_directive_stack_depth(self);
-        c_pp_cond_stack_resize(&self->cond_stack, depth + 1);
-        c_cond_directive_info* info = c_pp_cond_stack_begin(&self->cond_stack) + depth;
-        c_cond_directive_info_init(info, token, condition, false);
-        return info;
+        c_cond_directive* cd = c_cond_stack_push_e(&self->cond_stack);
+        c_init_cond_directive(cd, token, condition, false);
+        return cd;
 }
 
-extern c_cond_directive_info* c_preprocessor_lexer_get_conditional_directive(const c_preprocessor_lexer* self)
+extern c_cond_directive* c_get_cond_directive(const c_pp_lexer* self)
 {
-        size_t depth = c_preprocessor_lexer_get_conditional_directive_stack_depth(self);
-        assert(depth);
-        return c_pp_cond_stack_begin(&self->cond_stack) + depth - 1;
+        return c_cond_stack_last_p(&self->cond_stack);
 }
 
-extern void c_preprocessor_lexer_pop_conditional_directive(c_preprocessor_lexer* self)
+extern void c_pop_cond_directive(c_pp_lexer* self)
 {
-        size_t depth = c_preprocessor_lexer_get_conditional_directive_stack_depth(self);
-        assert(depth);
-        c_pp_cond_stack_resize(&self->cond_stack, depth - 1);
+        c_cond_stack_pop(&self->cond_stack);
 }
 
-extern size_t c_preprocessor_lexer_get_conditional_directive_stack_depth(const c_preprocessor_lexer* self)
+extern size_t c_cond_stack_depth(const c_pp_lexer* self)
 {
         assert(self->kind == CPLK_TOKEN);
-        return c_pp_cond_stack_size(&self->cond_stack);
+        return self->cond_stack.size;
 }
 
-#define DSEQ_VALUE_TYPE    c_preprocessor_lexer
-#define DSEQ_TYPE          c_pp_lexer_stack
-#define DSEQ_INIT          c_pp_lexer_stack_init
-#define DSEQ_INIT_ALLOC    c_pp_lexer_stack_init_alloc
-#define DSEQ_DISPOSE       c_pp_lexer_stack_dispose
-#define DSEQ_GET_SIZE      c_pp_lexer_stack_size
-#define DSEQ_GET_CAPACITY  c_pp_lexer_stack_capacity
-#define DSEQ_GET_ALLOCATOR c_pp_lexer_stack_allocator
-#define DSEQ_RESERVE       c_pp_lexer_stack_reserve
-#define DSEQ_RESIZE        c_pp_lexer_stack_resize
-#define DSEQ_GET_BEGIN     c_pp_lexer_stack_begin
-#define DSEQ_GET_END       c_pp_lexer_stack_end
-#define DSEQ_GET           c_pp_lexer_stack_get
-#define DSEQ_SET           c_pp_lexer_stack_set
-#define DSEQ_APPEND        c_pp_lexer_stack_append
-
-#include "scc/core/dseq.h"
-
-#undef DSEQ_VALUE_TYPE
-#undef DSEQ_TYPE 
-#undef DSEQ_INIT 
-#undef DSEQ_INIT_ALLOC 
-#undef DSEQ_DISPOSE 
-#undef DSEQ_GET_SIZE 
-#undef DSEQ_GET_CAPACITY 
-#undef DSEQ_GET_ALLOCATOR 
-#undef DSEQ_RESERVE 
-#undef DSEQ_RESIZE 
-#undef DSEQ_GET_BEGIN 
-#undef DSEQ_GET_END 
-#undef DSEQ_GET 
-#undef DSEQ_SET 
-#undef DSEQ_APPEND
-
-extern void c_preprocessor_lexer_stack_init(c_preprocessor_lexer_stack* self, c_context* context)
+extern void c_init_lexer_stack(c_lexer_stack* self, c_context* context)
 {
-        c_pp_lexer_stack_init_alloc(&self->stack, c_context_get_allocator(context));
+        c_pp_lexer_stack_init_ex(&self->lexers, c_context_get_allocator(context));
 }
 
-extern void c_preprocessor_lexer_stack_dispose(c_preprocessor_lexer_stack* self)
+extern void c_dispose_lexer_stack(c_lexer_stack* self)
 {
-        while (c_preprocessor_lexer_stack_depth(self))
-                c_preprocessor_lexer_stack_pop_lexer(self);
-        c_pp_lexer_stack_dispose(&self->stack);
+        while (c_lexer_stack_depth(self))
+                c_pop_lexer(self);
+        c_pp_lexer_stack_dispose(&self->lexers);
 }
 
-extern void c_preprocessor_lexer_stack_pop_lexer(c_preprocessor_lexer_stack* self)
+extern void c_pop_lexer(c_lexer_stack* self)
 {
-        size_t size = c_pp_lexer_stack_size(&self->stack);
-        assert(size);
-        c_preprocessor_lexer_dispose(c_preprocessor_lexer_stack_top(self));
-        c_pp_lexer_stack_resize(&self->stack, size - 1);
+        c_dispose_pp_lexer(c_pp_lexer_stack_pop_p(&self->lexers));
 }
 
-extern size_t c_preprocessor_lexer_stack_depth(const c_preprocessor_lexer_stack* self)
+extern size_t c_lexer_stack_depth(const c_lexer_stack* self)
 {
-        return c_pp_lexer_stack_size(&self->stack);
+        return self->lexers.size;
 }
 
-extern c_preprocessor_lexer* c_preprocessor_lexer_stack_top(const c_preprocessor_lexer_stack* self)
+extern c_pp_lexer* c_lexer_stack_top(const c_lexer_stack* self)
 {
-        size_t size = c_preprocessor_lexer_stack_depth(self);
-        assert(size);
-        return c_pp_lexer_stack_begin(&self->stack) + size - 1;
+        return c_pp_lexer_stack_last_p(&self->lexers);
 }
 
-extern c_preprocessor_lexer* c_preprocessor_lexer_stack_get(
-        const c_preprocessor_lexer_stack* self, size_t depth)
+extern c_pp_lexer* c_lexer_stack_get(
+        const c_lexer_stack* self, size_t depth)
 {
-        return c_pp_lexer_stack_begin(&self->stack) + depth;
+        return c_pp_lexer_stack_get_p(&self->lexers, depth);
 }
 
-static c_preprocessor_lexer* c_preprocessor_lexer_stack_push_lexer(c_preprocessor_lexer_stack* self)
+extern c_pp_lexer* c_push_token_lexer(
+        c_lexer_stack* self, c_logger* logger, c_context* context)
 {
-        size_t size = c_pp_lexer_stack_size(&self->stack);
-        c_pp_lexer_stack_resize(&self->stack, size + 1);
-        return c_pp_lexer_stack_begin(&self->stack) + size;
-}
-
-extern c_preprocessor_lexer* c_preprocessor_lexer_stack_push_token_lexer(
-        c_preprocessor_lexer_stack* self, c_logger* logger, c_context* context)
-{
-        c_preprocessor_lexer* lexer = c_preprocessor_lexer_stack_push_lexer(self);
-        c_preprocessor_lexer_init_token(lexer, logger, context);
+        c_pp_lexer* lexer = c_pp_lexer_stack_push_e(&self->lexers);
+        c_init_pp_token_lexer(lexer, logger, context);
         return lexer;
 }
 
-extern c_preprocessor_lexer* c_preprocessor_lexer_stack_push_macro_lexer(
-        c_preprocessor_lexer_stack* self,
+extern c_pp_lexer* c_push_macro_lexer(
+        c_lexer_stack* self,
         c_context* context,
         c_macro* macro,
         c_logger* logger,
         tree_location loc)
 {
-        c_preprocessor_lexer* lexer = c_preprocessor_lexer_stack_push_lexer(self);
-        c_preprocessor_lexer_init_macro(lexer, context, macro, logger, loc);
+        c_pp_lexer* lexer = c_pp_lexer_stack_push_e(&self->lexers);
+        c_init_pp_macro_token_lexer(lexer, context, macro, logger, loc);
         return lexer;
 }

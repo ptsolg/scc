@@ -1,7 +1,7 @@
 #ifndef C_PRAGMA_H
 #define C_PRAGMA_H
 
-#include "scc/core/error.h"
+#include "scc/core/common.h"
 
 typedef struct _c_pragma_handlers
 {

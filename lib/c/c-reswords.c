@@ -4,8 +4,8 @@
 
 extern void c_reswords_init(c_reswords* self, c_context* context)
 {
-        strmap_init_alloc(&self->reswords, c_context_get_allocator(context));
-        strmap_init_alloc(&self->pp_reswords, c_context_get_allocator(context));
+        strmap_init_ex(&self->reswords, c_context_get_allocator(context));
+        strmap_init_ex(&self->pp_reswords, c_context_get_allocator(context));
 }
 
 extern void c_reswords_dispose(c_reswords* self)
@@ -16,8 +16,7 @@ extern void c_reswords_dispose(c_reswords* self)
 
 extern void c_reswords_add_resword(c_reswords* self, const char* string, int kind)
 {
-        strref r = STRREF(string);
-        strmap_insert(&self->reswords, r, (void*)kind);
+        strmap_insert(&self->reswords, STRREF(string), (void*)kind);
 }
 
 extern void c_reswords_add_pp_resword(c_reswords* self, const char* string, int kind)
@@ -32,10 +31,8 @@ extern int c_reswords_get_resword(const c_reswords* self, const char* string, si
 
 extern int c_reswords_get_resword_by_ref(const c_reswords* self, strref ref)
 {
-        strmap_iter res;
-        return strmap_find(&self->reswords, ref, &res)
-                ? (int)*strmap_iter_value(&res)
-                : CTK_UNKNOWN;
+        strmap_entry* entry = strmap_lookup(&self->reswords, ref);
+        return entry ? (int)entry->value : CTK_UNKNOWN;
 }
 
 extern int c_reswords_get_pp_resword(const c_reswords* self, const char* string, size_t len)
@@ -45,8 +42,6 @@ extern int c_reswords_get_pp_resword(const c_reswords* self, const char* string,
 
 extern int c_reswords_get_pp_resword_by_ref(const c_reswords* self, strref ref)
 {
-        strmap_iter res;
-        return strmap_find(&self->pp_reswords, ref, &res)
-                ? (c_token_kind)*strmap_iter_value(&res)
-                : CTK_UNKNOWN;
+        strmap_entry* entry = strmap_lookup(&self->pp_reswords, ref);
+        return entry ? (c_token_kind)entry->value : CTK_UNKNOWN;
 }

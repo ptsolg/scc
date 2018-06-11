@@ -7,96 +7,6 @@
 #include "scc/tree/tree-context.h"
 #include "scc/tree/tree-module.h"
 
-#define DSEQ_VALUE_TYPE c_switch_stmt_info
-#define DSEQ_TYPE c_switch_stack
-#define DSEQ_INIT c_switch_stack_init
-#define DSEQ_INIT_ALLOC c_switch_stack_init_alloc
-#define DSEQ_DISPOSE c_switch_stack_dispose
-#define DSEQ_GET_SIZE c_switch_stack_size
-#define DSEQ_GET_CAPACITY c_switch_stack_capacity
-#define DSEQ_GET_ALLOCATOR c_switch_stack_allocator
-#define DSEQ_RESERVE c_switch_stack_reserve
-#define DSEQ_RESIZE c_switch_stack_resize
-#define DSEQ_GET_BEGIN c_switch_stack_begin
-#define DSEQ_GET_END c_switch_stack_end
-#define DSEQ_GET c_switch_stack_get
-#define DSEQ_SET c_switch_stack_set
-#define DSEQ_APPEND c_switch_stack_append
-
-#include "scc/core/dseq.h"
-
-#undef DSEQ_VALUE_TYPE
-#undef DSEQ_TYPE 
-#undef DSEQ_INIT 
-#undef DSEQ_INIT_ALLOC 
-#undef DSEQ_DISPOSE 
-#undef DSEQ_GET_SIZE 
-#undef DSEQ_GET_CAPACITY 
-#undef DSEQ_GET_ALLOCATOR 
-#undef DSEQ_RESERVE 
-#undef DSEQ_RESIZE 
-#undef DSEQ_GET_BEGIN 
-#undef DSEQ_GET_END 
-#undef DSEQ_GET 
-#undef DSEQ_SET 
-#undef DSEQ_APPEND
-
-#define CCASE_LABEL_MAP_EMPTY_KEY ((uint32_t)-1)
-#define CCASE_LABEL_MAP_DELETED_KEY ((uint32_t)-2)
-
-#define HTAB_TYPE c_case_label_map
-#define HTAB_IMPL_FN_GENERATOR(NAME) _c_case_label_map_##NAME
-#define HTAB_KEY_TYPE uint32_t
-#define HTAB_DELETED_KEY CCASE_LABEL_MAP_EMPTY_KEY
-#define HTAB_EMPTY_KEY CCASE_LABEL_MAP_DELETED_KEY
-#define HTAB_VALUE_TYPE void*
-#define HTAB_INIT c_case_label_map_init
-#define HTAB_INIT_ALLOC c_case_label_map_init_alloc
-#define HTAB_DISPOSE c_case_label_map_dispose
-#define HTAB_GET_SIZE c_case_label_map_size
-#define HTAB_GET_ALLOCATOR c_case_label_map_alloc
-#define HTAB_RESERVE c_case_label_map_reserve
-#define HTAB_CLEAR c_case_label_map_clear
-#define HTAB_ERASE c_case_label_map_erase
-#define HTAB_GROW c_case_label_map_grow
-#define HTAB_INSERT c_case_label_map_insert
-#define HTAB_FIND c_case_label_map_find
-
-#define HTAB_ITERATOR_TYPE c_case_label_map_iter
-#define HTAB_ITERATOR_GET_KEY c_case_label_map_iter_key
-#define HTAB_ITERATOR_ADVANCE c_case_label_map_iter_advance
-#define HTAB_ITERATOR_INIT c_case_label_map_iter_init
-#define HTAB_ITERATOR_CREATE c_case_label_map_iter_create
-#define HTAB_ITERATOR_IS_VALID c_case_label_map_iter_valid
-#define HTAB_ITERATOR_GET_VALUE c_case_label_map_iter_value
-
-#include "scc/core/htab.h"
-
-#undef HTAB_TYPE
-#undef HTAB_IMPL_FN_GENERATOR
-#undef HTAB_KEY_TYPE 
-#undef HTAB_DELETED_KEY
-#undef HTAB_EMPTY_KEY
-#undef HTAB_VALUE_TYPE
-#undef HTAB_INIT
-#undef HTAB_INIT_ALLOC
-#undef HTAB_DISPOSE
-#undef HTAB_GET_SIZE
-#undef HTAB_GET_ALLOCATOR
-#undef HTAB_RESERVE
-#undef HTAB_CLEAR
-#undef HTAB_ERASE
-#undef HTAB_GROW
-#undef HTAB_INSERT
-#undef HTAB_FIND
-#undef HTAB_ITERATOR_TYPE
-#undef HTAB_ITERATOR_GET_KEY
-#undef HTAB_ITERATOR_ADVANCE
-#undef HTAB_ITERATOR_INIT
-#undef HTAB_ITERATOR_CREATE
-#undef HTAB_ITERATOR_IS_VALID
-#undef HTAB_ITERATOR_GET_VALUE
-
 extern void c_sema_init(c_sema* self, c_context* context, c_logger* logger)
 {
         self->ccontext = context;
@@ -112,9 +22,9 @@ extern void c_sema_init(c_sema* self, c_context* context, c_logger* logger)
         self->tm_info.atomic_stmt_nesting = 0;
 
         allocator* alloc = c_context_get_allocator(self->ccontext);
-        c_switch_stack_init_alloc(&self->switch_stack, alloc);
-        dseq_init_alloc(&self->tm_info.non_atomic_gotos, alloc);
-        strmap_init_alloc(&self->tm_info.atomic_labels, alloc);
+        c_switch_stack_init_ex(&self->switch_stack, alloc);
+        ptrvec_init_ex(&self->tm_info.non_atomic_gotos, alloc);
+        strmap_init_ex(&self->tm_info.atomic_labels, alloc);
 }
 
 extern void c_sema_dispose(c_sema* self)
@@ -159,15 +69,27 @@ static void c_sema_init_builtin_functions(c_sema* self)
 
         c_sema_init_builtin_function(self,
                 TFBK_ATOMIC_ADD_FETCH_32_SEQ_CST, "__atomic_add_fetch_32_seq_cst",
-                "static void __atomic_add_fetch_32_seq_cst(unsigned* ptr, unsigned value);");
+                "static unsigned __atomic_add_fetch_32_seq_cst(volatile unsigned* ptr, unsigned value);");
 
         c_sema_init_builtin_function(self,
                 TFBK_ATOMIC_XCHG_32_SEQ_CST, "__atomic_xchg_32_seq_cst",
-                "static void __atomic_xchg_32_seq_cst(unsigned* ptr, unsigned value);");
+                "static void __atomic_xchg_32_seq_cst(volatile unsigned* ptr, unsigned value);");
 
         c_sema_init_builtin_function(self,
                 TFBK_ATOMIC_FENCE_ST_SEQ_CST, "__atomic_fence_st_seq_cst",
                 "static void __atomic_fence_st_seq_cst();");
+
+        c_sema_init_builtin_function(self,
+                TFBK_ATOMIC_FENCE_ST_ACQ, "__atomic_fence_st_acq",
+                "static void __atomic_fence_st_acq();");
+
+        c_sema_init_builtin_function(self,
+                TFBK_ATOMIC_FENCE_ST_REL, "__atomic_fence_st_rel",
+                "static void __atomic_fence_st_rel();");
+
+        c_sema_init_builtin_function(self,
+                TFBK_ATOMIC_FENCE_ST_ACQ_REL, "__atomic_fence_st_acq_rel",
+                "static void __atomic_fence_st_acq_rel();");
 }
 
 extern tree_module* c_sema_new_module(c_sema* self)
@@ -222,7 +144,7 @@ extern void c_sema_exit_function(c_sema* self)
         self->function = NULL;
         c_sema_exit_decl_scope(self);
 
-        dseq_resize(&self->tm_info.non_atomic_gotos, 0);
+        ptrvec_resize(&self->tm_info.non_atomic_gotos, 0);
         strmap_clear(&self->tm_info.atomic_labels);
 }
 
@@ -233,20 +155,18 @@ extern void c_sema_push_scope(c_sema* self)
 
 extern void c_sema_push_switch_stmt_info(c_sema* self, tree_stmt* switch_stmt)
 {
-        c_switch_stmt_info info;
+        c_switch_stmt info;
         info.has_default_label = false;
         info.in_atomic_block = false;
         info.switch_stmt = switch_stmt;
-        c_case_label_map_init_alloc(&info.labels, c_context_get_allocator(self->ccontext));
-        c_switch_stack_append(&self->switch_stack, info);
+        c_casemap_init_ex(&info.labels, c_context_get_allocator(self->ccontext));
+        c_switch_stack_push(&self->switch_stack, info);
 }
 
 extern void c_sema_pop_switch_stmt_info(c_sema* self)
 {
-        size_t size = c_switch_stack_size(&self->switch_stack);
-        assert(size);
-        c_case_label_map_dispose(&c_sema_get_switch_stmt_info(self)->labels);
-        c_switch_stack_resize(&self->switch_stack, size - 1);
+        c_casemap_dispose(&c_sema_get_switch_stmt_info(self)->labels);
+        c_switch_stack_pop(&self->switch_stack);
 }
 
 extern void c_sema_set_switch_stmt_has_default_label(c_sema* self)
@@ -259,16 +179,14 @@ extern void c_sema_set_switch_stmt_in_atomic_block(c_sema* self)
         c_sema_get_switch_stmt_info(self)->in_atomic_block = true;
 }
 
-extern c_switch_stmt_info* c_sema_get_switch_stmt_info(const c_sema* self)
+extern c_switch_stmt* c_sema_get_switch_stmt_info(const c_sema* self)
 {
-        size_t size = c_switch_stack_size(&self->switch_stack);
-        assert(size);
-        return c_switch_stack_begin(&self->switch_stack) + size - 1;
+        return c_switch_stack_last_p(&self->switch_stack);
 }
 
 extern bool c_sema_in_switch_stmt(const c_sema* self)
 {
-        return c_switch_stack_size(&self->switch_stack) != 0;
+        return self->switch_stack.size != 0;
 }
 
 extern bool c_sema_switch_stmt_has_default_label(const c_sema* self)
@@ -286,21 +204,18 @@ extern bool c_sema_switch_stmt_register_case_label(const c_sema* self, tree_stmt
         const int_value* val = tree_get_case_cvalue(label);
         uint32_t key = int_get_u32(val);
 
-        c_case_label_map* labels = &c_sema_get_switch_stmt_info(self)->labels;
+        c_casemap* labels = &c_sema_get_switch_stmt_info(self)->labels;
         for (uint32_t i = 1; ; i++)
         {
-                c_case_label_map_iter res;
-                if (c_case_label_map_find(labels, key, &res)
-                        && int_cmp(val, tree_get_case_cvalue(*c_case_label_map_iter_value(&res))) == CR_EQ)
-                {
+                c_casemap_entry* entry = c_casemap_lookup(labels, key);
+                if (entry && int_cmp(val, tree_get_case_cvalue(entry->value)) == CR_EQ)
                         return false;
-                }
-                else if (key != CCASE_LABEL_MAP_EMPTY_KEY && key != CCASE_LABEL_MAP_DELETED_KEY)
+                else if (key != C_CASEMAP_EMPTY_KEY && key != C_CASEMAP_DELETED_KEY)
                         break;
                 key += i;
         }
 
-        c_case_label_map_insert(labels, key, label);
+        c_casemap_insert(labels, key, label);
         return true;
 }
 

@@ -1,11 +1,9 @@
 #ifndef C_MACRO_H
 #define C_MACRO_H
 
-#include "scc/core/dseq-common.h"
 #include "scc/tree/tree-common.h"
+#include "scc/core/vec.h"
 
-typedef struct _dseq dseq;
-typedef struct _dseq dseq_u32;
 typedef struct _c_context c_context;
 typedef struct _c_token c_token;
 
@@ -14,8 +12,8 @@ typedef struct _c_macro
         bool builtin;
         bool function_like;
         bool used;
-        dseq tokens;
-        dseq_u32 params;
+        ptrvec tokens;
+        u32vec params;
         tree_location loc;
         tree_id name;
 } c_macro;
@@ -54,6 +52,6 @@ extern void c_macro_args_init(c_macro_args* self, c_context* context);
 extern void c_macro_args_dispose(c_macro_args* self);
 extern void c_macro_args_add(c_macro_args* self, tree_id arg, c_token* token);
 extern void c_macro_args_set_empty(c_macro_args* self, tree_id arg);
-extern dseq* c_macro_args_get(c_macro_args* self, tree_id arg);
+extern ptrvec* c_macro_args_get(c_macro_args* self, tree_id arg);
 
 #endif

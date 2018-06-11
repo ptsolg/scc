@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "scc/core/strmap.h"
+#include "scc/core/htab.h"
 
 typedef struct _c_context c_context;
 
