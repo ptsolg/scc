@@ -2,8 +2,12 @@
 #include "scc/c/c-env.h"
 #include "scc/c/c-context.h"
 #include "scc/c/c-printer.h"
+#include "scc/tree/tree-context.h"
+#include "scc/tree/tree-target.h"
 #include "scc/ssa/ssa-context.h"
-#include "scc/codegen/codegen.h"
+#include "scc/ssa/ssa-emit.h"
+#include "scc/ssa/ssa-pretty-print.h"
+#include "scc/ssa/ssa-opt.h"
 #include "scc/cc/llvm.h"
 #include <stdarg.h>
 
@@ -55,12 +59,12 @@ static void cc_context_dispose(cc_context* self)
 
 static file_entry** cc_sources_begin(cc_instance* self)
 {
-        return (file_entry**)dseq_begin(&self->input.sources);
+        return (file_entry**)ptrvec_begin(&self->input.sources);
 }
 
 static file_entry** cc_sources_end(cc_instance* self)
 {
-        return (file_entry**)dseq_end(&self->input.sources);
+        return (file_entry**)ptrvec_end(&self->input.sources);
 }
 
 #define CC_FOREACH_SOURCE(PCC, ITNAME, ENDNAME) \
@@ -69,12 +73,12 @@ static file_entry** cc_sources_end(cc_instance* self)
 
 static file_entry** cc_builtin_sources_begin(cc_instance* self)
 {
-        return (file_entry**)dseq_begin(&self->input.builtin_sources);
+        return (file_entry**)ptrvec_begin(&self->input.builtin_sources);
 }
 
 static file_entry** cc_builtin_sources_end(cc_instance* self)
 {
-        return (file_entry**)dseq_end(&self->input.builtin_sources);
+        return (file_entry**)ptrvec_end(&self->input.builtin_sources);
 }
 
 #define CC_FOREACH_BUILTIN_SOURCE(PCC, ITNAME, ENDNAME) \
@@ -83,12 +87,12 @@ static file_entry** cc_builtin_sources_end(cc_instance* self)
 
 static file_entry** cc_libs_begin(cc_instance* self)
 {
-        return (file_entry**)dseq_begin(&self->input.libs);
+        return (file_entry**)ptrvec_begin(&self->input.libs);
 }
 
 static file_entry** cc_libs_end(cc_instance* self)
 {
-        return (file_entry**)dseq_end(&self->input.libs);
+        return (file_entry**)ptrvec_end(&self->input.libs);
 }
 
 #define CC_FOREACH_LIB(PCC, ITNAME, ENDNAME) \
@@ -116,7 +120,7 @@ extern void cc_file_doesnt_exit(cc_instance* self, const char* file)
 
 static bool cc_check_single_input(cc_instance* self)
 {
-        if (dseq_size(&self->input.sources) > 1)
+        if (self->input.sources.size > 1)
         {
                 cc_error(self, "multiple input for single output");
                 return false;
@@ -137,12 +141,12 @@ static void cc_print_tokens(
         cc_instance* self,
         cc_context* context,
         FILE* output,
-        const dseq* tokens)
+        const ptrvec* tokens)
 {
         fwrite_cb write;
         fwrite_cb_init(&write, output);
         c_printer printer;
-        c_printer_init(&printer, fwrite_cb_base(&write), &context->c);
+        c_printer_init(&printer, &write.base, &context->c);
         cc_set_cprinter_opts(self, &printer);
         c_print_tokens(&printer, tokens);
         c_printer_dispose(&printer);
@@ -157,11 +161,11 @@ extern errcode cc_dump_tokens(cc_instance* self)
         jmp_buf fatal;
         cc_context context;
         c_env env;
-        dseq tokens;
+        ptrvec tokens;
 
         cc_context_init(&context, self, fatal);
         c_env_init(&env, &context.c, self->output.message);
-        dseq_init_alloc(&tokens, self->alloc);
+        ptrvec_init_ex(&tokens, self->alloc);
 
         if (setjmp(fatal))
                 goto cleanup;
@@ -173,7 +177,7 @@ extern errcode cc_dump_tokens(cc_instance* self)
                 cc_print_tokens(self, &context, self->output.file, &tokens);
 
 cleanup:
-        dseq_dispose(&tokens);
+        ptrvec_dispose(&tokens);
         c_env_dispose(&env);
         cc_context_dispose(&context);
         return result;
@@ -185,7 +189,7 @@ static void cc_print_tree_module(cc_instance* self,
         fwrite_cb write;
         fwrite_cb_init(&write, output);
         c_printer printer;
-        c_printer_init(&printer, fwrite_cb_base(&write), &context->c);
+        c_printer_init(&printer, &write.base, &context->c);
         cc_set_cprinter_opts(self, &printer);
         c_print_module(&printer, module);
         c_printer_dispose(&printer);
@@ -250,10 +254,10 @@ static void cc_set_ssa_optimizer_opts(cc_instance* self, ssa_optimizer_opts* opt
 {
         opts->eliminate_dead_code = self->opts.optimization.eliminate_dead_code;
         opts->fold_constants = self->opts.optimization.fold_constants;
+        opts->promote_allocas = self->opts.optimization.promote_allocas;
 }
 
-static errcode cc_codegen_file_ex(cc_instance* self,
-        codegen_output_kind kind, file_entry* file, FILE* output)
+static errcode cc_codegen_file_ex(cc_instance* self, file_entry* file, bool emit_llvm_ir, FILE* output)
 {
         errcode result = EC_ERROR;
         jmp_buf fatal;
@@ -267,9 +271,10 @@ static errcode cc_codegen_file_ex(cc_instance* self,
         if (!module)
                 goto cleanup;
 
-        tree_module* tm_decls = NULL;
+        ssa_additional_modules am;
+        am.tm = NULL;
         if (self->opts.ext.enable_tm)
-                if (!(tm_decls = cc_parse_file(self, &context, self->input.tm_decls)))
+                if (!(am.tm = cc_parse_file(self, &context, self->input.tm_decls)))
                         goto cleanup;
 
         fwrite_cb write;
@@ -277,14 +282,17 @@ static errcode cc_codegen_file_ex(cc_instance* self,
 
         ssa_optimizer_opts opts;
         cc_set_ssa_optimizer_opts(self, &opts);
-        if (kind == CGOK_LLVM)
-        {
-                opts.fold_constants = true;
-                opts.eliminate_dead_code = true;
-        }
+      
+        ssa_module* sm = ssa_emit_module(&context.ssa, module, &opts, &am);
+        if (!sm)
+                goto cleanup;
 
-        result = codegen_module(fwrite_cb_base(&write), &context.ssa, module, tm_decls, kind, &opts);
-
+        if (emit_llvm_ir)
+                ssa_pretty_print_module_llvm(&write.base, &context.ssa, sm);
+        else
+                ssa_pretty_print_module(&write.base, &context.ssa, sm);
+        
+        result = EC_NO_ERROR;
 cleanup:
         cc_context_dispose(&context);
         return result;
@@ -296,9 +304,9 @@ static errcode get_file_as(char* buffer, const file_entry* file, const char* ext
         return path_change_ext(buffer, ext);
 }
 
-static errcode cc_codegen_file(cc_instance* self, codegen_output_kind kind, file_entry* file)
+static errcode cc_codegen_file(cc_instance* self, file_entry* file, bool emit_llvm_ir)
 {
-        const char* ext = kind == CGOK_SSA ? SSA_EXT : LL_EXT;
+        const char* ext = emit_llvm_ir ? LL_EXT : SSA_EXT;
         char out[MAX_PATH_LEN + 1];
         if (EC_FAILED(get_file_as(out, file, ext)))
                 return EC_ERROR;
@@ -307,16 +315,16 @@ static errcode cc_codegen_file(cc_instance* self, codegen_output_kind kind, file
         if (!fout)
                 return EC_ERROR;
 
-        errcode result = cc_codegen_file_ex(self, kind, file, fout);
+        errcode result = cc_codegen_file_ex(self, file, emit_llvm_ir, fout);
         fclose(fout);
         return result;
 }
 
-static void cc_cleanup_codegen(cc_instance* self, codegen_output_kind kind)
+static void cc_cleanup_codegen(cc_instance* self, bool emit_llvm_ir)
 {
         CC_FOREACH_SOURCE(self, it, end)
         {
-                const char* ext = kind == CGOK_SSA ? SSA_EXT : LL_EXT;
+                const char* ext = emit_llvm_ir ? LL_EXT : SSA_EXT;
                 char file[MAX_PATH_LEN + 1];
                 if (EC_FAILED(get_file_as(file, *it, ext)))
                         return;
@@ -325,7 +333,7 @@ static void cc_cleanup_codegen(cc_instance* self, codegen_output_kind kind)
         }
         CC_FOREACH_BUILTIN_SOURCE(self, it, end)
         {
-                const char* ext = kind == CGOK_SSA ? SSA_EXT : LL_EXT;
+                const char* ext = emit_llvm_ir ? LL_EXT : SSA_EXT;
                 char file[MAX_PATH_LEN + 1];
                 if (EC_FAILED(get_file_as(file, *it, ext)))
                         return;
@@ -334,19 +342,19 @@ static void cc_cleanup_codegen(cc_instance* self, codegen_output_kind kind)
         }
 }
 
-static errcode cc_codegen(cc_instance* self, codegen_output_kind kind)
+static errcode cc_codegen(cc_instance* self, bool emit_llvm_ir)
 {
         CC_FOREACH_SOURCE(self, it, end)
-                if (EC_FAILED(cc_codegen_file(self, kind, *it)))
+                if (EC_FAILED(cc_codegen_file(self, *it, emit_llvm_ir)))
                         goto cleanup;
         CC_FOREACH_BUILTIN_SOURCE(self, it, end)
-                if (EC_FAILED(cc_codegen_file(self, kind, *it)))
+                if (EC_FAILED(cc_codegen_file(self, *it, emit_llvm_ir)))
                         goto cleanup;
 
         return EC_NO_ERROR;
 
 cleanup:
-        cc_cleanup_codegen(self, kind);
+        cc_cleanup_codegen(self, emit_llvm_ir);
         return EC_ERROR;
 }
 
@@ -363,7 +371,7 @@ static errcode cc_check_return_code(cc_instance* self, const char* tool, int cod
 static errcode cc_compile_file(cc_instance* self,
         file_entry* file, llvm_compiler_output_kind output_kind, const char* output)
 {
-        if (EC_FAILED(cc_codegen_file(self, CGOK_LLVM, file)))
+        if (EC_FAILED(cc_codegen_file(self, file, true)))
                 return EC_ERROR;
 
         char ll_file[MAX_PATH_LEN + 1];
@@ -373,7 +381,8 @@ static errcode cc_compile_file(cc_instance* self,
         int exit_code;
         llvm_compiler llc;
         llvm_compiler_init(&llc, self->input.llc_path);
-        // todo: set optimization opts
+        llc.opt_level = self->opts.optimization.level > LCOL_O3 
+                ? LCOL_O3 : self->opts.optimization.level;
         llc.file = ll_file;
         llc.output_kind = output_kind;
         llc.arch = self->opts.target == CTK_X86_32 ? LCAK_X86 : LCAK_X86_64;
@@ -474,10 +483,10 @@ extern errcode cc_generate_ssa(cc_instance* self)
                         return EC_ERROR;
 
                 return cc_codegen_file_ex(self,
-                        CGOK_SSA, *cc_sources_begin(self), self->output.file);
+                        *cc_sources_begin(self), false, self->output.file);
         }
 
-        return cc_codegen(self, CGOK_SSA);
+        return cc_codegen(self, false);
 }
 
 extern errcode cc_generate_llvm_ir(cc_instance* self)
@@ -488,10 +497,10 @@ extern errcode cc_generate_llvm_ir(cc_instance* self)
                         return EC_ERROR;
 
                 return cc_codegen_file_ex(self,
-                        CGOK_LLVM, *cc_sources_begin(self), self->output.file);
+                        *cc_sources_begin(self), true, self->output.file);
         }
 
-        return cc_codegen(self, CGOK_LLVM);
+        return cc_codegen(self, true);
 }
 
 static errcode cc_link(cc_instance* self, llvm_linker* lld)

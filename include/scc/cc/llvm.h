@@ -1,8 +1,7 @@
 #ifndef CC_LLVM_H
 #define CC_LLVM_H
 
-#include "scc/core/error.h"
-#include "scc/core/dseq-instance.h"
+#include "scc/core/vec.h"
 
 typedef enum
 {
@@ -44,8 +43,8 @@ typedef struct
         const char* path;
         const char* output;
         const char* entry;
-        dseq files;
-        dseq dirs;
+        ptrvec files;
+        ptrvec dirs;
         allocator* alloc;
 } llvm_linker;
 

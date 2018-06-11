@@ -6,7 +6,7 @@ add_scc_lib(cc
 
 	DEPENDS
 	c
-	codegen
+	ssa
 
 	INCLUDE
 	${SCC_INC_DIR}

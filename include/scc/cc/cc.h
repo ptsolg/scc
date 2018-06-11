@@ -23,9 +23,9 @@ typedef enum
 
 typedef struct
 {
-        dseq sources;
-        dseq builtin_sources;
-        dseq libs;
+        ptrvec sources;
+        ptrvec builtin_sources;
+        ptrvec libs;
         file_lookup source_lookup;
         file_lookup lib_lookup;
         file_entry* tm_decls;
@@ -51,6 +51,8 @@ typedef struct
         {
                 bool eliminate_dead_code;
                 bool fold_constants;
+                bool promote_allocas;
+                unsigned level;
         } optimization;
 
         struct

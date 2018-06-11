@@ -15,9 +15,9 @@ extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc)
         self->input.lld_path = NULL;
         self->input.entry = NULL;
         self->input.tm_decls = NULL;
-        dseq_init_alloc(&self->input.sources, alloc);
-        dseq_init_alloc(&self->input.builtin_sources, alloc);
-        dseq_init_alloc(&self->input.libs, alloc);
+        ptrvec_init_ex(&self->input.sources, alloc);
+        ptrvec_init_ex(&self->input.builtin_sources, alloc);
+        ptrvec_init_ex(&self->input.libs, alloc);
         flookup_init_ex(&self->input.source_lookup, alloc);
         flookup_init_ex(&self->input.lib_lookup, alloc);
 
@@ -29,6 +29,8 @@ extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc)
         self->opts.target = CTK_X86_32;
         self->opts.optimization.eliminate_dead_code = false;
         self->opts.optimization.fold_constants = false;
+        self->opts.optimization.promote_allocas = false;
+        self->opts.optimization.level = 0;
         self->opts.cprint.print_expr_value = false;
         self->opts.cprint.print_expr_type = false;
         self->opts.cprint.print_impl_casts = false;
@@ -44,9 +46,9 @@ extern void cc_dispose(cc_instance* self)
 
         flookup_dispose(&self->input.lib_lookup);
         flookup_dispose(&self->input.source_lookup);
-        dseq_dispose(&self->input.libs);
-        dseq_dispose(&self->input.sources);
-        dseq_dispose(&self->input.builtin_sources);
+        ptrvec_dispose(&self->input.libs);
+        ptrvec_dispose(&self->input.sources);
+        ptrvec_dispose(&self->input.builtin_sources);
 }
 
 extern void cc_set_output_stream(cc_instance* self, FILE* out)
@@ -84,7 +86,7 @@ extern errcode cc_add_lib(cc_instance* self, const char* lib)
                 return EC_ERROR;
         }
 
-        dseq_append(&self->input.libs, file);
+        ptrvec_push(&self->input.libs, file);
         return EC_NO_ERROR;
 }
 
@@ -102,7 +104,7 @@ extern errcode cc_add_source_file(cc_instance* self, const char* file, bool buil
                 return EC_ERROR;
         }
 
-        dseq_append(builtin ? &self->input.builtin_sources : &self->input.sources, source);
+        ptrvec_push(builtin ? &self->input.builtin_sources : &self->input.sources, source);
         return EC_NO_ERROR;
 }
 
@@ -114,7 +116,7 @@ extern errcode cc_emulate_source_file(
                 return EC_ERROR;
 
         if (add_to_input)
-                dseq_append(builtin ? &self->input.builtin_sources : &self->input.sources, source);
+                ptrvec_push(builtin ? &self->input.builtin_sources : &self->input.sources, source);
 
         return EC_NO_ERROR;
 }
@@ -123,7 +125,7 @@ extern errcode cc_run(cc_instance* self)
 {
         assert(self->opts.ext.enable_tm == (bool)self->input.tm_decls);
 
-        if (!dseq_size(&self->input.sources))
+        if (!self->input.sources.size)
         {
                 cc_error(self, "no input files");
                 return EC_ERROR;

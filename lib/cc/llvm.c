@@ -1,6 +1,6 @@
 #include "scc/cc/llvm.h"
 #include "scc/core/file.h"
-#include "scc/core/args.h"
+#include "scc/core/cmd.h"
 #include <stdio.h>
 #include <string.h>
 #include <scc/cc/llvm.h>
@@ -79,7 +79,7 @@ extern errcode llvm_linker_add_dir(llvm_linker* self, const char* dir)
                 return EC_ERROR;
 
         snprintf(copy, len, "/LIBPATH:\"%s\"", dir);
-        if (EC_FAILED(dseq_append(&self->dirs, copy)))
+        if (EC_FAILED(ptrvec_push(&self->dirs, copy)))
         {
                 deallocate(self->alloc, copy);
                 return EC_ERROR;
@@ -89,7 +89,7 @@ extern errcode llvm_linker_add_dir(llvm_linker* self, const char* dir)
         char* copy = allocate(self->alloc, strlen(dir) + 1);
         if (!copy)
                 return EC_ERROR;
-        if (EC_FAILED(dseq_append(&self->dirs, copy)))
+        if (EC_FAILED(ptrvec_push(&self->dirs, copy)))
         {
                 deallocate(self->alloc, copy);
                 return EC_ERROR;
@@ -108,7 +108,7 @@ extern errcode llvm_linker_add_file(llvm_linker* self, const char* file)
                 return EC_ERROR;
 
         strcpy(copy, file);
-        if (EC_FAILED(dseq_append(&self->files, copy)))
+        if (EC_FAILED(ptrvec_push(&self->files, copy)))
         {
                 deallocate(self->alloc, copy);
                 return EC_ERROR;
@@ -122,26 +122,26 @@ extern void llvm_linker_init(llvm_linker* self, const char* path)
         self->output = NULL;
         self->entry = NULL;
         self->alloc = STDALLOC;
-        dseq_init_alloc(&self->files, self->alloc);
-        dseq_init_alloc(&self->dirs, self->alloc);
+        ptrvec_init_ex(&self->files, self->alloc);
+        ptrvec_init_ex(&self->dirs, self->alloc);
 }
 
 extern void llvm_linker_dispose(llvm_linker* self)
 {
-        for (void** it = dseq_begin(&self->files),
-                **end = dseq_end(&self->files); it != end; it++)
+        for (void** it = ptrvec_begin(&self->files),
+                **end = ptrvec_end(&self->files); it != end; it++)
         {
                 deallocate(self->alloc, *it);
         }
 
-        for (void** it = dseq_begin(&self->dirs),
-                **end = dseq_end(&self->dirs); it != end; it++)
+        for (void** it = ptrvec_begin(&self->dirs),
+                **end = ptrvec_end(&self->dirs); it != end; it++)
         {
                 deallocate(self->alloc, *it);
         }
 
-        dseq_dispose(&self->files);
-        dseq_dispose(&self->dirs);
+        ptrvec_dispose(&self->files);
+        ptrvec_dispose(&self->dirs);
 }
 
 extern errcode llvm_link(llvm_linker* self, int* exit_code)
@@ -149,14 +149,14 @@ extern errcode llvm_link(llvm_linker* self, int* exit_code)
         arg_info args;
         arg_info_init(&args);
 
-        for (void** it = dseq_begin(&self->files),
-                **end = dseq_end(&self->files); it != end; it++)
+        for (void** it = ptrvec_begin(&self->files),
+                **end = ptrvec_end(&self->files); it != end; it++)
         {
                 arg_append(&args, *it);
         }
 
-        for (void** it = dseq_begin(&self->dirs),
-                **end = dseq_end(&self->dirs); it != end; it++)
+        for (void** it = ptrvec_begin(&self->dirs),
+                **end = ptrvec_end(&self->dirs); it != end; it++)
         {
                 arg_append(&args, *it);
         }
