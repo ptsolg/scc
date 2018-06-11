@@ -1,5 +1,5 @@
 #include "scc.h"
-#include "scc/core/args.h"
+#include "scc/core/cmd.h"
 
 static void scc_missing_argument(scc_env* self, const char* arg)
 {
@@ -22,49 +22,21 @@ extern FILE* scc_open_file(scc_env* self, const char* file, const char* mode)
         return f;
 }
 
-typedef enum
-{
-        SAK_S,
-        SAK_c,
-        SAK_o,
-        SAK_nostdlib,
-        SAK_log,
-        SAK_help,
-        SAK_fsyntax_only,
-        SAK_dump_tokens,
-        SAK_dump_tree,
-        SAK_fprint_eval_result,
-        SAK_fprint_expr_value,
-        SAK_fprint_expr_type,
-        SAK_fprint_impl_casts,
-        SAK_fforce_brackets,
-        SAK_fdce,
-        SAK_fcf,
-        SAK_ftm,
-        SAK_emit_ssa,
-        SAK_emit_llvm,
-        SAK_I,
-        SAK_l,
-        SAK_L,
-        SAK_m32,
-        SAK_m64,
-} scc_arg_kind;
-
-static void scc_S(scc_env* self, aparser* parser)
+static void scc_S(scc_env* self, cmd_parser* parser)
 {
         self->mode = SRM_ASSEMBLE;
         self->cc.output.kind = COK_ASM;
 }
 
-static void scc_c(scc_env* self, aparser* parser)
+static void scc_c(scc_env* self, cmd_parser* parser)
 {
         self->mode = SRM_COMPILE;
         self->cc.output.kind = COK_OBJ;
 }
 
-static void scc_o(scc_env* self, aparser* parser)
+static void scc_o(scc_env* self, cmd_parser* parser)
 {
-        const char* file = aparser_get_string(parser);
+        const char* file = cmd_parser_get_string(parser);
         if (!file)
         {
                 scc_missing_argument(self, "-o");
@@ -73,14 +45,14 @@ static void scc_o(scc_env* self, aparser* parser)
         cc_set_output_file(&self->cc, file);
 }
 
-static void scc_nostdlib(scc_env* self, aparser* parser)
+static void scc_nostdlib(scc_env* self, cmd_parser* parser)
 {
         self->link_stdlib = false;
 }
 
-static void scc_log(scc_env* self, aparser* parser)
+static void scc_log(scc_env* self, cmd_parser* parser)
 {
-        const char* file = aparser_get_string(parser);
+        const char* file = cmd_parser_get_string(parser);
         if (!file)
         {
                 scc_missing_argument(self, "-log");
@@ -94,69 +66,69 @@ static void scc_log(scc_env* self, aparser* parser)
         self->cc.output.message = log;
 }
 
-static void scc_help(scc_env* self, aparser* parser)
+static void scc_help(scc_env* self, cmd_parser* parser)
 {
 }
 
-static void scc_fsyntax_only(scc_env* self, aparser* parser)
+static void scc_fsyntax_only(scc_env* self, cmd_parser* parser)
 {
         self->cc.output.kind = COK_NONE;
         self->mode = SRM_OTHER;
 }
 
-static void scc_dump_tokens(scc_env* self, aparser* parser)
+static void scc_dump_tokens(scc_env* self, cmd_parser* parser)
 {
         self->cc.output.kind = COK_LEXEMES;
         self->mode = SRM_OTHER;
 }
 
-static void scc_dump_tree(scc_env* self, aparser* parser)
+static void scc_dump_tree(scc_env* self, cmd_parser* parser)
 {
         self->cc.output.kind = COK_C;
         self->mode = SRM_OTHER;
 }
 
-static void scc_fprint_eval_result(scc_env* self, aparser* parser)
+static void scc_fprint_eval_result(scc_env* self, cmd_parser* parser)
 {
         self->cc.opts.cprint.print_eval_result = true;
 }
 
-static void scc_fprint_expr_value(scc_env* self, aparser* parser)
+static void scc_fprint_expr_value(scc_env* self, cmd_parser* parser)
 {
         self->cc.opts.cprint.print_expr_value = true;
 }
 
-static void scc_fprint_expr_type(scc_env* self, aparser* parser)
+static void scc_fprint_expr_type(scc_env* self, cmd_parser* parser)
 {
         self->cc.opts.cprint.print_expr_type = true;
 }
 
-static void scc_fprint_impl_casts(scc_env* self, aparser* parser)
+static void scc_fprint_impl_casts(scc_env* self, cmd_parser* parser)
 {
         self->cc.opts.cprint.print_impl_casts = true;
 }
 
-static void scc_fforce_brackets(scc_env* self, aparser* parser)
+static void scc_fforce_brackets(scc_env* self, cmd_parser* parser)
 {
         self->cc.opts.cprint.force_brackets = true;
 }
 
-static void scc_fdce(scc_env* self, aparser* parser)
+static void scc_fdce(scc_env* self, cmd_parser* parser)
 {
         self->cc.opts.optimization.eliminate_dead_code = true;
 }
 
-static void scc_fcf(scc_env* self, aparser* parser)
+static void scc_fcf(scc_env* self, cmd_parser* parser)
 {
         self->cc.opts.optimization.fold_constants = true;
 }
 
-static void scc_ftm(scc_env* self, aparser* parser)
+static void scc_ftm(scc_env* self, cmd_parser* parser)
 {
         self->cc.opts.ext.enable_tm = true;
 }
 
-static void scc_emit_ssa(scc_env* self, aparser* parser)
+static void scc_emit_ssa(scc_env* self, cmd_parser* parser)
 {
         if (self->mode != SRM_ASSEMBLE)
         {
@@ -167,7 +139,7 @@ static void scc_emit_ssa(scc_env* self, aparser* parser)
         self->cc.output.kind = COK_SSA;
 }
 
-static void scc_emit_llvm(scc_env* self, aparser* parser)
+static void scc_emit_llvm(scc_env* self, cmd_parser* parser)
 {
         if (self->mode != SRM_ASSEMBLE)
         {
@@ -178,9 +150,9 @@ static void scc_emit_llvm(scc_env* self, aparser* parser)
         self->cc.output.kind = COK_LLVM_IR;
 }
 
-static void scc_I(scc_env* self, aparser* parser)
+static void scc_I(scc_env* self, cmd_parser* parser)
 {
-        const char* dir = aparser_get_string(parser);
+        const char* dir = cmd_parser_get_string(parser);
         if (!dir)
         {
                 scc_missing_argument(self, "-I");
@@ -190,9 +162,9 @@ static void scc_I(scc_env* self, aparser* parser)
         cc_add_source_dir(&self->cc, dir);
 }
 
-static void scc_l(scc_env* self, aparser* parser)
+static void scc_l(scc_env* self, cmd_parser* parser)
 {
-        const char* lib = aparser_get_string(parser);
+        const char* lib = cmd_parser_get_string(parser);
         if (!lib)
         {
                 scc_missing_argument(self, "-l");
@@ -202,9 +174,9 @@ static void scc_l(scc_env* self, aparser* parser)
         cc_add_lib(&self->cc, lib);
 }
 
-static void scc_L(scc_env* self, aparser* parser)
+static void scc_L(scc_env* self, cmd_parser* parser)
 {
-        const char* dir = aparser_get_string(parser);
+        const char* dir = cmd_parser_get_string(parser);
         if (!dir)
         {
                 scc_missing_argument(self, "-L");
@@ -214,19 +186,37 @@ static void scc_L(scc_env* self, aparser* parser)
         cc_add_lib_dir(&self->cc, dir);
 }
 
-static void scc_m32(scc_env* self, aparser* parser)
+static void scc_m32(scc_env* self, cmd_parser* parser)
 {
         self->cc.opts.target = CTK_X86_32;
 }
 
-static void scc_m64(scc_env* self, aparser* parser)
+static void scc_m64(scc_env* self, cmd_parser* parser)
 {
         self->cc.opts.target = CTK_X86_64;
 }
 
-static void scc_source_file(scc_env* self, aparser* parser)
+static void scc_fpa(scc_env* self, cmd_parser* parser)
 {
-        const char* file = aparser_get_string(parser);
+        self->cc.opts.optimization.promote_allocas = true;
+}
+
+static void scc_finline(scc_env* self, cmd_parser* parser)
+{
+        UNREACHABLE();
+}
+
+static void scc_O3(scc_env* self, cmd_parser* parser)
+{
+        self->cc.opts.optimization.eliminate_dead_code = true;
+        self->cc.opts.optimization.promote_allocas = true;
+        self->cc.opts.optimization.fold_constants = true;
+        self->cc.opts.optimization.level = 3;
+}
+
+static void scc_source_file(scc_env* self, cmd_parser* parser)
+{
+        const char* file = cmd_parser_get_string(parser);
         if (!file || EC_FAILED(cc_add_source_file(&self->cc, file, false)))
                 return;
 
@@ -241,37 +231,40 @@ static void scc_source_file(scc_env* self, aparser* parser)
 
 extern errcode scc_parse_opts(scc_env* self, int argc, const char** argv)
 {
-        arg_handler handlers[] =
+        cmd_handler handlers[] =
         {
-                ARG_HANDLER_INIT("-S", &scc_S, self),
-                ARG_HANDLER_INIT("-c", &scc_c, self),
-                ARG_HANDLER_INIT("-o", &scc_o, self),
-                ARG_HANDLER_INIT("-nostdlib", &scc_nostdlib, self),
-                ARG_HANDLER_INIT("-log", &scc_log, self),
-                ARG_HANDLER_INIT("-fsyntax-only", &scc_fsyntax_only, self),
-                ARG_HANDLER_INIT("-dump-tokens", &scc_dump_tokens, self),
-                ARG_HANDLER_INIT("-dump-tree", &scc_dump_tree, self),
-                ARG_HANDLER_INIT("-fprint-eval-result", &scc_fprint_eval_result, self),
-                ARG_HANDLER_INIT("-fprint-expr-value", &scc_fprint_expr_value, self),
-                ARG_HANDLER_INIT("-fprint-expr-type", &scc_fprint_expr_type, self),
-                ARG_HANDLER_INIT("-fprint-impl-casts", &scc_fprint_impl_casts, self),
-                ARG_HANDLER_INIT("-fforce-brackets", &scc_fforce_brackets, self),
-                ARG_HANDLER_INIT("-fdce", &scc_fdce, self),
-                ARG_HANDLER_INIT("-fcf", &scc_fcf, self),
-                ARG_HANDLER_INIT("-ftm", &scc_ftm, self),
-                ARG_HANDLER_INIT("-emit-ssa", &scc_emit_ssa, self),
-                ARG_HANDLER_INIT("-emit-llvm", &scc_emit_llvm, self),
-                ARG_HANDLER_INIT("-I", &scc_I, self),
-                ARG_HANDLER_INIT("-l", &scc_l, self),
-                ARG_HANDLER_INIT("-L", &scc_L, self),
-                ARG_HANDLER_INIT("-m32", &scc_m32, self),
-                ARG_HANDLER_INIT("-m64", &scc_m64, self),
+                CMD_HANDLER_INIT("-S", &scc_S, self),
+                CMD_HANDLER_INIT("-c", &scc_c, self),
+                CMD_HANDLER_INIT("-o", &scc_o, self),
+                CMD_HANDLER_INIT("-nostdlib", &scc_nostdlib, self),
+                CMD_HANDLER_INIT("-log", &scc_log, self),
+                CMD_HANDLER_INIT("-fsyntax-only", &scc_fsyntax_only, self),
+                CMD_HANDLER_INIT("-dump-tokens", &scc_dump_tokens, self),
+                CMD_HANDLER_INIT("-dump-tree", &scc_dump_tree, self),
+                CMD_HANDLER_INIT("-fprint-eval-result", &scc_fprint_eval_result, self),
+                CMD_HANDLER_INIT("-fprint-expr-value", &scc_fprint_expr_value, self),
+                CMD_HANDLER_INIT("-fprint-expr-type", &scc_fprint_expr_type, self),
+                CMD_HANDLER_INIT("-fprint-impl-casts", &scc_fprint_impl_casts, self),
+                CMD_HANDLER_INIT("-fforce-brackets", &scc_fforce_brackets, self),
+                CMD_HANDLER_INIT("-fdce", &scc_fdce, self),
+                CMD_HANDLER_INIT("-fcf", &scc_fcf, self),
+                CMD_HANDLER_INIT("-fpa", &scc_fpa, self),
+                CMD_HANDLER_INIT("-ftm", &scc_ftm, self),
+                CMD_HANDLER_INIT("-finline", &scc_finline, self),
+                CMD_HANDLER_INIT("-emit-ssa", &scc_emit_ssa, self),
+                CMD_HANDLER_INIT("-emit-llvm", &scc_emit_llvm, self),
+                CMD_HANDLER_INIT("-I", &scc_I, self),
+                CMD_HANDLER_INIT("-l", &scc_l, self),
+                CMD_HANDLER_INIT("-L", &scc_L, self),
+                CMD_HANDLER_INIT("-m32", &scc_m32, self),
+                CMD_HANDLER_INIT("-m64", &scc_m64, self),
+                CMD_HANDLER_INIT("-O3", &scc_O3, self),
         };
 
-        arg_handler source = ARG_HANDLER_INIT("", &scc_source_file, self);
+        cmd_handler source = CMD_HANDLER_INIT("", &scc_source_file, self);
 
-        aparser parser;
-        aparser_init(&parser, argc, argv);
-        aparse(&parser, handlers, ARRAY_SIZE(handlers), &source);
+        cmd_parser parser;
+        cmd_parser_init(&parser, argc, argv);
+        cmd_parser_run(&parser, handlers, ARRAY_SIZE(handlers), &source);
         return EC_NO_ERROR;
 }

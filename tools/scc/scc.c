@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <scc/cc/cc.h>
 
-extern void scc_env_init(scc_env* self)
+extern void scc_init(scc_env* self)
 {
         cc_init(&self->cc, stdout);
         self->llc_path[0] = '\0';
@@ -15,7 +15,7 @@ extern void scc_env_init(scc_env* self)
         self->mode = SRM_LINK;
 }
 
-extern void scc_env_dispose(scc_env* self)
+extern void scc_dispose(scc_env* self)
 {
         cc_dispose(&self->cc);
 }
@@ -29,7 +29,7 @@ extern void scc_error(scc_env* self, const char* format, ...)
         printf("\n");
 }
 
-static errcode scc_env_add_cd_dir(scc_env* self)
+static errcode scc_add_cd_dir(scc_env* self)
 {
         char cd[MAX_PATH_LEN + 1];
         if (EC_FAILED(path_get_cd(cd)))
@@ -37,7 +37,7 @@ static errcode scc_env_add_cd_dir(scc_env* self)
         return cc_add_source_dir(&self->cc, cd);
 }
 
-static errcode scc_env_add_stdlibc_dir(scc_env* self, const char* exec_path)
+static errcode scc_add_stdlibc_dir(scc_env* self, const char* exec_path)
 {
         char dir[MAX_PATH_LEN];
         strncpy(dir, exec_path, MAX_PATH_LEN);
@@ -48,7 +48,7 @@ static errcode scc_env_add_stdlibc_dir(scc_env* self, const char* exec_path)
         return cc_add_source_dir(&self->cc, dir);
 }
 
-static errcode scc_env_add_stdlibc_libs(scc_env* self, const char* exec_dir)
+static errcode scc_add_stdlibc_libs(scc_env* self, const char* exec_dir)
 {
         char dir[MAX_PATH_LEN];
         strncpy(dir, exec_dir, MAX_PATH_LEN);
@@ -71,7 +71,7 @@ static errcode scc_env_add_stdlibc_libs(scc_env* self, const char* exec_dir)
         return EC_NO_ERROR;
 }
 
-static errcode scc_env_add_tm_sources(scc_env* self, const char* exec_dir)
+static errcode scc_add_tm_sources(scc_env* self, const char* exec_dir)
 {
         char path[MAX_PATH_LEN];
         strncpy(path, exec_dir, MAX_PATH_LEN);
@@ -91,7 +91,7 @@ static errcode scc_env_add_tm_sources(scc_env* self, const char* exec_dir)
         return cc_add_source_file(&self->cc, path, true);
 }
 
-static errcode scc_env_setup_llc_lld(scc_env* self, const char* exec_dir)
+static errcode scc_setup_llc_lld(scc_env* self, const char* exec_dir)
 {
         char dir[MAX_PATH_LEN];
         strncpy(dir, exec_dir, MAX_PATH_LEN);
@@ -112,7 +112,7 @@ static errcode scc_env_setup_llc_lld(scc_env* self, const char* exec_dir)
         return EC_NO_ERROR;
 }
 
-extern errcode scc_env_setup(scc_env* self, int argc, const char** argv)
+extern errcode scc_setup(scc_env* self, int argc, const char** argv)
 {
         extern errcode scc_parse_opts(scc_env*, int, const char**);
 
@@ -132,10 +132,10 @@ extern errcode scc_env_setup(scc_env* self, int argc, const char** argv)
         path_strip_file(exec_dir);
 
 
-        return EC_FAILED(scc_env_add_cd_dir(self))
-                || EC_FAILED(scc_env_add_stdlibc_dir(self, exec_dir))
-                || (self->link_stdlib && EC_FAILED(scc_env_add_stdlibc_libs(self, exec_dir)))
-                || EC_FAILED(scc_env_setup_llc_lld(self, exec_dir))
-                || (self->cc.opts.ext.enable_tm && EC_FAILED(scc_env_add_tm_sources(self, exec_dir)))
+        return EC_FAILED(scc_add_cd_dir(self))
+                || EC_FAILED(scc_add_stdlibc_dir(self, exec_dir))
+                || (self->link_stdlib && EC_FAILED(scc_add_stdlibc_libs(self, exec_dir)))
+                || EC_FAILED(scc_setup_llc_lld(self, exec_dir))
+                || (self->cc.opts.ext.enable_tm && EC_FAILED(scc_add_tm_sources(self, exec_dir)))
                 ? EC_ERROR : EC_NO_ERROR;
 }

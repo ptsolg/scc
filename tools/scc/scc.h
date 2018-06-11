@@ -24,9 +24,9 @@ typedef struct
         scc_run_mode mode;
 } scc_env;
 
-extern void scc_env_init(scc_env* self);
-extern void scc_env_dispose(scc_env* self);
+extern void scc_init(scc_env* self);
+extern void scc_dispose(scc_env* self);
 extern void scc_error(scc_env* self, const char* format, ...);
-extern errcode scc_env_setup(scc_env* self, int argc, const char** argv);
+extern errcode scc_setup(scc_env* self, int argc, const char** argv);
 
 #endif
