@@ -46,12 +46,12 @@ static TREE_INLINE const tree_decl_scope* tree_get_scope_cdecls(const tree_scope
 
 static TREE_INLINE tree_stmt* tree_get_scope_stmts_begin(const tree_scope* self)
 {
-        return (tree_stmt*)list_begin(&self->stmts);
+        return (tree_stmt*)self->stmts.head;
 }
 
 static TREE_INLINE const tree_stmt* tree_get_scope_stmts_end(const tree_scope* self)
 {
-        return (const tree_stmt*)list_cend(&self->stmts);
+        return (const tree_stmt*)list_end_c(&self->stmts);
 }
 
 static TREE_INLINE tree_scope* tree_get_scope_parent(const tree_scope* self)
@@ -236,7 +236,7 @@ static TREE_INLINE tree_xlocation tree_get_stmt_loc(const tree_stmt* self)
 
 static TREE_INLINE tree_stmt* tree_get_next_stmt(const tree_stmt* self)
 {
-        return (tree_stmt*)list_node_next(&self->base.node);
+        return (tree_stmt*)self->base.node.next;
 }
 
 static TREE_INLINE bool tree_stmt_is(const tree_stmt* self, tree_stmt_kind k)

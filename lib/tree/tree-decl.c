@@ -26,19 +26,18 @@ static TREE_INLINE tree_decl* _tree_decl_scope_lookup(
         tree_lookup_kind lookup_kind,
         tree_id id)
 {
-        strmap_iter res;
+        strmap_entry* e;
         if (lookup_kind == TLK_DECL || lookup_kind == TLK_TAG)
-                return self->lookup[lookup_kind] && strmap_find(self->lookup[lookup_kind], id, &res)
-                        ? *strmap_iter_value(&res) : NULL;
-
+                return self->lookup[lookup_kind] && (e = strmap_lookup(self->lookup[lookup_kind], id))
+                        ? e->value : NULL;
 
         assert(lookup_kind == TLK_ANY);
 
-        if (self->lookup[TLK_DECL] && strmap_find(self->lookup[TLK_DECL], id, &res))
-                return *strmap_iter_value(&res);
+        if (self->lookup[TLK_DECL] && (e = strmap_lookup(self->lookup[TLK_DECL], id)))
+                return e->value;
 
-        if (self->lookup[TLK_TAG] && strmap_find(self->lookup[TLK_TAG], id, &res))
-                return *strmap_iter_value(&res);
+        if (self->lookup[TLK_TAG] && (e = strmap_lookup(self->lookup[TLK_TAG], id)))
+                return e->value;
 
         return NULL;
 }
@@ -72,7 +71,7 @@ extern errcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context
         {
                 if (!(*p = tree_allocate_node(context, sizeof(strmap))))
                         return EC_ERROR;
-                strmap_init_alloc(*p, context->alloc);
+                strmap_init_ex(*p, context->alloc);
         }
 
         return strmap_insert(*p, tree_get_decl_name(decl), decl);

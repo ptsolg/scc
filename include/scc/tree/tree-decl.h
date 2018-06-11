@@ -60,7 +60,7 @@ static TREE_INLINE void tree_set_decl_scope_parent(tree_decl_scope* self, tree_d
 
 static TREE_INLINE tree_decl* tree_get_decl_scope_decls_begin(const tree_decl_scope* self)
 {
-        return (tree_decl*)list_begin(&self->decls);
+        return (tree_decl*)self->decls.head;
 }
 
 static TREE_INLINE tree_decl* tree_get_decl_scope_decls_end(tree_decl_scope* self)
@@ -70,7 +70,7 @@ static TREE_INLINE tree_decl* tree_get_decl_scope_decls_end(tree_decl_scope* sel
 
 static TREE_INLINE const tree_decl* tree_get_decl_scope_decls_cend(const tree_decl_scope* self)
 {
-        return (const tree_decl*)list_cend(&self->decls);
+        return (const tree_decl*)list_end_c(&self->decls);
 }
 
 static TREE_INLINE bool tree_decl_scope_is_empty(const tree_decl_scope* self)
@@ -187,6 +187,9 @@ typedef enum
         TFBK_ATOMIC_ADD_FETCH_32_SEQ_CST,
         TFBK_ATOMIC_XCHG_32_SEQ_CST,
         TFBK_ATOMIC_FENCE_ST_SEQ_CST,
+        TFBK_ATOMIC_FENCE_ST_ACQ,
+        TFBK_ATOMIC_FENCE_ST_REL,
+        TFBK_ATOMIC_FENCE_ST_ACQ_REL,
 } tree_function_builtin_kind;
 
 struct _tree_function_decl
@@ -271,12 +274,12 @@ extern tree_decl* tree_new_decl(
 
 static TREE_INLINE tree_decl* tree_get_next_decl(const tree_decl* self)
 {
-        return (tree_decl*)list_node_next(&self->base.node);
+        return (tree_decl*)self->base.node.next;
 }
 
 static TREE_INLINE tree_decl* tree_get_prev_decl(const tree_decl* self)
 {
-        return (tree_decl*)list_node_prev(&self->base.node);
+        return (tree_decl*)self->base.node.prev;
 }
 
 static TREE_INLINE tree_decl_kind tree_get_decl_kind(const tree_decl* self)
