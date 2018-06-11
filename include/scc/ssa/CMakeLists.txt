@@ -6,12 +6,9 @@ add_scc_target_sources(ssa
 	ssa-instr.h
 	ssa-value.h
 	ssa-block.h
-	ssa-printer.h
 	ssa-module.h
-	ssaizer.h
-	ssaize-expr.h
-	ssaize-stmt.h
-	ssaize-decl.h
 	ssa-opt.h
 	ssa-pass.h
+	ssa-pretty-print.h
+	ssa-emit.h
 )
