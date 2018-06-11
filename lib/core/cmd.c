@@ -1,34 +1,35 @@
-#include "scc/core/args.h"
+#include "scc/core/cmd.h"
 #include "scc/core/string.h"
 #include "scc/core/file.h"
 #include <stdlib.h> // strtoi
 #include <stdio.h> // strtoi
 
-extern void arg_handler_init(arg_handler* self,
-        const char* prefix, void(*cb)(void*, aparser*), void* data)
+extern void cmd_handler_init(cmd_handler* self,
+        const char* prefix, void(*oncmd)(void*, cmd_parser*), void* data)
 {
-        self->_prefix = prefix;
-        self->_cb = cb;
-        self->_data = data;
+        self->prefix = prefix;
+        self->oncmd = oncmd;
+        self->data = data;
 }
 
-extern void aparser_init(aparser* self, int argc, const char** argv)
+extern void cmd_parser_init(cmd_parser* self, int argc, const char** argv)
 {
-        self->_argv = argv;
-        self->_argc = argc;
-        self->_pos = 1;
+        self->argv = argv;
+        self->argc = argc;
+        self->pos = 1;
 }
 
-extern void aparse(aparser* self, arg_handler* handlers, size_t nhandlers, arg_handler* def)
+extern void cmd_parser_run(
+        cmd_parser* self, cmd_handler* handlers, size_t nhandlers, cmd_handler* def)
 {
-        while (self->_pos < self->_argc)
+        while (self->pos < self->argc)
         {
-                const char* arg = self->_argv[self->_pos++];
+                const char* arg = self->argv[self->pos++];
 
-                arg_handler* handler = NULL;
+                cmd_handler* handler = NULL;
                 for (size_t i = 0; i < nhandlers; i++)
                 {
-                        const char* prefix = handlers[i]._prefix;
+                        const char* prefix = handlers[i].prefix;
                         if (*prefix && strncmp(arg, prefix, strlen(prefix)) == 0)
                         {
                                 handler = handlers + i;
@@ -39,33 +40,31 @@ extern void aparse(aparser* self, arg_handler* handlers, size_t nhandlers, arg_h
                 if (!handler)
                 {
                         handler = def;
-                        self->_pos--;
+                        self->pos--;
                 }
 
-                handler->_cb(handler->_data, self);
+                handler->oncmd(handler->data, self);
         }
 }
 
-extern int aparser_args_remain(const aparser* self)
+extern int cmd_parser_cmds_remain(const cmd_parser* self)
 {
-        int n = self->_argc - self->_pos;
+        int n = self->argc - self->pos;
         return n < 0 ? 0 : n;
 }
 
-extern const char* aparser_get_string(aparser* self)
+extern const char* cmd_parser_get_string(cmd_parser* self)
 {
-        return aparser_args_remain(self)
-                ? self->_argv[self->_pos++]
-                : NULL;
+        return cmd_parser_cmds_remain(self) ? self->argv[self->pos++] : NULL;
 }
 
-extern errcode aparser_get_int(aparser* self, int* pint)
+extern errcode cmd_parser_get_int(cmd_parser* self, int* result)
 {
-        const char* num = aparser_get_string(self);
+        const char* num = cmd_parser_get_string(self);
         if (!num)
                 return EC_ERROR;
 
-        *pint = atoi(num);
+        *result = atoi(num);
         return EC_NO_ERROR;
 }
 
