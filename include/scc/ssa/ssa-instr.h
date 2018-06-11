@@ -38,18 +38,44 @@ typedef enum
 
 #define SSA_ASSERT_INSTR_KIND(K) assert((K) > SIK_INVALID && (K) < SIK_SIZE)
 
+struct _ssa_instr_node
+{
+        union
+        {
+                list_node node;
+                list_head list;
+        };
+        ssa_block* block;
+};
+
+extern void _ssa_init_instr_node(struct _ssa_instr_node* self, ssa_block* block, bool init_as_list);
+extern void _ssa_add_instr_node_after(struct _ssa_instr_node* self, struct _ssa_instr_node* pos);
+extern void _ssa_add_instr_node_before(struct _ssa_instr_node* self, struct _ssa_instr_node* pos);
+extern void _ssa_remove_instr_node(struct _ssa_instr_node* self);
+
+static inline struct _ssa_instr_node* _ssa_instr_node(ssa_instr* self)
+{
+        assert(self);
+        return (struct _ssa_instr_node*)self;
+}
+
+static inline const struct _ssa_instr_node* _ssa_instr_cnode(const ssa_instr* self)
+{
+        assert(self);
+        return (const struct _ssa_instr_node*)self;
+}
+
 struct _ssa_instr_base
 {
-        list_node _node;
-        ssa_instr_kind _kind;
-        struct _ssa_local_var _val;
-        ssa_array _operands;
+        struct _ssa_instr_node base;
+        ssa_instr_kind kind;
+        struct _ssa_local_var val;
+        ssa_array operands;
 };
 
 extern ssa_instr* ssa_new_instr(
         ssa_context* context,
         ssa_instr_kind kind,
-        ssa_id id,
         tree_type* type,
         size_t reserved_operands,
         size_t size);
@@ -57,7 +83,6 @@ extern ssa_instr* ssa_new_instr(
 extern ssa_instr* ssa_new_unary_instr(
         ssa_context* context,
         ssa_instr_kind kind,
-        ssa_id id,
         tree_type* type,
         ssa_value* operand,
         size_t size);
@@ -65,7 +90,6 @@ extern ssa_instr* ssa_new_unary_instr(
 extern ssa_instr* ssa_new_binary_instr(
         ssa_context* context,
         ssa_instr_kind kind,
-        ssa_id id,
         tree_type* type,
         ssa_value* first,
         ssa_value* second,
@@ -82,6 +106,7 @@ extern size_t ssa_get_instr_operands_size(const ssa_instr* self);
 extern void ssa_add_instr_after(ssa_instr* self, ssa_instr* pos);
 extern void ssa_add_instr_before(ssa_instr* self, ssa_instr* pos);
 extern void ssa_remove_instr(ssa_instr* self);
+extern void ssa_move_instr(ssa_instr* self, ssa_instr* pos, bool after);
 extern void ssa_set_instr_operand_value(ssa_instr* self, size_t i, ssa_value* val);
 
 static inline struct _ssa_instr_base* _ssa_instr_base(ssa_instr* self);
@@ -92,6 +117,7 @@ static inline const ssa_instr* ssa_get_var_cinstr(const ssa_value* self);
 
 static inline ssa_instr_kind ssa_get_instr_kind(const ssa_instr* self);
 static inline ssa_value* ssa_get_instr_var(ssa_instr* self);
+static inline ssa_block* ssa_get_instr_block(const ssa_instr* self);
 static inline const ssa_value* ssa_get_instr_cvar(const ssa_instr* self);
 static inline ssa_instr* ssa_get_next_instr(const ssa_instr* self);
 static inline ssa_instr* ssa_get_prev_instr(const ssa_instr* self);
@@ -108,24 +134,24 @@ struct _ssa_alloca
         struct _ssa_instr_base _base;
 };
 
-extern ssa_instr* ssa_new_alloca(ssa_context* context, ssa_id id, tree_type* type);
+extern ssa_instr* ssa_new_alloca(ssa_context* context, tree_type* type);
 extern tree_type* ssa_get_allocated_type(const ssa_instr* self);
 
 struct _ssa_load
 {
-        struct _ssa_instr_base _base;
+        struct _ssa_instr_base base;
 };
 
 extern ssa_instr* ssa_new_load(
-        ssa_context* context, ssa_id id, tree_type* type, ssa_value* what);
+        ssa_context* context, tree_type* type, ssa_value* what);
 
 struct _ssa_cast
 {
-        struct _ssa_instr_base _base;
+        struct _ssa_instr_base base;
 };
 
 extern ssa_instr* ssa_new_cast(
-        ssa_context* context, ssa_id id, tree_type* type, ssa_value* operand);
+        ssa_context* context, tree_type* type, ssa_value* operand);
 
 typedef enum
 {
@@ -155,13 +181,12 @@ typedef enum
 
 struct _ssa_binop
 {
-        struct _ssa_instr_base _base;
-        ssa_binop_kind _kind;
+        struct _ssa_instr_base base;
+        ssa_binop_kind kind;
 };
 
 extern ssa_instr* ssa_new_binop(
         ssa_context* context,
-        ssa_id id,
         tree_type* restype,
         ssa_binop_kind kind,
         ssa_value* lhs,
@@ -175,20 +200,19 @@ static inline void ssa_set_binop_kind(ssa_instr* self, ssa_binop_kind kind);
 
 struct _ssa_store
 {
-        struct _ssa_instr_base _base;
+        struct _ssa_instr_base base;
 };
 
 extern ssa_instr* ssa_new_store(ssa_context* context, ssa_value* what, ssa_value* where);
 
 struct _ssa_getfieldaddr
 {
-        struct _ssa_instr_base _base;
-        unsigned _field_index;
+        struct _ssa_instr_base base;
+        unsigned field_index;
 };
 
 extern ssa_instr* ssa_new_getfieldaddr(
         ssa_context* context,
-        ssa_id id,
         tree_type* type,
         ssa_value* operand,
         unsigned field_index);
@@ -201,20 +225,20 @@ static inline void ssa_set_getfieldaddr_index(ssa_instr* self, unsigned i);
 
 struct _ssa_call
 {
-        struct _ssa_instr_base _base;
+        struct _ssa_instr_base base;
 };
 
-extern ssa_instr* ssa_new_call(ssa_context* context, ssa_id id, tree_type* type, ssa_value* func);
+extern ssa_instr* ssa_new_call(ssa_context* context, tree_type* type, ssa_value* func);
 extern bool ssa_call_returns_void(const ssa_instr* self);
 
 static inline ssa_value* ssa_get_called_func(const ssa_instr* self);
 
 struct _ssa_phi
 {
-        struct _ssa_instr_base _base;
+        struct _ssa_instr_base base;
 };
 
-extern ssa_instr* ssa_new_phi(ssa_context* context, ssa_id id, tree_type* restype);
+extern ssa_instr* ssa_new_phi(ssa_context* context, tree_type* restype);
 
 extern void ssa_add_phi_operand(
         ssa_instr* self, ssa_context* context, ssa_value* value, ssa_value* label);
@@ -231,8 +255,8 @@ typedef enum
 
 struct _ssa_terminator_instr
 {
-        struct _ssa_instr_base _base;
-        ssa_terminator_instr_kind _kind;
+        struct _ssa_instr_base base;
+        ssa_terminator_instr_kind kind;
 };
 
 extern ssa_instr* ssa_new_terminator_instr(
@@ -242,6 +266,8 @@ extern ssa_instr* ssa_new_terminator_instr(
         size_t size);
 
 extern ssa_value_use* ssa_get_terminator_instr_successors_begin(const ssa_instr* self);
+extern ssa_value_use* ssa_get_next_terminator_successor(const ssa_instr* instr, ssa_value_use* pos);
+extern size_t ssa_get_terminator_instr_successors_size(const ssa_instr* self);
 
 static inline struct _ssa_terminator_instr* _ssa_terminator_instr(ssa_instr* self);
 static inline const struct _ssa_terminator_instr* _ssa_terminator_cinstr(const ssa_instr* self);
@@ -252,18 +278,18 @@ static inline void ssa_set_terminator_instr_kind(ssa_instr* self, ssa_terminator
 #define SSA_FOREACH_TERMINATOR_SUCCESSOR(PINSTR, ITNAME, ENDNAME) \
         for (ssa_value_use* ITNAME = ssa_get_terminator_instr_successors_begin(PINSTR),\
                 *ENDNAME = ssa_get_instr_operands_end(PINSTR);\
-                ITNAME != ENDNAME; ITNAME++)
+                ITNAME < ENDNAME; ITNAME = ssa_get_next_terminator_successor(PINSTR, ITNAME))
 
 struct _ssa_inderect_jump
 {
-        struct _ssa_terminator_instr _base;
+        struct _ssa_terminator_instr base;
 };
 
 extern ssa_instr* ssa_new_inderect_jump(ssa_context* context, ssa_value* dest);
 
 struct _ssa_conditional_jump
 {
-        struct _ssa_terminator_instr _base;
+        struct _ssa_terminator_instr base;
 };
 
 extern ssa_instr* ssa_new_conditional_jump(
@@ -271,7 +297,7 @@ extern ssa_instr* ssa_new_conditional_jump(
 
 struct _ssa_switch_instr
 {
-        struct _ssa_terminator_instr _base;
+        struct _ssa_terminator_instr base;
 };
 
 extern ssa_instr* ssa_new_switch_instr(ssa_context* context, ssa_value* condition);
@@ -280,7 +306,7 @@ extern void ssa_add_switch_case(ssa_instr* self,
 
 struct _ssa_ret_instr
 {
-        struct _ssa_terminator_instr _base;
+        struct _ssa_terminator_instr base;
 };
 
 extern ssa_instr* ssa_new_ret_void(ssa_context* context);
@@ -306,14 +332,13 @@ typedef enum
 
 struct _ssa_atomic_rmw_instr
 {
-        struct _ssa_instr_base _base;
-        ssa_atomic_rmw_instr_kind _kind;
-        ssa_memorder_kind _ordering;
+        struct _ssa_instr_base base;
+        ssa_atomic_rmw_instr_kind kind;
+        ssa_memorder_kind ordering;
 };
 
 extern ssa_instr* ssa_new_atomic_rmw_instr(
         ssa_context* context,
-        ssa_id id,
         tree_type* restype,
         ssa_atomic_rmw_instr_kind kind,
         ssa_value* ptr,
@@ -332,22 +357,22 @@ static inline const struct _ssa_atomic_rmw_instr* _ssa_atomic_rmw_cinstr(const s
 
 static inline ssa_atomic_rmw_instr_kind ssa_get_atomic_rmw_instr_kind(const ssa_instr* self)
 {
-        return _ssa_atomic_rmw_cinstr(self)->_kind;
+        return _ssa_atomic_rmw_cinstr(self)->kind;
 }
 
 static inline void ssa_set_atomic_rmw_instr_kind(ssa_instr* self, ssa_atomic_rmw_instr_kind kind)
 {
-        _ssa_atomic_rmw_instr(self)->_kind = kind;
+        _ssa_atomic_rmw_instr(self)->kind = kind;
 }
 
 static inline ssa_memorder_kind ssa_get_atomic_rmw_instr_ordering(const ssa_instr* self)
 {
-        return _ssa_atomic_rmw_cinstr(self)->_ordering;
+        return _ssa_atomic_rmw_cinstr(self)->ordering;
 }
 
 static inline void ssa_set_atomic_rmw_instr_ordering(ssa_instr* self, ssa_memorder_kind ordering)
 {
-        _ssa_atomic_rmw_instr(self)->_ordering = ordering;
+        _ssa_atomic_rmw_instr(self)->ordering = ordering;
 }
 
 typedef enum
@@ -405,7 +430,6 @@ struct _ssa_atomic_cmpxchg_instr
 
 extern ssa_instr* ssa_new_atomic_cmpxchg_instr(
         ssa_context* context,
-        ssa_id id,
         tree_type* restype,
         ssa_value* ptr,
         ssa_value* expected,
@@ -476,43 +500,49 @@ static inline const struct _ssa_instr_base* _ssa_instr_cbase(const ssa_instr* se
 
 static inline ssa_instr* ssa_get_var_instr(ssa_value* self)
 {
-        return (ssa_instr*)((uint8_t*)self - offsetof(struct _ssa_instr_base, _val));
+        assert(ssa_get_value_kind(self) == SVK_LOCAL_VAR);
+        return (ssa_instr*)((uint8_t*)self - offsetof(struct _ssa_instr_base, val));
 }
 
 static inline const ssa_instr* ssa_get_var_cinstr(const ssa_value* self)
 {
         return (const ssa_instr*)(
-                (const uint8_t*)self - offsetof(struct _ssa_instr_base, _val));
+                (const uint8_t*)self - offsetof(struct _ssa_instr_base, val));
 }
 
 static inline ssa_instr_kind ssa_get_instr_kind(const ssa_instr* self)
 {
-        return _ssa_instr_cbase(self)->_kind;
+        return _ssa_instr_cbase(self)->kind;
 }
 
 static inline ssa_value* ssa_get_instr_var(ssa_instr* self)
 {
-        return (ssa_value*)&_ssa_instr_base(self)->_val;
+        return (ssa_value*)&_ssa_instr_base(self)->val;
+}
+
+static inline ssa_block* ssa_get_instr_block(const ssa_instr* self)
+{
+        return _ssa_instr_cnode(self)->block;
 }
 
 static inline const ssa_value* ssa_get_instr_cvar(const ssa_instr* self)
 {
-        return (ssa_value*)&_ssa_instr_cbase(self)->_val;
+        return (ssa_value*)&_ssa_instr_cbase(self)->val;
 }
 
 static inline ssa_instr* ssa_get_next_instr(const ssa_instr* self)
 {
-        return (ssa_instr*)list_node_next(&_ssa_instr_cbase(self)->_node);
+        return (ssa_instr*)_ssa_instr_cnode(self)->node.next;
 }
 
 static inline ssa_instr* ssa_get_prev_instr(const ssa_instr* self)
 {
-        return (ssa_instr*)list_node_prev(&_ssa_instr_cbase(self)->_node);
+        return (ssa_instr*)_ssa_instr_cnode(self)->node.prev;
 }
 
 static inline void ssa_set_instr_kind(ssa_instr* self, ssa_instr_kind kind)
 {
-        _ssa_instr_base(self)->_kind = kind;
+        _ssa_instr_base(self)->kind = kind;
 }
 
 #define SSA_ASSERT_INSTR(P, K) assert((P) && ssa_get_instr_kind(P) == (K))
@@ -531,12 +561,12 @@ static inline const struct _ssa_binop* _ssa_cbinop(const ssa_instr* self)
 
 static inline ssa_binop_kind ssa_get_binop_kind(const ssa_instr* self)
 {
-        return _ssa_cbinop(self)->_kind;
+        return _ssa_cbinop(self)->kind;
 }
 
 static inline void ssa_set_binop_kind(ssa_instr* self, ssa_binop_kind kind)
 {
-        _ssa_binop(self)->_kind = kind;
+        _ssa_binop(self)->kind = kind;
 }
 
 static inline struct _ssa_getfieldaddr* _ssa_getfieldaddr(ssa_instr* self)
@@ -553,12 +583,12 @@ static inline const struct _ssa_getfieldaddr* _ssa_cgetfieldaddr(const ssa_instr
 
 static inline unsigned ssa_get_getfieldaddr_index(const ssa_instr* self)
 {
-        return _ssa_cgetfieldaddr(self)->_field_index;
+        return _ssa_cgetfieldaddr(self)->field_index;
 }
 
 static inline void ssa_set_getfieldaddr_index(ssa_instr* self, unsigned i)
 {
-        _ssa_getfieldaddr(self)->_field_index = i;
+        _ssa_getfieldaddr(self)->field_index = i;
 }
 
 static inline ssa_value* ssa_get_called_func(const ssa_instr* self)
@@ -581,13 +611,20 @@ static inline const struct _ssa_terminator_instr* _ssa_terminator_cinstr(const s
 static inline ssa_terminator_instr_kind ssa_get_terminator_instr_kind(const ssa_instr* self)
 {
         SSA_ASSERT_INSTR(self, SIK_TERMINATOR);
-        return _ssa_terminator_cinstr(self)->_kind;
+        return _ssa_terminator_cinstr(self)->kind;
 }
 
 static inline void ssa_set_terminator_instr_kind(ssa_instr* self, ssa_terminator_instr_kind kind)
 {
         SSA_ASSERT_INSTR(self, SIK_TERMINATOR);
-        _ssa_terminator_instr(self)->_kind = kind;
+        _ssa_terminator_instr(self)->kind = kind;
+}
+
+static inline ssa_instr* ssa_ignore_casts(ssa_instr* self)
+{
+        while (ssa_get_instr_kind(self) == SIK_CAST)
+                self = ssa_get_var_instr(ssa_get_instr_operand_value(self, 0));
+        return self;
 }
 
 #ifdef __cplusplus
