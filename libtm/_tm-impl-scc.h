@@ -12,8 +12,7 @@ static inline unsigned tm_sample_lock(const tm_versioned_lock* lock)
 
 static inline unsigned tm_inc_version(tm_versioned_lock* lock)
 {
-        __atomic_add_fetch_32_seq_cst(lock, 2);
-        return tm_sample_lock(lock);
+        return __atomic_add_fetch_32_seq_cst(lock, 2) + 2;
 }
 
 static inline void tm_set_lock(tm_versioned_lock* lock, unsigned val)

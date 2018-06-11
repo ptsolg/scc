@@ -5,21 +5,23 @@
 #define thread_local _Thread_local
 #endif
 
-extern thread_local unsigned _tm_transaction_id;
+#include "_tm-word.h"
+#include <setjmp.h>
 
-extern int _tm_read(const void* source, void* dest, unsigned n);
+extern _tm_word _tm_read_word(const void* source);
+extern void _tm_write_word(void* dest, _tm_word word);
+
+extern void _tm_read(const void* source, void* dest, unsigned n);
 extern void _tm_write(const void* source, void* dest, unsigned n);
 
-struct _tm_transaction
-{
-        unsigned readset_pos;
-        unsigned writeset_pos;
-        unsigned writeset_entries_locked;
-        unsigned read_version;
-};
-
-extern void _tm_transaction_init(struct _tm_transaction* self);
-extern int _tm_transaction_commit(struct _tm_transaction* self);
-extern void _tm_transaction_reset(struct _tm_transaction* self);
+// setjmp should be called right after _tm_start()
+// returns 0 if transaction is nested
+extern int* _tm_start();
+extern void _tm_end();
+extern void _tm_abort();
+extern void _tm_commit();
+extern void _tm_commit_n(size_t n);
+extern void* _tm_alloca(size_t n);
+extern int _tm_active();
 
 #endif

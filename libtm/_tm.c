@@ -1,248 +1,246 @@
 #include "_tm.h"
 
-#define TM_MEMLOCKS_SIZE 8192
-#define TM_READSET_SIZE 8192
-#define TM_WRITESET_SIZE 8192
-#define TM_WRITEMAP_SIZE 8192
+#define TM_MEMLOCKS_SIZE 256
+#define TM_READSET_SIZE 256
+#define TM_WRITESET_SIZE 256
+#define TM_MAX_NESTING 256
+#define TM_STACK_SIZE 256
 
-#define ERR_NONE 0
-#define ERR_READSET_FULL 1
-#define ERR_WRITESET_FULL 2
-#define ERR_WRITEMAP_FULL 3
+enum
+{
+        TM_ERROR_NONE,
+        TM_ERROR_READSET_FULL,
+        TM_ERROR_WRITESET_FULL,
+        TM_ERROR_STACK_OVERFLOW,
+        TM_ERROR_TOO_DEEP_NESTING,
+};
 
 #include "_tm-impl.h"
 
 static tm_versioned_lock global_version;
 static tm_versioned_lock memlocks[TM_MEMLOCKS_SIZE];
 
-thread_local unsigned _tm_transaction_id;
-
-static thread_local char acquired_locks[TM_MEMLOCKS_SIZE];
+static thread_local unsigned acquired_locks[TM_MEMLOCKS_SIZE];
 static thread_local unsigned read_version;
 static thread_local unsigned write_version;
-static thread_local struct tm_writemap writemap;
 static thread_local struct tm_readset readset;
 static thread_local struct tm_writeset writeset;
+static thread_local struct tm_stack stack;
+static thread_local jmp_buf onabort;
+static thread_local unsigned nesting;
+static thread_local struct tm_transaction transactions[TM_MAX_NESTING];
 
-static inline size_t tm_get_lock_index(const void* block)
+static inline size_t tm_get_lock_index(const void* p)
 {
-        return ((size_t)block & (TM_MEMLOCKS_SIZE - 1));
+        return ((size_t)p & (TM_MEMLOCKS_SIZE - 1));
 }
 
-static inline tm_versioned_lock* tm_get_lock(const void* block)
+static inline tm_versioned_lock* tm_get_lock(const void* p)
 {
-        return memlocks + tm_get_lock_index(block);
+        return memlocks + tm_get_lock_index(p);
 }
 
-static inline int tm_read(const tm_block* source, tm_block* dest, unsigned block_mask)
+static inline struct tm_transaction* tm_get_current_transaction()
 {
-        struct tm_writeset_entry* entry = tm_writemap_find(&writemap, source);
-        if (entry)
-        {
-                unsigned intersection = entry->block_mask & block_mask;
-                if (intersection)
-                {
-                        tm_write_block(dest, &entry->block, intersection);
-                        if (intersection == block_mask)
-                                return 1;
+        return transactions + nesting - 1;
+}
 
-                        block_mask ^= intersection;
-                }
-        }
+static inline void tm_read(const _tm_word* source, _tm_word* dest, unsigned mask)
+{
+        mask = tm_maybe_read_part_from_writeset(&writeset, source, dest, mask);
+        if (!mask)
+                return;
 
         tm_versioned_lock* lock = tm_get_lock(source);
         unsigned sample = tm_sample_lock(lock);
         unsigned version = sample & ~1;
 
         if ((sample & 1) || version > read_version)
-                return 0;
+                _tm_abort();
+
+        if (!tm_write_word_atomic(lock, source, dest, mask))
+                _tm_abort();
 
         if (!tm_readset_append(&readset, lock))
-                tm_fatal_error(ERR_READSET_FULL);
-
-        tm_write_block(dest, source, block_mask);
-        return 1;
+                tm_fatal_error(TM_ERROR_READSET_FULL);
 }
 
-extern int _tm_read(const void* source, void* dest, unsigned n)
+extern _tm_word _tm_read_word(const void* source)
 {
-        if (source == dest)
-                return 1;
+        _tm_word result;
+        if ((size_t)source & (sizeof(_tm_word) - 1))
+                _tm_read(source, &result, sizeof(_tm_word));
+        else
+                tm_read(source, &result, TM_MAX_WORD_MASK);
+        return result;
+}
 
+extern void _tm_read(const void* source, void* dest, unsigned n)
+{
         struct tm_memcutter mc;
         tm_memcutter_init(&mc, source, dest, n, 0);
         do
-        {
-                if (!tm_read(mc.source_pos, mc.dest_pos, mc.mask))
-                        return 0;
-        } while (tm_memcutter_advance(&mc));
-
-        return 1;
+                tm_read(mc.source_pos, mc.dest_pos, mc.mask);
+        while (tm_memcutter_advance(&mc));
 }
 
-static inline void tm_write(tm_block* dest, const tm_block* block, unsigned block_mask)
+extern void _tm_write_word(void* dest, _tm_word word)
 {
-        struct tm_writeset_entry** bucket = tm_writemap_find_bucket(&writemap, dest);
-        if (!bucket)
-                tm_fatal_error(ERR_WRITEMAP_FULL);
-
-        struct tm_writeset_entry* prev = *bucket;
-        if (prev && prev->transaction_id == _tm_transaction_id)
-        {
-                tm_writeset_entry_add_block(prev, block, block_mask);
-                return;
-        }
-
-        struct tm_writeset_entry* entry = tm_writeset_allocate_entry(&writeset);
-        if (!entry)
-                tm_fatal_error(ERR_WRITESET_FULL);
-
-        entry->prev = prev;
-        entry->lock = tm_get_lock(dest);
-        entry->address = dest;
-        entry->transaction_id = _tm_transaction_id;
-
-        if (prev)
-        {
-                entry->block = prev->block;
-                entry->block_mask = prev->block_mask | block_mask;
-        }
-        else
-                entry->block_mask = block_mask;
-        tm_write_block(&entry->block, block, block_mask);
-
-        entry->top_level = 1;
-        if (prev)
-                prev->top_level = 0;
-
-        *bucket = entry;
+        if ((size_t)dest & (sizeof(_tm_word) - 1))
+                _tm_write(&word, dest, sizeof(_tm_word));
+        else if (!tm_writeset_append(&writeset, dest, word, TM_MAX_WORD_MASK))
+                tm_fatal_error(TM_ERROR_WRITESET_FULL);
 }
 
 extern void _tm_write(const void* source, void* dest, unsigned n)
 {
-        if (source == dest)
-                return;
-
         struct tm_memcutter mc;
         tm_memcutter_init(&mc, source, dest, n, 1);
         do
         {
-                tm_write(mc.dest_pos, mc.source_pos, mc.mask);
-        } while (tm_memcutter_advance(&mc));
-}
-
-extern void _tm_transaction_init(struct _tm_transaction* self)
-{
-        _tm_transaction_id++;
-        self->writeset_entries_locked = 0;
-        self->writeset_pos = writeset.size;
-        self->readset_pos = readset.size;
-        read_version = tm_sample_lock(&global_version);
-        self->read_version = read_version;
-}
-
-static void tm_release_writeset_entry(struct tm_writeset_entry* entry)
-{
-        size_t index = tm_get_lock_index(entry->address);
-        if (!acquired_locks[index])
-                return;
-
-        acquired_locks[index] = 0;
-        tm_release_lock(entry->lock);
-}
-
-static void tm_transaction_cancel(struct _tm_transaction* self)
-{
-        for (unsigned i = 0; i < self->writeset_entries_locked; i++)
-        {
-                struct tm_writeset_entry* entry = writeset.entries + i + self->writeset_pos;
-                if (!entry->top_level)
-                        continue;
-
-                tm_release_writeset_entry(entry);
+                _tm_word value;
+                if (!tm_write_word_atomic(tm_get_lock(mc.source_pos), mc.source_pos, &value, mc.mask))
+                        _tm_abort();
+                if (!tm_writeset_append(&writeset, mc.dest_pos, value, mc.mask))
+                        tm_fatal_error(TM_ERROR_WRITESET_FULL);
         }
-        _tm_transaction_reset(self);
+        while (tm_memcutter_advance(&mc));
 }
 
-static int tm_acquire_writeset_entry(struct tm_writeset_entry* entry)
+extern int* _tm_start()
 {
-        size_t index = tm_get_lock_index(entry->address);
-        if (acquired_locks[index])
-                return 1;
+        if (nesting >= TM_MAX_NESTING)
+                tm_fatal_error(TM_ERROR_TOO_DEEP_NESTING);
 
-        if (!tm_acquire_lock(entry->lock))
+        int* jbuf = 0;
+        if (!nesting)
+        {
+                jbuf = onabort;
+                read_version = tm_sample_lock(&global_version);
+        }
+
+        nesting++;
+        struct tm_transaction* t = tm_get_current_transaction();
+        t->readset_pos = readset.size;
+        t->writeset_pos = writeset.size;
+        t->stack_pos = stack.size;
+        return jbuf;
+}
+
+extern void _tm_end()
+{
+        struct tm_transaction* t = tm_get_current_transaction();
+        readset.size = t->readset_pos;
+        tm_writeset_resize(&writeset, t->writeset_pos);
+        stack.size = t->stack_pos;
+        nesting--;
+}
+
+extern void _tm_abort()
+{
+        nesting = 0;
+        readset.size = 0;
+        tm_writeset_resize(&writeset, 0);
+        stack.size = 0;
+        longjmp(onabort, 0);
+}
+
+static int tm_acquire_lock_once(const void* address)
+{
+        size_t index = tm_get_lock_index(address);
+        if (acquired_locks[index])
+        {
+                acquired_locks[index]++;
+                return 1;
+        }
+
+        //todo: spin?
+        if (!tm_acquire_lock(memlocks + index))
                 return 0;
 
         acquired_locks[index] = 1;
         return 1;
 }
 
-extern int _tm_transaction_commit(struct _tm_transaction* self)
+static void tm_update_lock_once(const void* address, unsigned val)
 {
-        if (_tm_transaction_id != 1)
+        size_t index = tm_get_lock_index(address);
+        unsigned n = acquired_locks[index];
+        if (!n)
+                return;
+
+        if (n == 1)
+                tm_set_lock(memlocks + index, val);
+
+        acquired_locks[index]--;
+}
+
+static void tm_update_and_abort(unsigned entries_acquired)
+{
+        for (unsigned i = 0; i < entries_acquired; i++)
+                tm_update_lock_once((writeset.entries + i)->address, write_version);
+        _tm_abort();
+}
+
+extern void _tm_commit_n(size_t n)
+{
+        for (size_t i = 0; i < n; i++)
+                _tm_commit();
+}
+
+extern void _tm_commit()
+{
+        if (nesting > 1)
         {
-                _tm_transaction_id--;
-                return 1;
+                struct tm_transaction* t = tm_get_current_transaction();
+                stack.size = t->stack_pos;
+                nesting--;
+                return;
         }
 
+        if (!writeset.size)
+        {
+                _tm_end();
+                return;
+        }
+
+        unsigned entries_acquired = 0;
+
+        // todo: skip addresses from previous transactions' stack?
         for (unsigned i = 0; i < writeset.size; i++)
         {
-                struct tm_writeset_entry* entry = writeset.entries + i;
-                if (entry->top_level && !tm_acquire_writeset_entry(entry))
-                {
-                        tm_transaction_cancel(self);
-                        return 0;
-                }
-                self->writeset_entries_locked++;
+                if (!tm_acquire_lock_once((writeset.entries + i)->address))
+                        tm_update_and_abort(entries_acquired);
+
+                entries_acquired++;
         }
 
         write_version = tm_inc_version(&global_version);
 
-        for (unsigned i = 0; i < readset.size; i++)
-        {
-                unsigned version = tm_sample_lock(readset.locks[i]) & ~1;
-                if (version > self->read_version)
+        if (read_version + 1 != write_version)
+                for (unsigned i = 0; i < readset.size; i++)
                 {
-                        tm_transaction_cancel(self);
-                        return 0;
+                        unsigned version = tm_sample_lock(readset.locks[i]) & ~1;
+                        if (version > read_version)
+                                tm_update_and_abort(entries_acquired);
                 }
-        }
 
         for (unsigned i = 0; i < writeset.size; i++)
         {
-                struct tm_writeset_entry* entry = writeset.entries + i;
-                if (!entry->top_level)
-                        continue;
-
-                tm_write_block(entry->address, &entry->block, entry->block_mask);
-                acquired_locks[tm_get_lock_index(entry->address)] = 0;
-                tm_set_lock(entry->lock, write_version);
+                struct tm_writeset_entry* e = writeset.entries + i;
+                tm_write_word(&e->value, e->address, e->mask);
+                tm_update_lock_once(e->address, write_version);
         }
 
-        _tm_transaction_reset(self);
-        return 1;
+        _tm_end();
 }
 
-extern void _tm_transaction_reset(struct _tm_transaction* self)
+extern void* _tm_alloca(size_t n)
 {
-        for (unsigned i = self->writeset_pos; i < writeset.size; i++)
-        {
-                struct tm_writeset_entry* entry = writeset.entries + i;
-                entry->bucket = tm_writemap_find_bucket(&writemap, entry->address);
-        }
-        for (unsigned i = self->writeset_pos; i < writeset.size; i++)
-        {
-                struct tm_writeset_entry** bucket = writeset.entries[i].bucket;
-                while (*bucket && (*bucket)->transaction_id >= _tm_transaction_id)
-                {
-                        *bucket = (*bucket)->prev;
-                        if (*bucket)
-                                (*bucket)->top_level = 1;
-                }
-        }
+        return tm_alloca(&stack, n);
+}
 
-        writeset.size = self->writeset_pos;
-        readset.size = self->readset_pos;
-        _tm_transaction_id--;
-        read_version = self->read_version;
+extern int _tm_active()
+{
+        return nesting != 0;
 }
