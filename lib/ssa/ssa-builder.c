@@ -8,36 +8,31 @@
 extern void ssa_init_builder(ssa_builder* self, ssa_context* context, ssa_instr* pos)
 {
         self->context = context;
-        self->uid = 0;
-        self->string_uid = 0;
-        ssa_builder_set_pos(self, pos, false);
+        self->pos = pos;
 }
 
 extern void ssa_dispose_builder(ssa_builder* self)
 {
 }
 
-static ssa_value* ssa_build_instr(ssa_builder* self, ssa_instr* i)
+static ssa_value* ssa_insert_instr(ssa_instr* pos, ssa_instr* instr, bool insert_after)
 {
-        assert(i && self->pos);
-
-        if (self->insert_after)
-                ssa_add_instr_after(i, self->pos);
+        assert(instr && pos);
+        if (insert_after)
+                ssa_add_instr_after(instr, pos);
         else
-                ssa_add_instr_before(i, self->pos);
-
-        return ssa_get_instr_var(i);
+                ssa_add_instr_before(instr, pos);
+        return ssa_get_instr_var(instr);
 }
 
 static ssa_value* ssa_build_binop(ssa_builder* self,
         ssa_binop_kind opcode, tree_type* restype, ssa_value* lhs, ssa_value* rhs)
 {
-        ssa_instr* i = ssa_new_binop(self->context,
-                ssa_builder_gen_uid(self), restype, opcode, lhs, rhs);
+        ssa_instr* i = ssa_new_binop(self->context, restype, opcode, lhs, rhs);
         if (!i)
                 return NULL;
 
-        return ssa_build_instr(self, i);
+        return ssa_insert_instr(self->pos, i, false);
 }
 
 static inline ssa_value* ssa_build_arith_binop(
@@ -174,11 +169,16 @@ extern ssa_value* ssa_build_neq(ssa_builder* self, ssa_value* lhs, ssa_value* rh
 
 extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* to, ssa_value* operand)
 {
+        return ssa_build_cast_ex(self, self->pos, to, operand, false);
+}
+
+extern ssa_value* ssa_build_cast_ex(ssa_builder* self, ssa_instr* pos, tree_type* to, ssa_value* operand, bool insert_after)
+{
         assert(to && tree_type_is_scalar(to));
         to = tree_desugar_type(to);
         tree_type* from = tree_desugar_type(ssa_get_value_type(operand));
-        
-        if (tree_compare_types(to, from) != TTEK_NEQ)
+
+        if (tree_compare_types(to, from) == TTEK_EQ)
                 return operand;
 
         if (tree_type_is(from, TTK_FUNCTION) && tree_type_is_function_pointer(to))
@@ -187,11 +187,23 @@ extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* to, ssa_value* op
                 return operand;
         }
 
-        ssa_instr* c = ssa_new_cast(self->context, ssa_builder_gen_uid(self), to, operand);
+        ssa_instr* c = ssa_new_cast(self->context, to, operand);
         if (!c)
                 return NULL;
 
-        return ssa_build_instr(self, c);
+        return ssa_insert_instr(pos, c, insert_after);
+}
+
+extern ssa_value* ssa_build_cast_to_pvoid(ssa_builder* self, ssa_value* operand)
+{
+        tree_type* pvoid = tree_new_pointer_type(self->context->tree,
+                tree_new_builtin_type(self->context->tree, TBTK_VOID));
+        return ssa_build_cast(self, pvoid, operand);
+}
+
+extern ssa_value* ssa_build_call_0(ssa_builder* self, ssa_value* func)
+{
+        return ssa_build_call_n(self, func, NULL, 0);
 }
 
 extern ssa_value* ssa_build_call_1(ssa_builder* self, ssa_value* func, ssa_value* a1)
@@ -214,47 +226,44 @@ extern ssa_value* ssa_build_call_3(ssa_builder* self, ssa_value* func, ssa_value
 
 extern ssa_value* ssa_build_call_n(ssa_builder* self, ssa_value* func, ssa_value** args, size_t n)
 {
+        return ssa_build_call_n_ex(self, self->pos, func, args, n, false);
+}
+
+extern ssa_value* ssa_build_call_n_ex(
+        ssa_builder* self, ssa_instr* pos, ssa_value* func, ssa_value** args, size_t n, bool insert_after)
+{
         assert(func);
         tree_type* func_type = tree_desugar_type(
                 tree_get_pointer_target(ssa_get_value_type(func)));
         assert(tree_type_is(func_type, TTK_FUNCTION));
 
-        ssa_instr* call = ssa_new_call(self->context,
-                ssa_builder_gen_uid(self), tree_get_func_type_result(func_type), func);
+        ssa_instr* call = ssa_new_call(self->context, tree_get_func_type_result(func_type), func);
         if (!call)
                 return NULL;
 
         for (size_t i = 0; i < n; i++)
                 ssa_add_instr_operand(call, self->context, args[i]);
-       
-        return ssa_build_instr(self, call);
+
+        return ssa_insert_instr(pos, call, insert_after);
 }
 
 extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type)
 {
-        tree_type* p = tree_new_pointer_type(ssa_get_tree(self->context), type);
-        if (!p)
-                return NULL;
-
-        ssa_instr* i = ssa_new_alloca(self->context, ssa_builder_gen_uid(self), p);
-        if (!i)
-                return NULL;
-
-        return ssa_build_instr(self, i);
+        return ssa_build_alloca_ex(self, self->pos, type, false);
 }
 
-extern ssa_value* ssa_build_alloca_after(ssa_builder* self, tree_type* type, ssa_instr* instr)
+extern ssa_value* ssa_build_alloca_ex(
+        ssa_builder* self, ssa_instr* pos, tree_type* type, bool insert_after)
 {
         tree_type* p = tree_new_pointer_type(ssa_get_tree(self->context), type);
         if (!p)
                 return NULL;
 
-        ssa_instr* i = ssa_new_alloca(self->context, ssa_builder_gen_uid(self), p);
+        ssa_instr* i = ssa_new_alloca(self->context, p);
         if (!i)
                 return NULL;
 
-        ssa_add_instr_after(i, instr);
-        return ssa_get_instr_var(i);
+        return ssa_insert_instr(pos, i, insert_after);
 }
 
 extern ssa_value* ssa_build_load(ssa_builder* self, ssa_value* what)
@@ -263,11 +272,11 @@ extern ssa_value* ssa_build_load(ssa_builder* self, ssa_value* what)
         assert(what_type && tree_type_is_object_pointer(what_type));
 
         tree_type* pointee = tree_get_pointer_target(what_type);
-        ssa_instr* i = ssa_new_load(self->context, ssa_builder_gen_uid(self), pointee, what);
+        ssa_instr* i = ssa_new_load(self->context, pointee, what);
         if (!i)
                 return NULL;
 
-        return ssa_build_instr(self, i);
+        return ssa_insert_instr(self->pos, i, false);
 }
 
 extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value* where)
@@ -281,7 +290,7 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
         if (!i)
                 return NULL;
 
-        return ssa_build_instr(self, i);
+        return ssa_insert_instr(self->pos, i, false);
 }
 
 extern ssa_value* ssa_build_getfieldaddr(
@@ -297,19 +306,18 @@ extern ssa_value* ssa_build_getfieldaddr(
 
         ssa_instr* i = ssa_new_getfieldaddr(
                 self->context,
-                ssa_builder_gen_uid(self),
                 field_ptr,
                 record,
                 tree_get_field_index(field));
         if (!i)
                 return NULL;
 
-        return ssa_build_instr(self, i);
+        return ssa_insert_instr(self->pos, i, false);
 }
 
 extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id id)
 {
-        return ssa_new_string(self->context, self->string_uid++, type, id);
+        return ssa_new_string(self->context, type, id);
 }
 
 extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, uint64_t val)
@@ -321,6 +329,15 @@ extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, uin
         avalue_init_int(&v, bits, tree_type_is_signed_integer(type), val);
 
         return ssa_new_constant(self->context, type, &v);
+}
+
+extern ssa_value* ssa_build_i32_constant(ssa_builder* self, int val)
+{
+        tree_type* i32 = tree_new_builtin_type(ssa_get_tree(self->context), TBTK_INT32);
+        if (!i32)
+                return NULL;
+
+        return ssa_build_int_constant(self, i32, val);
 }
 
 extern ssa_value* ssa_build_u32_constant(ssa_builder* self, unsigned val)
@@ -428,19 +445,24 @@ extern ssa_value* ssa_build_neq_zero(ssa_builder* self, ssa_value* operand)
 
 extern ssa_value* ssa_build_phi(ssa_builder* self, tree_type* type)
 {
-        ssa_instr* phi = ssa_new_phi(self->context, ssa_builder_gen_uid(self), type);
+        return ssa_build_phi_ex(self, self->pos, type, false);
+}
+
+extern ssa_value* ssa_build_phi_ex(ssa_builder* self, ssa_instr* pos, tree_type* type, bool insert_after)
+{
+        ssa_instr* phi = ssa_new_phi(self->context, type);
         if (!phi)
                 return NULL;
 
-        return ssa_build_instr(self, phi);
+        return ssa_insert_instr(pos, phi, insert_after);
 }
 
-static ssa_instr* ssa_build_block_terminator(ssa_builder* self, ssa_instr* terminator)
+static ssa_instr* ssa_insert_block_terminator(ssa_instr* pos, ssa_instr* terminator, bool insert_after)
 {
-        if (self->insert_after)
-                ssa_add_instr_after(terminator, self->pos);
+        if (insert_after)
+                ssa_add_instr_after(terminator, pos);
         else
-                ssa_add_instr_before(terminator, self->pos);
+                ssa_add_instr_before(terminator, pos);
 
         return terminator;
 }
@@ -453,10 +475,10 @@ extern ssa_instr* ssa_build_inderect_jmp(ssa_builder* self, ssa_value* dest)
         if (!jmp)
                 return NULL;
 
-        return ssa_build_block_terminator(self, jmp);
+        return ssa_insert_block_terminator(self->pos, jmp, false);
 }
 
-extern ssa_instr* ssa_build_conditional_jmp(
+extern ssa_instr* ssa_build_cond_jmp(
         ssa_builder* self, ssa_value* cond, ssa_value* if_true, ssa_value* if_false)
 {
         SSA_ASSERT_VALUE(if_true, SVK_LABEL);
@@ -466,7 +488,7 @@ extern ssa_instr* ssa_build_conditional_jmp(
         if (!jmp)
                 return NULL;
 
-        return ssa_build_block_terminator(self, jmp);
+        return ssa_insert_block_terminator(self->pos, jmp, false);
 }
 
 extern ssa_instr* ssa_build_switch_instr(ssa_builder* self, ssa_value* cond, ssa_value* otherwise)
@@ -476,7 +498,7 @@ extern ssa_instr* ssa_build_switch_instr(ssa_builder* self, ssa_value* cond, ssa
                 return NULL;
 
         ssa_add_instr_operand(switch_instr, self->context, otherwise);
-        return ssa_build_block_terminator(self, switch_instr);
+        return ssa_insert_block_terminator(self->pos, switch_instr, false);
 }
 
 extern ssa_instr* ssa_build_return(ssa_builder* self, ssa_value* val)
@@ -487,12 +509,12 @@ extern ssa_instr* ssa_build_return(ssa_builder* self, ssa_value* val)
         if (!ret)
                 return NULL;
 
-        return ssa_build_block_terminator(self, ret);
+        return ssa_insert_block_terminator(self->pos, ret, false);
 }
 
 extern ssa_value* ssa_build_function_param(ssa_builder* self, tree_type* type)
 {
-        return ssa_new_param(self->context, ssa_builder_gen_uid(self), type);
+        return ssa_new_param(self->context, type);
 }
 
 static ssa_value* ssa_build_atomic_rmw_instr(
@@ -507,12 +529,12 @@ static ssa_value* ssa_build_atomic_rmw_instr(
         assert(tree_type_is_integer(val_type));
         assert(tree_compare_types(val_type, tree_get_pointer_target(ptr_type)) != TTEK_NEQ);
 
-        ssa_instr* instr = ssa_new_atomic_rmw_instr(
-                self->context, ssa_builder_gen_uid(self), val_type, kind, ptr, val, ordering);
-        if (!instr)
+        ssa_instr* i = ssa_new_atomic_rmw_instr(
+                self->context, val_type, kind, ptr, val, ordering);
+        if (!i)
                 return NULL;
 
-        return ssa_build_instr(self, instr);
+        return ssa_insert_instr(self->pos, i, false);
 }
 
 extern ssa_value* ssa_build_atomic_add(
@@ -531,7 +553,7 @@ extern ssa_value* ssa_build_fence_instr(
         ssa_builder* self, ssa_syncscope_kind syncscope, ssa_memorder_kind ordering)
 {
         ssa_instr* fence = ssa_new_fence_instr(self->context, syncscope, ordering);
-        return fence ? ssa_build_instr(self, fence) : NULL;
+        return fence ? ssa_insert_instr(self->pos, fence, false) : NULL;
 }
 
 extern ssa_value* ssa_build_atomic_cmpxchg(
@@ -547,13 +569,12 @@ extern ssa_value* ssa_build_atomic_cmpxchg(
         assert(tree_compare_types(
                 tree_get_pointer_target(ssa_get_value_type(ptr)),  ssa_get_value_type(desired)) != TTEK_NEQ);
 
-        ssa_instr* instr = ssa_new_atomic_cmpxchg_instr(self->context,
-                ssa_builder_gen_uid(self),
+        ssa_instr* i = ssa_new_atomic_cmpxchg_instr(self->context,
                 tree_get_builtin_type(self->context->tree, TBTK_INT32),
                 ptr, expected, desired,
                 success_ordering, failure_ordering);
-        if (!instr)
+        if (!i)
                 return NULL;
 
-        return ssa_build_instr(self, instr);
+        return ssa_insert_instr(self->pos, i, false);
 }

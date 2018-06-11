@@ -24,9 +24,6 @@ typedef struct _ssa_builder
 {
         ssa_context* context;
         ssa_instr* pos;
-        bool insert_after;
-        ssa_id uid;
-        ssa_id string_uid;
 } ssa_builder;
 
 extern void ssa_init_builder(ssa_builder* self, ssa_context* context, ssa_instr* pos);
@@ -50,13 +47,20 @@ extern ssa_value* ssa_build_geq(ssa_builder* self, ssa_value* lhs, ssa_value* rh
 extern ssa_value* ssa_build_eq(ssa_builder* self, ssa_value* lhs, ssa_value* rhs);
 extern ssa_value* ssa_build_neq(ssa_builder* self, ssa_value* lhs, ssa_value* rhs);
 extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* to, ssa_value* operand);
+extern ssa_value* ssa_build_cast_ex(ssa_builder* self, ssa_instr* pos, tree_type* to, ssa_value* operand, bool insert_after);
+extern ssa_value* ssa_build_cast_to_pvoid(ssa_builder* self, ssa_value* operand);
+extern ssa_value* ssa_build_call_0(ssa_builder* self, ssa_value* func);
 extern ssa_value* ssa_build_call_1(ssa_builder* self, ssa_value* func, ssa_value* a1);
 extern ssa_value* ssa_build_call_2(ssa_builder* self, ssa_value* func, ssa_value* a1, ssa_value* a2);
 extern ssa_value* ssa_build_call_3(ssa_builder* self, ssa_value* func, ssa_value* a1, ssa_value* a2, ssa_value* a3);
 extern ssa_value* ssa_build_call_n(ssa_builder* self, ssa_value* func, ssa_value** args, size_t n);
+extern ssa_value* ssa_build_call_n_ex(
+        ssa_builder* self, ssa_instr* pos, ssa_value* func, ssa_value** args, size_t n, bool insert_after);
 
 extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type);
-extern ssa_value* ssa_build_alloca_after(ssa_builder* self, tree_type* type, ssa_instr* instr);
+extern ssa_value* ssa_build_alloca_ex(
+        ssa_builder* self, ssa_instr* pos, tree_type* type, bool insert_after);
+
 extern ssa_value* ssa_build_load(ssa_builder* self, ssa_value* what);
 extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value* where);
 extern ssa_value* ssa_build_getfieldaddr(
@@ -64,6 +68,7 @@ extern ssa_value* ssa_build_getfieldaddr(
 
 extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id id);
 extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, uint64_t val);
+extern ssa_value* ssa_build_i32_constant(ssa_builder* self, int val);
 extern ssa_value* ssa_build_u32_constant(ssa_builder* self, unsigned val);
 extern ssa_value* ssa_build_size_t_constant(ssa_builder* self, size_t val);
 extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, float val);
@@ -77,9 +82,10 @@ extern ssa_value* ssa_build_neg(ssa_builder* self, ssa_value* operand);
 extern ssa_value* ssa_build_neq_zero(ssa_builder* self, ssa_value* operand);
 
 extern ssa_value* ssa_build_phi(ssa_builder* self, tree_type* type);
+extern ssa_value* ssa_build_phi_ex(ssa_builder* self, ssa_instr* pos, tree_type* type, bool insert_after);
 
 extern ssa_instr* ssa_build_inderect_jmp(ssa_builder* self, ssa_value* dest);
-extern ssa_instr* ssa_build_conditional_jmp(
+extern ssa_instr* ssa_build_cond_jmp(
         ssa_builder* self, ssa_value* cond, ssa_value* if_true, ssa_value* if_false);
 extern ssa_instr* ssa_build_switch_instr(ssa_builder* self, ssa_value* cond, ssa_value* otherwise);
 
@@ -103,32 +109,6 @@ extern ssa_value* ssa_build_atomic_cmpxchg(
         ssa_value* desired,
         ssa_memorder_kind success_ordering,
         ssa_memorder_kind failure_ordering);
-
-static inline void ssa_builder_set_pos(ssa_builder* self, ssa_instr* pos, bool insert_after)
-{
-        self->pos = pos;
-        self->insert_after = insert_after;
-}
-
-static inline void ssa_builder_set_uid(ssa_builder* self, ssa_id uid)
-{
-        self->uid = uid;
-}
-
-static inline ssa_id ssa_builder_get_uid(const ssa_builder* self)
-{
-        return self->uid;
-}
-
-static inline ssa_id ssa_builder_gen_uid(ssa_builder* self)
-{
-        return self->uid++;
-}
-
-static inline ssa_context* ssa_get_builder_context(const ssa_builder* self)
-{
-        return self->context;
-}
 
 #ifdef __cplusplus
 }
