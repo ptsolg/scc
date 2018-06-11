@@ -30,21 +30,21 @@ extern void obstack_init(obstack* self)
 
 extern void obstack_init_ex(obstack* self, allocator* alloc)
 {
-        self->_alloc = alloc;
-        self->_chunk.pos = NULL;
-        self->_chunk.end = NULL;
-        self->_chunk.size = 0;
-        allocator_init_ex(&self->_base,
+        self->alloc = alloc;
+        self->chunk.pos = NULL;
+        self->chunk.end = NULL;
+        self->chunk.size = 0;
+        allocator_init_ex(&self->base,
                 &obstack_allocate,
                 &obstack_allocate_aligned,
                 &obstack_deallocate);
-        list_init(&self->_chunks);
+        list_init(&self->chunks);
 }
 
 extern void obstack_dispose(obstack* self)
 {
-        while (!list_empty(&self->_chunks))
-                deallocate(self->_alloc, list_pop_front(&self->_chunks));
+        while (!list_empty(&self->chunks))
+                deallocate(self->alloc, list_pop_front(&self->chunks));
 }
 
 extern errcode obstack_grow(obstack* self, size_t at_least)
@@ -55,14 +55,14 @@ extern errcode obstack_grow(obstack* self, size_t at_least)
                 uint8_t data[0];
         } *chunk;
 
-        size_t data_size = at_least + self->_chunk.size;
-        if (!(chunk = allocate(self->_alloc, sizeof(*chunk) + data_size)))
+        size_t data_size = at_least + self->chunk.size;
+        if (!(chunk = allocate(self->alloc, sizeof(*chunk) + data_size)))
                 return EC_ERROR;
 
-        self->_chunk.pos = chunk->data;
-        self->_chunk.end = self->_chunk.pos + data_size;
-        self->_chunk.size = data_size;
-        list_push_back(&self->_chunks, &chunk->node);
+        self->chunk.pos = chunk->data;
+        self->chunk.end = self->chunk.pos + data_size;
+        self->chunk.size = data_size;
+        list_push_back(&self->chunks, &chunk->node);
         return EC_NO_ERROR;
 }
 
@@ -73,14 +73,14 @@ extern void objpool_init(objpool* self, size_t obsize)
 
 extern void objpool_init_ex(objpool* self, size_t obsize, allocator* alloc)
 {
-        obstack_init_ex(&self->_base, alloc);
-        self->_obsize = obsize;
-        self->_top = NULL;
+        obstack_init_ex(&self->base, alloc);
+        self->obsize = obsize;
+        self->top = NULL;
 }
 
 extern void objpool_dispose(objpool* self)
 {
-        obstack_dispose(&self->_base);
+        obstack_dispose(&self->base);
 }
 
 extern void mempool_init(
@@ -93,15 +93,15 @@ extern void mempool_init_ex(
         mempool* self, mempool_bad_alloc_handler handler, jmp_buf on_bad_alloc, allocator* alloc)
 {
         assert(on_bad_alloc);
-        self->_alloc = alloc;
-        self->_handler = handler;
-        self->_on_bad_alloc = on_bad_alloc;
-        allocator_init(&self->_base, &mempool_allocate, &mempool_deallocate);
-        list_init(&self->_used);
+        self->alloc = alloc;
+        self->handler = handler;
+        self->on_bad_alloc = on_bad_alloc;
+        allocator_init(&self->base, &mempool_allocate, &mempool_deallocate);
+        list_init(&self->used);
 }
 
 extern void mempool_dispose(mempool* self)
 {
-        while (!list_empty(&self->_used))
-                deallocate(self->_alloc, list_pop_front(&self->_used));
+        while (!list_empty(&self->used))
+                deallocate(self->alloc, list_pop_front(&self->used));
 }

@@ -30,11 +30,11 @@ typedef enum
 
 typedef struct _float_value
 {
-        float_precision _precision;
+        float_precision precision;
         union
         {
-                float _float;
-                double _double;
+                float as_float;
+                double as_double;
         };
 } float_value;
 
@@ -78,16 +78,16 @@ extern int float_print_as_hex(const float_value* val, char* buf, size_t count);
 
 typedef struct _int_value
 {
-        uint64_t _val;
-        uint _bits;
-        bool _signed;
+        uint64_t val;
+        uint bits;
+        bool issigned;
 } int_value;
 
 extern void int_init(int_value* self, uint bits, bool signed_, uint64_t val);
 
-extern void int_set_signed(int_value* self, bool signed_);
-extern uint int_get_bits(const int_value* self);
 extern bool int_is_signed(const int_value* self);
+extern void int_set_signed(int_value* self, bool issigned);
+extern uint int_get_bits(const int_value* self);
 
 extern op_result int_add(int_value* self, const int_value* rhs);
 extern op_result int_sub(int_value* self, const int_value* rhs);
@@ -129,11 +129,11 @@ extern int int_print_as_hex(const int_value* val, char* buf, size_t count);
 
 typedef struct _avalue
 {
-        bool _integer;
+        bool isint;
         union
         {
-                float_value _float;
-                int_value _int;
+                float_value as_float;
+                int_value as_int;
         };
 } avalue;
 

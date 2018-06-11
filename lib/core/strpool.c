@@ -14,14 +14,14 @@ extern void strpool_init(strpool* self)
 
 extern void strpool_init_ex(strpool* self, allocator* alloc)
 {
-        strmap_init_alloc(&self->_map, alloc);
-        obstack_init_ex(&self->_string_alloc, alloc);
+        strmap_init_ex(&self->map, alloc);
+        obstack_init_ex(&self->string_alloc, alloc);
 }
 
 extern void strpool_dispose(strpool* self)
 {
-        strmap_dispose(&self->_map);
-        obstack_dispose(&self->_string_alloc);
+        strmap_dispose(&self->map);
+        obstack_dispose(&self->string_alloc);
 }
 
 extern bool strpool_get(const strpool* self, strref ref, strentry* result)
@@ -29,11 +29,11 @@ extern bool strpool_get(const strpool* self, strref ref, strentry* result)
         result->data = NULL;
         result->size = 0;
 
-        strmap_iter it;
-        if (!strmap_find(&self->_map, ref, &it))
+        strmap_entry* map_entry = strmap_lookup(&self->map, ref);
+        if (!map_entry)
                 return false;
 
-        strentry_impl* entry = *strmap_iter_value(&it);
+        strentry_impl* entry = map_entry->value;
         result->data = entry->data;
         result->size = entry->size;
         return true;
@@ -41,8 +41,7 @@ extern bool strpool_get(const strpool* self, strref ref, strentry* result)
 
 extern bool strpooled(const strpool* self, strref ref)
 {
-        strmap_iter placeholder;
-        return strmap_find(&self->_map, ref, &placeholder);
+        return strmap_has(&self->map, ref);
 }
 
 extern strref strpool_insert(strpool* self, const void* data, size_t size)
@@ -57,19 +56,19 @@ extern strref strpool_insert(strpool* self, const void* data, size_t size)
                 {
                         return ref;
                 }
-                else if (ref != STRMAP_DELETED && ref != STRMAP_EMPTY)
+                else if (!STRREF_IS_INVALID(ref))
                         break;
 
                 ref += i;
         }
 
-        strentry_impl* copy = obstack_allocate(&self->_string_alloc, sizeof(strentry_impl) + size);
+        strentry_impl* copy = obstack_allocate(&self->string_alloc, sizeof(strentry_impl) + size);
         if (!copy)
                 return STRREF_INVALID;
 
         copy->size = size;
         memcpy(copy->data, data, size);
-        if (EC_FAILED(strmap_insert(&self->_map, ref, copy)))
+        if (EC_FAILED(strmap_insert(&self->map, ref, copy)))
                 return STRREF_INVALID;
 
         return ref;

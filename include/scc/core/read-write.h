@@ -14,7 +14,7 @@ extern "C" {
 typedef struct _write_cb
 { 
         // takes itself as first argument, returns bytes written
-        size_t(*_write)(void*, const void*, size_t);
+        size_t(*write)(void*, const void*, size_t);
 } write_cb;
 
 extern void write_cb_init(write_cb* self, void* write_fn);
@@ -26,10 +26,10 @@ extern void write_cb_init(write_cb* self, void* write_fn);
 // Struct that reduces write callbacks by writing data to buffer and then calling a function
 typedef struct _writebuf
 {
-        write_cb* _cb;
-        char* _pos;
-        char _data[WB_SIZE];
-        size_t _written;
+        write_cb* cb;
+        char* pos;
+        char data[WB_SIZE];
+        size_t written;
 } writebuf;
 
 extern void writebuf_init(writebuf* self, write_cb* cb);
@@ -47,22 +47,22 @@ extern size_t writebuf_writec(writebuf* self, int c);
 // returns total bytes written
 static inline size_t writebuf_get_bytes_written(const writebuf* self)
 {
-        return self->_written;
+        return self->written;
 }
 
 typedef struct _snwrite_cb
 {
-        write_cb _base;
-        char* _pos;
-        char* _begin;
-        size_t _n;
+        write_cb base;
+        char* pos;
+        char* begin;
+        size_t n;
 } snwrite_cb;
 
 extern void snwrite_cb_init(snwrite_cb* self, char* buf, size_t buf_size);
 
 static inline write_cb* snwrite_cb_base(snwrite_cb* self)
 {
-        return &self->_base;
+        return &self->base;
 }
 
 #ifndef RB_SIZE
@@ -72,18 +72,18 @@ static inline write_cb* snwrite_cb_base(snwrite_cb* self)
 typedef struct _read_cb
 {
         // takes itself as first argument, returns bytes read
-        size_t(*_read)(void*, void*, size_t);
+        size_t(*read)(void*, void*, size_t);
 } read_cb;
 
 extern void read_cb_init(read_cb* self, void* read_fn);
 
 typedef struct _readbuf
 {
-        read_cb* _cb;
-        char* _pos;
-        char* _end;
-        char _data[RB_SIZE];
-        size_t _read;
+        read_cb* cb;
+        char* pos;
+        char* end;
+        char data[RB_SIZE];
+        size_t read;
 } readbuf;
 
 extern void readbuf_init(readbuf* self, read_cb* cb);
@@ -102,21 +102,21 @@ extern size_t readbuf_reads(readbuf* self, char* buf, size_t len);
 // returns total bytes read
 static inline size_t readbuf_get_bytes_read(const readbuf* self)
 {
-        return self->_read;
+        return self->read;
 }
 
 typedef struct _sread_cb
 {
-        read_cb _base;
-        const char* _pos;
-        const char* _end;
+        read_cb base;
+        const char* pos;
+        const char* end;
 } sread_cb;
 
 extern void sread_cb_init(sread_cb* self, const char* text);
 
 static inline read_cb* sread_cb_base(sread_cb* self)
 {
-        return &self->_base;
+        return &self->base;
 }
 
 #ifdef __cplusplus

@@ -11,17 +11,17 @@ typedef void(*deallocate_fn)(void*, void*);
 // an allocator for 'heavy' allocations that is used by various data structures
 typedef struct _allocator
 {
-        allocate_fn _allocate;
-        allocate_aligned_fn _allocate_aligned;
-        deallocate_fn _deallocate;
+        allocate_fn alloc;
+        allocate_aligned_fn aalloc;
+        deallocate_fn dealloc;
 } allocator;
 
 static void allocator_init_ex(
         allocator* self, void* allocate, void* allocate_aligned, void* deallocate)
 {
-        self->_allocate = (allocate_fn)allocate;
-        self->_allocate_aligned = (allocate_aligned_fn)allocate_aligned;
-        self->_deallocate = (deallocate_fn)deallocate;
+        self->alloc = (allocate_fn)allocate;
+        self->aalloc = (allocate_aligned_fn)allocate_aligned;
+        self->dealloc = (deallocate_fn)deallocate;
 }
 
 static inline void* allocate(allocator*, size_t);
@@ -41,20 +41,20 @@ static void allocator_init(allocator* self, void* allocate, void* deallocate)
 
 static inline void* allocate(allocator* self, size_t bytes)
 {
-        assert(self && self->_allocate);
-        return self->_allocate(self, bytes);
+        assert(self && self->alloc);
+        return self->alloc(self, bytes);
 }
 
 static inline void* allocate_aligned(allocator* self, size_t bytes, size_t alignment)
 {
-        assert(self && self->_allocate_aligned && alignment);
-        return self->_allocate_aligned(self, bytes, alignment);
+        assert(self && self->aalloc && alignment);
+        return self->aalloc(self, bytes, alignment);
 }
 
 static inline void deallocate(allocator* self, void* block)
 {
-        assert(self && self->_deallocate);
-        self->_deallocate(self, block);
+        assert(self && self->dealloc);
+        self->dealloc(self, block);
 }
 
 #endif

@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "strmap.h"
+#include "htab.h"
 
 typedef struct _strentry
 {
@@ -20,8 +20,8 @@ typedef struct _strentry
 // a set of unique strings that can be accessed through strref
 typedef struct
 {
-        strmap _map;
-        obstack _string_alloc;
+        strmap map;
+        obstack string_alloc;
 } strpool;
 
 extern void strpool_init(strpool* self);

@@ -11,8 +11,8 @@ extern "C" {
 
 #include "common.h"
 #include "read-write.h"
-#include "strmap.h"
-#include "dseq-instance.h"
+#include "htab.h"
+#include "vec.h"
 #include <stdio.h>
 
 extern errcode path_get_cd(char* path);
@@ -35,42 +35,32 @@ extern errcode path_delete_file(const char* path);
 
 typedef struct _fread_cb
 {
-        read_cb _base;
-        FILE* _in;
+        read_cb base;
+        FILE* in;
 } fread_cb;
 
 extern void fread_cb_init(fread_cb* self, FILE* in);
 
-static inline read_cb* fread_cb_base(fread_cb* self)
-{
-        return &self->_base;
-}
-
 typedef struct _fwrite_cb
 {
-        write_cb _base;
-        FILE* _out;
+        write_cb base;
+        FILE* out;
 } fwrite_cb;
 
 extern void fwrite_cb_init(fwrite_cb* self, FILE* out);
 
-static inline write_cb* fwrite_cb_base(fwrite_cb* self)
-{
-        return &self->_base;
-}
-
 typedef struct _file_entry
 {
-        char* _path;
-        bool _opened;
-        bool _emulated;
-        char* _content;
-        readbuf _rb;
-        FILE* _file;
+        char* path;
+        bool opened;
+        bool emulated;
+        char* content;
+        readbuf rb;
+        FILE* file;
         union
         {
-                fread_cb _fread;
-                sread_cb _sread;
+                fread_cb fread;
+                sread_cb sread;
         };
 } file_entry;
 
@@ -84,9 +74,9 @@ extern size_t file_size(const file_entry* entry);
 
 typedef struct _file_lookup
 {
-        strmap _lookup;
-        dseq _dirs;
-        allocator* _alloc;
+        strmap lookup;
+        ptrvec dirs;
+        allocator* alloc;
 } file_lookup;
 
 extern void flookup_init(file_lookup* self);

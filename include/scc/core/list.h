@@ -13,56 +13,46 @@ extern "C" {
 
 typedef struct _list_node
 {
-        struct _list_node* _next;
-        struct _list_node* _prev;
+        struct _list_node* next;
+        struct _list_node* prev;
 } list_node;
-
-static inline list_node* list_node_next(const list_node* self)
-{
-        return self->_next;
-}
-
-static inline list_node* list_node_prev(const list_node* self)
-{
-        return self->_prev;
-}
 
 static inline void list_node_init(list_node* self)
 {
-        self->_next = NULL;
-        self->_prev = NULL;
+        self->next = NULL;
+        self->prev = NULL;
 }
 
 // inserts other node after self node
 // if other node is already in list the behaviour is undefined
 static inline void list_node_add_after(list_node* self, list_node* other)
 {
-        list_node* next = self->_next;
+        list_node* next = self->next;
         if (next)
-                next->_prev = other;
+                next->prev = other;
 
-        other->_next = next;
-        other->_prev = self;
-        self->_next = other;
+        other->next = next;
+        other->prev = self;
+        self->next = other;
 }
 
 // inserts other node before self node
 // if other node is already in list the behaviour is undefined
 static inline void list_node_add_before(list_node* self, list_node* other)
 {
-        list_node* prev = self->_prev;
+        list_node* prev = self->prev;
         if (prev)
-                prev->_next = other;
+                prev->next = other;
 
-        other->_prev = prev;
-        other->_next = self;
-        self->_prev = other;
+        other->prev = prev;
+        other->next = self;
+        self->prev = other;
 }
 
 static inline list_node* list_node_remove(list_node* self)
 {
-        self->_prev->_next = self->_next;
-        self->_next->_prev = self->_prev;
+        self->prev->next = self->next;
+        self->next->prev = self->prev;
         return self;
 }
 
@@ -70,49 +60,29 @@ typedef struct _list_head
 {
         union
         {
-                list_node _base;
+                list_node as_node;
                 struct
                 {
-                        list_node* _first;
-                        list_node* _last;
+                        list_node* head;
+                        list_node* tail;
                 };
         };
 } list_head;
 
-static inline list_node* list_base(list_head* self)
-{
-        return &self->_base;
-}
-
-static inline const list_node* list_cbase(const list_head* self)
-{
-        return &self->_base;
-}
-
-static inline list_node* list_begin(const list_head* self)
-{
-        return self->_first;
-}
-
-static inline list_node* list_last(const list_head* self)
-{
-        return self->_last;
-}
-
 static inline list_node* list_end(list_head* self)
 {
-        return list_base(self);
+        return &self->as_node;
 }
 
-static inline const list_node* list_cend(const list_head* self)
+static inline const list_node* list_end_c(const list_head* self)
 {
-        return list_cbase(self);
+        return &self->as_node;
 }
 
 static inline void list_init(list_head* self)
 {
-        self->_first = list_end(self);
-        self->_last = list_end(self);
+        self->head = list_end(self);
+        self->tail = list_end(self);
 }
 
 static inline list_head list_create(list_node* first, list_node* last)
@@ -123,7 +93,7 @@ static inline list_head list_create(list_node* first, list_node* last)
 
 static inline bool list_empty(const list_head* self)
 {
-        return list_begin(self) == list_cend(self);
+        return self->head == &self->as_node;
 }
 
 static inline void list_push_back(list_head* self, list_node* node)
@@ -131,8 +101,8 @@ static inline void list_push_back(list_head* self, list_node* node)
         list_node_add_before(list_end(self), node);
         if (list_empty(self))
         {
-                self->_first = node;
-                node->_prev = list_end(self);
+                self->head = node;
+                node->prev = list_end(self);
         }
 }
 
@@ -141,8 +111,8 @@ static inline void list_push_front(list_head* self, list_node* node)
         list_node_add_after(list_end(self), node);
         if (list_empty(self))
         {
-                self->_last = node;
-                node->_next = list_end(self);
+                self->tail = node;
+                node->next = list_end(self);
         }
 }
 
@@ -151,23 +121,24 @@ static inline void list_push_back_list(list_head* self, list_head* other)
         if (list_empty(other))
                 return;
 
-        list_node* first = list_begin(other);
-        list_node* last = list_last(other);
+        list_node* head = other->head;
+        list_node* tail = other->tail;
 
-        first->_prev = self->_last;
-        last->_next = list_end(self);
-        self->_last->_next = first;
-        self->_last = last;
+        head->prev = self->tail;
+        tail->next = list_end(self);
+        self->tail->next = head;
+        self->tail = tail;
+        list_init(other);
 }
 
 static inline list_node* list_pop_back(list_head* self)
 {
-        return list_node_remove(self->_last);
+        return list_node_remove(self->tail);
 }
 
 static inline list_node* list_pop_front(list_head* self)
 {
-        return list_node_remove(self->_first);
+        return list_node_remove(self->head);
 }
 
 static inline void list_init_array(list_head* self, list_node nodes[], size_t count)
@@ -181,9 +152,9 @@ static inline void list_init_array(list_head* self, list_node nodes[], size_t co
 }
 
 #define LIST_FOREACH(PLIST, ITTYPE, ITNAME) \
-        for (ITTYPE ITNAME = (ITTYPE)list_begin(((const list_head*)PLIST)); \
-                ITNAME != (ITTYPE)list_cend(((const list_head*)PLIST)); \
-                ITNAME = (ITTYPE)list_node_next(((const list_node*)ITNAME)))
+        for (ITTYPE ITNAME = (ITTYPE)((const list_head*)PLIST)->head; \
+                ITNAME != (ITTYPE)list_end_c(((const list_head*)PLIST)); \
+                ITNAME = (ITTYPE)((const list_node*)ITNAME)->next)
 
 #ifdef __cplusplus
 }

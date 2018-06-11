@@ -249,24 +249,24 @@ extern errcode path_get_abs(char* abs, const char* loc)
 
 static size_t fread_cb_read(fread_cb* self, void* buf, size_t bytes)
 {
-        return fread(buf, 1, bytes, self->_in);
+        return fread(buf, 1, bytes, self->in);
 }
 
 extern void fread_cb_init(fread_cb* self, FILE* in)
 {
-        self->_in = in;
-        read_cb_init(&self->_base, &fread_cb_read);
+        self->in = in;
+        read_cb_init(&self->base, &fread_cb_read);
 }
 
 static size_t fwrite_cb_write(fwrite_cb* self, const void* data, size_t bytes)
 {
-        return fwrite(data, 1, bytes, self->_out);
+        return fwrite(data, 1, bytes, self->out);
 }
 
 extern void fwrite_cb_init(fwrite_cb* self, FILE* out)
 {
-        self->_out = out;
-        write_cb_init(&self->_base, &fwrite_cb_write);
+        self->out = out;
+        write_cb_init(&self->base, &fwrite_cb_write);
 }
 
 static file_entry* file_entry_new(allocator* alloc, const char* path, const char* content)
@@ -283,16 +283,16 @@ static file_entry* file_entry_new(allocator* alloc, const char* path, const char
                 goto error;
 
         strcpy(path_copy, path);
-        entry->_path = path_copy;
-        entry->_content = content_copy;
-        entry->_file = NULL;
-        entry->_opened = false;
-        entry->_emulated = false;
+        entry->path = path_copy;
+        entry->content = content_copy;
+        entry->file = NULL;
+        entry->opened = false;
+        entry->emulated = false;
 
         if (content)
         {
                 strcpy(content_copy, content);
-                entry->_emulated = true;
+                entry->emulated = true;
         }
 
         return entry;
@@ -307,8 +307,8 @@ error:
 static void file_entry_delete(allocator* alloc, file_entry* entry)
 {
         file_close(entry);
-        deallocate(alloc, entry->_path);
-        deallocate(alloc, entry->_content);
+        deallocate(alloc, entry->path);
+        deallocate(alloc, entry->content);
         deallocate(alloc, entry);
 }
 
@@ -319,21 +319,21 @@ extern readbuf* file_open(file_entry* entry)
         read_cb* read;
         if (file_emulated(entry))
         {
-                sread_cb_init(&entry->_sread, entry->_content);
-                read = sread_cb_base(&entry->_sread);
+                sread_cb_init(&entry->sread, entry->content);
+                read = sread_cb_base(&entry->sread);
         }
         else
         {
-                if (!(entry->_file = fopen(entry->_path, "rb")))
+                if (!(entry->file = fopen(entry->path, "rb")))
                         return NULL;
 
-                fread_cb_init(&entry->_fread, entry->_file);
-                read = fread_cb_base(&entry->_fread);
+                fread_cb_init(&entry->fread, entry->file);
+                read = &entry->fread.base;
         }
 
-        entry->_opened = true;
-        readbuf_init(&entry->_rb, read);
-        return &entry->_rb;
+        entry->opened = true;
+        readbuf_init(&entry->rb, read);
+        return &entry->rb;
 }
 
 extern void file_close(file_entry* entry)
@@ -341,32 +341,32 @@ extern void file_close(file_entry* entry)
         if (!entry)
                 return;
 
-        entry->_opened = false;
-        if (!file_emulated(entry) && entry->_file)
+        entry->opened = false;
+        if (!file_emulated(entry) && entry->file)
         {
-                fclose(entry->_file);
-                entry->_file = NULL;
+                fclose(entry->file);
+                entry->file = NULL;
         }
 }
 
 extern bool file_opened(const file_entry* entry)
 {
-        return entry->_opened;
+        return entry->opened;
 }
 
 extern bool file_emulated(const file_entry* entry)
 {
-        return entry->_emulated;
+        return entry->emulated;
 }
 
 extern const char* file_get_path(const file_entry* entry)
 {
-        return entry->_path;
+        return entry->path;
 }
 
 extern const char* file_get_content(const file_entry* entry)
 {
-        return entry->_content;
+        return entry->content;
 }
 
 extern size_t file_size(const file_entry* entry)
@@ -378,13 +378,13 @@ extern size_t file_size(const file_entry* entry)
 
 static file_entry* flookup_new_entry(file_lookup* self, const char* path, const char* content)
 {
-        file_entry* entry = file_entry_new(self->_alloc, path, content);
+        file_entry* entry = file_entry_new(self->alloc, path, content);
         if (!entry)
                 return NULL;
 
-        if (EC_FAILED(strmap_insert(&self->_lookup, STRREF(path), entry)))
+        if (EC_FAILED(strmap_insert(&self->lookup, STRREF(path), entry)))
         {
-                file_entry_delete(self->_alloc, entry);
+                file_entry_delete(self->alloc, entry);
                 return NULL;
         }
 
@@ -398,44 +398,42 @@ extern void flookup_init(file_lookup* self)
 
 extern void flookup_init_ex(file_lookup* self, allocator* alloc)
 {
-        self->_alloc = alloc;
-        strmap_init_alloc(&self->_lookup, alloc);
-        dseq_init_alloc(&self->_dirs, alloc);
+        self->alloc = alloc;
+        strmap_init_ex(&self->lookup, alloc);
+        ptrvec_init_ex(&self->dirs, alloc);
 }
 
 extern void flookup_dispose(file_lookup* self)
 {
-        STRMAP_FOREACH(&self->_lookup, it)
-                file_entry_delete(self->_alloc, *strmap_iter_value(&it));
-        strmap_dispose(&self->_lookup);
+        STRMAP_FOREACH(&self->lookup, it)
+                file_entry_delete(self->alloc, it->value);
+        strmap_dispose(&self->lookup);
 
-        for (void** it = dseq_begin(&self->_dirs);
-                it != dseq_end(&self->_dirs); it++)
-        {
-                deallocate(self->_alloc, *it);
-        }
-        dseq_dispose(&self->_dirs);
+        PTRVEC_FOREACH(&self->dirs, it, end)
+                deallocate(self->alloc, *it);
+
+        ptrvec_dispose(&self->dirs);
 }
 
 extern errcode flookup_add(file_lookup* self, const char* dir)
 {
         assert(dir);
-        char* copy = allocate(self->_alloc, strlen(dir) + 1);
+        char* copy = allocate(self->alloc, strlen(dir) + 1);
         if (!copy)
                 return EC_ERROR;
 
         strcpy(copy, dir);
-        return dseq_append(&self->_dirs, copy);
+        return ptrvec_push(&self->dirs, copy);
 }
 
 extern const char** flookup_dirs_begin(const file_lookup* self)
 {
-        return (const char**)dseq_begin(&self->_dirs);
+        return (const char**)ptrvec_begin(&self->dirs);
 }
 
 extern const char** flookup_dirs_end(const file_lookup* self)
 {
-        return (const char**)dseq_end(&self->_dirs);
+        return (const char**)ptrvec_end(&self->dirs);
 }
 
 extern bool file_exists(file_lookup* lookup, const char* path)
@@ -449,9 +447,9 @@ static file_entry* file_get_without_lookup(file_lookup* self, const char* path)
         if (EC_FAILED(path_get_abs(abs, path)))
                 return NULL;
 
-        strmap_iter res;
-        if (strmap_find(&self->_lookup, STRREF(abs), &res))
-                return *strmap_iter_value(&res);
+        strmap_entry* entry;
+        if ((entry = strmap_lookup(&self->lookup, STRREF(abs))))
+                return entry->value;
 
         if (!path_is_file(abs))
                 return NULL;
@@ -462,17 +460,17 @@ static file_entry* file_get_without_lookup(file_lookup* self, const char* path)
 static file_entry* file_get_with_lookup(file_lookup* self, const char* path)
 {
         char abs[MAX_PATH_LEN + 1];
-        for (size_t i = 0; i < dseq_size(&self->_dirs); i++)
+        for (size_t i = 0; i < self->dirs.size; i++)
         {
-                if (EC_FAILED(path_get_abs(abs, dseq_get(&self->_dirs, i))))
+                if (EC_FAILED(path_get_abs(abs, ptrvec_get(&self->dirs, i))))
                         continue;
                 if (EC_FAILED(path_join(abs, path)))
                         continue;
                 path_fix_delimeter(abs);
 
-                strmap_iter res;
-                if (strmap_find(&self->_lookup, STRREF(abs), &res))
-                        return *strmap_iter_value(&res);
+                strmap_entry* entry = strmap_lookup(&self->lookup, STRREF(abs));
+                if (entry)
+                        return entry->value;
 
                 if (path_is_file(abs))
                         return flookup_new_entry(self, abs, NULL);
