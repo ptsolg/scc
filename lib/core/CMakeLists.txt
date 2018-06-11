@@ -1,15 +1,14 @@
 add_scc_lib(core
+	cmd.c
 	file.c
-	malloc.c
-	args.c
-	membuf.c
-	strpool.c
-	string.c
 	heap-debug.c
-	read-write.c
-	value.c
-	misc.c
+	malloc.c
 	memory.c
+	misc.c
+	read-write.c
+	string.c
+	strpool.c
+	value.c
 
 	INCLUDE
 	${SCC_INC_DIR}

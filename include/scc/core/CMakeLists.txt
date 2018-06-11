@@ -1,24 +1,20 @@
 add_scc_target_sources(core
 	allocator.h
+	cmd.h
 	common.h
-	error.h
 	file.h
 	hash.h
-	htab.h
-	htab-common.h
-	malloc.h
-	misc.h
-	args.h
-	membuf.h
-	strpool.h
-	strmap.h
-	string.h
 	heap-debug.h
-	read-write.h
-	value.h
+	htab.h
+	htab-type.h
 	list.h
-	dseq.h
-	dseq-common.h
-	dseq-instance.h
+	malloc.h
 	memory.h
+	misc.h
+	read-write.h
+	string.h
+	strpool.h
+	value.h
+	vec.h
+	vec-type.h
 )
