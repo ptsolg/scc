@@ -2,21 +2,14 @@
 #include "scc/ssa/ssa-module.h"
 #include "scc/ssa/ssa-instr.h"
 
-extern void ssa_init_pass(ssa_pass* self, ssa_pass_kind kind, void* run_fn)
+extern void ssa_init_pass(ssa_pass* self, ssa_pass_kind kind, void(*run)(const ssa_pass*))
 {
-        self->kind = kind;
-        self->run_fn = run_fn;
         list_node_init(&self->node);
-}
-
-extern void ssa_run_pass_on_function(ssa_pass* self, ssa_value* function)
-{
-        self->run_on_function(self, function);
-}
-
-extern void ssa_run_pass_on_module(ssa_pass* self, ssa_module* module)
-{
-        self->run_on_module(self, module);
+        self->kind = kind;
+        self->module = NULL;
+        self->function = NULL;
+        self->entry = run;
+        self->context = NULL;
 }
 
 extern void ssa_init_pass_manager(ssa_pass_manager* self)
@@ -29,15 +22,23 @@ extern void ssa_pass_manager_add_pass(ssa_pass_manager* self, ssa_pass* pass)
         list_push_back(&self->passes, &pass->node);
 }
 
-extern void ssa_pass_manager_run(ssa_pass_manager* self, ssa_module* module)
+extern void ssa_pass_manager_run(ssa_pass_manager* self, ssa_context* context, ssa_module* module)
 {
         LIST_FOREACH(&self->passes, ssa_pass*, pass)
         {
+                if (!pass->entry)
+                        continue;
+
+                pass->context = context;
+                pass->module = module;
                 if (pass->kind == SPK_MODULE)
-                        ssa_run_pass_on_module(pass, module);
+                        pass->entry(pass);
                 else if (pass->kind == SPK_FUNCTION)
                         SSA_FOREACH_MODULE_GLOBAL(module, it, end)
                                 if (ssa_get_value_kind(*it) == SVK_FUNCTION)
-                                        ssa_run_pass_on_function(pass, *it);
+                                {
+                                        pass->function = *it;
+                                        pass->entry(pass);
+                                }
         }
 }
