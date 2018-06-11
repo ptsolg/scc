@@ -61,4 +61,12 @@ typedef unsigned short ushort;
 typedef unsigned long ulong;
 typedef long double ldouble;
 
+typedef int errcode;
+
+#define EC_NO_ERROR ((errcode)0)
+#define EC_ERROR ((errcode)1)
+
+#define EC_SUCCEEDED(E) (((errcode)(E)) == EC_NO_ERROR)
+#define EC_FAILED(E) (!EC_SUCCEEDED(E))
+
 #endif
