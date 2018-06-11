@@ -14,11 +14,11 @@ extern "C" {
 #include "ssa-common.h"
 #include "ssa-context.h"
 #include "ssa-instr.h"
-#include "ssaizer.h"
+#include "ssa-emit.h"
 #include "ssa-module.h"
 #include "ssa-opt.h"
 #include "ssa-pass.h"
-#include "ssa-printer.h"
+#include "ssa-pretty-print.h"
 #include "ssa-value.h"
 
 #ifdef __cplusplus
