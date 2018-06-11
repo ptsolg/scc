@@ -19,7 +19,7 @@ extern void __cdecl hd_free_a(void* block);
 extern void* __cdecl hd_malloc_b(size_t size);
 extern void __cdecl hd_free_b(void* block);
 
-extern void scl_enable_heap_debug(bool insert_after);
+extern void enable_head_debug(bool insert_after);
 
 #ifdef __cplusplus
 }

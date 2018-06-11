@@ -17,7 +17,7 @@ typedef void (*free_fn)(void*);
 extern malloc_fn core_malloc;
 extern free_fn core_free;
 
-extern void scl_override_malloc(malloc_fn malloc, free_fn free);
+extern void override_malloc(malloc_fn malloc, free_fn free);
       
 #ifdef __cplusplus
 }

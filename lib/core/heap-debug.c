@@ -69,10 +69,10 @@ extern void __cdecl hd_free_b(void* block)
 
 #endif
 
-extern void scl_enable_heap_debug(bool insert_after)
+extern void enable_head_debug(bool insert_after)
 {
         if (insert_after)
-                scl_override_malloc(&hd_malloc_a, &hd_free_a);
+                override_malloc(&hd_malloc_a, &hd_free_a);
         else
-                scl_override_malloc(&hd_malloc_b, &hd_free_b);
+                override_malloc(&hd_malloc_b, &hd_free_b);
 }
