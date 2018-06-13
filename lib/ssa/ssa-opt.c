@@ -21,12 +21,12 @@ extern void ssa_optimize(ssa_context* context,
         ssa_pass_manager pm;
         ssa_init_pass_manager(&pm);
 
+        if (opts->fold_constants)
+                ssa_pass_manager_add_pass(&pm, &cf);
         if (opts->eliminate_dead_code || opts->promote_allocas)
                 ssa_pass_manager_add_pass(&pm, &dce);
         if (opts->promote_allocas)
                 ssa_pass_manager_add_pass(&pm, &pa);
-        if (opts->fold_constants)
-                ssa_pass_manager_add_pass(&pm, &cf);
 
         ssa_pass_manager_run(&pm, context, module);
         ssa_number_module_values(module);
