@@ -66,6 +66,7 @@ extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value*
 extern ssa_value* ssa_build_getfieldaddr(
         ssa_builder* self, ssa_value* record, tree_decl* field);
 
+extern ssa_value* ssa_build_undef(ssa_builder* self, tree_type* type);
 extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id id);
 extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, uint64_t val);
 extern ssa_value* ssa_build_i32_constant(ssa_builder* self, int val);

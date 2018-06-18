@@ -315,6 +315,11 @@ extern ssa_value* ssa_build_getfieldaddr(
         return ssa_insert_instr(self->pos, i, false);
 }
 
+extern ssa_value* ssa_build_undef(ssa_builder* self, tree_type* type)
+{
+        return ssa_new_undef(self->context, type);
+}
+
 extern ssa_value* ssa_build_string(ssa_builder* self, tree_type* type, tree_id id)
 {
         return ssa_new_string(self->context, type, id);

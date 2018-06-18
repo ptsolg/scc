@@ -62,6 +62,11 @@ extern void ssa_set_value_use_value(ssa_value_use* self, ssa_value* val)
         _ssa_add_value_use(val, self);
 }
 
+extern ssa_value* ssa_new_undef(ssa_context* context, tree_type* type)
+{
+        return ssa_new_value(context, SVK_UNDEF, type, sizeof(struct _ssa_undef));
+}
+
 extern void ssa_init_local_var(ssa_value* self, tree_type* type)
 {
         ssa_init_value(self, SVK_LOCAL_VAR, type);

@@ -40,6 +40,7 @@ static inline ssa_value_use* ssa_get_next_value_use(const ssa_value_use* self);
 typedef enum
 {
         SVK_INVALID,
+        SVK_UNDEF,
         SVK_LOCAL_VAR,
         SVK_GLOBAL_VAR,
         SVK_CONSTANT,
@@ -92,6 +93,13 @@ static inline void ssa_set_value_type(ssa_value* self, tree_type* type);
         for (ssa_value_use* ITNAME = ssa_get_value_uses_begin(PVAL),\
                 *ENDNAME = ssa_get_value_uses_end(PVAL), *NEXTNAME;\
                 (NEXTNAME = ssa_get_next_value_use(ITNAME)), ITNAME != ENDNAME; ITNAME = NEXTNAME)
+
+struct _ssa_undef
+{
+        struct _ssa_value_base base;
+};
+
+extern ssa_value* ssa_new_undef(ssa_context* context, tree_type* type);
 
 struct _ssa_local_var
 {

@@ -140,6 +140,8 @@ static void ssa_print_value(ssa_printer* self, const ssa_value* value, bool prin
                 ssa_printf(self, "@.str.%u", ssa_get_value_id(value));
         else if (k == SVK_LABEL)
                 ssa_printf(self, "%%%u", ssa_get_value_id(value));
+        else if (k == SVK_UNDEF)
+                ssa_prints(self, "undef");
 }
 
 typedef enum

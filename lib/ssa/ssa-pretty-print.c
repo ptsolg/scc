@@ -67,6 +67,8 @@ static inline void ssa_print_value_ref(ssa_printer* self, const ssa_value* val)
         }
         else if (k == SVK_STRING)
                 ssa_print_string_value(self, val);
+        else if (k == SVK_UNDEF)
+                ssa_prints(self, "undef");
 }
 
 static const char* ssa_binary_instr_table[] =

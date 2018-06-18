@@ -26,20 +26,27 @@ static void ssa_constant_fold_conditional_jumps(ssa_context* context, ssa_value*
         }
 }
 
-static void ssa_remove_unused_block(ssa_block* block)
+static void ssa_remove_unused_block(ssa_context* context, ssa_block* block)
 {
         if (ssa_value_is_used(ssa_get_block_label(block)))
                 return;
 
-        // todo: replace values from unreachable block with SVK_UNDEF and remove block
         SSA_FOREACH_BLOCK_INSTR(block, instr)
-                if (ssa_instr_has_var(instr) && ssa_value_is_used(ssa_get_instr_var(instr)))
-                        return;
+        {
+                if (!ssa_instr_has_var(instr))
+                        continue;
+
+                ssa_value* var = ssa_get_instr_var(instr);
+                if (!ssa_value_is_used(var))
+                        continue;
+
+                ssa_replace_value_with(var, ssa_new_undef(context, ssa_get_value_type(var)));
+        }
 
         ssa_remove_block(block);
 }
 
-static void ssa_remove_unused_blocks(ssa_value* func)
+static void ssa_remove_unused_blocks(ssa_context* context, ssa_value* func)
 {
         ssa_block* it = ssa_get_function_blocks_begin(func);
         ssa_block* end = ssa_get_function_blocks_end(func);
@@ -50,7 +57,7 @@ static void ssa_remove_unused_blocks(ssa_value* func)
         while (it != end)
         {
                 ssa_block* next = ssa_get_next_block(it);
-                ssa_remove_unused_block(it);
+                ssa_remove_unused_block(context, it);
                 it = next;
         }
 }
@@ -58,5 +65,5 @@ static void ssa_remove_unused_blocks(ssa_value* func)
 extern void ssa_eliminate_dead_code(const ssa_pass* pass)
 {
         ssa_constant_fold_conditional_jumps(pass->context, pass->function);
-        ssa_remove_unused_blocks(pass->function);
+        ssa_remove_unused_blocks(pass->context, pass->function);
 }

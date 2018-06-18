@@ -94,8 +94,11 @@ static void ssa_promote_load(ssa_block* block,
                 return;
 
         ssa_scope_entry* def = ssa_scope_lookup(&md->defs, source_id);
-        assert(def);
-        ssa_replace_value_with(ssa_get_instr_var(instr), def->value);
+        ssa_value* val = def
+                ? def->value
+                : ssa_new_undef(context, tree_get_pointer_target(ssa_get_value_type(source)));
+
+        ssa_replace_value_with(ssa_get_instr_var(instr), val);
         ssa_remove_instr(instr);
 }
 
