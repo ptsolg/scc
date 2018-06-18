@@ -797,10 +797,9 @@ static tree_type* c_sema_check_sub_expr(
                 return c_sema_usual_arithmetic_conversion(self, lhs, rhs, !is_assign);
         else if (tree_type_is_object_pointer(lt))
         {
-                tree_type* ltarget = tree_get_pointer_target(lt);
-                tree_type* rtarget = tree_get_pointer_target(rt);
                 if (tree_type_is_object_pointer(rt)
-                        && c_sema_types_are_compatible(self, ltarget, rtarget, true))
+                        && c_sema_types_are_compatible(self,
+                                tree_get_pointer_target(lt), tree_get_pointer_target(rt), true))
                 {
                         return tree_get_ptrdiff_type(self->context);
                 }
