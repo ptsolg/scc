@@ -49,7 +49,7 @@ extern bool c_sema_require_lvalue_or_function_designator(
 extern bool c_sema_require_modifiable_lvalue(const c_sema* self, const tree_expr* e);
 
 extern bool c_sema_require_compatible_expr_types(
-        const c_sema* self, const tree_type* a, const tree_type* b, tree_location l);
+        const c_sema* self, const tree_type* a, const tree_type* b, tree_location l, bool ignore_modifiers);
 
 extern tree_expr* c_sema_new_paren_expr(
         c_sema* self, tree_location lbracket_loc, tree_expr* expr, tree_location rbracket_loc);

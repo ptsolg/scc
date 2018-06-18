@@ -13,7 +13,8 @@ extern "C" {
 #include "scc/tree/tree-type.h"
 
 extern bool c_sema_types_are_same(const c_sema* self, const tree_type* a, const tree_type* b);
-extern bool c_sema_types_are_compatible(const c_sema* self, const tree_type* a, const tree_type* b);
+extern bool c_sema_types_are_compatible(
+        const c_sema* self, const tree_type* a, const tree_type* b, bool unqualify);
 extern bool c_sema_require_complete_type(const c_sema* self, tree_location loc, const tree_type* type);
 
 // returns one of: int32_t uint32_t int64_t uint64_t

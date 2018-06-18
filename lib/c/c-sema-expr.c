@@ -144,9 +144,9 @@ extern bool c_sema_require_modifiable_lvalue(const c_sema* self, const tree_expr
 }
 
 extern bool c_sema_require_compatible_expr_types(
-        const c_sema* self, const tree_type* a, const tree_type* b, tree_location l)
+        const c_sema* self, const tree_type* a, const tree_type* b, tree_location l, bool unqualify)
 {
-        if (!c_sema_types_are_compatible(self, a, b))
+        if (!c_sema_types_are_compatible(self, a, b, unqualify))
         {
                 c_error_types_are_not_compatible(self->logger, l);
                 return false;
@@ -664,7 +664,9 @@ static tree_type* c_sema_check_relational_expr(
         }
         else if (tree_type_is_object_pointer(lt) && tree_type_is_object_pointer(rt))
         {
-                if (!c_sema_require_compatible_expr_types(self, lt, rt, loc))
+                tree_type* ltarget = tree_get_pointer_target(lt);
+                tree_type* rtarget = tree_get_pointer_target(rt);
+                if (!c_sema_require_compatible_expr_types(self, ltarget, rtarget, loc, true))
                         return NULL;
         }
         else
@@ -713,8 +715,7 @@ static tree_type* c_sema_check_compare_expr(
                         c_error_cmp_of_distinct_pointers(self->logger, loc);
                         return NULL;
                 }
-                else if (!c_sema_require_compatible_expr_types(self,
-                        tree_get_modified_type(ltarget), tree_get_modified_type(rtarget), loc))
+                else if (!c_sema_require_compatible_expr_types(self, ltarget, rtarget, loc, true))
                 {
                         return NULL;
                 }
@@ -788,9 +789,7 @@ static tree_type* c_sema_check_add_expr(
 static tree_type* c_sema_check_sub_expr(
         c_sema* self, tree_expr** lhs, tree_expr** rhs, tree_location loc, bool is_assign)
 {
-        tree_type* lt = is_assign
-                ? tree_get_expr_type(*lhs)
-                : c_sema_unary_conversion(self, lhs);
+        tree_type* lt = is_assign ? tree_get_expr_type(*lhs) : c_sema_unary_conversion(self, lhs);
         tree_type* rt = c_sema_unary_conversion(self, rhs);
         tree_location rl = tree_get_expr_loc(*rhs);
 
@@ -798,8 +797,13 @@ static tree_type* c_sema_check_sub_expr(
                 return c_sema_usual_arithmetic_conversion(self, lhs, rhs, !is_assign);
         else if (tree_type_is_object_pointer(lt))
         {
-                if (tree_type_is_object_pointer(rt) && c_sema_types_are_compatible(self, lt, rt))
-                        return lt;
+                tree_type* ltarget = tree_get_pointer_target(lt);
+                tree_type* rtarget = tree_get_pointer_target(rt);
+                if (tree_type_is_object_pointer(rt)
+                        && c_sema_types_are_compatible(self, ltarget, rtarget, true))
+                {
+                        return tree_get_ptrdiff_type(self->context);
+                }
 
                 if (!c_sema_require_integral_expr_type(self, rt, rl))
                         return NULL;
@@ -995,8 +999,7 @@ static tree_type* c_sema_check_conditional_operator_pointer_types(
                         target = ltarget;
                 else if (tree_type_is_void(rtarget))
                         target = rtarget;
-                else if (c_sema_types_are_compatible(self,
-                        tree_get_modified_type(ltarget), tree_get_modified_type(rtarget)))
+                else if (c_sema_types_are_compatible(self, ltarget, rtarget, true))
                 {
                         target = ltarget;
                 }
@@ -1049,19 +1052,14 @@ extern tree_expr* c_sema_new_conditional_expr(
                 t = c_sema_usual_arithmetic_conversion(self, &lhs, &rhs, true);
         else if (tree_type_is_record(lt) && tree_type_is_record(rt))
         {
-                if (!c_sema_require_compatible_expr_types(self, lt, rt, loc))
+                if (!c_sema_require_compatible_expr_types(self, lt, rt, loc, false))
                         return NULL;
                 t = lt;
         }
         else if (tree_type_is_void(lt) && tree_type_is_void(rt))
                 t = lt;
-        else if ((t = c_sema_check_conditional_operator_pointer_types(self, &lhs, &rhs, loc)))
-                ;
-        else
-        {
-                c_error_type_mismatch(self->logger, loc);
+        else if (!(t = c_sema_check_conditional_operator_pointer_types(self, &lhs, &rhs, loc)))
                 return NULL;
-        }
 
         assert(t);
         return tree_new_conditional_expr(self->context, TVK_RVALUE, t, loc, condition, lhs, rhs);

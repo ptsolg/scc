@@ -11,8 +11,14 @@ extern bool c_sema_types_are_same(const c_sema* self, const tree_type* a, const 
         return tree_compare_types(a, b) == TTEK_EQ;
 }
 
-extern bool c_sema_types_are_compatible(const c_sema* self, const tree_type* a, const tree_type* b)
+extern bool c_sema_types_are_compatible(
+        const c_sema* self, const tree_type* a, const tree_type* b, bool unqualify)
 {
+        if (unqualify)
+        {
+                a = tree_get_modified_type_c(a);
+                b = tree_get_modified_type_c(b);
+        }
         // todo
         return c_sema_types_are_same(self, a, b);
 }

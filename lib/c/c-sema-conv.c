@@ -209,8 +209,7 @@ static bool c_sema_check_pointer_assignment(
         tree_type* ltarget = tree_ignore_paren_types(tree_get_pointer_target(lt));
         tree_type* rtarget = tree_ignore_paren_types(tree_get_pointer_target(rt));
 
-        if (c_sema_types_are_compatible(self, tree_get_modified_type(ltarget),
-                                              tree_get_modified_type(rtarget))
+        if (c_sema_types_are_compatible(self, ltarget, rtarget, true)
                 || (tree_type_is_incomplete_or_object(ltarget) && tree_type_is_void(rtarget))
                 || (tree_type_is_incomplete_or_object(rtarget) && tree_type_is_void(ltarget)))
         {
