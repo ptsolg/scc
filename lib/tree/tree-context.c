@@ -34,3 +34,9 @@ extern tree_type* tree_get_size_type(tree_context* self)
         return tree_get_builtin_type(self,
                 tree_target_is(self->target, TTAK_X86_32) ? TBTK_UINT32 : TBTK_UINT64);
 }
+
+extern tree_type* tree_get_ptrdiff_type(tree_context* self)
+{
+        return tree_get_builtin_type(self,
+                tree_target_is(self->target, TTAK_X86_32) ? TBTK_INT32 : TBTK_INT64);
+}

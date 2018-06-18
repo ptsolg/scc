@@ -49,6 +49,8 @@ extern ssa_value* ssa_build_neq(ssa_builder* self, ssa_value* lhs, ssa_value* rh
 extern ssa_value* ssa_build_cast(ssa_builder* self, tree_type* to, ssa_value* operand);
 extern ssa_value* ssa_build_cast_ex(ssa_builder* self, ssa_instr* pos, tree_type* to, ssa_value* operand, bool insert_after);
 extern ssa_value* ssa_build_cast_to_pvoid(ssa_builder* self, ssa_value* operand);
+extern ssa_value* ssa_build_cast_to_size_t(ssa_builder* self, ssa_value* operand);
+extern ssa_value* ssa_build_cast_to_ptrdiff_t(ssa_builder* self, ssa_value* operand);
 extern ssa_value* ssa_build_call_0(ssa_builder* self, ssa_value* func);
 extern ssa_value* ssa_build_call_1(ssa_builder* self, ssa_value* func, ssa_value* a1);
 extern ssa_value* ssa_build_call_2(ssa_builder* self, ssa_value* func, ssa_value* a1, ssa_value* a2);
@@ -72,6 +74,7 @@ extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, uin
 extern ssa_value* ssa_build_i32_constant(ssa_builder* self, int val);
 extern ssa_value* ssa_build_u32_constant(ssa_builder* self, unsigned val);
 extern ssa_value* ssa_build_size_t_constant(ssa_builder* self, size_t val);
+extern ssa_value* ssa_build_ptrdiff_t_constant(ssa_builder* self, ptrdiff_t val);
 extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, float val);
 extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, double val);
 extern ssa_value* ssa_build_zero(ssa_builder* self, tree_type* type);

@@ -35,7 +35,27 @@ static ssa_value* ssa_emit_sub(ssa_function_emitter* self, ssa_value* lhs, ssa_v
         tree_type* lt = ssa_get_value_type(lhs);
         tree_type* rt = ssa_get_value_type(rhs);
         ssa_value* neg;
-        if (tree_type_is_pointer(lt))
+
+        if (tree_type_is_pointer(lt) && tree_type_is_pointer(rt))
+        {
+                tree_type* pointee = tree_get_pointer_target(ssa_get_value_type(lhs));
+                if (!(lhs = ssa_build_cast_to_ptrdiff_t(&self->builder, lhs)))
+                        return NULL;
+                if (!(rhs = ssa_build_cast_to_ptrdiff_t(&self->builder, rhs)))
+                        return NULL;
+
+                ssa_value* diff = ssa_build_sub(&self->builder, lhs, rhs);
+                if (!diff)
+                        return NULL;
+
+                ssa_value* pointee_size = ssa_build_ptrdiff_t_constant(
+                        &self->builder, tree_get_sizeof(self->context->target, pointee));
+                if (!pointee_size)
+                        return NULL;
+
+                return ssa_build_div(&self->builder, diff, pointee_size);
+        }
+        else if (tree_type_is_pointer(lt))
         {
                 if (!(neg = ssa_build_neg(&self->builder, rhs)))
                         return NULL;

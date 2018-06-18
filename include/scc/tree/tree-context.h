@@ -30,6 +30,7 @@ extern void tree_dispose(tree_context* self);
 
 extern tree_type* tree_get_builtin_type(tree_context* self, tree_builtin_type_kind k);
 extern tree_type* tree_get_size_type(tree_context* self);
+extern tree_type* tree_get_ptrdiff_type(tree_context* self);
 
 static TREE_INLINE void* tree_allocate(tree_context* self, size_t bytes)
 {

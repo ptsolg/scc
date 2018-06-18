@@ -201,6 +201,16 @@ extern ssa_value* ssa_build_cast_to_pvoid(ssa_builder* self, ssa_value* operand)
         return ssa_build_cast(self, pvoid, operand);
 }
 
+extern ssa_value* ssa_build_cast_to_size_t(ssa_builder* self, ssa_value* operand)
+{
+        return ssa_build_cast(self, tree_get_size_type(self->context->tree), operand);
+}
+
+extern ssa_value* ssa_build_cast_to_ptrdiff_t(ssa_builder* self, ssa_value* operand)
+{
+        return ssa_build_cast(self, tree_get_ptrdiff_type(self->context->tree), operand);
+}
+
 extern ssa_value* ssa_build_call_0(ssa_builder* self, ssa_value* func)
 {
         return ssa_build_call_n(self, func, NULL, 0);
@@ -356,11 +366,12 @@ extern ssa_value* ssa_build_u32_constant(ssa_builder* self, unsigned val)
 
 extern ssa_value* ssa_build_size_t_constant(ssa_builder* self, size_t val)
 {
-        tree_type* size_type = tree_new_size_type(ssa_get_tree(self->context));
-        if (!size_type)
-                return NULL;
+        return ssa_build_int_constant(self, tree_get_size_type(self->context->tree), val);
+}
 
-        return ssa_build_int_constant(self, size_type, val);
+extern ssa_value* ssa_build_ptrdiff_t_constant(ssa_builder* self, ptrdiff_t val)
+{
+        return ssa_build_int_constant(self, tree_get_ptrdiff_type(self->context->tree), (uint64_t)val);
 }
 
 extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, float val)
