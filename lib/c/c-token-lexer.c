@@ -8,8 +8,8 @@
 
 typedef struct
 {
-        unsigned char buffer[C_MAX_LINE_LENGTH + 1];
-        unsigned char* pos;
+        char buffer[C_MAX_LINE_LENGTH + 1];
+        char* pos;
         tree_location loc;
         c_logger* logger;
         tree_context* context;

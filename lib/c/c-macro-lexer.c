@@ -73,7 +73,7 @@ static c_token* c_macro_lexer_concat(c_macro_lexer* self, const ptrvec* tokens, 
 }
 
 static inline c_token* c_macro_lexer_stringify_macro_arg(
-        c_macro_lexer* self, c_macro_args* args, const c_token** arg, tree_location hash_loc)
+        c_macro_lexer* self, c_macro_args* args, c_token** arg, tree_location hash_loc)
 {
         ptrvec* tokens;
         if (arg == c_macro_get_tokens_end(self->macro) 

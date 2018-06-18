@@ -165,7 +165,7 @@ static inline ssa_value* ssa_emit_log_expr_lhs(
         ssa_function_emitter* self, ssa_cond_expr_exit* exit, const tree_expr* expr)
 {
         if (!tree_expr_is(expr, TEK_BINARY)
-                || !tree_binop_is(expr, TBK_LOG_AND) && !tree_binop_is(expr, TBK_LOG_OR))
+                || (!tree_binop_is(expr, TBK_LOG_AND) && !tree_binop_is(expr, TBK_LOG_OR)))
         {
                 return ssa_emit_expr_as_condition(self, expr);
         }

@@ -29,6 +29,12 @@ extern "C" {
 #include "vec-type.h"
 #define U8VEC_FOREACH(PVEC, IT, END) VEC_FOREACH(PVEC, uint8_t, IT, END)
 
+#define VEC_FN(N) i8vec_##N
+#define VEC_TP    i8vec
+#define VEC_VTP   int8_t
+#include "vec-type.h"
+#define I8VEC_FOREACH(PVEC, IT, END) VEC_FOREACH(PVEC, int8_t, IT, END)
+
 #ifdef __cplusplus
 }
 #endif

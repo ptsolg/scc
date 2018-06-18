@@ -48,22 +48,22 @@ extern void __cdecl hd_free_b(void* block)
 
 extern void* __cdecl hd_malloc_a(size_t size)
 {
-        return smalloc(size);
+        return core_malloc(size);
 }
 
 extern void __cdecl hd_free_a(void* block)
 {
-        sfree(block);
+        core_free(block);
 }
 
 extern void* __cdecl hd_malloc_b(size_t size)
 {
-        return smalloc(size);
+        return core_malloc(size);
 }
 
 extern void __cdecl hd_free_b(void* block)
 {
-        sfree(block);
+        core_free(block);
 }
 
 

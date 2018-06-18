@@ -459,8 +459,8 @@ static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, p
 {
         assert(strings->size);
 
-        u8vec concat;
-        u8vec_init_ex(&concat, c_context_get_allocator(self->context));
+        i8vec concat;
+        i8vec_init_ex(&concat, c_context_get_allocator(self->context));
         for (size_t i = 0; i < strings->size; i++)
         {
                 c_token* t = ptrvec_get(strings, i);
@@ -468,14 +468,14 @@ static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, p
                 char escaped[C_MAX_LINE_LENGTH + 1];
                 size_t size = c_get_escaped_string(escaped, ARRAY_SIZE(escaped), string, strlen(string) + 1);
                 for (size_t j = 0; j < size - 1; j++)
-                        u8vec_push(&concat, escaped[j]);
+                        i8vec_push(&concat, escaped[j]);
         }
-        u8vec_push(&concat, '\0');
+        i8vec_push(&concat, '\0');
 
         tree_id concat_ref = tree_get_id_for_string_s(self->context->tree,
-                (char*)u8vec_begin(&concat), concat.size);
+                (char*)i8vec_begin(&concat), concat.size);
         tree_location loc = c_token_get_loc(ptrvec_get(strings, 0));
-        u8vec_dispose(&concat);
+        i8vec_dispose(&concat);
 
         return c_token_new_string(self->context, loc, concat_ref);
 }

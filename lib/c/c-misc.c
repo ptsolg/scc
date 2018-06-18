@@ -55,7 +55,7 @@ extern size_t c_get_escaped_string(char* dst, size_t dst_size, const char* strin
         return written;
 }
 
-#define ASSERT_ENUM_RANGE(V, MAX) assert((V) > -1 && (V) < (MAX))
+#define ASSERT_ENUM_RANGE(V, MAX) assert((V) >= 0 && (V) < (MAX))
 
 typedef struct
 {
