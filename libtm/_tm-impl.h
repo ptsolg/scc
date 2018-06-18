@@ -6,16 +6,8 @@
 #include <setjmp.h>
 #include "_tm-word.h"
 
-#ifndef TM_READSET_SIZE
-#define TM_READSET_SIZE 256
-#endif
-
-#ifndef TM_WRITESET_SIZE
-#define TM_WRITESET_SIZE 256
-#endif
-
 #ifndef TM_STACK_SIZE
-#define TM_STACK_SIZE 256
+#define TM_STACK_SIZE 4096
 #endif
 
 #ifndef TM_STACK_ALIGNMENT
@@ -39,7 +31,8 @@ struct tm_transaction
 
 struct tm_readset
 {
-        tm_versioned_lock* locks[TM_READSET_SIZE];
+        tm_versioned_lock** locks;
+        unsigned pos;
         unsigned size;
 };
 
@@ -60,9 +53,9 @@ struct tm_writeset_bucket
 
 struct tm_writeset
 {
-        // todo: split?
-        struct tm_writeset_entry entries[TM_WRITESET_SIZE];
-        struct tm_writeset_bucket lookup[TM_WRITESET_SIZE];
+        struct tm_writeset_entry* entries;
+        struct tm_writeset_bucket* lookup;
+        unsigned pos;
         unsigned size;
 };
 
@@ -78,8 +71,13 @@ struct tm_memcutter
 
 struct tm_stack
 {
-        char chunk[TM_STACK_SIZE];
-        unsigned size;
+        char* chunk;
+        unsigned pos;
+};
+
+struct tm_mutex
+{
+        tm_versioned_lock val;
 };
 
 static inline _tm_word* tm_get_word_ptr(void* ptr)
@@ -132,26 +130,26 @@ static inline int tm_write_word_atomic(
 
 static inline int tm_readset_append(struct tm_readset* self, tm_versioned_lock* lock)
 {
-        if (self->size >= TM_READSET_SIZE)
+        if (self->pos >= self->size)
                 return 0;
 
-        self->locks[self->size++] = lock;
+        self->locks[self->pos++] = lock;
         return 1;
 }
 
 static inline struct tm_writeset_bucket* tm_writeset_get_bucket(
         struct tm_writeset* self, const void* address)
 {
-        return self->lookup + ((size_t)address & (TM_WRITESET_SIZE - 1));
+        return self->lookup + ((size_t)address & (self->size - 1));
 }
 
 static inline int tm_writeset_append(
         struct tm_writeset* self, _tm_word* address, _tm_word value, unsigned mask)
 {
-        if (self->size >= TM_WRITESET_SIZE)
+        if (self->pos >= self->size)
                 return 0;
 
-        struct tm_writeset_entry* e = self->entries + self->size++;
+        struct tm_writeset_entry* e = self->entries + self->pos++;
         e->address = address;
         e->value = value;
         e->mask = mask;
@@ -177,7 +175,7 @@ static inline int tm_writeset_append(
 static inline unsigned tm_maybe_read_part_from_writeset(
         struct tm_writeset* self, const _tm_word* source, _tm_word* dest, unsigned mask)
 {
-        if (!self->size)
+        if (!self->pos)
                 return mask;
 
         struct tm_writeset_bucket* b = tm_writeset_get_bucket(self, source);
@@ -199,7 +197,7 @@ static inline unsigned tm_maybe_read_part_from_writeset(
 
 static inline void tm_writeset_resize(struct tm_writeset* self, unsigned new_size)
 {
-        for (unsigned i = new_size; i < self->size; i++)
+        for (unsigned i = new_size; i < self->pos; i++)
         {
                 struct tm_writeset_entry* e = self->entries + i;
                 struct tm_writeset_bucket* b = tm_writeset_get_bucket(self, e->address);
@@ -214,7 +212,7 @@ static inline void tm_writeset_resize(struct tm_writeset* self, unsigned new_siz
                 if (e->prev)
                         e->prev->next = e->next;
         }
-        self->size = new_size;
+        self->pos = new_size;
 }
 
 static void tm_fatal_error(int code)
@@ -284,14 +282,25 @@ static int tm_memcutter_advance(struct tm_memcutter* self)
 
 static inline void* tm_alloca(struct tm_stack* self, size_t n)
 {
-        size_t padding = (size_t)(self->chunk + self->size) & (TM_STACK_ALIGNMENT - 1);
-        if (n + padding + self->size >= TM_STACK_SIZE)
+        size_t padding = (size_t)(self->chunk + self->pos) & (TM_STACK_ALIGNMENT - 1);
+        if (n + padding + self->pos >= TM_STACK_SIZE)
                 return 0;
 
-        self->size += padding;
-        void* ptr = self->chunk + self->size;
-        self->size += n;
+        self->pos += padding;
+        void* ptr = self->chunk + self->pos;
+        self->pos += n;
         return ptr;
+}
+
+static inline void tm_mutex_lock(struct tm_mutex* self)
+{
+        while (!tm_acquire_lock(&self->val))
+                ;
+}
+
+static inline void tm_mutex_unlock(struct tm_mutex* self)
+{
+        tm_set_lock(&self->val, 0);
 }
 
 #endif
