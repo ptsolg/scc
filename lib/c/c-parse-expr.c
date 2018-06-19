@@ -236,11 +236,9 @@ static inline tree_expr* c_parse_rhs_of_binary_expr(c_parser* self, tree_expr* l
                         return NULL;
 
                 int next_prec = c_get_operator_precedence(c_parser_get_token(self));
-                bool next_right_assoc = this_prec == CPL_ASSIGN
-                                     || this_prec == CPL_CONDITIONAL;
-
+                bool next_right_assoc = next_prec == CPL_ASSIGN || next_prec == CPL_CONDITIONAL;
                 if ((next_prec > this_prec) || (next_right_assoc && next_prec == this_prec))
-                        rhs = c_parse_rhs_of_binary_expr(self, rhs, next_prec);
+                        rhs = c_parse_rhs_of_binary_expr(self, rhs, this_prec + !next_right_assoc);
 
                 lhs = c_token_is(optoken, CTK_QUESTION)
                         ? c_sema_new_conditional_expr(self->sema, oploc, lhs, ternary_middle, rhs)
@@ -282,7 +280,6 @@ extern tree_expr* c_parse_expr(c_parser* self)
 {
         return c_parse_expr_ex(self, CPL_COMMA);
 }
-
 
 extern tree_expr* c_parse_const_expr(c_parser* self)
 {
