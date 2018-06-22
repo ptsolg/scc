@@ -15,4 +15,10 @@ extern void exit(int status);
 extern void qsort(const void* ptr, size_t count, size_t size,
         int(*cmp)(const void*, const void*));
 
+extern int rand();
+extern void srand(unsigned seed);
+
+extern int atoi(const char* string);
+extern double atof(const char* string);
+
 #endif
