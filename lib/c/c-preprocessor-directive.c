@@ -456,7 +456,7 @@ extern bool c_preprocessor_handle_pragma_directive(c_preprocessor* self)
                 return false;
         }
 
-        return EC_SUCCEEDED(c_pragma_handles_on_link(&self->context->pragma_handlers, lib));
+        return EC_SUCCEEDED(c_pragma_handlers_on_link(&self->context->pragma_handlers, lib));
 }
 
 extern bool c_preprocessor_handle_undef_directive(c_preprocessor* self, c_token* tok)

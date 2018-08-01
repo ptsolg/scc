@@ -11,7 +11,7 @@ extern void c_pragma_handlers_init(c_pragma_handlers* self, void* data)
         self->on_link = on_link;
 }
 
-extern errcode c_pragma_handles_on_link(c_pragma_handlers* self, const char* lib)
+extern errcode c_pragma_handlers_on_link(c_pragma_handlers* self, const char* lib)
 {
         return self->on_link(self->data, lib);
 }
