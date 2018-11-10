@@ -31,7 +31,7 @@ add_scc_lib(c
 	macro.c
 	macro-lexer.c
 	printer.c
-	env.c
+	c.c
 	builtin-type.h
 	builtin-type.c
 	initializer.h

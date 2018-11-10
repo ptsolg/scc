@@ -1,5 +1,5 @@
 #include "cc-impl.h"
-#include "scc/c/env.h"
+#include "scc/c/c.h"
 #include "scc/c/context.h"
 #include "scc/c/printer.h"
 #include "scc/tree/context.h"
@@ -160,16 +160,14 @@ extern errcode cc_dump_tokens(cc_instance* self)
         errcode result = EC_ERROR;
         jmp_buf fatal;
         cc_context context;
-        c_env env;
         ptrvec tokens;
 
         cc_context_init(&context, self, fatal);
-        c_env_init(&env, &context.c, self->output.message);
         ptrvec_init_ex(&tokens, self->alloc);
 
         if (setjmp(fatal))
                 goto cleanup;
-        if (EC_FAILED(c_env_lex_source(&env, *cc_sources_begin(self), &tokens)))
+        if (EC_FAILED(c_lex_source(&context.c, *cc_sources_begin(self), self->output.message, &tokens)))
                 goto cleanup;
 
         result = EC_NO_ERROR;
@@ -178,7 +176,6 @@ extern errcode cc_dump_tokens(cc_instance* self)
 
 cleanup:
         ptrvec_dispose(&tokens);
-        c_env_dispose(&env);
         cc_context_dispose(&context);
         return result;
 }

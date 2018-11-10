@@ -29,7 +29,7 @@ add_scc_target_sources(c
 	macro.h
 	macro-lexer.h
 	printer.h
-	env.h
+	c.h
 	pragma.h
 	token-kind.inc
 )
