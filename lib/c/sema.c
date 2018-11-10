@@ -1,13 +1,13 @@
 #include "scc/c/sema.h"
 #include "scc/c/parse-decl.h"
 #include "misc.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "scc/tree/decl.h"
 #include "scc/tree/stmt.h"
 #include "scc/tree/context.h"
 #include "scc/tree/module.h"
 
-extern void c_sema_init(c_sema* self, c_context* context, c_logger* logger)
+extern void c_sema_init(c_sema* self, c_context* context)
 {
         self->ccontext = context;
         self->context = context->tree;
@@ -18,7 +18,6 @@ extern void c_sema_init(c_sema* self, c_context* context, c_logger* logger)
         self->function = NULL;
         self->labels = NULL;
         self->scope = NULL;
-        self->logger = logger;
         self->tm_info.atomic_stmt_nesting = 0;
 
         allocator* alloc = c_context_get_allocator(self->ccontext);
@@ -36,12 +35,12 @@ static void c_sema_init_builtin_function(c_sema* self, tree_function_builtin_kin
 {
         c_source* s = c_source_emulate(&self->ccontext->source_manager, name, decl);
         c_lexer lexer;
-        c_lexer_init(&lexer, self->logger, self->ccontext);
+        c_lexer_init(&lexer, self->ccontext);
         if (!s || EC_FAILED(c_lexer_enter_source_file(&lexer, s)))
                 goto error;
 
         c_parser parser;
-        c_parser_init(&parser, &lexer, self, self->logger);
+        c_parser_init(&parser, self->ccontext, &lexer, self);
         jmp_buf on_parser_error;
         c_parser_set_on_error(&parser, on_parser_error);
         if (setjmp(on_parser_error))

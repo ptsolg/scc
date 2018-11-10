@@ -2,7 +2,7 @@
 #include "scc/c/sema-type.h"
 #include "scc/c/sema-conv.h"
 #include "scc/c/sema-expr.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "scc/tree/context.h"
 #include "scc/tree/eval.h"
 #include "scc/tree/target.h"
@@ -32,7 +32,7 @@ static tree_decl* c_sema_require_decl(
         tree_decl* d = tree_decl_scope_lookup(scope, TLK_ANY, name, parent_lookup);
         if (!d)
         {
-                c_error_undeclared_identifier(self->logger, name_loc, name);
+                c_error_undeclared_identifier(self->ccontext, name_loc, name);
                 return NULL;
         }
         return d;
@@ -199,7 +199,7 @@ extern bool c_sema_set_declarator_has_vararg(c_sema* self, c_declarator* d, tree
 
         if (d->params.size == 0)
         {
-                c_error_named_argument_before_ellipsis_required(self->logger, ellipsis_loc);
+                c_error_named_argument_before_ellipsis_required(self->ccontext, ellipsis_loc);
                 return false;
         }
 
@@ -267,7 +267,7 @@ extern bool c_sema_set_typedef_specified(c_sema* self, c_decl_specs* ds)
 {
         if (ds->storage_class != TSC_NONE || ds->has_typedef)
         {
-                c_error_multiple_storage_classes(self->logger, ds);
+                c_error_multiple_storage_classes(self->ccontext, ds);
                 return false;
         }
 
@@ -285,7 +285,7 @@ extern bool c_sema_set_storage_class(c_sema* self, c_decl_specs* ds, tree_storag
 {
         if (ds->storage_class != TSC_NONE || ds->has_typedef)
         {
-                c_error_multiple_storage_classes(self->logger, ds);
+                c_error_multiple_storage_classes(self->ccontext, ds);
                 return false;
         }
 
@@ -307,7 +307,7 @@ extern bool c_sema_set_dll_storage_class(c_sema* self, c_decl_specs* ds, tree_dl
 {
         if (ds->dll_storage_class != TDSC_NONE)
         {
-                c_error_multiple_storage_classes(self->logger, ds);
+                c_error_multiple_storage_classes(self->ccontext, ds);
                 return false;
         }
 
@@ -321,7 +321,7 @@ static bool c_sema_check_decl_redefinition(c_sema* self, tree_decl_scope* scope,
                 tree_decl_is_tag(decl) ? TLK_TAG : TLK_DECL,
                 tree_get_decl_name(decl), false))
         {
-                c_error_decl_redefinition(self->logger, decl);
+                c_error_decl_redefinition(self->ccontext, decl);
                 return false;
         }
         return true;
@@ -394,19 +394,19 @@ static bool c_sema_check_decl_specs(const c_sema* self,
         {
                 if (c_sema_at_block_scope(self) && sc != TSC_EXTERN && sc != TSC_IMPL_EXTERN)
                 {
-                        c_error_invalid_storage_class(self->logger, specs->loc.begin, d->name);
+                        c_error_invalid_storage_class(self->ccontext, specs->loc.begin, d->name);
                         return false;
                 }
         }
         else if (specs->has_inline)
         {
-                c_error_invalid_specifier(self->logger, name_loc, CTK_INLINE, TDK_FUNCTION);
+                c_error_invalid_specifier(self->ccontext, name_loc, CTK_INLINE, TDK_FUNCTION);
                 return false;
         }
 
         if (dk == TDK_FIELD && (sc != TSC_NONE || sd != TSD_AUTOMATIC))
         {
-                c_error_field_declared_with_storage_specifier(self->logger, d);
+                c_error_field_declared_with_storage_specifier(self->ccontext, d);
                 return false;
         }
 
@@ -414,12 +414,12 @@ static bool c_sema_check_decl_specs(const c_sema* self,
         {
                 if (dk != TDK_VAR)
                 {
-                        c_error_invalid_specifier(self->logger, name_loc, CTK_THREAD_LOCAL, TDK_VAR);
+                        c_error_invalid_specifier(self->ccontext, name_loc, CTK_THREAD_LOCAL, TDK_VAR);
                         return false;
                 }
                 if (sc == TSC_NONE && !c_sema_at_file_scope(self))
                 {
-                        c_error_variable_declared_thread_local_at_function_scope(self->logger, d);
+                        c_error_variable_declared_thread_local_at_function_scope(self->ccontext, d);
                         return false;
                 }
         }
@@ -428,19 +428,19 @@ static bool c_sema_check_decl_specs(const c_sema* self,
         {
                 if (dk != TDK_VAR)
                 {
-                        c_error_invalid_specifier(self->logger, name_loc, CTK_REGISTER, TDK_VAR);
+                        c_error_invalid_specifier(self->ccontext, name_loc, CTK_REGISTER, TDK_VAR);
                         return false;
                 }
                 if (c_sema_at_file_scope(self))
                 {
-                        c_error_variable_declared_register_at_file_scope(self->logger, d);
+                        c_error_variable_declared_register_at_file_scope(self->ccontext, d);
                         return false;
                 }
         }
 
         if ((sc == TSC_EXTERN || sc == TSC_STATIC) && dk == TDK_PARAM)
         {
-                c_error_invalid_parameter_storage_class(self->logger, d);
+                c_error_invalid_parameter_storage_class(self->ccontext, d);
                 return false;
 
         }
@@ -449,12 +449,12 @@ static bool c_sema_check_decl_specs(const c_sema* self,
         {
                 if (dk != TDK_FUNCTION && dk != TDK_VAR)
                 {
-                        c_error_dllimport_applied_to_wrong_decl(self->logger, specs->loc.begin);
+                        c_error_dllimport_applied_to_wrong_decl(self->ccontext, specs->loc.begin);
                         return false;
                 }
                 if (has_body_or_init)
                 {
-                        c_error_dllimport_cannot_be_applied_to_definition(self->logger, specs, dk);
+                        c_error_dllimport_cannot_be_applied_to_definition(self->ccontext, specs, dk);
                         return false;
                 }
         }
@@ -512,7 +512,7 @@ static bool c_sema_compute_enumerator_value(
                 tree_eval_result r;
                 if (!tree_eval_expr_as_integer(self->context, init, &r))
                 {
-                        c_error_enumerator_value_isnt_constant(self->logger, name_loc, name);
+                        c_error_enumerator_value_isnt_constant(self->ccontext, name_loc, name);
                         return false;
                 }
                 *result = avalue_get_int(&r.value);
@@ -588,7 +588,7 @@ static tree_decl* c_sema_lookup_or_create_enum_decl(
         }
         else if (tree_get_decl_kind(e) != TDK_ENUM)
         {
-                c_error_wrong_king_of_tag(self->logger, kw_loc, name);
+                c_error_wrong_king_of_tag(self->ccontext, kw_loc, name);
                 return NULL;
         }
         return e;
@@ -602,7 +602,7 @@ extern tree_decl* c_sema_define_enum_decl(c_sema* self, tree_location kw_loc, tr
 
         if (tree_tag_decl_is_complete(e))
         {
-                c_error_redefinition(self->logger, kw_loc, name);
+                c_error_redefinition(self->ccontext, kw_loc, name);
                 return NULL;
         }
         return e;
@@ -644,7 +644,7 @@ static tree_decl* c_sema_lookup_or_create_record_decl(
         }
         else if (!tree_decl_is(d, TDK_RECORD) || tree_record_is_union(d) != is_union)
         {
-                c_error_wrong_king_of_tag(self->logger, kw_loc, name);
+                c_error_wrong_king_of_tag(self->ccontext, kw_loc, name);
                 return NULL;
         }
         return d;
@@ -659,7 +659,7 @@ extern tree_decl* c_sema_define_record_decl(
 
         if (tree_tag_decl_is_complete(r))
         {
-                c_error_redefinition(self->logger, kw_loc, name);
+                c_error_redefinition(self->ccontext, kw_loc, name);
                 return NULL;
         }
         return r;
@@ -684,7 +684,7 @@ static bool c_sema_check_field_decl(const c_sema* self, const tree_decl* field)
         tree_type* mt = tree_desugar_type(tree_get_decl_type(field));
         if (tree_type_is(mt, TTK_FUNCTION))
         {
-                c_error_field_function(self->logger, field);
+                c_error_field_function(self->ccontext, field);
                 return false;
         }
         if (!c_sema_require_complete_type(self, tree_get_decl_loc_begin(field), mt))
@@ -696,32 +696,32 @@ static bool c_sema_check_field_decl(const c_sema* self, const tree_decl* field)
 
         if (!tree_type_is_integer(mt))
         {
-                c_error_invalid_bitfield_type(self->logger, field);
+                c_error_invalid_bitfield_type(self->ccontext, field);
                 return false;
         }
 
         tree_eval_result r;
         if (!tree_eval_expr_as_integer(self->context, bit_width, &r))
         {
-                c_error_bitfield_width_isnt_constant(self->logger, field);
+                c_error_bitfield_width_isnt_constant(self->ccontext, field);
                 return false;
         }
 
         if (avalue_is_zero(&r.value))
         {
-                c_error_bitfield_width_is_zero(self->logger, field);
+                c_error_bitfield_width_is_zero(self->ccontext, field);
                 return false;
         }
 
         if (avalue_is_signed(&r.value) && avalue_get_i64(&r.value) < 0)
         {
-                c_error_negative_bitfield_width(self->logger, field);
+                c_error_negative_bitfield_width(self->ccontext, field);
                 return false;
         }
 
         if (avalue_get_u64(&r.value) > 8 * tree_get_sizeof(self->target, mt))
         {
-                c_error_bitfield_width_exceeds_type(self->logger, field);
+                c_error_bitfield_width_exceeds_type(self->ccontext, field);
                 return false;
         }
         return field;
@@ -804,7 +804,7 @@ extern tree_decl* c_sema_define_label_decl(
 
         if (tree_get_label_decl_stmt(l))
         {
-                c_error_redefinition(self->logger, name_loc, name);
+                c_error_redefinition(self->ccontext, name_loc, name);
                 return NULL;
         }
 
@@ -832,7 +832,7 @@ extern bool csema_require_variable_decl_kind(const c_sema* self, const tree_decl
                 return true;
 
         if (k == TDK_FUNCTION)
-                c_error_function_initialized_like_a_variable(self->logger, decl);
+                c_error_function_initialized_like_a_variable(self->ccontext, decl);
         else
                 UNREACHABLE(); // todo
         
@@ -888,7 +888,7 @@ static bool c_sema_check_function_decl(
         tree_location func_loc = specs->loc.begin;
         if (self->function && has_body)
         {
-                c_error_function_isnt_allowed_here(self->logger, func_loc);
+                c_error_function_isnt_allowed_here(self->ccontext, func_loc);
                 return false;
         }
 
@@ -911,7 +911,7 @@ static bool c_sema_check_function_decl(
 
                 if (param->declarator.name == TREE_EMPTY_ID)
                 {
-                        c_error_parameter_name_omitted(self->logger, param_loc);
+                        c_error_parameter_name_omitted(self->ccontext, param_loc);
                         return false;
                 }
 
@@ -921,7 +921,7 @@ static bool c_sema_check_function_decl(
                 if (tree_func_type_is_transaction_safe(func_type)
                         && (tree_get_type_quals(param_type) & TTQ_VOLATILE))
                 {
-                        c_error_volatile_param_is_not_allowed(self->logger, param_loc);
+                        c_error_volatile_param_is_not_allowed(self->ccontext, param_loc);
                         return false;
                 }
         }
@@ -964,7 +964,7 @@ static bool c_sema_check_var_decl(const c_sema* self,
         }
         else if (sc == TSC_EXTERN && has_init)
         {
-                c_error_extern_variable_has_an_initializer(self->logger, d);
+                c_error_extern_variable_has_an_initializer(self->ccontext, d);
                 return false;
         }
         return true;
@@ -1015,19 +1015,19 @@ static bool c_sema_check_external_decl_redefinition(
         tree_decl_kind other_kind = tree_get_decl_kind(other);
         if (decl_kind != other_kind)
         {
-                c_error_different_kind_of_symbol(self->logger, decl);
+                c_error_different_kind_of_symbol(self->ccontext, decl);
                 return false;
         }
 
         if (decl_kind != TDK_TYPEDEF && !tree_decls_have_same_linkage(decl, other))
         {
-                c_error_different_storage_class(self->logger, decl);
+                c_error_different_storage_class(self->ccontext, decl);
                 return false;
         }
 
         if (!c_sema_types_are_same(self, tree_get_decl_type(decl), tree_get_decl_type(other)))
         {
-                c_error_conflicting_types(self->logger, decl);
+                c_error_conflicting_types(self->ccontext, decl);
                 return false;
         }
 
@@ -1035,7 +1035,7 @@ static bool c_sema_check_external_decl_redefinition(
                 && ((other_kind == TDK_VAR && tree_get_var_init(other))
                  || (other_kind == TDK_FUNCTION && tree_get_func_body(other))))
         {
-                c_error_decl_redefinition(self->logger, decl);
+                c_error_decl_redefinition(self->ccontext, decl);
                 return false;
         }
 

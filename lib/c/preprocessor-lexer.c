@@ -9,11 +9,10 @@ extern void c_init_cond_directive(
         self->has_body = has_body;
 }
 
-extern void c_init_pp_token_lexer(
-        c_pp_lexer* self, c_logger* logger, c_context* context)
+extern void c_init_pp_token_lexer(c_pp_lexer* self, c_context* context)
 {
         self->kind = CPLK_TOKEN;
-        c_token_lexer_init(&self->token_lexer, context, logger);
+        c_token_lexer_init(&self->token_lexer, context);
         c_cond_stack_init_ex(&self->cond_stack, c_context_get_allocator(context));
 }
 
@@ -21,11 +20,10 @@ extern void c_init_pp_macro_token_lexer(
         c_pp_lexer* self,
         c_context* context,
         c_macro* macro,
-        c_logger* logger,
         tree_location loc)
 {
         self->kind = CPLK_MACRO;
-        c_macro_lexer_init(&self->macro_lexer, context, macro, logger, loc);
+        c_macro_lexer_init(&self->macro_lexer, context, macro, loc);
 }
 
 extern void c_dispose_pp_lexer(c_pp_lexer* self)
@@ -106,11 +104,10 @@ extern c_pp_lexer* c_lexer_stack_get(
         return c_pp_lexer_stack_get_p(&self->lexers, depth);
 }
 
-extern c_pp_lexer* c_push_token_lexer(
-        c_lexer_stack* self, c_logger* logger, c_context* context)
+extern c_pp_lexer* c_push_token_lexer(c_lexer_stack* self, c_context* context)
 {
         c_pp_lexer* lexer = c_pp_lexer_stack_push_e(&self->lexers);
-        c_init_pp_token_lexer(lexer, logger, context);
+        c_init_pp_token_lexer(lexer, context);
         return lexer;
 }
 
@@ -118,10 +115,9 @@ extern c_pp_lexer* c_push_macro_lexer(
         c_lexer_stack* self,
         c_context* context,
         c_macro* macro,
-        c_logger* logger,
         tree_location loc)
 {
         c_pp_lexer* lexer = c_pp_lexer_stack_push_e(&self->lexers);
-        c_init_pp_macro_token_lexer(lexer, context, macro, logger, loc);
+        c_init_pp_macro_token_lexer(lexer, context, macro, loc);
         return lexer;
 }

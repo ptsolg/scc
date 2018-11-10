@@ -1,14 +1,14 @@
 #include "scc/c/parser.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "misc.h"
 #include "scc/c/reswords.h"
 #include <setjmp.h>
 
-extern void c_parser_init(c_parser* self, c_lexer* lexer, c_sema* sema, c_logger* logger)
+extern void c_parser_init(c_parser* self, c_context* context, c_lexer* lexer, c_sema* sema)
 {
         self->lexer = lexer;
         self->sema = sema;
-        self->logger = logger;
+        self->context = context;
         self->on_error = NULL;
         self->buffer[0] = NULL;
         self->buffer[1] = NULL;
@@ -107,12 +107,12 @@ static void c_parser_print_expected(const c_parser* self, c_token_kind k, const 
         if (size == 0)
                 UNREACHABLE();
         else if (size == 1)
-                c_error_expected_a_before_b(self->logger, loc, expected[0], current);
+                c_error_expected_a_before_b(self->context, loc, expected[0], current);
         else if (size == 2)
-                c_error_expected_a_or_b_before_c(self->logger,
+                c_error_expected_a_or_b_before_c(self->context,
                         loc, expected[0], expected[1], current);
         else
-                c_error_expected_one_of(self->logger, loc, expected, size, current);
+                c_error_expected_one_of(self->context, loc, expected, size, current);
 }
 
 extern bool c_parser_require_ex(c_parser* self, c_token_kind k, const c_token_kind expected[])

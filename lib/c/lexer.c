@@ -1,7 +1,7 @@
 #include "scc/c/lexer.h"
 #include "misc.h"
 #include "scc/c/context.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "scc/c/reswords-info.h"
 #include "scc/tree/context.h"
 #include "numeric-literal.h"
@@ -29,10 +29,10 @@ static void c_lexer_init_reswords(c_lexer* self)
                         c_lexer_add_token(self, i, false);
 }
 
-extern void c_lexer_init(c_lexer* self, c_logger* logger, c_context* context)
+extern void c_lexer_init(c_lexer* self, c_context* context)
 {
         c_reswords_init(&self->reswords, context);
-        c_preprocessor_init(&self->pp, &self->reswords,  logger, context);
+        c_preprocessor_init(&self->pp, &self->reswords, context);
         c_lexer_init_reswords(self);
 }
 
@@ -52,7 +52,7 @@ static c_token* c_lex_pp_num(c_lexer* self, c_token* num)
 {
         const char* num_string = tree_get_id_string(self->pp.context->tree, c_token_get_string(num));
         c_numeric_literal literal;
-        c_parse_numeric_literal(num_string, c_token_get_loc(num), &literal, self->pp.logger);
+        c_parse_numeric_literal(num_string, c_token_get_loc(num), &literal, self->pp.context);
         switch (literal.kind)
         {
                 case CNLK_SP_FLOATING:

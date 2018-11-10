@@ -20,7 +20,6 @@ typedef struct _c_preprocessor
         c_lexer_stack lexer_stack;
         strmap macro_lookup;
         const c_reswords* reswords;
-        c_logger* logger;
         c_context* context;
 
         struct
@@ -43,10 +42,7 @@ typedef struct _c_preprocessor
 } c_preprocessor;
 
 extern void c_preprocessor_init(
-        c_preprocessor* self,
-        const c_reswords* reswords,
-        c_logger* logger,
-        c_context* context);
+        c_preprocessor* self, const c_reswords* reswords, c_context* context);
 
 extern void c_preprocessor_dispose(c_preprocessor* self);
 extern errcode c_preprocessor_enter_source(c_preprocessor* self, c_source* source);

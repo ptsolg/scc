@@ -1,5 +1,5 @@
 #include "numeric-literal.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include <stdlib.h> // strtoll, strtod, ...
 #include <ctype.h> // toupper
 
@@ -26,7 +26,7 @@ static bool c_parse_floating_literal(
         const char* num,
         tree_location num_loc,
         c_numeric_literal* result,
-        c_logger* logger)
+        c_context* context)
 {
         size_t len = strlen(num);
         char* suffix = NULL;
@@ -40,7 +40,7 @@ static bool c_parse_floating_literal(
         size_t suffix_len = strlen(suffix);
         if ((sp && suffix_len > 1) || (!sp && suffix_len))
         {
-                c_error_invalid_floating_literal(logger, num_loc, num);
+                c_error_invalid_floating_literal(context, num_loc, num);
                 return false;
         }
 
@@ -71,7 +71,7 @@ static bool c_parse_integer_literal(
         const char* num,
         tree_location num_loc,
         c_numeric_literal* result,
-        c_logger* logger)
+        c_context* context)
 {
         result->integer.radix = num[0] == '0'
                 ? toupper(num[1]) == 'X' ? 16 : 8
@@ -80,7 +80,7 @@ static bool c_parse_integer_literal(
         result->integer.value = strtoull(num, &result->integer.suffix, result->integer.radix);
         if (!c_parse_integer_literal_suffix(result))
         {
-                c_error_invalid_integer_literal(logger, num_loc, num);
+                c_error_invalid_integer_literal(context, num_loc, num);
                 return false;
         }
 
@@ -92,7 +92,7 @@ extern bool c_parse_numeric_literal(
         const char* num,
         tree_location num_loc,
         c_numeric_literal* result,
-        c_logger* logger)
+        c_context* context)
 {
         result->kind = CNLK_INVALID;
         result->string = num;
@@ -104,6 +104,6 @@ extern bool c_parse_numeric_literal(
         result->integer.radix = 0;
 
         return c_numeric_literal_is_float(num)
-                ? c_parse_floating_literal(num, num_loc, result, logger)
-                : c_parse_integer_literal(num, num_loc, result, logger);
+                ? c_parse_floating_literal(num, num_loc, result, context)
+                : c_parse_integer_literal(num, num_loc, result, context);
 }

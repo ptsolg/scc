@@ -1,6 +1,6 @@
 #include "scc/c/token-lexer.h"
 #include "scc/c/source.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "scc/c/charset.h"
 #include "scc/c/context.h"
 #include "scc/tree/context.h"
@@ -11,8 +11,7 @@ typedef struct
         char buffer[C_MAX_LINE_LENGTH + 1];
         char* pos;
         tree_location loc;
-        c_logger* logger;
-        tree_context* context;
+        c_context* context;
 } c_sequence;
 
 static size_t c_sequence_length(const c_sequence* self)
@@ -24,7 +23,7 @@ static bool c_sequence_append(c_sequence* self, int c)
 {
         if (c_sequence_length(self) >= C_MAX_LINE_LENGTH)
         {
-                c_error_token_is_too_long(self->logger, self->loc);
+                c_error_token_is_too_long(self->context, self->loc);
                 return false;
         }
         *self->pos++ = (unsigned char)c;
@@ -32,10 +31,9 @@ static bool c_sequence_append(c_sequence* self, int c)
         return true;
 }
 
-static void c_sequence_init(c_sequence* self, c_logger* logger, c_context* context, tree_location loc)
+static void c_sequence_init(c_sequence* self, c_context* context, tree_location loc)
 {
-        self->logger = logger;
-        self->context = context->tree;
+        self->context = context;
         self->loc = loc;
         self->pos = self->buffer;
         *self->pos = '\0';
@@ -43,10 +41,10 @@ static void c_sequence_init(c_sequence* self, c_logger* logger, c_context* conte
 
 static tree_id c_sequence_get_id(c_sequence* self)
 {
-        return tree_get_id_for_string(self->context, self->buffer);
+        return tree_get_id_for_string(self->context->tree, self->buffer);
 }
 
-extern void c_token_lexer_init(c_token_lexer* self, c_context* context, c_logger* logger)
+extern void c_token_lexer_init(c_token_lexer* self, c_context* context)
 {
         self->c = RB_ENDC;
         self->nextc = RB_ENDC;
@@ -59,7 +57,6 @@ extern void c_token_lexer_init(c_token_lexer* self, c_context* context, c_logger
         self->eod_before_eof_returned = false;
 
         self->source = NULL;
-        self->logger = logger;
         self->context = context;
 
         self->loc = TREE_INVALID_LOC;
@@ -129,7 +126,7 @@ extern errcode c_token_lexer_enter(c_token_lexer* self, c_source* source)
         readbuf* buf = c_source_open(source);
         if (!buf)
         {
-                c_error_cannot_open_source_file(self->logger, 0, c_source_get_name(source));
+                c_error_cannot_open_source_file(self->context, 0, c_source_get_name(source));
                 return EC_ERROR;
         }
 
@@ -184,7 +181,7 @@ static bool c_token_lexer_read_till_quote(c_token_lexer* self, c_sequence* seq, 
                 int c = c_token_lexer_readc(self);
                 if (c_token_lexer_at_eof(self) || c == '\n')
                 {
-                        c_error_missing_closing_quote(self->logger, seq->loc);
+                        c_error_missing_closing_quote(self->context, seq->loc);
                         return false;
                 }
                 else if (c == '\\')
@@ -226,12 +223,12 @@ static c_token* c_token_lexer_lex_character_constant(c_token_lexer* self, c_sequ
         size_t len = c_sequence_length(seq);
         if (len == 0)
         {
-                c_error_empty_character_constant(self->logger, seq->loc);
+                c_error_empty_character_constant(self->context, seq->loc);
                 return NULL;
         }
         else if ((escape && len > 2) || (!escape && len > 1))
         {
-                c_error_invalid_character_constant(self->logger, seq->loc);
+                c_error_invalid_character_constant(self->context, seq->loc);
                 return NULL;
         }
 
@@ -284,7 +281,7 @@ static c_token* c_token_lexer_lex_comment(c_token_lexer* self, tree_location sta
                         c_token_lexer_readc(self);
                         if (c_token_lexer_at_eof(self))
                         {
-                                c_error_unclosed_comment(self->logger, start_loc);
+                                c_error_unclosed_comment(self->context, start_loc);
                                 return NULL;
                         }
                         else if (self->c == '*' && self->nextc == '/')
@@ -306,7 +303,7 @@ static c_token* _c_token_lexer_lex_token(c_token_lexer* self)
         int c = self->c;
 
         c_sequence seq;
-        c_sequence_init(&seq, self->logger, self->context, self->loc);
+        c_sequence_init(&seq, self->context, self->loc);
 
         c_token_kind kind = CTK_UNKNOWN;
         tree_location loc = self->loc;
@@ -585,7 +582,7 @@ static c_token* _c_token_lexer_lex_token(c_token_lexer* self)
 
         if (kind == CTK_UNKNOWN)
         {
-                c_error_stray_symbol(self->logger, loc, c);
+                c_error_stray_symbol(self->context, loc, c);
                 return NULL;
         }
 
@@ -607,7 +604,7 @@ extern c_token* c_token_lexer_lex_token(c_token_lexer* self)
         {
                 if (k == CTK_HASH && !self->hash_expected && !self->in_directive)
                 {
-                        c_error_stray_symbol(self->logger, c_token_get_loc(t), '#');
+                        c_error_stray_symbol(self->context, c_token_get_loc(t), '#');
                         return NULL;
                 }
                 self->hash_expected = false;

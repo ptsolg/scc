@@ -32,17 +32,42 @@ typedef struct
         tree_target_info target;
         tree_context tree;
         c_context c;
+        c_error_handler eh;
         ssa_context ssa;
+        cc_instance* instance;
 } cc_context;
+
+static void cc_handle_error(void* eh, c_error_severity severity, c_location loc, const char* err)
+{
+        static const char* c_error_severity_to_str[] =
+        {
+                "warning",
+                "error",
+                "fatal error",
+        };
+
+        cc_context* context = (cc_context*)((char*)eh - offsetof(cc_context, eh));
+        fprintf(
+                context->instance->output.message,
+                "%s:%d:%d: %s: %s\n",
+                path_get_cfile(loc.file),
+                loc.line,
+                loc.column,
+                c_error_severity_to_str[severity],
+                err);
+}
 
 static void cc_context_init(cc_context* self, cc_instance* cc, jmp_buf on_fatal_error)
 {
+        self->instance = cc;
+
         tree_init_target_info(&self->target,
                 cc->opts.target == CTK_X86_32 ? TTAK_X86_32 : TTAK_X86_64);
 
         tree_init(&self->tree, &self->target);
 
-        c_context_init(&self->c, &self->tree, &cc->input.source_lookup, on_fatal_error);
+        self->eh.on_error = cc_handle_error;
+        c_context_init(&self->c, &self->tree, &cc->input.source_lookup, &self->eh, on_fatal_error);
         self->c.pragma_handlers.data = cc;
         self->c.pragma_handlers.on_link = cc_handle_pragma_link;
         self->c.lang_opts.ext.tm_enabled = cc->opts.ext.enable_tm;

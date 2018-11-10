@@ -3,7 +3,7 @@
 #include "scc/c/sema-decl.h"
 #include "scc/c/sema-expr.h"
 #include "misc.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "scc/tree/eval.h"
 #include "scc/tree/stmt.h"
 
@@ -40,13 +40,13 @@ extern tree_stmt* c_sema_start_case_stmt(
 {
         if (!c_sema_in_switch_stmt(self))
         {
-                c_error_case_stmt_outside_switch(self->logger, kw_loc);
+                c_error_case_stmt_outside_switch(self->ccontext, kw_loc);
                 return NULL;
         }
 
         if (c_sema_in_transaction_safe_block(self) && !c_sema_switch_stmt_in_atomic_block(self))
         {
-                c_error_jumping_into_the_atomic_block_is_prohibited(self->logger, kw_loc, CTK_CASE);
+                c_error_jumping_into_the_atomic_block_is_prohibited(self->ccontext, kw_loc, CTK_CASE);
                 return NULL;
         }
 
@@ -56,7 +56,7 @@ extern tree_stmt* c_sema_start_case_stmt(
         tree_eval_result r;
         if (!tree_eval_expr_as_integer(self->context, expr, &r))
         {
-                c_error_case_stmt_isnt_constant(self->logger, kw_loc);
+                c_error_case_stmt_isnt_constant(self->ccontext, kw_loc);
                 return NULL;
         }
         
@@ -69,7 +69,7 @@ extern tree_stmt* c_sema_start_case_stmt(
                 tree_create_xloc(kw_loc, colon_loc), expr, &value, NULL);
         if (!c_sema_switch_stmt_register_case_label(self, case_stmt))
         {
-                c_error_case_stmt_duplication(self->logger, kw_loc);
+                c_error_case_stmt_duplication(self->ccontext, kw_loc);
                 return NULL;
         }
         return case_stmt;
@@ -86,17 +86,17 @@ extern tree_stmt* c_sema_start_default_stmt(
 {
         if (!c_sema_in_switch_stmt(self))
         {
-                c_error_default_stmt_outside_switch(self->logger, kw_loc);
+                c_error_default_stmt_outside_switch(self->ccontext, kw_loc);
                 return false;
         }
         if (c_sema_switch_stmt_has_default_label(self))
         {
-                c_error_default_stmt_duplication(self->logger, kw_loc);
+                c_error_default_stmt_duplication(self->ccontext, kw_loc);
                 return false;
         }
         if (c_sema_in_transaction_safe_block(self) && !c_sema_switch_stmt_in_atomic_block(self))
         {
-                c_error_jumping_into_the_atomic_block_is_prohibited(self->logger, kw_loc, CTK_DEFAULT);
+                c_error_jumping_into_the_atomic_block_is_prohibited(self->ccontext, kw_loc, CTK_DEFAULT);
                 return NULL;
         }
 
@@ -221,14 +221,14 @@ static bool _c_sema_check_iteration_stmt_decl(const c_sema* self, const tree_dec
 {
         if (!tree_decl_is(d, TDK_VAR))
         {
-                c_error_non_variable_decl_in_for_loop(self->logger, d);
+                c_error_non_variable_decl_in_for_loop(self->ccontext, d);
                 return false;
         }
 
         tree_storage_class sc = tree_get_decl_storage_class(d);
         if (sc != TSC_NONE && sc != TSC_AUTO && sc != TSC_REGISTER)
         {
-                c_error_invalid_storage_class_for_loop_decl(self->logger, d);
+                c_error_invalid_storage_class_for_loop_decl(self->ccontext, d);
                 return false;
         }
         return true;
@@ -303,14 +303,14 @@ extern tree_stmt* c_sema_new_return_stmt(
         tree_type* restype = tree_get_func_type_result(tree_get_decl_type(self->function));
         if (tree_type_is_void(restype) && value)
         {
-                c_error_return_non_void(self->logger, value);
+                c_error_return_non_void(self->ccontext, value);
                 return NULL;
         }
 
         c_assignment_conversion_result r;
         if (value && !c_sema_assignment_conversion(self, restype, &value, &r))
         {
-                c_error_invalid_return_type(self->logger, value, &r);
+                c_error_invalid_return_type(self->ccontext, value, &r);
                 return NULL;
         }
 
@@ -322,7 +322,7 @@ static bool c_sema_check_top_level_compound_stmt(const c_sema* self, const tree_
         TREE_FOREACH_DECL_IN_SCOPE(self->labels, it)
                 if (!tree_get_label_decl_stmt(it))
                 {
-                        c_error_undefined_label(self->logger, it);
+                        c_error_undefined_label(self->ccontext, it);
                         return false;
                 }
 
@@ -334,7 +334,7 @@ static bool c_sema_check_top_level_compound_stmt(const c_sema* self, const tree_
                         continue;
 
                 c_error_jumping_into_the_atomic_block_is_prohibited(
-                        self->logger, tree_get_stmt_loc(*it).begin, CTK_GOTO);
+                        self->ccontext, tree_get_stmt_loc(*it).begin, CTK_GOTO);
                 return false;
         }
         return true;
@@ -350,17 +350,17 @@ extern bool c_sema_check_stmt(const c_sema* self, const tree_stmt* s, int scope_
 
         if (sk == TSK_BREAK && !(scope_flags & CSF_BREAK))
         {
-                c_error_break_stmt_outside_loop_or_switch(self->logger, s);
+                c_error_break_stmt_outside_loop_or_switch(self->ccontext, s);
                 return false;
         }
         else if (sk == TSK_CONTINUE && !(scope_flags & CSF_CONTINUE))
         {
-                c_error_continue_stmt_outside_loop(self->logger, s);
+                c_error_continue_stmt_outside_loop(self->ccontext, s);
                 return false;
         }
         else if (sk == TSK_DECL && !(scope_flags & CSF_DECL))
         {
-                c_error_decl_stmt_outside_block(self->logger, s);
+                c_error_decl_stmt_outside_block(self->ccontext, s);
                 return false;
         }
         else if (sk == TSK_COMPOUND && is_top_level)

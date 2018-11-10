@@ -5,8 +5,7 @@
 #include "scc/c/token.h"
 #include "scc/c/context.h"
 #include "scc/c/token-lexer.h"
-#include "scc/c/error.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "scc/core/read-write.h"
 #include "scc/tree/context.h"
 
@@ -14,12 +13,10 @@ extern void c_macro_lexer_init(
         c_macro_lexer* self,
         c_context* context,
         c_macro* macro,
-        c_logger* logger,
         tree_location loc)
 {
         self->context = context;
         self->macro = macro;
-        self->logger = logger;
         self->loc = loc;
         self->pos = NULL;
         ptrvec_init_ex(&self->tokens, c_context_get_allocator(context));
@@ -28,7 +25,7 @@ extern void c_macro_lexer_init(
 static c_token* _c_macro_lexer_concat(c_macro_lexer* self, c_token* l, c_token* r, tree_location loc)
 {
         c_token_lexer lexer;
-        c_token_lexer_init(&lexer, self->context, self->logger);
+        c_token_lexer_init(&lexer, self->context);
 
         char buf[C_MAX_LINE_LENGTH + 1];
         int n = c_token_to_string(self->context->tree, l, buf, C_MAX_LINE_LENGTH);
@@ -41,13 +38,13 @@ static c_token* _c_macro_lexer_concat(c_macro_lexer* self, c_token* l, c_token* 
         readbuf_init(&rb, sread_cb_base(&cb));
 
         c_token_lexer_enter_char_stream(&lexer, &rb, loc);
-        c_logger_set_disabled(self->logger);
+        self->context->errors_disabled = true;
         c_token* result = c_token_lexer_lex_token(&lexer);
-        c_logger_set_enabled(self->logger);
+        self->context->errors_disabled = false;
 
         if (!result || !c_token_lexer_at_eof(&lexer))
         {
-                c_error_invalid_pasting(self->logger, l, r, loc);
+                c_error_invalid_pasting(self->context, l, r, loc);
                 return NULL;
         }
 
@@ -80,7 +77,7 @@ static inline c_token* c_macro_lexer_stringify_macro_arg(
                 || !c_token_is(*arg, CTK_ID) 
                 || !(tokens = c_macro_args_get(args, c_token_get_string(*arg))))
         {
-                c_error_hash_is_not_followed_by_a_macro_param(self->logger, hash_loc);
+                c_error_hash_is_not_followed_by_a_macro_param(self->context, hash_loc);
                 return NULL;
         }
 

@@ -3,8 +3,7 @@
 #include "scc/c/preprocessor.h"
 #include "scc/c/context.h"
 #include "scc/c/limits.h"
-#include "scc/c/error.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "scc/c/source.h"
 #include "scc/c/reswords.h"
 #include "scc/c/macro.h"
@@ -41,10 +40,10 @@ static bool _c_preprocessor_handle_directive(c_preprocessor* self, c_token* tok)
                 case CTK_EOD:
                         return true;
                 case CTK_UNKNOWN:
-                        c_error_unknown_preprocessor_directive(self->logger, loc);
+                        c_error_unknown_preprocessor_directive(self->context, loc);
                         return false;
                 default:
-                        c_error_unsupported_preprocessor_directive(self->logger, loc);
+                        c_error_unsupported_preprocessor_directive(self->context, loc);
                         return false;
         }
 }
@@ -62,7 +61,7 @@ extern bool c_preprocessor_handle_directive(c_preprocessor* self, c_token* tok)
 
 static bool c_preprocessor_skip_conditional_directive_body(c_preprocessor* self)
 {
-        c_logger_set_disabled(self->logger);
+        self->context->errors_disabled = true;
         int nesting = 1; // assuming we are already in directive' body
         while (1)
         {
@@ -73,8 +72,8 @@ static bool c_preprocessor_skip_conditional_directive_body(c_preprocessor* self)
                 {
                         c_cond_directive* info 
                                 = c_get_cond_directive(self->lexer);
-                        c_logger_set_enabled(self->logger);
-                        c_error_unterminated_directive(self->logger, info->token);
+                        self->context->errors_disabled = false;
+                        c_error_unterminated_directive(self->context, info->token);
                         return false;
                 }
                 if (!c_token_is(t, CTK_HASH))
@@ -105,7 +104,7 @@ static bool c_preprocessor_skip_conditional_directive_body(c_preprocessor* self)
                                         nesting--;
                                 if (nesting == 0)
                                 {
-                                        c_logger_set_enabled(self->logger);
+                                        self->context->errors_disabled = false;
                                         return c_preprocessor_handle_directive(self, t);
                                 }
                                 break;
@@ -139,7 +138,7 @@ static bool c_preprocessor_require_end_of_directive(c_preprocessor* self, c_toke
 
         if (!c_token_is(t, CTK_EOD))
         {
-                c_error_extra_tokens_at_end_of_directive(self->logger, directive, c_token_get_loc(t));
+                c_error_extra_tokens_at_end_of_directive(self->context, directive, c_token_get_loc(t));
                 return false;
         }
 
@@ -156,7 +155,7 @@ extern bool c_preprocessor_handle_if_directive(c_preprocessor* self, c_token* to
                 return false;
         if (!c_token_is(last, CTK_EOD))
         {
-                c_error_extra_tokens_at_end_of_directive(self->logger, CTK_PP_IF, c_token_get_loc(last));
+                c_error_extra_tokens_at_end_of_directive(self->context, CTK_PP_IF, c_token_get_loc(last));
                 return false;
         }
 
@@ -172,12 +171,12 @@ static c_token* c_preprocessor_read_macro_name(c_preprocessor* self, c_token_kin
         tree_location loc = c_token_get_loc(t);
         if (c_token_is(t, CTK_EOD))
         {
-                c_error_no_macro_name_given_in_directive(self->logger, directive, c_token_get_loc(t));
+                c_error_no_macro_name_given_in_directive(self->context, directive, c_token_get_loc(t));
                 return NULL;
         }
         else if (!c_token_is(t, CTK_ID))
         {
-                c_error_macro_names_must_be_identifiers(self->logger, loc);
+                c_error_macro_names_must_be_identifiers(self->context, loc);
                 return NULL;
         }
         return t;
@@ -211,7 +210,7 @@ static bool c_preprocessor_check_else_of_endif_directive(c_preprocessor* self, c
 {
         if (!c_cond_stack_depth(self->lexer))
         {
-                c_error_ending_directive_without_if(self->logger, tok);
+                c_error_ending_directive_without_if(self->context, tok);
                 return false;
         }
         if (c_token_is(tok, CTK_PP_ELIF) || c_token_is(tok, CTK_PP_ELSE))
@@ -219,7 +218,7 @@ static bool c_preprocessor_check_else_of_endif_directive(c_preprocessor* self, c
                 c_cond_directive* info = c_get_cond_directive(self->lexer);
                 if (c_token_is(info->token, CTK_PP_ELSE))
                 {
-                        c_error_directive_after_else(self->logger, tok);
+                        c_error_directive_after_else(self->context, tok);
                         return false;
                 }
         }
@@ -240,7 +239,7 @@ extern bool c_preprocessor_handle_elif_directive(c_preprocessor* self, c_token* 
                 return false;
         if (!c_token_is(last, CTK_EOD))
         {
-                c_error_extra_tokens_at_end_of_directive(self->logger, CTK_PP_ELIF, c_token_get_loc(last));
+                c_error_extra_tokens_at_end_of_directive(self->context, CTK_PP_ELIF, c_token_get_loc(last));
                 return false;
         }
 
@@ -274,7 +273,7 @@ static c_source* c_preprocessor_find_source(c_preprocessor* self, c_token* tok)
         tree_location loc = c_token_get_loc(tok);
         if (!c_token_is(tok, CTK_CONST_STRING) && !c_token_is(tok, CTK_ANGLE_STRING))
         {
-                c_error_expected_file_name(self->logger, loc);
+                c_error_expected_file_name(self->context, loc);
                 return NULL;
         }
 
@@ -283,14 +282,14 @@ static c_source* c_preprocessor_find_source(c_preprocessor* self, c_token* tok)
 
         if (!*filename)
         {
-                c_error_empty_file_name_in_include(self->logger, loc);
+                c_error_empty_file_name_in_include(self->context, loc);
                 return NULL;
         }
 
         c_source* source = c_source_find(&self->context->source_manager, filename);
         if (!source)
         {
-                c_error_cannot_open_source_file(self->logger, loc, filename);
+                c_error_cannot_open_source_file(self->context, loc, filename);
                 return NULL;
         }
         return source;
@@ -340,7 +339,7 @@ static bool c_preprocessor_read_macro_body(c_preprocessor* self, c_macro* macro)
                 if (c_token_is(bounds[i], CTK_HASH2))
                 {
                         c_error_hash2_cannot_appear_at_either_end_of_macro_expansion(
-                                self->logger, c_token_get_loc(bounds[i]));
+                                self->context, c_token_get_loc(bounds[i]));
                         return false;
                 }
 
@@ -354,7 +353,7 @@ static bool c_preprocessor_read_macro_params(c_preprocessor* self, c_macro* macr
                 c_token* t = c_preprocess_non_wspace(self);
                 if (!c_token_is(t, CTK_ID))
                 {
-                        c_error_expected_identifier(self->logger, c_token_get_loc(t));
+                        c_error_expected_identifier(self->context, c_token_get_loc(t));
                         return false;
                 }
 
@@ -367,13 +366,13 @@ static bool c_preprocessor_read_macro_params(c_preprocessor* self, c_macro* macr
                 else if (c_token_is(t, CTK_EOD))
                 {
                         c_error_missing_closing_bracket_in_macro_parameter_list(
-                                self->logger, c_token_get_loc(t));
+                                self->context, c_token_get_loc(t));
                         return false;
                 }
                 else if (!c_token_is(t, CTK_COMMA))
                 {
                         c_error_macro_parameters_must_be_comma_separated(
-                                self->logger, c_token_get_loc(t));
+                                self->context, c_token_get_loc(t));
                         return false;
                 }
         }
@@ -401,7 +400,7 @@ extern bool c_preprocessor_handle_define_directive(c_preprocessor* self)
                 has_body = false;
         else if (!c_token_is(t, CTK_WSPACE))
         {
-                c_error_whitespace_after_macro_name_required(self->logger, c_token_get_loc(t));
+                c_error_whitespace_after_macro_name_required(self->context, c_token_get_loc(t));
                 return false;
         }
 
@@ -424,7 +423,7 @@ extern bool c_preprocessor_handle_error_directive(c_preprocessor* self, c_token*
         }
 
         // todo
-        c_error_error_directive(self->logger, c_token_get_loc(tok), "");
+        c_error_error_directive(self->context, c_token_get_loc(tok), "");
         return false;
 }
 
@@ -436,7 +435,7 @@ extern bool c_preprocessor_handle_pragma_directive(c_preprocessor* self)
 
         if (!c_token_is(t, CTK_ID) || c_token_get_string(t) != self->id.link)
         {
-                c_error_unknown_pragma(self->logger, c_token_get_loc(t));
+                c_error_unknown_pragma(self->context, c_token_get_loc(t));
                 return false;
         }
         if (!(t = c_preprocess_non_macro(self)))
@@ -445,14 +444,14 @@ extern bool c_preprocessor_handle_pragma_directive(c_preprocessor* self)
         tree_location loc = c_token_get_loc(t);
         if (!c_token_is(t, CTK_CONST_STRING))
         {
-                c_error_expected_library_name(self->logger,  loc);
+                c_error_expected_library_name(self->context,  loc);
                 return false;
         }
 
         const char* lib = tree_get_id_string(self->context->tree, c_token_get_string(t));
         if (!*lib)
         {
-                c_error_empty_library_name(self->logger, loc);
+                c_error_empty_library_name(self->context, loc);
                 return false;
         }
 

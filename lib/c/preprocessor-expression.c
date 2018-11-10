@@ -2,7 +2,7 @@
 #include "scc/c/preprocessor.h"
 #include "numeric-literal.h"
 #include "scc/c/context.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "scc/c/token.h"
 #include "misc.h"
 #include "scc/tree/context.h"
@@ -20,7 +20,7 @@ static bool c_preprocessor_require(const c_preprocessor* self, c_token_kind k, c
 {
         if (!c_token_is(t, k))
         {
-                c_error_missing_token_in_expression(self->logger, k, c_token_get_loc(t));
+                c_error_missing_token_in_expression(self->context, k, c_token_get_loc(t));
                 return false;
         }
         return true;
@@ -47,7 +47,7 @@ static bool c_preprocessor_evaluate_primary_expr(c_preprocessor* self, c_token* 
         {
                 const char* num_string = tree_get_id_string(self->context->tree, c_token_get_string(tok));
                 c_numeric_literal literal;
-                c_parse_numeric_literal(num_string, loc, &literal, self->logger);
+                c_parse_numeric_literal(num_string, loc, &literal, self->context);
                 switch (literal.kind)
                 {
                         case CNLK_INTEGER:
@@ -57,7 +57,7 @@ static bool c_preprocessor_evaluate_primary_expr(c_preprocessor* self, c_token* 
 
                         case CNLK_SP_FLOATING:
                         case CNLK_DP_FLOATING:
-                                c_error_floating_constant_in_preprocessor_expression(self->logger, loc);
+                                c_error_floating_constant_in_preprocessor_expression(self->context, loc);
                                 return false;
                         default:
                                 return false;
@@ -73,9 +73,9 @@ static bool c_preprocessor_evaluate_primary_expr(c_preprocessor* self, c_token* 
         }
 
         if (!c_token_is(tok, CTK_EOD))
-                c_error_token_is_not_valid_in_preprocessor_expressions(self->logger, tok);
+                c_error_token_is_not_valid_in_preprocessor_expressions(self->context, tok);
         else
-                c_error_expected_expr(self->logger, c_token_get_loc(tok));
+                c_error_expected_expr(self->context, c_token_get_loc(tok));
         return false;
 }
 
@@ -159,7 +159,7 @@ static bool c_preprocessor_evaluate_binary_expr(
                         if (int_div(lhs, rhs) == OR_DIV_BY_ZERO)
                         {
                                 c_error_division_by_zero_in_preprocessor_expression(
-                                        self->logger, oploc);
+                                        self->context, oploc);
                                 return false;
                         }
                         return true;
@@ -167,7 +167,7 @@ static bool c_preprocessor_evaluate_binary_expr(
                         if (int_mod(lhs, rhs) == OR_DIV_BY_ZERO)
                         {
                                 c_error_division_by_zero_in_preprocessor_expression(
-                                        self->logger, oploc);
+                                        self->context, oploc);
                                 return false;
                         }
                         return true;
@@ -227,7 +227,7 @@ static bool c_preprocessor_evaluate_binary_expr(
                                 !int_is_zero(lhs) || !int_is_zero(rhs) ? 1 : 0);
                         return true;
                 default:
-                        c_error_token_is_not_valid_in_preprocessor_expressions(self->logger, op);
+                        c_error_token_is_not_valid_in_preprocessor_expressions(self->context, op);
                         return false;
         }
 }

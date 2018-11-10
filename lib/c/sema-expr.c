@@ -3,7 +3,7 @@
 #include "scc/c/sema-decl.h"
 #include "scc/c/sema-conv.h"
 #include "misc.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "scc/tree/eval.h"
 #include "scc/tree/context.h"
 #include "scc/tree/target.h"
@@ -14,7 +14,7 @@ extern bool c_sema_require_object_pointer_expr_type(
 {
         if (!tree_type_is_object_pointer(tree_desugar_ctype(t)))
         {
-                c_error_expr_must_have_pointer_to_object_type(self->logger, l);
+                c_error_expr_must_have_pointer_to_object_type(self->ccontext, l);
                 return false;
         }
         return true;
@@ -25,7 +25,7 @@ extern bool c_sema_require_function_pointer_expr_type(
 {
         if (!tree_type_is_function_pointer(tree_desugar_ctype(t)))
         {
-                c_error_expr_must_have_pointer_to_function_type(self->logger, l);
+                c_error_expr_must_have_pointer_to_function_type(self->ccontext, l);
                 return false;
         }
         return true;
@@ -36,7 +36,7 @@ extern bool c_sema_require_integral_expr_type(
 {
         if (!tree_type_is_integer(tree_desugar_ctype(t)))
         {
-                c_error_expr_must_have_integral_type(self->logger, l);
+                c_error_expr_must_have_integral_type(self->ccontext, l);
                 return false;
         }
         return true;
@@ -53,7 +53,7 @@ extern bool c_sema_require_real_expr_type(
 {
         if (!tree_type_is_real(tree_desugar_ctype(t)))
         {
-                c_error_expr_must_have_real_type(self->logger, l);
+                c_error_expr_must_have_real_type(self->ccontext, l);
                 return false;
         }
         return true;
@@ -64,7 +64,7 @@ extern bool c_sema_require_record_expr_type(
 {
         if (!tree_type_is_record(tree_desugar_ctype(t)))
         {
-                c_error_expr_must_have_record_type(self->logger, l);
+                c_error_expr_must_have_record_type(self->ccontext, l);
                 return false;
         }
         return true;
@@ -75,7 +75,7 @@ extern bool c_sema_require_array_expr_type(
 {
         if (!tree_type_is_array(tree_desugar_ctype(t)))
         {
-                c_error_expr_must_have_array_type(self->logger, l);
+                c_error_expr_must_have_array_type(self->ccontext, l);
                 return false;
         }
         return true;
@@ -86,7 +86,7 @@ extern bool c_sema_require_scalar_expr_type(
 {
         if (!tree_type_is_scalar(tree_desugar_ctype(t)))
         {
-                c_error_expr_must_have_scalar_type(self->logger, l);
+                c_error_expr_must_have_scalar_type(self->ccontext, l);
                 return false;
         }
         return true;
@@ -103,7 +103,7 @@ extern bool c_sema_require_arithmetic_expr_type(
 {
         if (!tree_type_is_arithmetic(tree_desugar_ctype(t)))
         {
-                c_error_expr_must_have_arithmetic_type(self->logger, l);
+                c_error_expr_must_have_arithmetic_type(self->ccontext, l);
                 return false;
         }
         return true;
@@ -115,7 +115,7 @@ extern bool c_sema_require_real_or_object_pointer_expr_type(
         t = tree_desugar_ctype(t);
         if (!tree_type_is_real(t) && !tree_type_is_pointer(t))
         {
-                c_error_expr_must_have_real_or_pointer_to_object_type(self->logger, l);
+                c_error_expr_must_have_real_or_pointer_to_object_type(self->ccontext, l);
                 return false;
         }
         return true;
@@ -127,7 +127,7 @@ extern bool c_sema_require_lvalue_or_function_designator(
         tree_type* t = tree_desugar_type(tree_get_expr_type(e));
         if (!tree_expr_is_lvalue(e) && tree_get_type_kind(t) != TTK_FUNCTION)
         {
-                c_error_expr_must_be_lvalue_or_function_designator(self->logger, e);
+                c_error_expr_must_be_lvalue_or_function_designator(self->ccontext, e);
                 return false;
         }
         return true;
@@ -137,7 +137,7 @@ extern bool c_sema_require_modifiable_lvalue(const c_sema* self, const tree_expr
 {
         if (!tree_expr_is_modifiable_lvalue(e))
         {
-                c_error_expr_must_be_modifiable_lvalue(self->logger, e);
+                c_error_expr_must_be_modifiable_lvalue(self->ccontext, e);
                 return false;
         }
         return true;
@@ -148,7 +148,7 @@ extern bool c_sema_require_compatible_expr_types(
 {
         if (!c_sema_types_are_compatible(self, a, b, unqualify))
         {
-                c_error_types_are_not_compatible(self->logger, l);
+                c_error_types_are_not_compatible(self->ccontext, l);
                 return false;
         }
         return true;
@@ -173,7 +173,7 @@ static bool c_sema_check_object_type(c_sema* self, tree_location loc, tree_type*
         if (c_sema_in_transaction_safe_block(self) && (tree_get_type_quals(type) & TTQ_VOLATILE))
         {
                 c_error_reffering_volatile_object_is_not_allowed(
-                        self->logger, loc, c_sema_in_atomic_block(self));
+                        self->ccontext, loc, c_sema_in_atomic_block(self));
                 return false;
         }
         return true;
@@ -188,7 +188,7 @@ extern tree_expr* c_sema_new_decl_expr(c_sema* self, tree_id id, tree_location i
         tree_decl_kind dk = tree_get_decl_kind(d);
         if (dk != TDK_VAR && dk != TDK_FUNCTION && dk != TDK_ENUMERATOR && dk != TDK_PARAM)
         {
-                c_error_undeclared_identifier(self->logger, id_loc, id);
+                c_error_undeclared_identifier(self->ccontext, id_loc, id);
                 return NULL;
         }
 
@@ -263,7 +263,7 @@ extern tree_expr* c_sema_new_subscript_expr(
         tree_type* base_type = tree_get_expr_type(base);
         if (!tree_type_is_object_pointer(base_type))
         {
-                c_error_subscripted_value_isnt_array(self->logger, loc);
+                c_error_subscripted_value_isnt_array(self->ccontext, loc);
                 return NULL;
         }
         if (!c_sema_require_integer_expr(self, index))
@@ -282,7 +282,7 @@ static bool c_sema_check_call_argument(
         c_assignment_conversion_result r;
         if (!c_sema_assignment_conversion(self, arg_type, arg, &r))
         {
-                c_error_invalid_argument_assignment(self->logger, tree_get_expr_loc(*arg), pos, &r);
+                c_error_invalid_argument_assignment(self->ccontext, tree_get_expr_loc(*arg), pos, &r);
                 return false;
         }
         return true;
@@ -309,7 +309,7 @@ extern tree_expr* c_sema_new_call_expr(
         if (c_sema_in_transaction_safe_block(self) && !tree_func_type_is_transaction_safe(ft))
         {
                 c_error_transaction_unsafe_function_is_not_allowed(
-                        self->logger, loc, c_sema_in_atomic_block(self));
+                        self->ccontext, loc, c_sema_in_atomic_block(self));
                 return NULL;
         }
 
@@ -337,12 +337,12 @@ extern tree_expr* c_sema_check_call_expr_args(c_sema* self, tree_expr* call)
 
         if (num_args < num_params)
         {
-                c_error_too_few_arguments(self->logger, lhs);
+                c_error_too_few_arguments(self->ccontext, lhs);
                 return NULL;
         }
         if (!tree_func_type_is_vararg(ft) && num_args > num_params)
         {
-                c_error_too_many_arguments(self->logger, lhs);
+                c_error_too_many_arguments(self->ccontext, lhs);
                 return NULL;
         }
 
@@ -550,14 +550,14 @@ extern tree_expr* c_sema_new_sizeof_expr(
         tree_type* type = contains_type ? operand : tree_get_expr_type(operand);
         if (tree_type_is(type, TTK_FUNCTION))
         {
-                c_error_operand_of_sizeof_is_function(self->logger, loc);
+                c_error_operand_of_sizeof_is_function(self->ccontext, loc);
                 return NULL;
         }
         if (!c_sema_require_complete_type(self, loc, type))
                 return NULL;
         if (!contains_type && tree_expr_designates_bitfield(operand))
         {
-                c_error_operand_of_sizeof_is_bitfield(self->logger, loc);
+                c_error_operand_of_sizeof_is_bitfield(self->ccontext, loc);
                 return NULL;
         }
 
@@ -671,7 +671,7 @@ static tree_type* c_sema_check_relational_expr(
         }
         else
         {
-                c_error_invalid_binop_operands(self->logger, loc, opcode);
+                c_error_invalid_binop_operands(self->ccontext, loc, opcode);
                 return NULL;
         }
 
@@ -712,7 +712,7 @@ static tree_type* c_sema_check_compare_expr(
                 if ((tree_type_is_incomplete(ltarget) && !tree_type_is_void(rtarget))
                         || (tree_type_is_incomplete(rtarget) && !tree_type_is_void(ltarget)))
                 {
-                        c_error_cmp_of_distinct_pointers(self->logger, loc);
+                        c_error_cmp_of_distinct_pointers(self->ccontext, loc);
                         return NULL;
                 }
                 else if (!c_sema_require_compatible_expr_types(self, ltarget, rtarget, loc, true))
@@ -722,7 +722,7 @@ static tree_type* c_sema_check_compare_expr(
         }
         else
         {
-                c_error_invalid_binop_operands(self->logger, loc, opcode);
+                c_error_invalid_binop_operands(self->ccontext, loc, opcode);
                 return NULL;
         }
         return c_sema_get_logical_operation_type(self);
@@ -775,7 +775,7 @@ static tree_type* c_sema_check_add_expr(
 
                 return rt;
         }
-        c_error_invalid_binop_operands(self->logger, loc, is_assign ? TBK_ADD_ASSIGN : TBK_ADD);
+        c_error_invalid_binop_operands(self->ccontext, loc, is_assign ? TBK_ADD_ASSIGN : TBK_ADD);
         return NULL;
 }
 
@@ -809,7 +809,7 @@ static tree_type* c_sema_check_sub_expr(
 
                 return lt;
         }
-        c_error_invalid_binop_operands(self->logger, loc, is_assign ? TBK_SUB_ASSIGN : TBK_SUB);
+        c_error_invalid_binop_operands(self->ccontext, loc, is_assign ? TBK_SUB_ASSIGN : TBK_SUB);
         return NULL;
 }
 
@@ -843,7 +843,7 @@ static tree_type* c_sema_check_assign_expr(
         if (t)
                 return t;
 
-        c_error_invalid_assignment(self->logger, loc, *rhs, &r);
+        c_error_invalid_assignment(self->ccontext, loc, *rhs, &r);
         return NULL;
 }
 
@@ -873,7 +873,7 @@ static tree_type* c_sema_check_add_sub_assign_expr(
         }
         else
         {
-                c_error_invalid_binop_operands(self->logger, loc, opcode);
+                c_error_invalid_binop_operands(self->ccontext, loc, opcode);
                 return NULL;
         }
 
@@ -1004,7 +1004,7 @@ static tree_type* c_sema_check_conditional_operator_pointer_types(
                 }
                 else
                 {
-                        c_error_pointer_type_mismatch(self->logger, loc);
+                        c_error_pointer_type_mismatch(self->ccontext, loc);
                         return NULL;
                 }
                 quals = tree_get_type_quals(ltarget) | tree_get_type_quals(rtarget);
@@ -1091,7 +1091,7 @@ static c_initialized_object* c_sema_check_field_designator(
 {
         if (parent->kind != CIOK_STRUCT && parent->kind != CIOK_UNION)
         {
-                c_error_field_name_not_in_record_initializer(self->logger, designator);
+                c_error_field_name_not_in_record_initializer(self->ccontext, designator);
                 return NULL;
         }
 
@@ -1120,7 +1120,7 @@ static c_initialized_object* c_sema_check_array_designator(
 {
         if (parent->kind != CIOK_ARRAY)
         {
-                c_error_array_index_in_non_array_intializer(self->logger, designator);
+                c_error_array_index_in_non_array_intializer(self->ccontext, designator);
                 return false;
         }
 
@@ -1129,9 +1129,9 @@ static c_initialized_object* c_sema_check_array_designator(
         if (!tree_eval_expr_as_integer(self->context, index, &eval_result))
         {
                 if (eval_result.kind == TERK_FLOATING)
-                        c_error_array_index_in_initializer_not_of_integer_type(self->logger, index);
+                        c_error_array_index_in_initializer_not_of_integer_type(self->ccontext, index);
                 else
-                        c_error_nonconstant_array_index_in_initializer(self->logger, index);
+                        c_error_nonconstant_array_index_in_initializer(self->ccontext, index);
                 return false;
         }
 
@@ -1140,7 +1140,7 @@ static c_initialized_object* c_sema_check_array_designator(
         {
                 if (index_val >= tree_get_array_size(parent->type))
                 {
-                        c_error_array_index_in_initializer_exceeds_array_bounds(self->logger, index);
+                        c_error_array_index_in_initializer_exceeds_array_bounds(self->ccontext, index);
                         return false;
                 }
         }
@@ -1219,7 +1219,7 @@ static c_initializer_kind c_sema_maybe_handle_special_array_initializer(
                 && !tree_builtin_type_is(eltype, TBTK_INT8))
         {
                 // todo
-                c_error_wide_character_array_initialized_from_non_wide_string(self->logger, expr);
+                c_error_wide_character_array_initialized_from_non_wide_string(self->ccontext, expr);
                 return CIK_INVALID;
         }
 
@@ -1237,7 +1237,7 @@ static c_initializer_kind c_sema_maybe_handle_special_array_initializer(
       
         if (is_constant_array && tree_get_array_size(array->type) < num_elems)
         {
-                c_error_initializer_string_is_too_long(self->logger, expr);
+                c_error_initializer_string_is_too_long(self->ccontext, expr);
                 return CIK_INVALID;
         }
 
@@ -1264,7 +1264,7 @@ static bool _c_sema_check_array_or_record_initializer(
 
         if (init_kind == CIK_ORDINARY && top_level && !tree_expr_is(*init->expr, TEK_INIT_LIST))
         {
-                c_error_invalid_initializer(self->logger, *init->expr);
+                c_error_invalid_initializer(self->ccontext, *init->expr);
                 return false;
         }
 
@@ -1290,7 +1290,7 @@ static bool _c_sema_check_array_or_record_initializer(
                         {
                                 if (!top_level)
                                         return true;
-                                c_error_too_many_initializer_values(self->logger, tree_get_expr_loc(*init->pos));
+                                c_error_too_many_initializer_values(self->ccontext, tree_get_expr_loc(*init->pos));
                                 return false;
                         }
 
@@ -1326,7 +1326,7 @@ static bool c_sema_check_scalar_initializer(
         {
                 if (tree_get_init_list_exprs_size(*init->expr) > 1)
                 {
-                        c_error_too_many_initializer_values(self->logger,
+                        c_error_too_many_initializer_values(self->ccontext,
                                 tree_get_expr_loc(tree_get_init_list_expr(*init->expr, 1)));
                         return false;
                 }
@@ -1335,7 +1335,7 @@ static bool c_sema_check_scalar_initializer(
         tree_expr** expr = init->pos;
         if (tree_expr_is(*expr, TEK_INIT_LIST))
         {
-                c_error_braces_around_scalar_initializer(self->logger, tree_get_expr_loc(*expr));
+                c_error_braces_around_scalar_initializer(self->ccontext, tree_get_expr_loc(*expr));
                 return false;
         }
         else if (tree_expr_is(*expr, TEK_DESIGNATION))
@@ -1349,14 +1349,14 @@ static bool c_sema_check_scalar_initializer(
         c_assignment_conversion_result r;
         if (!c_sema_assignment_conversion(self, type, expr, &r))
         {
-                c_error_invalid_scalar_initialization(self->logger, *expr, &r);
+                c_error_invalid_scalar_initialization(self->ccontext, *expr, &r);
                 return false;
         }
 
         tree_eval_result eval_result;
         if (c_sema_at_file_scope(self) && !tree_eval_expr(self->context, *expr, &eval_result))
         {
-                c_error_initializer_element_isnt_constant(self->logger, *expr);
+                c_error_initializer_element_isnt_constant(self->ccontext, *expr);
                 return false;
         }
 

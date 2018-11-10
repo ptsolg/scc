@@ -4,8 +4,6 @@ add_scc_target_sources(c
 	token-kind.h
 	limits.h
 	charset.h
-	error.h
-	errors.h
 	token.h
 	source.h
 	lexer.h

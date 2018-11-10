@@ -15,7 +15,6 @@ extern "C" {
 typedef struct _readbuf readbuf;
 typedef struct _c_reswords c_reswords;
 typedef struct _c_source c_source;
-typedef struct _c_logger c_logger;
 typedef struct _c_context c_context;
 typedef struct _c_token c_token;
 
@@ -32,7 +31,6 @@ typedef struct _c_token_lexer
         bool eod_before_eof_returned;
 
         c_source* source;
-        c_logger* logger;
         c_context* context;
 
         tree_location loc;
@@ -40,7 +38,7 @@ typedef struct _c_token_lexer
         int tab_to_space;
 } c_token_lexer;
 
-extern void c_token_lexer_init(c_token_lexer* self, c_context* context, c_logger* logger);
+extern void c_token_lexer_init(c_token_lexer* self, c_context* context);
 
 extern void c_token_lexer_enter_char_stream(
         c_token_lexer* self, readbuf* input, tree_location start_loc);

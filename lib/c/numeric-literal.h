@@ -3,7 +3,7 @@
 
 #include "scc/tree/common.h"
 
-typedef struct _c_logger c_logger;
+typedef struct _c_context c_context;
 
 typedef enum
 {
@@ -45,6 +45,6 @@ extern bool c_parse_numeric_literal(
         const char* num,
         tree_location num_loc,
         c_numeric_literal* result,
-        c_logger* logger);
+        c_context* context);
 
 #endif

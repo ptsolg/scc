@@ -1,9 +1,8 @@
 #include "scc/c/preprocessor.h"
 #include "scc/c/preprocessor-directive.h"
 #include "scc/c/token.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "scc/c/context.h"
-#include "scc/c/error.h"
 #include "scc/c/reswords.h"
 #include "misc.h"
 #include "scc/c/macro.h"
@@ -92,10 +91,7 @@ static void c_preprocessor_init_builtin_macro(c_preprocessor* self)
 }
 
 extern void c_preprocessor_init(
-        c_preprocessor* self,
-        const c_reswords* reswords,
-        c_logger* logger,
-        c_context* context)
+        c_preprocessor* self, const c_reswords* reswords, c_context* context)
 {
         self->lexer = NULL;
         self->token_lexer_depth = -1;
@@ -104,7 +100,6 @@ extern void c_preprocessor_init(
         self->lookahead.next_expanded_token = NULL;
         strmap_init_ex(&self->macro_lookup, c_context_get_allocator(context));
         self->reswords = reswords;
-        self->logger = logger;
         self->context = context;
         self->id.defined = tree_get_id_for_string(self->context->tree, "defined");
         self->id.link = tree_get_id_for_string(self->context->tree, "link");
@@ -124,7 +119,7 @@ extern errcode c_preprocessor_enter_source(c_preprocessor* self, c_source* sourc
         assert(source);
 
         self->lexer = c_push_token_lexer(
-                &self->lexer_stack, self->logger, self->context);
+                &self->lexer_stack, self->context);
         c_preprocessor_set_file(self, source);
         self->token_lexer_depth = c_lexer_stack_depth(&self->lexer_stack) - 1;
         return c_token_lexer_enter(&self->lexer->token_lexer, source);
@@ -136,7 +131,7 @@ static void c_preprocessor_enter_macro(
         assert(macro);
         macro->used = true;
         self->lexer = c_push_macro_lexer(
-                &self->lexer_stack, self->context, macro, self->logger, loc);
+                &self->lexer_stack, self->context, macro, loc);
 }
 
 extern void c_preprocessor_exit(c_preprocessor* self)
@@ -173,7 +168,7 @@ extern bool c_preprocessor_define_macro(c_preprocessor* self, c_macro* macro)
 {
         if (c_preprocessor_macro_defined(self, macro->name))
         {
-                c_error_macro_redefenition(self->logger, macro->name, macro->loc);
+                c_error_macro_redefenition(self->context, macro->name, macro->loc);
                 return false;
         }
         strmap_insert(&self->macro_lookup, macro->name, macro);
@@ -210,7 +205,7 @@ extern c_token* c_preprocess_non_comment(c_preprocessor* self)
 
                 if (c_cond_stack_depth(self->lexer))
                 {
-                        c_error_unterminated_directive(self->logger, 
+                        c_error_unterminated_directive(self->context,
                                 c_get_cond_directive(self->lexer)->token);
                         return NULL;
                 }
@@ -252,7 +247,7 @@ extern c_token* c_preprocess_non_directive(c_preprocessor* self)
                 //      A
                 if (self->lexer->kind != CPLK_TOKEN)
                 {
-                        c_error_stray_symbol(self->logger, c_token_get_loc(t), '#');
+                        c_error_stray_symbol(self->context, c_token_get_loc(t), '#');
                         return NULL;
                 }
 
@@ -295,7 +290,7 @@ static bool c_preprocessor_check_macro_args_overflow(c_preprocessor* self, c_pre
         if (pp_args->num_args > pp_args->num_params)
         {
                 c_error_macro_argument_list_overflow(
-                        self->logger, pp_args->macro, pp_args->num_args, pp_args->loc);
+                        self->context, pp_args->macro, pp_args->num_args, pp_args->loc);
                 return false;
         }
         return true;
@@ -306,7 +301,7 @@ static bool c_preprocessor_check_macro_args_underflow(c_preprocessor* self, c_pr
         if (pp_args->num_args < pp_args->num_params)
         {
                 c_error_macro_argument_list_underflow(
-                        self->logger, pp_args->macro, pp_args->num_args, pp_args->loc);
+                        self->context, pp_args->macro, pp_args->num_args, pp_args->loc);
                 return false;
         }
         return true;
@@ -352,7 +347,7 @@ static bool c_preprocessor_read_macro_args(
 
                 if (c_token_is(t, CTK_EOF))
                 {
-                        c_error_unterminated_macro_argument_list(self->logger, macro, loc);
+                        c_error_unterminated_macro_argument_list(self->context, macro, loc);
                         return false;
                 }
                 else if (c_token_is(t, CTK_LBRACKET))

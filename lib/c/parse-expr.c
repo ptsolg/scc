@@ -2,7 +2,7 @@
 #include "scc/c/parse-decl.h"
 #include "misc.h"
 #include "scc/c/sema-expr.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 
 const c_token_kind ctk_rbracket_or_comma[] =
 {
@@ -56,7 +56,7 @@ extern tree_expr* c_parse_primary_expr(c_parser* self)
                         loc, c_token_get_int(t), signed_, ext);
         }
        
-        c_error_expected_expr(self->logger, loc);
+        c_error_expected_expr(self->context, loc);
         return NULL;
 }
 
@@ -333,7 +333,7 @@ static tree_expr* c_parse_initializer_list(c_parser* self, tree_location lbrace_
 {
         if (c_parser_at(self, CTK_RBRACE))
         {
-                c_error_empty_initializer(self->logger, c_parser_get_loc(self));
+                c_error_empty_initializer(self->context, c_parser_get_loc(self));
                 return NULL;
         }
 

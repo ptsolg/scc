@@ -1,6 +1,6 @@
 add_scc_lib(c
 	reswords.c
-	error.c
+	errors.h
 	errors.c
 	token.c
 	source.c

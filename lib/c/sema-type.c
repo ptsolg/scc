@@ -1,6 +1,6 @@
 #include "scc/c/sema-type.h"
 #include "scc/c/sema-decl.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "scc/tree/eval.h"
 #include "scc/tree/target.h"
 #include "scc/tree/context.h"
@@ -27,7 +27,7 @@ extern bool c_sema_require_complete_type(const c_sema* self, tree_location loc, 
 {
         if (tree_type_is_incomplete(type))
         {
-                c_error_incomplete_type(self->logger, loc);
+                c_error_incomplete_type(self->ccontext, loc);
                 return false;
         }
         return true;
@@ -172,7 +172,7 @@ extern bool c_sema_check_array_type(const c_sema* self, const tree_type* t, tree
 
         if (tree_type_is(tree_desugar_type(el), TTK_FUNCTION))
         {
-                c_error_array_of_functions(self->logger, l);
+                c_error_array_of_functions(self->ccontext, l);
                 return false;
         }
 
@@ -185,7 +185,7 @@ extern bool c_sema_check_array_type(const c_sema* self, const tree_type* t, tree
 
         if (!tree_type_is_integer(tree_get_expr_type(size_expr)))
         {
-                c_error_array_size_isnt_integer(self->logger, l);
+                c_error_array_size_isnt_integer(self->ccontext, l);
                 return false;
         }
 
@@ -193,7 +193,7 @@ extern bool c_sema_check_array_type(const c_sema* self, const tree_type* t, tree
         if (int_is_zero(size_value)
                 || (int_is_signed(size_value) && int_get_i64(size_value) < 0))
         {
-                c_error_array_must_be_greater_than_zero(self->logger, l);
+                c_error_array_must_be_greater_than_zero(self->ccontext, l);
                 return false;
         }
 
@@ -207,12 +207,12 @@ extern bool c_sema_check_function_type(const c_sema* self, const tree_type* t, t
         tree_type* r = tree_desugar_type(tree_get_func_type_result(t));
         if (tree_type_is(r, TTK_ARRAY))
         {
-                c_error_function_returning_array(self->logger, l);
+                c_error_function_returning_array(self->ccontext, l);
                 return false;
         }
         else if (tree_type_is(r, TTK_FUNCTION))
         {
-                c_error_function_returning_function(self->logger, l);
+                c_error_function_returning_function(self->ccontext, l);
                 return false;
         }
         return true;
@@ -223,7 +223,7 @@ extern bool c_sema_check_type_quals(const c_sema* self, const tree_type* t, tree
         tree_type_quals q = tree_get_type_quals(t);
         if ((q & TTQ_RESTRICT) && !tree_type_is_pointer(t))
         {
-                c_error_invalid_use_of_restrict(self->logger, l);
+                c_error_invalid_use_of_restrict(self->ccontext, l);
                 return false;
         }
         return true;

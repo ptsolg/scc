@@ -5,7 +5,7 @@
 #include "scc/c/parse-expr.h" // cparse_const_expr
 #include "misc.h"
 #include "scc/c/context.h"
-#include "scc/c/errors.h"
+#include "errors.h"
 #include "builtin-type.h"
 
 static tree_decl* c_parse_function_or_init_declarator(
@@ -31,7 +31,7 @@ static tree_decl* c_parse_function_or_init_declarator(
                 if (dk != TDK_VAR)
                 {
                         if (dk == TDK_FUNCTION)
-                                c_error_function_initialized_like_a_variable(self->logger, decl);
+                                c_error_function_initialized_like_a_variable(self->context, decl);
                         return NULL;
                 }
 
@@ -206,9 +206,9 @@ extern bool c_parse_decl_specs(c_parser* self, c_decl_specs* result)
         if (!result->typespec)
         {
                 if (c_parser_at(self, CTK_ID))
-                        c_error_unknown_type_name(self->logger, c_parser_get_token(self));
+                        c_error_unknown_type_name(self->context, c_parser_get_token(self));
                 else
-                        c_error_expected_type_specifier(self->logger,
+                        c_error_expected_type_specifier(self->context,
                                 c_decl_specs_get_loc_begin(result));
                 return false;
         }
@@ -250,7 +250,7 @@ static tree_type* c_parse_builtin_type_specifier(c_parser* self)
 
                 if (!correct)
                 {
-                        c_error_invalid_type_specifier(self->logger, begin);
+                        c_error_invalid_type_specifier(self->context, begin);
                         return NULL;
                 }
                 c_parser_consume_token(self);
@@ -259,7 +259,7 @@ static tree_type* c_parse_builtin_type_specifier(c_parser* self)
         tree_builtin_type_kind k = c_builtin_type_get_kind(&type);
         if (k == TBTK_INVALID)
         {
-                c_error_expected_type_specifier(self->logger, c_parser_get_loc(self));
+                c_error_expected_type_specifier(self->context, c_parser_get_loc(self));
                 return NULL;
         }
         return c_sema_get_builtin_type(self->sema, TTQ_UNQUALIFIED, k);
@@ -363,7 +363,7 @@ static bool c_parse_struct_declaration_list(c_parser* self, tree_decl* record)
 {
         if (c_parser_at(self, CTK_RBRACE))
         {
-                c_error_empty_struct(self->logger, c_parser_get_loc(self));
+                c_error_empty_struct(self->context, c_parser_get_loc(self));
                 return false;
         }
 
@@ -457,7 +457,7 @@ static bool c_parse_enumerator_list(c_parser* self, tree_decl* enum_)
 {
         if (c_parser_at(self, CTK_RBRACE))
         {
-                c_error_empty_enum(self->logger, c_parser_get_loc(self));
+                c_error_empty_enum(self->context, c_parser_get_loc(self));
                 return false;
         }
         bool res = false;

@@ -11,7 +11,6 @@ extern "C" {
 
 #include "lexer.h"
 
-typedef struct _c_logger c_logger;
 typedef struct _c_sema c_sema;
 typedef struct _tree_scope tree_scope;
 typedef struct _tree_decl_scope tree_decl_scope;
@@ -23,11 +22,11 @@ typedef struct _c_parser
         c_token* buffer[3];
         c_lexer* lexer;
         c_sema* sema;
-        c_logger* logger;
+        c_context* context;
         int* on_error;
 } c_parser;
 
-extern void c_parser_init(c_parser* self, c_lexer* lexer, c_sema* sema, c_logger* logger);
+extern void c_parser_init(c_parser* self, c_context* context, c_lexer* lexer, c_sema* sema);
 
 extern void c_parser_dispose(c_parser* self);
 extern void c_parser_set_on_error(c_parser* self, int* b);

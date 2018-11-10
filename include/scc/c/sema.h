@@ -9,7 +9,6 @@
 extern "C" {
 #endif
 
-#include "error.h"
 #include "context.h"
 
 typedef struct _tree_stmt tree_stmt;
@@ -51,7 +50,6 @@ typedef struct _c_sema
 {
         tree_context* context;
         c_context* ccontext;
-        c_logger* logger;
         tree_decl* function;
         tree_decl_scope* globals;
         tree_decl_scope* labels;
@@ -69,7 +67,7 @@ typedef struct _c_sema
         } tm_info;
 } c_sema;
 
-extern void c_sema_init(c_sema* self, c_context* context, c_logger* logger);
+extern void c_sema_init(c_sema* self, c_context* context);
 extern void c_sema_dispose(c_sema* self);
 
 extern tree_module* c_sema_new_module(c_sema* self);

@@ -16,6 +16,20 @@ extern "C" {
 
 typedef struct _tree_context tree_context;
 
+typedef enum
+{
+        CES_WARNING,
+        CES_ERROR,
+        CES_FATAL_ERROR,
+} c_error_severity;
+
+#define C_MAX_ERROR_LEN 512
+
+typedef struct _c_error_handler
+{
+        void(*on_error)(void*, c_error_severity, c_location, const char*);
+} c_error_handler;
+
 typedef struct _c_context
 {
         mempool memory;
@@ -24,22 +38,33 @@ typedef struct _c_context
         c_source_manager source_manager;
         c_lang_opts lang_opts;
         c_pragma_handlers pragma_handlers;
+        c_error_handler* error_handler;
+        bool errors_disabled;
 } c_context;
 
 extern void c_context_init(
         c_context* self, 
         tree_context* tree, 
         file_lookup* lookup,
+        c_error_handler* error_handler,
         jmp_buf on_bad_alloc);
 
 extern void c_context_init_ex(
         c_context* self,
         tree_context* tree,
         file_lookup* lookup,
+        c_error_handler* error_handler,
         jmp_buf on_bad_alloc,
         allocator* alloc);
 
 extern void c_context_dispose(c_context* self);
+
+extern void c_error(
+        const c_context* self,
+        c_error_severity severity,
+        tree_location location,
+        const char* format,
+        ...);
 
 static inline allocator* c_context_get_allocator(c_context* self)
 {

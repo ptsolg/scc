@@ -43,14 +43,12 @@ typedef struct _c_pp_lexer
         };
 } c_pp_lexer;
 
-extern void c_init_pp_token_lexer(
-        c_pp_lexer* self, c_logger* logger, c_context* context);
+extern void c_init_pp_token_lexer(c_pp_lexer* self, c_context* context);
 
 extern void c_init_pp_macro_token_lexer(
         c_pp_lexer* self,
         c_context* context,
         c_macro* macro,
-        c_logger* logger,
         tree_location loc);
 
 extern void c_dispose_pp_lexer(c_pp_lexer* self);
@@ -82,14 +80,12 @@ extern c_pp_lexer* c_lexer_stack_top(const c_lexer_stack* self);
 extern c_pp_lexer* c_lexer_stack_get(
         const c_lexer_stack* self, size_t depth);
 
-extern c_pp_lexer* c_push_token_lexer(
-        c_lexer_stack* self, c_logger* logger, c_context* context);
+extern c_pp_lexer* c_push_token_lexer(c_lexer_stack* self, c_context* context);
 
 extern c_pp_lexer* c_push_macro_lexer(
         c_lexer_stack* self,
         c_context* context,
         c_macro* macro,
-        c_logger* logger,
         tree_location loc);
 
 #ifdef __cplusplus

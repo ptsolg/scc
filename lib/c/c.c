@@ -5,7 +5,6 @@
 
 typedef struct _c_env
 {
-        c_logger logger;
         c_lexer lexer;
         c_sema sema;
         c_parser parser;
@@ -15,10 +14,9 @@ typedef struct _c_env
 static void c_env_init(c_env* self, c_context* context, FILE* err)
 {
         self->context = context;
-        c_logger_init(&self->logger, context, err);
-        c_lexer_init(&self->lexer, &self->logger, context);
-        c_sema_init(&self->sema, context, &self->logger);
-        c_parser_init(&self->parser, &self->lexer, &self->sema, &self->logger);
+        c_lexer_init(&self->lexer, context);
+        c_sema_init(&self->sema, context);
+        c_parser_init(&self->parser, context, &self->lexer, &self->sema);
 }
 
 static void c_env_dispose(c_env* self)
