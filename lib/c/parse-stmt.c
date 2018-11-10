@@ -1,8 +1,6 @@
-#include "scc/c/parse-stmt.h"
-#include "scc/c/parse-expr.h"
+#include "scc/c/parser.h"
 #include "scc/c/sema-stmt.h"
 #include "scc/c/sema-decl.h"
-#include "scc/c/parse-decl.h"
 #include "misc.h"
 #include "scc/tree/stmt.h"
 

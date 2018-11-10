@@ -1,5 +1,5 @@
 #include "scc/c/sema.h"
-#include "scc/c/parse-decl.h"
+#include "scc/c/parser.h"
 #include "misc.h"
 #include "errors.h"
 #include "scc/tree/decl.h"

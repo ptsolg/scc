@@ -1,8 +1,6 @@
-#include "scc/c/parse-decl.h"
+#include "scc/c/parser.h"
 #include "scc/c/sema-decl.h"
 #include "scc/c/sema-type.h"
-#include "scc/c/parse-stmt.h"
-#include "scc/c/parse-expr.h" // cparse_const_expr
 #include "misc.h"
 #include "scc/c/context.h"
 #include "errors.h"

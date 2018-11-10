@@ -8,7 +8,6 @@ add_scc_lib(c
 	context.c
 	charset.c
 	parser.c
-	parse-module.c
 	parse-expr.c
 	parse-stmt.c
 	parse-decl.c

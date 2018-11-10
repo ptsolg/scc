@@ -2,6 +2,7 @@
 #include "errors.h"
 #include "misc.h"
 #include "scc/c/reswords.h"
+#include "scc/c/sema.h"
 #include <setjmp.h>
 
 extern void c_parser_init(c_parser* self, c_context* context, c_lexer* lexer, c_sema* sema)
@@ -129,4 +130,13 @@ extern bool c_parser_require_ex(c_parser* self, c_token_kind k, const c_token_ki
 extern tree_location c_parser_get_loc(const c_parser* self)
 {
         return c_token_get_loc(c_parser_get_token(self));
+}
+
+extern tree_module* c_parse_module(c_parser* self)
+{
+        while (!c_parser_at(self, CTK_EOF))
+                if (!c_parse_decl(self))
+                        return NULL;
+
+        return self->sema->module;
 }

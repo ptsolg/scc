@@ -9,10 +9,6 @@ add_scc_target_sources(c
 	lexer.h
 	context.h
 	parser.h
-	parse-module.h
-	parse-expr.h
-	parse-stmt.h
-	parse-decl.h
 	sema.h
 	sema-conv.h
 	sema-expr.h
