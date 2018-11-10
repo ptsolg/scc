@@ -1,7 +1,4 @@
-#include "scc/c/sema-expr.h"
-#include "scc/c/sema-type.h"
-#include "scc/c/sema-decl.h"
-#include "scc/c/sema-conv.h"
+#include "scc/c/sema.h"
 #include "misc.h"
 #include "errors.h"
 #include "scc/tree/eval.h"

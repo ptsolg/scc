@@ -4,12 +4,11 @@
 #include "scc/c/macro.h"
 #include "misc.h"
 #include "scc/c/reswords-info.h"
-#include "scc/c/sema-decl.h"
+#include "scc/c/sema.h"
 #include "scc/c/context.h"
 #include "scc/tree/context.h"
 #include "scc/tree/decl.h"
 #include "scc/tree/stmt.h"
-#include "scc/c/sema-conv.h"
 #include <ctype.h> // isprint
 
 static const char* c_context_get_id_string(c_context* self, tree_id id)

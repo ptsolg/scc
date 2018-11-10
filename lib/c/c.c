@@ -1,5 +1,5 @@
 #include "scc/c/c.h"
-#include "scc/c/parse-module.h"
+#include "scc/c/parser.h"
 #include "scc/c/sema.h"
 #include "scc/tree/module.h"
 

@@ -1,6 +1,6 @@
 #include "scc/c/parser.h"
 #include "misc.h"
-#include "scc/c/sema-expr.h"
+#include "scc/c/sema.h"
 #include "errors.h"
 
 const c_token_kind ctk_rbracket_or_comma[] =

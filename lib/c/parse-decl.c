@@ -1,6 +1,5 @@
 #include "scc/c/parser.h"
-#include "scc/c/sema-decl.h"
-#include "scc/c/sema-type.h"
+#include "scc/c/sema.h"
 #include "misc.h"
 #include "scc/c/context.h"
 #include "errors.h"

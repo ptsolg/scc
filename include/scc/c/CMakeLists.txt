@@ -10,11 +10,6 @@ add_scc_target_sources(c
 	context.h
 	parser.h
 	sema.h
-	sema-conv.h
-	sema-expr.h
-	sema-decl.h
-	sema-type.h
-	sema-stmt.h
 	lang-opts.h
 	preprocessor.h
 	preprocessor-lexer.h
