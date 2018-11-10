@@ -27,8 +27,8 @@ extern ssa_value* ssa_get_global_decl(ssa_module_emitter* self, const tree_decl*
         return entry ? entry->value : NULL;
 }
 
-static bool ssa_load_additional_modules(
-        ssa_module_emitter* self, const tree_module* module, const ssa_additional_modules* ext)
+static bool ssa_load_implicit_modules(
+        ssa_module_emitter* self, const tree_module* module, const ssa_implicitl_modules* ext)
 {
         if (!ext || !ext->tm)
                 return true;
@@ -140,7 +140,7 @@ extern ssa_module* ssa_emit_module(
         ssa_context* context,
         const tree_module* module,
         const ssa_optimizer_opts* opts,
-        const ssa_additional_modules* ext)
+        const ssa_implicitl_modules* ext)
 {
         bool failed = true;
         ssa_module_emitter module_emitter;
@@ -148,7 +148,7 @@ extern ssa_module* ssa_emit_module(
 
         module_emitter.module = ssa_new_module(context);
 
-        if (!ssa_load_additional_modules(&module_emitter, module, ext))
+        if (!ssa_load_implicit_modules(&module_emitter, module, ext))
                 goto cleanup;
 
         const tree_decl_scope* globals = tree_get_module_cglobals(module);

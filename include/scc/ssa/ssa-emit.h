@@ -9,12 +9,12 @@ typedef struct _ssa_optimizer_opts ssa_optimizer_opts;
 typedef struct
 {
         const tree_module* tm;
-} ssa_additional_modules;
+} ssa_implicitl_modules;
 
 extern ssa_module* ssa_emit_module(
         ssa_context* context,
         const tree_module* module,
         const ssa_optimizer_opts* opts,
-        const ssa_additional_modules* ext);
+        const ssa_implicitl_modules* ext);
 
 #endif
