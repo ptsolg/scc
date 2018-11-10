@@ -1,14 +1,14 @@
 add_scc_target_sources(ssa
 	ssa.h
-	ssa-builder.h
-	ssa-context.h
-	ssa-common.h
-	ssa-instr.h
-	ssa-value.h
-	ssa-block.h
-	ssa-module.h
-	ssa-opt.h
-	ssa-pass.h
-	ssa-pretty-print.h
-	ssa-emit.h
+	builder.h
+	context.h
+	common.h
+	instr.h
+	value.h
+	block.h
+	module.h
+	optimize.h
+	pass.h
+	pretty-print.h
+	emit.h
 )

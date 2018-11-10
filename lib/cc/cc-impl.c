@@ -1,13 +1,13 @@
 #include "cc-impl.h"
-#include "scc/c/c-env.h"
-#include "scc/c/c-context.h"
-#include "scc/c/c-printer.h"
-#include "scc/tree/tree-context.h"
-#include "scc/tree/tree-target.h"
-#include "scc/ssa/ssa-context.h"
-#include "scc/ssa/ssa-emit.h"
-#include "scc/ssa/ssa-pretty-print.h"
-#include "scc/ssa/ssa-opt.h"
+#include "scc/c/env.h"
+#include "scc/c/context.h"
+#include "scc/c/printer.h"
+#include "scc/tree/context.h"
+#include "scc/tree/target.h"
+#include "scc/ssa/context.h"
+#include "scc/ssa/emit.h"
+#include "scc/ssa/pretty-print.h"
+#include "scc/ssa/optimize.h"
 #include "scc/cc/llvm.h"
 #include <stdarg.h>
 
@@ -271,7 +271,7 @@ static errcode cc_codegen_file_ex(cc_instance* self, file_entry* file, bool emit
         if (!module)
                 goto cleanup;
 
-        ssa_additional_modules am;
+        ssa_implicitl_modules am;
         am.tm = NULL;
         if (self->opts.ext.enable_tm)
                 if (!(am.tm = cc_parse_file(self, &context, self->input.tm_decls)))

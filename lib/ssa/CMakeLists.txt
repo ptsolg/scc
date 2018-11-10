@@ -1,26 +1,26 @@
 add_scc_lib(ssa
-	ssa-builder.c
-	ssa-context.c
-	ssa-instr.c
-	ssa-value.c
-	ssa-block.c
-	ssa-module.c
-	ssa-opt.c
-	ssa-pass.c
-	ssa-pretty-print.c
-	ssa-llvm-pretty-print.c
-	ssa-emitter.h
-	ssa-emitter.c
-	ssa-emit-expr.c
-	ssa-emit-stmt.c
-	ssa-emit-decl.c
-	ssa-finish-module.c
-	ssa-printer.h
-	ssa-printer.c
-	ssa-constant-fold.c
-	ssa-dead-code-elimination.c
-	ssa-alloca-promotion.c
-	ssa-inline.c
+	builder.c
+	context.c
+	instr.c
+	value.c
+	block.c
+	module.c
+	optimize.c
+	pass.c
+	pretty-print.c
+	llvm-pretty-print.c
+	emitter.h
+	emitter.c
+	emit-expr.c
+	emit-stmt.c
+	emit-decl.c
+	finish-module.c
+	printer.h
+	printer.c
+	constant-fold.c
+	dead-code-elimination.c
+	alloca-promotion.c
+	inline.c
 
 	DEPENDS
 	tree

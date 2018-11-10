@@ -9,17 +9,17 @@
 extern "C" {
 #endif
 
-#include "ssa-block.h"
-#include "ssa-builder.h"
-#include "ssa-common.h"
-#include "ssa-context.h"
-#include "ssa-instr.h"
-#include "ssa-emit.h"
-#include "ssa-module.h"
-#include "ssa-opt.h"
-#include "ssa-pass.h"
-#include "ssa-pretty-print.h"
-#include "ssa-value.h"
+#include "block.h"
+#include "builder.h"
+#include "common.h"
+#include "context.h"
+#include "instr.h"
+#include "emit.h"
+#include "module.h"
+#include "optimize.h"
+#include "pass.h"
+#include "pretty-print.h"
+#include "value.h"
 
 #ifdef __cplusplus
 }

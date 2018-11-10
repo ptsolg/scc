@@ -9,15 +9,15 @@
 extern "C" {
 #endif
 
-#include "tree-common.h"
-#include "tree-context.h"
-#include "tree-decl.h"
-#include "tree-expr.h"
-#include "tree-stmt.h"
-#include "tree-type.h"
-#include "tree-module.h"
-#include "tree-target.h"
-#include "tree-eval.h"
+#include "common.h"
+#include "context.h"
+#include "decl.h"
+#include "expr.h"
+#include "stmt.h"
+#include "type.h"
+#include "module.h"
+#include "target.h"
+#include "eval.h"
 
 #ifdef __cplusplus
 }
