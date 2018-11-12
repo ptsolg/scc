@@ -533,7 +533,7 @@ struct _tree_adjusted_type
 };
 
 extern tree_type* tree_new_adjusted_type(
-        tree_context* context, tree_type* adjusted_type, tree_type* pointee_type);
+        tree_context* context, tree_type* adjusted_type, tree_type* original_type);
 
 static TREE_INLINE struct _tree_adjusted_type* _tree_adjusted_type(tree_type* self)
 {

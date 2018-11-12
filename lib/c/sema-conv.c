@@ -235,6 +235,7 @@ extern tree_type* c_sema_assignment_conversion(
         c_sema* self, tree_type* lt, tree_expr** rhs, c_assignment_conversion_result* r)
 {
         assert(r);
+        r->discarded_quals = TTQ_UNQUALIFIED;
 
         lt = tree_desugar_type(lt);
         tree_type* rt = c_sema_unary_conversion(self, rhs);

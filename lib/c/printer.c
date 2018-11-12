@@ -605,6 +605,9 @@ static void c_type_name_info_init(
 
         while (it)
         {
+                if (tree_type_is(it, TTK_ADJUSTED))
+                        it = tree_get_original_type(it);
+
                 self->type_parts[self->n_type_parts++] = it;
                 if (tree_type_is(it, TTK_PAREN))
                         self->has_brackets = true;

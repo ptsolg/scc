@@ -187,7 +187,7 @@ static TREE_INLINE tree_type* _tree_desugar_type(const tree_type* self)
                         result = tree_get_paren_type(t);
                 else if (tree_type_is(t, TTK_ADJUSTED))
                         result = tree_get_adjusted_type(t);
-                else if (tree_declared_type_is(self, TDK_TYPEDEF))
+                else if (tree_declared_type_is(t, TDK_TYPEDEF))
                         result = tree_get_decl_type(tree_get_decl_type_entity(t));
                 else
                         return result;

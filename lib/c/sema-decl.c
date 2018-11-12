@@ -466,6 +466,28 @@ extern c_param* c_sema_finish_param(c_sema* self, c_param* p)
                 return NULL;
         if (!c_sema_finish_decl_type(self, &p->specs, d))
                 return NULL;
+
+        // C99 6.7.5.3
+        // 7. A declaration of a parameter as 'array of type' shall be adjusted to 'qualified pointer to
+        // type', where the type qualifiers(if any) are those specified within the '[' and ']' of the
+        // array type derivation. If the keyword static also appears within the '[' and ']' of the
+        // array type derivation, then for each call to the function, the value of the corresponding
+        // actual argument shall provide access to the first element of an array with at least as many
+        // elements as specified by the size expression.
+        // 8. A declaration of a parameter as 'function returning type' shall be adjusted to 'pointer to
+        // function returning type', as in 6.3.2.1.
+
+        tree_type* original_type = c_param_get_type(p);
+        tree_type* param_type = tree_desugar_type(original_type);
+
+        if (tree_type_is(param_type, TTK_ARRAY) || tree_type_is(param_type, TTK_FUNCTION))
+        {
+                // todo: [ qualifiers ]
+                tree_type* ptr = c_sema_new_pointer_type(self, TTQ_UNQUALIFIED,
+                        tree_type_is(param_type, TTK_ARRAY) ? tree_get_array_eltype(param_type) : param_type);
+                p->declarator.type.head = tree_new_adjusted_type(self->context, ptr, original_type);
+        }
+
         return p;
 }
 
