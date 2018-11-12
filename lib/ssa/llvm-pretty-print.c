@@ -50,7 +50,7 @@ static void ssa_print_record_name(ssa_printer* self, const tree_decl* rec)
 
 static void ssa_print_type(ssa_printer* self, const tree_type* type)
 {
-        type = tree_desugar_ctype(type);
+        type = tree_desugar_type_c(type);
         tree_type* target;
         switch (tree_get_type_kind(type))
         {
@@ -261,7 +261,7 @@ static void ssa_print_alloca_instr(ssa_printer* self, const ssa_instr* instr)
 
 static void ssa_print_volatile(ssa_printer* self, const tree_type* type)
 {
-        type = tree_desugar_ctype(type);
+        type = tree_desugar_type_c(type);
         if (!tree_type_is(type, TTK_POINTER))
                 return;
 

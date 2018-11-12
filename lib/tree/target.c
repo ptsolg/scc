@@ -115,7 +115,7 @@ extern size_t tree_get_sizeof_record(const tree_target_info* info, const tree_de
 extern size_t tree_get_sizeof(const tree_target_info* info, const tree_type* t)
 {
         assert(t);
-        t = tree_desugar_ctype(t);
+        t = tree_desugar_type_c(t);
 
         if (tree_type_is_pointer(t))
                 return tree_get_pointer_size(info);
@@ -157,7 +157,7 @@ extern size_t tree_get_alignof_record(const tree_target_info* info, const tree_d
 extern size_t tree_get_alignof(const tree_target_info* info, const tree_type* t)
 {
         assert(t);
-        t = tree_desugar_ctype(t);
+        t = tree_desugar_type_c(t);
 
         if (tree_type_is_pointer(t))
                 return tree_get_pointer_align(info);

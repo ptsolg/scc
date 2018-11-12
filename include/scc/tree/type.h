@@ -582,14 +582,8 @@ typedef struct _tree_type
         };
 } tree_type;
 
-extern tree_type* tree_ignore_typedefs(tree_type* self);
-extern const tree_type* tree_ignore_ctypedefs(const tree_type* self);
-extern tree_type* tree_ignore_paren_types(tree_type* self);
-extern const tree_type* tree_ignore_paren_ctypes(const tree_type* self);
-// ignores typedefs and ignore parenthesises, if any
+extern const tree_type* tree_desugar_type_c(const tree_type* self);
 extern tree_type* tree_desugar_type(tree_type* self);
-extern const tree_type* tree_desugar_ctype(const tree_type* self);
-extern tree_type* tree_ignore_chain_types(tree_type* self);
 
 extern bool tree_builtin_type_is(const tree_type* self, tree_builtin_type_kind k);
 extern bool tree_declared_type_is(const tree_type* self, tree_decl_kind k);

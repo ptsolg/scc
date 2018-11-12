@@ -176,58 +176,35 @@ extern tree_type* tree_new_adjusted_type(
         return t;
 }
 
-extern tree_type* tree_ignore_typedefs(tree_type* self)
+static TREE_INLINE tree_type* _tree_desugar_type(const tree_type* self)
 {
-        tree_type* it = self;
-        while (tree_declared_type_is(it, TDK_TYPEDEF))
-                it = tree_get_decl_type(tree_get_decl_type_entity(it));
-        return it;
+        tree_type* result = NULL;
+        const tree_type* t = self;
+
+        while (1)
+        {
+                if (tree_type_is(t, TTK_PAREN))
+                        result = tree_get_paren_type(t);
+                else if (tree_type_is(t, TTK_ADJUSTED))
+                        result = tree_get_adjusted_type(t);
+                else if (tree_declared_type_is(self, TDK_TYPEDEF))
+                        result = tree_get_decl_type(tree_get_decl_type_entity(t));
+                else
+                        return result;
+                t = result;
+        }
 }
 
-extern const tree_type* tree_ignore_ctypedefs(const tree_type* self)
+extern const tree_type* tree_desugar_type_c(const tree_type* self)
 {
-        const tree_type* it = self;
-        while (tree_declared_type_is(it, TDK_TYPEDEF))
-                it = tree_get_decl_type(tree_get_decl_type_entity(it));
-        return it;
-}
-
-extern tree_type* tree_ignore_paren_types(tree_type* self)
-{
-        while (tree_type_is(self, TTK_PAREN))
-                self = tree_get_paren_type(self);
-        return self;
-}
-
-extern const tree_type* tree_ignore_paren_ctypes(const tree_type* self)
-{
-        while (tree_type_is(self, TTK_PAREN))
-                self = tree_get_paren_type(self);
-        return self;
+        const tree_type* t = _tree_desugar_type(self);
+        return t ? t : self;
 }
 
 extern tree_type* tree_desugar_type(tree_type* self)
 {
-        return tree_ignore_typedefs(tree_ignore_paren_types(self));
-}
-
-extern const tree_type* tree_desugar_ctype(const tree_type* self)
-{
-        return tree_ignore_ctypedefs(tree_ignore_paren_ctypes(self));
-}
-
-extern tree_type* tree_ignore_chain_types(tree_type* self)
-{
-        while (1)
-        {
-                self = tree_desugar_type(self);
-                tree_type_kind k = tree_get_type_kind(self);
-                if (k == TTK_POINTER || k == TTK_ARRAY || k == TTK_FUNCTION)
-                        self = tree_get_chain_type_next(self);
-                else
-                        break;
-        }
-        return self;
+        tree_type* t = _tree_desugar_type(self);
+        return t ? t : self;
 }
 
 extern bool tree_builtin_type_is(const tree_type* self, tree_builtin_type_kind k)
@@ -248,12 +225,12 @@ extern bool tree_declared_type_is(const tree_type* self, tree_decl_kind k)
 
 extern bool tree_type_is_void(const tree_type* self)
 {
-        return tree_builtin_type_is(tree_desugar_ctype(self), TBTK_VOID);
+        return tree_builtin_type_is(tree_desugar_type_c(self), TBTK_VOID);
 }
 
 extern bool tree_type_is_signed_integer(const tree_type* self)
 {
-        self = tree_desugar_ctype(self);
+        self = tree_desugar_type_c(self);
         if (tree_get_type_kind(self) != TTK_BUILTIN)
                 return false;
 
@@ -272,7 +249,7 @@ extern bool tree_type_is_signed_integer(const tree_type* self)
 
 extern bool tree_type_is_unsigned_integer(const tree_type* self)
 {
-        self = tree_desugar_ctype(self);
+        self = tree_desugar_type_c(self);
         if (tree_get_type_kind(self) != TTK_BUILTIN)
                 return false;
 
@@ -291,7 +268,7 @@ extern bool tree_type_is_unsigned_integer(const tree_type* self)
 
 extern bool tree_type_is_real_floating(const tree_type* self)
 {
-        self = tree_desugar_ctype(self);
+        self = tree_desugar_type_c(self);
         if (tree_get_type_kind(self) != TTK_BUILTIN)
                 return false;
 
@@ -313,7 +290,7 @@ extern bool tree_type_is_complex_floating(const tree_type* self)
 
 extern bool tree_type_is_derived(const tree_type* self)
 {
-        switch (tree_get_type_kind(tree_desugar_ctype(self)))
+        switch (tree_get_type_kind(tree_desugar_type_c(self)))
         {
                 case TTK_FUNCTION:
                 case TTK_POINTER:
@@ -327,12 +304,12 @@ extern bool tree_type_is_derived(const tree_type* self)
 
 extern bool tree_type_is_enumerated(const tree_type* self)
 {
-        return tree_declared_type_is(tree_desugar_ctype(self), TDK_ENUM);
+        return tree_declared_type_is(tree_desugar_type_c(self), TDK_ENUM);
 }
 
 extern bool tree_type_is_object(const tree_type* self)
 {
-        return !tree_type_is(tree_desugar_ctype(self), TTK_FUNCTION);
+        return !tree_type_is(tree_desugar_type_c(self), TTK_FUNCTION);
 }
 
 extern bool tree_type_is_real(const tree_type* self)
@@ -352,25 +329,25 @@ extern bool tree_type_is_arithmetic(const tree_type* self)
 
 extern bool tree_type_is_pointer(const tree_type* self)
 {
-        return tree_type_is(tree_desugar_ctype(self), TTK_POINTER);
+        return tree_type_is(tree_desugar_type_c(self), TTK_POINTER);
 }
 
 extern bool tree_type_is_record(const tree_type* self)
 {
-        return tree_declared_type_is(tree_desugar_ctype(self), TDK_RECORD);
+        return tree_declared_type_is(tree_desugar_type_c(self), TDK_RECORD);
 }
 
 extern bool tree_type_is_array(const tree_type* self)
 {
-        return tree_type_is(tree_desugar_ctype(self), TTK_ARRAY);
+        return tree_type_is(tree_desugar_type_c(self), TTK_ARRAY);
 }
 
 extern bool tree_type_is_function_pointer(const tree_type* self)
 {
-        self = tree_desugar_ctype(self);
+        self = tree_desugar_type_c(self);
         if (tree_type_is(self, TTK_POINTER))
         {
-                const tree_type* eltype = tree_desugar_ctype(tree_get_pointer_target(self));
+                const tree_type* eltype = tree_desugar_type_c(tree_get_pointer_target(self));
                 return tree_type_is(eltype, TTK_FUNCTION);
         }
         return false;
@@ -378,10 +355,10 @@ extern bool tree_type_is_function_pointer(const tree_type* self)
 
 extern bool tree_type_is_object_pointer(const tree_type* self)
 {
-        self = tree_desugar_ctype(self);
+        self = tree_desugar_type_c(self);
         if (tree_type_is(self, TTK_POINTER))
         {
-                const tree_type* eltype = tree_desugar_ctype(tree_get_pointer_target(self));
+                const tree_type* eltype = tree_desugar_type_c(tree_get_pointer_target(self));
                 return tree_type_is_object(eltype);
         }
         return false;
@@ -389,10 +366,10 @@ extern bool tree_type_is_object_pointer(const tree_type* self)
 
 extern bool tree_type_is_void_pointer(const tree_type* self)
 {
-        self = tree_desugar_ctype(self);
+        self = tree_desugar_type_c(self);
         if (tree_type_is(self, TTK_POINTER))
         {
-                const tree_type* eltype = tree_desugar_ctype(tree_get_pointer_target(self));
+                const tree_type* eltype = tree_desugar_type_c(tree_get_pointer_target(self));
                 return tree_type_is_void(eltype);
         }
         return false;
@@ -403,7 +380,7 @@ extern bool tree_type_is_incomplete(const tree_type* self)
         if (!self)
                 return true;
 
-        self = tree_desugar_ctype(self);
+        self = tree_desugar_type_c(self);
         if (tree_type_is_void(self))
                 return true;
         else if (tree_type_is_array(self))
@@ -440,7 +417,7 @@ extern tree_type* tree_get_type_next(const tree_type* self)
 
 extern bool tree_type_is_integer(const tree_type* t)
 {
-        t = tree_desugar_ctype(t);
+        t = tree_desugar_type_c(t);
         if (tree_get_type_kind(t) != TTK_BUILTIN)
                 return tree_declared_type_is(t, TDK_ENUM);
 
@@ -463,7 +440,7 @@ extern bool tree_type_is_integer(const tree_type* t)
 
 extern bool tree_type_is_floating(const tree_type* t)
 {
-        t = tree_desugar_ctype(t);
+        t = tree_desugar_type_c(t);
         if (tree_get_type_kind(t) != TTK_BUILTIN)
                 return false;
 
@@ -569,8 +546,8 @@ extern tree_type_equality_kind tree_compare_types(const tree_type* a, const tree
                         return TTEK_EQ;
 
                 same_quals &= tree_get_type_quals(a) == tree_get_type_quals(b);
-                a = tree_desugar_ctype(a);
-                b = tree_desugar_ctype(b);
+                a = tree_desugar_type_c(a);
+                b = tree_desugar_type_c(b);
                 if (tree_get_modified_type_c(a) == tree_get_modified_type_c(b))
                         return same_quals ? TTEK_EQ : TTEK_DIFFERENT_QUALS;
 

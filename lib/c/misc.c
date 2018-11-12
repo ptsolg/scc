@@ -380,7 +380,7 @@ extern bool c_token_starts_declarator(const c_token* self)
 
 extern int c_get_type_rank(const tree_type* t)
 {
-        t = tree_desugar_ctype(t);
+        t = tree_desugar_type_c(t);
         return tree_declared_type_is(t, TDK_ENUM)
                 ? TBTK_INT32
                 : (int)tree_get_builtin_type_kind(t);

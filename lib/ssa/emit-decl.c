@@ -30,7 +30,7 @@ extern void ssa_emit_type(ssa_module_emitter* self, const tree_type* type)
 
         while (1)
         {
-                type = tree_desugar_ctype(type);
+                type = tree_desugar_type_c(type);
                 tree_type_kind k = tree_get_type_kind(type);
                 if (k == TTK_POINTER || k == TTK_ARRAY)
                         type = tree_get_chain_type_next(type);

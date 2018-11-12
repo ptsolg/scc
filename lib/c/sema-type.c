@@ -238,7 +238,7 @@ extern bool c_sema_check_type(const c_sema* self, const tree_type* t, tree_locat
 {
         while (1)
         {
-                t = tree_desugar_ctype(t);
+                t = tree_desugar_type_c(t);
                 tree_type_kind k = tree_get_type_kind(t);
 
                 if (k == TTK_FUNCTION)

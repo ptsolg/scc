@@ -9,7 +9,7 @@
 extern bool c_sema_require_object_pointer_expr_type(
         const c_sema* self, const tree_type* t, tree_location l)
 {
-        if (!tree_type_is_object_pointer(tree_desugar_ctype(t)))
+        if (!tree_type_is_object_pointer(tree_desugar_type_c(t)))
         {
                 c_error_expr_must_have_pointer_to_object_type(self->ccontext, l);
                 return false;
@@ -20,7 +20,7 @@ extern bool c_sema_require_object_pointer_expr_type(
 extern bool c_sema_require_function_pointer_expr_type(
         const c_sema* self, const tree_type* t, tree_location l)
 {
-        if (!tree_type_is_function_pointer(tree_desugar_ctype(t)))
+        if (!tree_type_is_function_pointer(tree_desugar_type_c(t)))
         {
                 c_error_expr_must_have_pointer_to_function_type(self->ccontext, l);
                 return false;
@@ -31,7 +31,7 @@ extern bool c_sema_require_function_pointer_expr_type(
 extern bool c_sema_require_integral_expr_type(
         const c_sema* self, const tree_type* t, tree_location l)
 {
-        if (!tree_type_is_integer(tree_desugar_ctype(t)))
+        if (!tree_type_is_integer(tree_desugar_type_c(t)))
         {
                 c_error_expr_must_have_integral_type(self->ccontext, l);
                 return false;
@@ -48,7 +48,7 @@ extern bool c_sema_require_integer_expr(const c_sema* self, const tree_expr* e)
 extern bool c_sema_require_real_expr_type(
         const c_sema* self, const tree_type* t, tree_location l)
 {
-        if (!tree_type_is_real(tree_desugar_ctype(t)))
+        if (!tree_type_is_real(tree_desugar_type_c(t)))
         {
                 c_error_expr_must_have_real_type(self->ccontext, l);
                 return false;
@@ -59,7 +59,7 @@ extern bool c_sema_require_real_expr_type(
 extern bool c_sema_require_record_expr_type(
         const c_sema* self, const tree_type* t, tree_location l)
 {
-        if (!tree_type_is_record(tree_desugar_ctype(t)))
+        if (!tree_type_is_record(tree_desugar_type_c(t)))
         {
                 c_error_expr_must_have_record_type(self->ccontext, l);
                 return false;
@@ -70,7 +70,7 @@ extern bool c_sema_require_record_expr_type(
 extern bool c_sema_require_array_expr_type(
         const c_sema* self, const tree_type* t, tree_location l)
 {
-        if (!tree_type_is_array(tree_desugar_ctype(t)))
+        if (!tree_type_is_array(tree_desugar_type_c(t)))
         {
                 c_error_expr_must_have_array_type(self->ccontext, l);
                 return false;
@@ -81,7 +81,7 @@ extern bool c_sema_require_array_expr_type(
 extern bool c_sema_require_scalar_expr_type(
         const c_sema* self, const tree_type* t, tree_location l)
 {
-        if (!tree_type_is_scalar(tree_desugar_ctype(t)))
+        if (!tree_type_is_scalar(tree_desugar_type_c(t)))
         {
                 c_error_expr_must_have_scalar_type(self->ccontext, l);
                 return false;
@@ -98,7 +98,7 @@ extern bool c_sema_require_scalar_expr(const c_sema* self, const tree_expr* e)
 extern bool c_sema_require_arithmetic_expr_type(
         const c_sema* self, const tree_type* t, tree_location l)
 {
-        if (!tree_type_is_arithmetic(tree_desugar_ctype(t)))
+        if (!tree_type_is_arithmetic(tree_desugar_type_c(t)))
         {
                 c_error_expr_must_have_arithmetic_type(self->ccontext, l);
                 return false;
@@ -109,7 +109,7 @@ extern bool c_sema_require_arithmetic_expr_type(
 extern bool c_sema_require_real_or_object_pointer_expr_type(
         const c_sema* self, const tree_type* t, tree_location l)
 {
-        t = tree_desugar_ctype(t);
+        t = tree_desugar_type_c(t);
         if (!tree_type_is_real(t) && !tree_type_is_pointer(t))
         {
                 c_error_expr_must_have_real_or_pointer_to_object_type(self->ccontext, l);
@@ -302,7 +302,7 @@ extern tree_expr* c_sema_new_call_expr(
         if (!c_sema_require_function_pointer_expr_type(self, t, tree_get_expr_loc(lhs)))
                 return NULL;
 
-        tree_type* ft = tree_desugar_type(tree_get_pointer_target(tree_desugar_ctype(t)));
+        tree_type* ft = tree_desugar_type(tree_get_pointer_target(tree_desugar_type_c(t)));
         if (c_sema_in_transaction_safe_block(self) && !tree_func_type_is_transaction_safe(ft))
         {
                 c_error_transaction_unsafe_function_is_not_allowed(

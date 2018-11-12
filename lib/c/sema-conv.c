@@ -205,14 +205,19 @@ static bool c_sema_check_attribute_discartion(
 static bool c_sema_check_pointer_assignment(
         c_sema* self, tree_type* lt, tree_type* rt, c_assignment_conversion_result* r)
 {
-        tree_type* ltarget = tree_ignore_paren_types(tree_get_pointer_target(lt));
-        tree_type* rtarget = tree_ignore_paren_types(tree_get_pointer_target(rt));
+        if (tree_type_is(lt, TTK_PAREN))
+                lt = tree_get_paren_type(lt);
+        if (tree_type_is(rt, TTK_PAREN))
+                rt = tree_get_paren_type(rt);
 
-        if (c_sema_types_are_compatible(self, ltarget, rtarget, true)
-                || (tree_type_is_incomplete_or_object(ltarget) && tree_type_is_void(rtarget))
-                || (tree_type_is_incomplete_or_object(rtarget) && tree_type_is_void(ltarget)))
+        lt = tree_get_pointer_target(lt);
+        rt = tree_get_pointer_target(rt);
+
+        if (c_sema_types_are_compatible(self, lt, rt, true)
+                || (tree_type_is_incomplete_or_object(lt) && tree_type_is_void(rt))
+                || (tree_type_is_incomplete_or_object(rt) && tree_type_is_void(lt)))
         {
-                return c_sema_check_attribute_discartion(self, ltarget, rtarget, r);
+                return c_sema_check_attribute_discartion(self, lt, rt, r);
         }
 
         r->kind = CACRK_INCOMPATIBLE_POINTERS;
