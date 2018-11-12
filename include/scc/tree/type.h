@@ -95,6 +95,8 @@ typedef enum _tree_type_kind
         TTK_DECL,
         TTK_PAREN,
 
+        TTK_ADJUSTED,
+
         TTK_SIZE,
 } tree_type_kind;
 
@@ -523,6 +525,48 @@ static TREE_INLINE void tree_set_paren_type(tree_type* self, tree_type* next)
         tree_set_chain_type_next(self, next);
 }
 
+struct _tree_adjusted_type
+{
+        struct _tree_type_base base;
+        tree_type* adjusted_type;
+        tree_type* original_type;
+};
+
+extern tree_type* tree_new_adjusted_type(
+        tree_context* context, tree_type* adjusted_type, tree_type* pointee_type);
+
+static TREE_INLINE struct _tree_adjusted_type* _tree_adjusted_type(tree_type* self)
+{
+        assert(tree_type_is(self, TTK_ADJUSTED));
+        return (struct _tree_adjusted_type*)self;
+}
+
+static TREE_INLINE const struct _tree_adjusted_type* _tree_adjusted_type_c(const tree_type* self)
+{
+        assert(tree_type_is(self, TTK_ADJUSTED));
+        return (const struct _tree_adjusted_type*)self;
+}
+
+static TREE_INLINE tree_type* tree_get_adjusted_type(const tree_type* self)
+{
+        return _tree_adjusted_type_c(self)->adjusted_type;
+}
+
+static TREE_INLINE tree_type* tree_get_original_type(const tree_type* self)
+{
+        return _tree_adjusted_type_c(self)->original_type;
+}
+
+static TREE_INLINE void tree_set_adjusted_type(tree_type* self, tree_type* adjusted_type)
+{
+        _tree_adjusted_type(self)->adjusted_type = adjusted_type;
+}
+
+static TREE_INLINE void tree_set_original_type(tree_type* self, tree_type* original_type)
+{
+        _tree_adjusted_type(self)->original_type = original_type;
+}
+
 typedef struct _tree_type
 {
         union
@@ -534,6 +578,7 @@ typedef struct _tree_type
                 struct _tree_decl_type decl;
                 struct _tree_paren_type paren;
                 struct _tree_modified_type modified;
+                struct _tree_adjusted_type adjusted;
         };
 } tree_type;
 

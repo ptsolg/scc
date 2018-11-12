@@ -164,6 +164,18 @@ extern tree_type* tree_new_paren_type(tree_context* context, tree_type* next)
                 sizeof(struct _tree_pointer_type));
 }
 
+extern tree_type* tree_new_adjusted_type(
+        tree_context* context, tree_type* adjusted_type, tree_type* original_type)
+{
+        tree_type* t = tree_new_type(context, TTK_ADJUSTED, sizeof(struct _tree_adjusted_type));
+        if (!t)
+                return NULL;
+
+        tree_set_adjusted_type(t, adjusted_type);
+        tree_set_original_type(t, original_type);
+        return t;
+}
+
 extern tree_type* tree_ignore_typedefs(tree_type* self)
 {
         tree_type* it = self;
