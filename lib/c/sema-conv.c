@@ -205,13 +205,13 @@ static bool c_sema_check_attribute_discartion(
 static bool c_sema_check_pointer_assignment(
         c_sema* self, tree_type* lt, tree_type* rt, c_assignment_conversion_result* r)
 {
-        if (tree_type_is(lt, TTK_PAREN))
-                lt = tree_get_paren_type(lt);
-        if (tree_type_is(rt, TTK_PAREN))
-                rt = tree_get_paren_type(rt);
-
         lt = tree_get_pointer_target(lt);
         rt = tree_get_pointer_target(rt);
+
+        while (tree_type_is(lt, TTK_PAREN))
+                lt = tree_get_paren_type(lt);
+        while (tree_type_is(rt, TTK_PAREN))
+                rt = tree_get_paren_type(rt);
 
         if (c_sema_types_are_compatible(self, lt, rt, true)
                 || (tree_type_is_incomplete_or_object(lt) && tree_type_is_void(rt))
