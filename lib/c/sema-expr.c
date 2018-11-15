@@ -1212,6 +1212,12 @@ static c_initializer_kind c_sema_maybe_handle_special_array_initializer(
         if (!tree_expr_is(expr, TEK_STRING_LITERAL))
                 return CIK_ORDINARY;
 
+        if (init->end - init->pos > 1)
+        {
+                c_error_too_many_initializer_values(self->ccontext, tree_get_expr_loc_begin(init->pos[1]));
+                return CIK_INVALID;
+        }
+
         if (!tree_builtin_type_is(eltype, TBTK_UINT8) 
                 && !tree_builtin_type_is(eltype, TBTK_INT8))
         {
@@ -1223,16 +1229,8 @@ static c_initializer_kind c_sema_maybe_handle_special_array_initializer(
         strentry entry;
         tree_get_id_strentry(self->context, tree_get_string_literal(expr), &entry);
 
-        uint num_elems = (uint)(entry.size - 1); // ignore '\0' at first...
-        if ((in_init_list && init->end - init->pos > 1) || !is_constant_array)
-        {
-                // ...except this cases:
-                //      char a[3] = { "ab", 'c' };
-                //      char a[] = "abc";
-                num_elems += 1;
-        }
-      
-        if (is_constant_array && tree_get_array_size(array->type) < num_elems)
+        uint len = (uint)(is_constant_array ? entry.size - 1 : entry.size);
+        if (is_constant_array && tree_get_array_size(array->type) < len)
         {
                 c_error_initializer_string_is_too_long(self->ccontext, expr);
                 return CIK_INVALID;
@@ -1240,9 +1238,9 @@ static c_initializer_kind c_sema_maybe_handle_special_array_initializer(
 
         init->pos++;
         if (!is_constant_array)
-                c_sema_set_incomplete_array_size(self, array->type, num_elems);
+                c_sema_set_incomplete_array_size(self, array->type, len);
 
-        c_initialized_object_set_index(array, num_elems);
+        c_initialized_object_set_index(array, len);
         return CIK_STRING;
 }
 
