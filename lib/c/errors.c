@@ -445,10 +445,10 @@ extern void c_error_initializer_string_is_too_long(c_context* self, const tree_e
         c_error(self, CES_ERROR, tree_get_expr_loc_begin(init), "initializer-string is too long");
 }
 
-extern void c_error_wide_character_array_initialized_from_non_wide_string(c_context* self, const tree_expr* init)
+extern void c_error_array_cannot_be_initalized_with_string_literal(c_context* self, const tree_expr* init)
 {
         c_error(self, CES_ERROR, tree_get_expr_loc_begin(init),
-                "wide character array initialized from non-wide string");
+                "array of inappropriate type initialized from string constant");
 }
 
 extern void c_error_named_argument_before_ellipsis_required(c_context* self, tree_location loc)

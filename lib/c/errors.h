@@ -103,7 +103,7 @@ extern void c_error_nonconstant_array_index_in_initializer(c_context* self, cons
 extern void c_error_array_index_in_initializer_exceeds_array_bounds(c_context* self, const tree_expr* index);
 extern void c_error_initializer_element_isnt_constant(c_context* self, const tree_expr* init);
 extern void c_error_initializer_string_is_too_long(c_context* self, const tree_expr* init);
-extern void c_error_wide_character_array_initialized_from_non_wide_string(c_context* self, const tree_expr* init);
+extern void c_error_array_cannot_be_initalized_with_string_literal(c_context* self, const tree_expr* init);
 
 extern void c_error_named_argument_before_ellipsis_required(c_context* self, tree_location loc);
 extern void c_error_redefinition(c_context* self, tree_location loc, tree_id id);
