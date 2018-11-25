@@ -1,4 +1,4 @@
 void test()
 {
-    int a[] = { "str", "ing" };
+    char a[] = { "str", "ing" };
 }
