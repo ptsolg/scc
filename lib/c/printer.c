@@ -151,6 +151,14 @@ static void _c_print_string_literal(c_printer* self, tree_id id)
         c_printf(self, "\"%s\"", unescaped);
 }
 
+static void _c_print_char_literal(c_printer* self, int c)
+{
+        if (c_char_is_escape(c))
+                c_printf(self, "'\\%c'", c_char_from_escape(c));
+        else
+                c_printf(self, "'%c'", c);
+}
+
 static void c_print_token_value(c_printer* self, const c_token* token)
 {
         c_token_kind k = c_token_get_kind(token);
@@ -173,13 +181,7 @@ static void c_print_token_value(c_printer* self, const c_token* token)
         else if (k == CTK_CONST_STRING)
                 _c_print_string_literal(self, c_token_get_string(token));
         else if (k == CTK_CONST_CHAR)
-        {
-                int c = c_token_get_char(token);
-                if (c_char_is_escape(c))
-                        c_printf(self, "'\\%c'", c_char_from_escape(c));
-                else
-                        c_printf(self, "'%c'", c);
-        }
+                _c_print_char_literal(self, c_token_get_char(token));
         c_print_endl(self);
 }
 
@@ -403,7 +405,7 @@ static void c_print_integer_literal(c_printer* self, const tree_expr* expr)
 
 static void c_print_char_literal(c_printer* self, const tree_expr* expr)
 {
-        c_printf(self, "'%c'", tree_get_character_literal(expr));
+        _c_print_char_literal(self, tree_get_character_literal(expr));
 }
 
 static void c_print_string_literal(c_printer* self, const tree_expr* expr)
