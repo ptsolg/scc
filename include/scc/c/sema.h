@@ -263,7 +263,7 @@ extern tree_decl* c_sema_declare_label_decl(c_sema* self, tree_location name_loc
 
 extern tree_decl* c_sema_declare_external_decl(
         c_sema* self, c_decl_specs* ds, c_declarator* d, bool has_init_or_body);
-extern void c_sema_set_var_init(c_sema* self, tree_decl* var, tree_expr* init);
+extern bool c_sema_set_var_init(c_sema* self, tree_decl* var, tree_expr* init);
 extern void c_sema_set_func_body(c_sema* self, tree_decl* func, tree_stmt* body);
 
 extern tree_expr* c_sema_new_impl_cast(c_sema* self, tree_expr* e, tree_type* t);
@@ -390,9 +390,22 @@ extern tree_expr* c_sema_new_initializer_list(c_sema* self, tree_location loc);
 extern tree_expr* c_sema_add_initializer_list_expr(
         c_sema* self, tree_expr* list, tree_expr* expr);
 
-extern tree_expr* c_sema_check_initializer(c_sema* self, tree_type* type, tree_expr* init);
+typedef struct _c_initializer_check_result
+{
+        tree_expr* syntactical_initializer;
+        tree_expr* semantic_initializer;
+        bool check_only;
+} c_initializer_check_result;
 
-extern tree_expr* c_sema_new_designation(c_sema* self);
+extern bool c_sema_check_initializer(
+        c_sema* self,
+        tree_type* object,
+        tree_storage_class object_sc,
+        tree_expr* init,
+        c_initializer_check_result* result,
+        bool check_only);
+
+extern tree_expr* c_sema_new_designation(c_sema* self, tree_location start_loc);
 extern tree_expr* c_sema_add_designation_designator(
         c_sema* self, tree_expr* designation, tree_designator* designator);
 extern tree_expr* c_sema_set_designation_initializer(c_sema* self, tree_expr* designation, tree_expr* init);

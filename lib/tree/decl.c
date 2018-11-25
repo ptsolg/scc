@@ -210,6 +210,15 @@ extern tree_decl* tree_new_record_decl(
         return d;
 }
 
+extern size_t tree_count_record_fields(const tree_decl* record)
+{
+        const tree_decl* end = tree_get_record_fields_cend(record);
+        for (tree_decl* it = tree_get_prev_decl(end); it != end; it = tree_get_prev_decl(it))
+                if (tree_decl_is(it, TDK_FIELD))
+                        return tree_get_field_index(it) + 1;
+        return 0;
+}
+
 extern tree_decl* tree_new_enum_decl(
         tree_context* context, tree_decl_scope* scope, tree_xlocation loc, tree_id name)
 {

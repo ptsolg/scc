@@ -1089,9 +1089,20 @@ extern tree_decl* c_sema_declare_external_decl(
         return decl;
 }
 
-extern void c_sema_set_var_init(c_sema* self, tree_decl* var, tree_expr* init)
+extern bool c_sema_set_var_init(c_sema* self, tree_decl* var, tree_expr* init)
 {
-        tree_set_var_init(var, init);
+        if (!init)
+                return false;
+
+        c_initializer_check_result r;
+        if (!c_sema_check_initializer(self, tree_get_decl_type(var),
+                tree_get_decl_storage_class(var), init, &r, false))
+        {
+                return false;
+        }
+
+        tree_set_var_init(var, r.syntactical_initializer);
+        return true;
 }
 
 extern void c_sema_set_func_body(c_sema* self, tree_decl* func, tree_stmt* body)

@@ -342,6 +342,11 @@ extern bool tree_type_is_array(const tree_type* self)
         return tree_type_is(tree_desugar_type_c(self), TTK_ARRAY);
 }
 
+extern bool tree_type_is_array_or_record(const tree_type* self)
+{
+        return tree_type_is_array(self) || tree_type_is_record(self);
+}
+
 extern bool tree_type_is_function_pointer(const tree_type* self)
 {
         self = tree_desugar_type_c(self);

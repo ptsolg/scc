@@ -287,7 +287,7 @@ extern tree_expr* c_parse_const_expr(c_parser* self)
 
 static tree_expr* c_parse_designation(c_parser* self)
 {
-        tree_expr* designation = c_sema_new_designation(self->sema);
+        tree_expr* designation = c_sema_new_designation(self->sema, c_parser_get_loc(self));
         while (1)
         {
                 tree_designator* designator = NULL;
@@ -326,8 +326,6 @@ static tree_expr* c_parse_designation(c_parser* self)
         }
 }
 
-static tree_expr* _c_parse_initializer(c_parser*);
-
 static tree_expr* c_parse_initializer_list(c_parser* self, tree_location lbrace_loc)
 {
         if (c_parser_at(self, CTK_RBRACE))
@@ -344,7 +342,7 @@ static tree_expr* c_parse_initializer_list(c_parser* self, tree_location lbrace_
                         if (!(designation = c_parse_designation(self)))
                                 return NULL;
 
-                tree_expr* init = _c_parse_initializer(self);
+                tree_expr* init = c_parse_initializer(self);
                 if (!init)
                         return NULL;
 
@@ -369,7 +367,7 @@ static tree_expr* c_parse_initializer_list(c_parser* self, tree_location lbrace_
         }
 }
 
-static tree_expr* _c_parse_initializer(c_parser* self)
+extern tree_expr* c_parse_initializer(c_parser* self)
 {
         tree_expr* init;
         tree_location loc = c_parser_get_loc(self);
@@ -386,10 +384,4 @@ static tree_expr* _c_parse_initializer(c_parser* self)
                 return NULL;
 
         return c_parser_require(self, CTK_RBRACE) ? init : NULL;
-}
-
-extern tree_expr* c_parse_initializer(c_parser* self, tree_type* initialized_type)
-{
-        tree_expr* init = _c_parse_initializer(self);
-        return init ? c_sema_check_initializer(self->sema, initialized_type, init) : NULL;
 }

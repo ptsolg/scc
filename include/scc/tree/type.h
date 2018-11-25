@@ -607,6 +607,7 @@ extern bool tree_type_is_arithmetic(const tree_type* self);
 extern bool tree_type_is_pointer(const tree_type* self);
 extern bool tree_type_is_record(const tree_type* self);
 extern bool tree_type_is_array(const tree_type* self);
+extern bool tree_type_is_array_or_record(const tree_type* self);
 extern bool tree_type_is_function_pointer(const tree_type* self);
 extern bool tree_type_is_object_pointer(const tree_type* self);
 extern bool tree_type_is_void_pointer(const tree_type* self);

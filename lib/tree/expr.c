@@ -23,6 +23,12 @@ extern tree_expr* tree_new_expr(
         return e;
 }
 
+extern tree_expr* tree_new_unknown_expr(tree_context* context)
+{
+        return tree_new_expr(context, TEK_UNKNOWN, TVK_RVALUE,
+                NULL, TREE_INVALID_LOC, sizeof(struct _tree_expr_base));
+}
+
 extern tree_expr* tree_new_binop(
         tree_context* context,
         tree_value_kind value_kind,
@@ -290,10 +296,10 @@ extern tree_designator* tree_new_array_designator(
         return d;
 }
 
-extern tree_expr* tree_new_designation(tree_context* context, tree_expr* init)
+extern tree_expr* tree_new_designation(tree_context* context, tree_location loc, tree_expr* init)
 {
         tree_expr* e = tree_new_expr(context, TEK_DESIGNATION,
-                TVK_LVALUE, NULL, TREE_INVALID_LOC, sizeof(struct _tree_designation));
+                TVK_LVALUE, NULL, loc, sizeof(struct _tree_designation));
         if (!e)
                 return NULL;
 
@@ -323,7 +329,6 @@ extern tree_expr* tree_new_init_list_expr(tree_context* context, tree_location l
 
 extern errcode tree_add_init_list_expr(tree_expr* self, tree_context* context, tree_expr* expr)
 {
-        assert(expr);
         return tree_array_append_ptr(context, &self->init_list.exprs, expr);
 }
 

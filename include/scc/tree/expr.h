@@ -292,6 +292,8 @@ extern tree_expr* tree_new_expr(
         tree_location loc,
         size_t size);
 
+extern tree_expr* tree_new_unknown_expr(tree_context* context);
+
 static TREE_INLINE tree_expr_kind tree_get_expr_kind(const tree_expr* self)
 {
         return self->base.kind;
@@ -783,7 +785,7 @@ static TREE_INLINE void tree_set_designator_index(tree_designator* self, tree_ex
         self->index = index;
 }
 
-extern tree_expr* tree_new_designation(tree_context* context, tree_expr* init);
+extern tree_expr* tree_new_designation(tree_context* context, tree_location loc, tree_expr* init);
 
 extern errcode tree_add_designation_designator(
         tree_expr* self, tree_context* context, tree_designator* d);
@@ -834,6 +836,12 @@ static TREE_INLINE tree_expr** tree_get_init_list_exprs_end(const tree_expr* sel
 static TREE_INLINE size_t tree_get_init_list_exprs_size(const tree_expr* self)
 {
         return tree_get_init_list_exprs_end(self) - tree_get_init_list_exprs_begin(self);
+}
+
+static TREE_INLINE void tree_set_init_list_expr(tree_expr* self, size_t i, tree_expr* e)
+{
+        assert(tree_get_init_list_exprs_size(self));
+        tree_get_init_list_exprs_begin(self)[i] = e;
 }
 
 static TREE_INLINE bool tree_init_list_has_trailing_comma(const tree_expr* self)

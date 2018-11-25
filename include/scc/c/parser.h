@@ -408,7 +408,7 @@ extern tree_expr* c_parse_const_expr(c_parser* self);
 // designator:
 //      [ constant-expression ]
 //      . identifier
-extern tree_expr* c_parse_initializer(c_parser* self, tree_type* initialized_type);
+extern tree_expr* c_parse_initializer(c_parser* self);
 
 #ifdef __cplusplus
 }

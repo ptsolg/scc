@@ -481,6 +481,8 @@ extern tree_decl* tree_new_record_decl(
         tree_id name,
         bool is_union);
 
+extern size_t tree_count_record_fields(const tree_decl* record);
+
 static TREE_INLINE tree_decl* tree_get_record_fields_begin(const tree_decl* self)
 {
         return tree_get_decl_scope_decls_begin(&self->record.fields);
@@ -636,6 +638,26 @@ static TREE_INLINE tree_decl* tree_get_field_record(const tree_decl* self)
 {
         return (tree_decl*)((uint8_t*)tree_get_decl_scope(self)
                 - offsetof(struct _tree_record_decl, fields));
+}
+
+static TREE_INLINE tree_decl* _tree_skip_non_field_decls(tree_decl* self, tree_decl* end)
+{
+        for (; self != end; self = tree_get_next_decl(self))
+                if (tree_decl_is(self, TDK_FIELD))
+                        break;
+        return self;
+}
+
+static TREE_INLINE tree_decl* tree_skip_non_field_decls(tree_decl* self)
+{
+        return _tree_skip_non_field_decls(self, 
+                tree_get_decl_scope_decls_end(tree_get_decl_scope(self)));
+}
+
+static TREE_INLINE tree_decl* tree_get_next_field(const tree_decl* self)
+{
+        return _tree_skip_non_field_decls(tree_get_next_decl(self),
+                tree_get_decl_scope_decls_end(tree_get_decl_scope(self)));
 }
 
 static TREE_INLINE tree_expr* tree_get_field_bit_width(const tree_decl* self)

@@ -31,13 +31,9 @@ static tree_decl* c_parse_function_or_init_declarator(
                                 c_error_function_initialized_like_a_variable(self->context, decl);
                         return NULL;
                 }
-
                 c_parser_consume_token(self);
-                tree_expr* init = c_parse_initializer(self, tree_get_decl_type(decl));
-                if (!init)
+                if (!c_sema_set_var_init(self->sema, decl, c_parse_initializer(self)))
                         return NULL;
-
-                c_sema_set_var_init(self->sema, decl, init);
         }
         else if (func_def_expected && dk == TDK_FUNCTION && c_parser_at(self, CTK_LBRACE))
         {

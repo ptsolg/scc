@@ -17,6 +17,7 @@ add_scc_lib(c
 	sema-decl.c
 	sema-type.c
 	sema-stmt.c
+	sema-init.c
 	misc.c
 	misc.h
 	preprocessor.c
@@ -33,8 +34,6 @@ add_scc_lib(c
 	c.c
 	builtin-type.h
 	builtin-type.c
-	initializer.h
-	initializer.c
 	pragma.c
 
 	DEPENDS
