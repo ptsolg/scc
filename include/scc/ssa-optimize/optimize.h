@@ -1,8 +1,7 @@
 #ifndef SSA_OPT_H
 #define SSA_OPT_H
 
-#include "instr.h"
-#include "pass.h"
+#include "scc/ssa/pass.h"
 
 extern void ssa_fold_constants(const ssa_pass* pass);
 extern void ssa_eliminate_dead_code(const ssa_pass* pass);

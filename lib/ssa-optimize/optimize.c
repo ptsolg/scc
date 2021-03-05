@@ -1,4 +1,4 @@
-#include "scc/ssa/optimize.h"
+#include "scc/ssa-optimize/optimize.h"
 #include "scc/ssa/module.h"
 
 extern void ssa_reset_optimizer_opts(ssa_optimizer_opts* self)

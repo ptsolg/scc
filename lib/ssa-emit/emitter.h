@@ -1,11 +1,12 @@
 #ifndef SSA_EMITTER_H
 #define SSA_EMITTER_H
 
-#include "scc/ssa/emit.h"
-#include "scc/ssa/value.h"
+//#include "scc/ssa/value.h"
 #include "scc/ssa/builder.h"
 #include "scc/core/htab.h"
 #include "scc/core/vec.h"
+
+typedef struct _ssa_module ssa_module;
 
 typedef struct
 {

@@ -1,4 +1,4 @@
-#include "scc/ssa/optimize.h"
+#include "scc/ssa-optimize/optimize.h"
 #include "scc/ssa/block.h"
 
 static void ssa_constant_fold_conditional_jumps(ssa_context* context, ssa_value* func)

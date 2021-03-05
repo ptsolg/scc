@@ -1,8 +1,9 @@
 #include "emitter.h"
 #include "scc/ssa/context.h"
-#include "scc/ssa/optimize.h"
 #include "scc/ssa/module.h"
 #include "scc/ssa/block.h"
+#include "scc/ssa-emit/emit.h"
+#include "scc/ssa-optimize/optimize.h"
 
 extern bool ssa_record_is_emmited(ssa_module_emitter* self, const tree_decl* decl)
 {

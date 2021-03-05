@@ -1,4 +1,4 @@
-#include "scc/ssa/optimize.h"
+#include "scc/ssa-optimize/optimize.h"
 #include "scc/ssa/block.h"
 #include "scc/ssa/context.h"
 
