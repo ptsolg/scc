@@ -5,8 +5,9 @@ add_scc_lib(cc
 	llvm.c
 
 	DEPENDS
-	c
-	ssa
+	lex
+	syntax
+	ssa-emit
 
 	INCLUDE
 	${SCC_INC_DIR}

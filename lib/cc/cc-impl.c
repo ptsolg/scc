@@ -1,14 +1,15 @@
 #include "cc-impl.h"
-#include "scc/c/c.h"
-#include "scc/c/context.h"
-#include "scc/c/printer.h"
+#include "scc/cc/llvm.h"
+#include "scc/c-common/context.h"
+#include "scc/lex/lexer.h"
+#include "scc/syntax/parser.h"
+#include "scc/syntax/printer.h"
+#include "scc/ssa/context.h"
+#include "scc/ssa/pretty-print.h"
+#include "scc/ssa-emit/emit.h"
+#include "scc/ssa-optimize/optimize.h"
 #include "scc/tree/context.h"
 #include "scc/tree/target.h"
-#include "scc/ssa/context.h"
-#include "scc/ssa/emit.h"
-#include "scc/ssa/pretty-print.h"
-#include "scc/ssa/optimize.h"
-#include "scc/cc/llvm.h"
 #include <stdarg.h>
 
 #define LL_EXT "ll"
@@ -68,8 +69,6 @@ static void cc_context_init(cc_context* self, cc_instance* cc, jmp_buf on_fatal_
 
         self->eh.on_error = cc_handle_error;
         c_context_init(&self->c, &self->tree, &cc->input.source_lookup, &self->eh, on_fatal_error);
-        self->c.pragma_handlers.data = cc;
-        self->c.pragma_handlers.on_link = cc_handle_pragma_link;
         self->c.lang_opts.ext.tm_enabled = cc->opts.ext.enable_tm;
 
         ssa_init(&self->ssa, &self->tree, on_fatal_error);
@@ -219,7 +218,8 @@ static void cc_print_tree_module(cc_instance* self,
 
 static tree_module* cc_parse_file(cc_instance* self, cc_context* context, file_entry* file)
 {
-        return c_parse_source(&context->c, file, self->output.message);
+        c_pragma_handlers h = { .on_link = cc_handle_pragma_link, .data = self };
+        return c_parse_source(&context->c, file, h, self->output.message);
 }
 
 extern errcode cc_dump_tree(cc_instance* self)
@@ -252,6 +252,7 @@ extern errcode cc_perform_syntax_analysis(cc_instance* self)
 {
         jmp_buf fatal;
         cc_context context;
+        c_pragma_handlers h = { .on_link = cc_handle_pragma_link, .data = self };
 
         cc_context_init(&context, self, fatal);
         if (setjmp(fatal))
@@ -262,7 +263,7 @@ extern errcode cc_perform_syntax_analysis(cc_instance* self)
 
         errcode result = EC_NO_ERROR;
         CC_FOREACH_SOURCE(self, it, end)
-                if (!c_parse_source(&context.c, *it, self->output.message))
+                if (!c_parse_source(&context.c, *it, h, self->output.message))
                 {
                         result = EC_ERROR;
                         break;
