@@ -1,0 +1,14 @@
+add_scc_target_sources(lex
+	charset.h
+	lexer.h
+	macro-lexer.h
+	misc.h
+	pragma.h
+	preprocessor.h
+	preprocessor-lexer.h
+	reswords.h
+	reswords-info.h
+	token.h
+	token-kind.h
+	token-lexer.h
+)
