@@ -57,7 +57,7 @@ typedef struct
 extern void c_token_print_info_init(c_token_print_info* self);
 
 extern void c_print_token(c_printer* self, const c_token* token, const c_token_print_info* info);
-extern void c_print_tokens(c_printer* self, const ptrvec* tokens);
+extern void c_print_tokens(c_printer* self, const struct vec* tokens);
 
 extern void c_print_expr(c_printer* self, const tree_expr* expr);
 

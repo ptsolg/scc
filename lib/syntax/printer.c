@@ -2,6 +2,7 @@
 #include "scc/c-common/context.h"
 #include "scc/c-common/source.h"
 #include "scc/c-common/limits.h"
+#include "scc/core/string.h"
 #include "scc/lex/charset.h"
 #include "scc/lex/token.h"
 #include "scc/lex/reswords-info.h"
@@ -144,10 +145,9 @@ extern void c_token_print_info_init(c_token_print_info* self)
 
 static void _c_print_string_literal(c_printer* self, tree_id id)
 {
-        strentry entry;
-        tree_get_id_strentry(self->context, id, &entry);
+        struct strentry* entry = tree_get_id_strentry(self->context, id);
         char unescaped[C_MAX_LINE_LENGTH * 2];
-        c_get_unescaped_string(unescaped, ARRAY_SIZE(unescaped), (const char*)entry.data, entry.size);
+        c_get_unescaped_string(unescaped, ARRAY_SIZE(unescaped), (const char*)entry->data, entry->size);
         c_printf(self, "\"%s\"", unescaped);
 }
 
@@ -215,14 +215,14 @@ extern void c_print_token(c_printer* self, const c_token* token, const c_token_p
         c_print_token_value(self, token);
 }
 
-extern void c_print_tokens(c_printer* self, const ptrvec* tokens)
+extern void c_print_tokens(c_printer* self, const struct vec* tokens)
 {
         c_token_print_info info;
         c_token_print_info_init(&info);
 
         for (size_t i = 0; i < tokens->size; i++)
         {
-                const c_token* token = ptrvec_get(tokens, i);
+                const c_token* token = vec_get(tokens, i);
                 c_location loc;
                 c_source_find_loc(self->source_manager, &loc, c_token_get_loc(token));
 
@@ -240,7 +240,7 @@ extern void c_print_tokens(c_printer* self, const ptrvec* tokens)
                         info.max_kind_len = len;
         }
         for (size_t i = 0; i < tokens->size; i++)
-                c_print_token(self, ptrvec_get(tokens, i), &info);
+                c_print_token(self, vec_get(tokens, i), &info);
 }
 
 static inline void c_print_lbracket(c_printer* self)

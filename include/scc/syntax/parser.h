@@ -21,13 +21,13 @@ typedef struct _c_parser
         c_lexer* lexer;
         c_sema* sema;
         c_context* context;
-        int* on_error;
+        void* on_error;
 } c_parser;
 
 extern void c_parser_init(c_parser* self, c_context* context, c_lexer* lexer, c_sema* sema);
 
 extern void c_parser_dispose(c_parser* self);
-extern void c_parser_set_on_error(c_parser* self, int* b);
+extern void c_parser_set_on_error(c_parser* self, void* b);
 extern void c_parser_die(const c_parser* self, int code);
 
 extern void c_parser_enter_token_stream(c_parser* self);

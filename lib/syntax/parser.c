@@ -15,7 +15,7 @@ extern void c_parser_init(c_parser* self, c_context* context, c_lexer* lexer, c_
         self->buffer[2] = NULL;
 }
 
-extern void c_parser_set_on_error(c_parser* self, int* b)
+extern void c_parser_set_on_error(c_parser* self, void* b)
 {
         self->on_error = b;
 }
