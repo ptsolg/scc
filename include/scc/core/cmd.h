@@ -1,14 +1,6 @@
 #ifndef SCC_CORE_CMD_H
 #define SCC_CORE_CMD_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 
 typedef struct _cmd_parser cmd_parser;
@@ -45,9 +37,5 @@ extern int arg_to_cmd(char* buffer, size_t buffer_size, const char* arg);
 extern int argv_to_cmd(char* buffer, size_t buffer_size, int argc, const char** argv);
 
 extern errcode execute(const char* path, int* code, int argc, const char** argv);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

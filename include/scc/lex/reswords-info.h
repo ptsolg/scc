@@ -1,14 +1,6 @@
 #ifndef C_RESWORDS_INFO_H
 #define C_RESWORDS_INFO_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "scc/core/common.h"
 #include "scc/lex/token-kind.h"
 
@@ -159,9 +151,5 @@ static const c_resword_info _c_resword_infos[CTK_TOTAL_SIZE] =
 #undef CRK_TOKEN
 #undef CRK_LITERAL
 #undef CRK_EMPTY
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -1,14 +1,6 @@
 #ifndef TREE_EXPR_H
 #define TREE_EXPR_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 #include "type.h" // TTQ_CONST
 
@@ -870,9 +862,5 @@ static TREE_INLINE void tree_set_impl_init_expr(tree_expr* self, tree_expr* expr
 {
         self->impl_init.expr = expr;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // !TREE_EXPR_H

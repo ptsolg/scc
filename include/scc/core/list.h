@@ -1,14 +1,6 @@
 #ifndef SCC_CORE_LIST_H
 #define SCC_CORE_LIST_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 
 typedef struct _list_node
@@ -155,9 +147,5 @@ static inline void list_init_array(list_head* self, list_node nodes[], size_t co
         for (ITTYPE ITNAME = (ITTYPE)((const list_head*)PLIST)->head; \
                 ITNAME != (ITTYPE)list_end_c(((const list_head*)PLIST)); \
                 ITNAME = (ITTYPE)((const list_node*)ITNAME)->next)
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

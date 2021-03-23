@@ -1,14 +1,6 @@
 #ifndef SCC_CORE_VALUE_H
 #define SCC_CORE_VALUE_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "misc.h"
 
 typedef enum
@@ -182,9 +174,5 @@ extern void avalue_to_dp(avalue* val);
 
 extern int avalue_print(const avalue* self, char* buf, size_t count, int precision);
 extern int avalue_print_as_hex(const avalue* val, char* buf, size_t count);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

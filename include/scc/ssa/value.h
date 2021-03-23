@@ -1,14 +1,6 @@
 #ifndef SSA_VALUE_H
 #define SSA_VALUE_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <scc/tree/tree.h>
 #include "common.h"
 
@@ -449,9 +441,5 @@ static inline void ssa_set_function_entity(ssa_value* self, tree_decl* func)
 {
         _ssa_function(self)->entity = func;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

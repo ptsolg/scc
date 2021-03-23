@@ -1,14 +1,6 @@
 #ifndef SSA_MODULE_H
 #define SSA_MODULE_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 #include "scc/core/vec.h"
 
@@ -42,9 +34,5 @@ extern tree_decl** ssa_get_module_type_decls_end(const ssa_module* self);
         for (tree_decl** ITNAME = ssa_get_module_type_decls_begin(PMODULE), \
                 **ENDNAME = ssa_get_module_type_decls_end(PMODULE); \
                 ITNAME != ENDNAME; ITNAME++)
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

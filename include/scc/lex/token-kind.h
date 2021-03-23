@@ -1,14 +1,6 @@
 #ifndef C_TOKEN_KIND_H
 #define C_TOKEN_KIND_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define C_TOKEN(T) CTK_##T
 
 // C preprocessor token
@@ -47,9 +39,5 @@ static const char* c_token_kind_to_string[] =
 #undef C_PUNCTUATOR
 #undef C_KEYWORD
 #undef _TOSTR
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -1,14 +1,6 @@
 #ifndef TREE_TARGET_H
 #define TREE_TARGET_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 #include "type.h"
 
@@ -42,9 +34,5 @@ extern size_t tree_get_builtin_type_align(const tree_target_info* self, tree_bui
 
 extern size_t tree_get_sizeof(const tree_target_info* info, const tree_type* t);
 extern size_t tree_get_alignof(const tree_target_info* info, const tree_type* t);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // !TREE_TARGET_H

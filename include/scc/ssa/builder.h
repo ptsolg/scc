@@ -1,14 +1,6 @@
 #ifndef SSA_BUILDER_H
 #define SSA_BUILDER_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 #include "instr.h" // ssa_memorder_kind ...
 
@@ -113,9 +105,5 @@ extern ssa_value* ssa_build_atomic_cmpxchg(
         ssa_value* desired,
         ssa_memorder_kind success_ordering,
         ssa_memorder_kind failure_ordering);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

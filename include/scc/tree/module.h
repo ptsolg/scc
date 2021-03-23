@@ -1,14 +1,6 @@
 #ifndef TREE_MODULE_H
 #define TREE_MODULE_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "decl.h"
 
 typedef struct _tree_target_info tree_target_info;
@@ -39,9 +31,5 @@ static TREE_INLINE tree_target_info* tree_get_module_target(const tree_module* s
 {
         return self->target;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // !TREE_MODULE_H

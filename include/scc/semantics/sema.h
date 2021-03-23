@@ -1,14 +1,6 @@
 #ifndef C_SEMA_H
 #define C_SEMA_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "scc/c-common/context.h"
 #include "scc/tree/type.h"
 #include "scc/tree/expr.h"
@@ -503,9 +495,5 @@ enum
 };
 
 extern bool c_sema_check_stmt(const c_sema* self, const tree_stmt* s, int scope_flags);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

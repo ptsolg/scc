@@ -1,14 +1,6 @@
 #ifndef TREE_EVAL_H
 #define TREE_EVAL_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "scc/core/value.h"
 
 typedef struct _tree_context tree_context;
@@ -37,9 +29,5 @@ extern bool tree_eval_expr_as_integer(
 
 extern bool tree_eval_expr_as_arithmetic(
         tree_context* context, const tree_expr* expr, tree_eval_result* result);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // !TREE_EVAL_H

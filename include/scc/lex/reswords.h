@@ -1,10 +1,6 @@
 #ifndef C_RESWORDS_H
 #define C_RESWORDS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "scc/core/hashmap.h"
 
 typedef struct _c_context c_context;
@@ -23,9 +19,5 @@ extern int c_reswords_get_resword(const c_reswords* self, const char* string, si
 extern int c_reswords_get_resword_by_ref(const c_reswords* self, unsigned ref);
 extern int c_reswords_get_pp_resword(const c_reswords* self, const char* string, size_t len);
 extern int c_reswords_get_pp_resword_by_ref(const c_reswords* self, unsigned ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

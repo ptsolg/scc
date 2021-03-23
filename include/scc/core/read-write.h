@@ -1,14 +1,6 @@
 #ifndef SCC_CORE_READ_WRITE_H
 #define SCC_CORE_READ_WRITE_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 
 typedef struct _write_cb
@@ -118,9 +110,5 @@ static inline read_cb* sread_cb_base(sread_cb* self)
 {
         return &self->base;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

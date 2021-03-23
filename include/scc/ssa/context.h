@@ -2,14 +2,6 @@
 #define SSA_CONTEXT_H
 
 #include "scc/core/allocator.h"
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 #include <setjmp.h>
 
@@ -73,9 +65,5 @@ static inline void ssa_dispose_array(ssa_context* self, ssa_array* array)
         dealloc(array->data);
         ssa_init_array(array);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

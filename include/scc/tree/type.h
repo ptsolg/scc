@@ -1,14 +1,6 @@
 #ifndef TREE_TYPE_H
 #define TREE_TYPE_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 #include "decl.h" // tree_decl_kind
 
@@ -637,9 +629,5 @@ typedef enum
 } tree_type_equality_kind;
 
 extern tree_type_equality_kind tree_compare_types(const tree_type* a, const tree_type* b);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // !TREE_TYPE_H

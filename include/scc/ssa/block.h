@@ -1,14 +1,6 @@
 #ifndef SSA_BLOCK_H
 #define SSA_BLOCK_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 #include "value.h"
 #include "instr.h" // struct _ssa_instr_node
@@ -122,9 +114,5 @@ static inline bool ssa_block_is_atomic(ssa_block* self)
 {
         return self->atomic;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

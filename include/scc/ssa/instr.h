@@ -1,14 +1,6 @@
 #ifndef SSA_INSTR_H
 #define SSA_INSTR_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 #include "value.h"
 
@@ -626,9 +618,5 @@ static inline ssa_instr* ssa_ignore_casts(ssa_instr* self)
                 self = ssa_get_var_instr(ssa_get_instr_operand_value(self, 0));
         return self;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

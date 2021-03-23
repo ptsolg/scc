@@ -1,14 +1,6 @@
 #ifndef TREE_STMT_H
 #define TREE_STMT_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "decl.h"
 
 typedef struct _tree_stmt tree_stmt;
@@ -548,9 +540,5 @@ static TREE_INLINE void tree_set_atomic_body(tree_stmt* self, tree_stmt* body)
 {
         self->atomic.body = body;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // !TREE_STMT_H
