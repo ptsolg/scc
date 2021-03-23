@@ -1,14 +1,6 @@
 #ifndef TREE_DECL_H
 #define TREE_DECL_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 #include "scc/core/value.h"
 
@@ -30,7 +22,7 @@ typedef struct _tree_decl_scope
 {
         struct _tree_decl_scope* parent;
         list_head decls;
-        strmap* lookup[2];
+        struct hashmap* lookup[2];
 } tree_decl_scope;
 
 extern void tree_init_decl_scope(
@@ -44,8 +36,8 @@ extern tree_decl* tree_decl_scope_lookup(
         tree_id id,
         bool parent_lookup);
 
-extern errcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context* context, tree_decl* decl);
-extern errcode tree_decl_scope_add_decl(tree_decl_scope* self, tree_context* context, tree_decl* decl);
+extern void tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context* context, tree_decl* decl);
+extern void tree_decl_scope_add_decl(tree_decl_scope* self, tree_context* context, tree_decl* decl);
 extern void tree_decl_scope_add_hidden_decl(tree_decl_scope* self, tree_decl* decl);
 
 static TREE_INLINE tree_decl_scope* tree_get_decl_scope_parent(const tree_decl_scope* self)
@@ -600,7 +592,7 @@ extern tree_decl* tree_new_var_decl(
         tree_context* context,
         tree_decl_scope* scope,
         tree_xlocation loc,
-        tree_id name, 
+        tree_id name,
         tree_storage_class sc,
         tree_storage_duration sd,
         tree_dll_storage_class dll_sc,
@@ -637,7 +629,7 @@ extern uint tree_get_field_index(tree_decl* self);
 static TREE_INLINE tree_decl* tree_get_field_record(const tree_decl* self)
 {
         return (tree_decl*)((uint8_t*)tree_get_decl_scope(self)
-                - offsetof(struct _tree_record_decl, fields));
+                            - offsetof(struct _tree_record_decl, fields));
 }
 
 static TREE_INLINE tree_decl* _tree_skip_non_field_decls(tree_decl* self, tree_decl* end)
@@ -650,14 +642,14 @@ static TREE_INLINE tree_decl* _tree_skip_non_field_decls(tree_decl* self, tree_d
 
 static TREE_INLINE tree_decl* tree_skip_non_field_decls(tree_decl* self)
 {
-        return _tree_skip_non_field_decls(self, 
-                tree_get_decl_scope_decls_end(tree_get_decl_scope(self)));
+        return _tree_skip_non_field_decls(self,
+                                          tree_get_decl_scope_decls_end(tree_get_decl_scope(self)));
 }
 
 static TREE_INLINE tree_decl* tree_get_next_field(const tree_decl* self)
 {
         return _tree_skip_non_field_decls(tree_get_next_decl(self),
-                tree_get_decl_scope_decls_end(tree_get_decl_scope(self)));
+                                          tree_get_decl_scope_decls_end(tree_get_decl_scope(self)));
 }
 
 static TREE_INLINE tree_expr* tree_get_field_bit_width(const tree_decl* self)
@@ -737,7 +729,7 @@ static TREE_INLINE void tree_set_label_decl_stmt(tree_decl* self, tree_stmt* stm
 extern tree_decl* tree_new_decl_group(
         tree_context* context, tree_decl_scope* scope, tree_xlocation loc);
 
-extern errcode tree_add_decl_in_group(tree_decl* self, tree_context* context, tree_decl* decl);
+extern void tree_add_decl_in_group(tree_decl* self, tree_context* context, tree_decl* decl);
 
 static TREE_INLINE tree_decl** tree_get_decl_group_begin(const tree_decl* self)
 {
@@ -762,9 +754,5 @@ static TREE_INLINE tree_decl* tree_get_decl_group_decl(const tree_decl* self, si
 #define TREE_FOREACH_DECL_IN_GROUP(PGROUP, ITNAME) \
         for (tree_decl** ITNAME = tree_get_decl_group_begin(PGROUP); \
                 ITNAME != tree_get_decl_group_end(PGROUP); ITNAME++)
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // !TREE_DECL_H

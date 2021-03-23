@@ -1,27 +1,20 @@
 #ifndef TREE_COMMON_H
 #define TREE_COMMON_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "scc/core/common.h"
 #include "scc/core/strpool.h"
+#include "scc/core/hash.h"
 #include "scc/core/list.h"
 
 #define TREE_INLINE inline
-#define TREE_INVALID_ID STRREF_INVALID
+#define TREE_INVALID_ID HASHMAP_DEL_KEY
 #define TREE_INVALID_LOC ((tree_location)UINT32_MAX)
 #define TREE_MAX_LOC (TREE_INVALID_LOC - 1)
 #define TREE_INVALID_XLOC ((uint64_t)UINT64_MAX)
 
-typedef strref tree_id;
+typedef unsigned tree_id;
 
-#define TREE_EMPTY_ID (STRREF(""))
+#define TREE_EMPTY_ID (strhash(""))
 
 typedef uint32_t tree_location;
 
@@ -55,9 +48,5 @@ static TREE_INLINE void tree_init_array(tree_array* self)
         self->data = NULL;
         self->size = 0;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // !TREE_COMMON_H

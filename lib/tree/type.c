@@ -85,9 +85,9 @@ extern tree_type* tree_new_func_type(tree_context* context, tree_type* restype)
         return t;
 }
 
-extern errcode tree_add_func_type_param(tree_type* self, tree_context* context, tree_type* param)
+extern void tree_add_func_type_param(tree_type* self, tree_context* context, tree_type* param)
 {
-        return tree_array_append_ptr(context, &_tree_func_type(self)->params, param);
+        tree_array_append_ptr(context, &_tree_func_type(self)->params, param);
 }
 
 extern void tree_init_array_type(tree_type* self, tree_array_kind kind, tree_type* eltype)

@@ -1,4 +1,5 @@
 #include "scc/tree/decl.h"
+#include "scc/core/hashmap.h"
 #include "scc/tree/type.h"
 #include "scc/tree/context.h"
 
@@ -26,17 +27,17 @@ static TREE_INLINE tree_decl* _tree_decl_scope_lookup(
         tree_lookup_kind lookup_kind,
         tree_id id)
 {
-        strmap_entry* e;
+        struct hashmap_entry* e;
         if (lookup_kind == TLK_DECL || lookup_kind == TLK_TAG)
-                return self->lookup[lookup_kind] && (e = strmap_lookup(self->lookup[lookup_kind], id))
+                return self->lookup[lookup_kind] && (e = hashmap_lookup(self->lookup[lookup_kind], id))
                         ? e->value : NULL;
 
         assert(lookup_kind == TLK_ANY);
 
-        if (self->lookup[TLK_DECL] && (e = strmap_lookup(self->lookup[TLK_DECL], id)))
+        if (self->lookup[TLK_DECL] && (e = hashmap_lookup(self->lookup[TLK_DECL], id)))
                 return e->value;
 
-        if (self->lookup[TLK_TAG] && (e = strmap_lookup(self->lookup[TLK_TAG], id)))
+        if (self->lookup[TLK_TAG] && (e = hashmap_lookup(self->lookup[TLK_TAG], id)))
                 return e->value;
 
         return NULL;
@@ -60,29 +61,23 @@ extern tree_decl* tree_decl_scope_lookup(
         return NULL;
 }
 
-extern errcode tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context* context, tree_decl* decl)
+extern void tree_decl_scope_update_lookup(tree_decl_scope* self, tree_context* context, tree_decl* decl)
 {
         assert(decl && tree_get_decl_scope(decl) == self);
 
-        strmap** p = tree_decl_is_tag(decl)
+        struct hashmap** p = tree_decl_is_tag(decl)
                 ? self->lookup + TLK_TAG
                 : self->lookup + TLK_DECL;
         if (!*p)
-        {
-                if (!(*p = tree_allocate_node(context, sizeof(strmap))))
-                        return EC_ERROR;
-                strmap_init_ex(*p, context->alloc);
-        }
-
-        return strmap_insert(*p, tree_get_decl_name(decl), decl);
+                *p = hashmap_new();
+        hashmap_insert(*p, tree_get_decl_name(decl), decl);
 }
 
-extern errcode tree_decl_scope_add_decl(tree_decl_scope* self, tree_context* context, tree_decl* decl)
+extern void tree_decl_scope_add_decl(tree_decl_scope* self, tree_context* context, tree_decl* decl)
 {
-        if (!tree_decl_is_anon(decl) && EC_FAILED(tree_decl_scope_update_lookup(self, context, decl)))
-                return EC_ERROR;
+        if (!tree_decl_is_anon(decl))
+                tree_decl_scope_update_lookup(self, context, decl);
         tree_decl_scope_add_hidden_decl(self, decl);
-        return EC_NO_ERROR;
 }
 
 extern void tree_decl_scope_add_hidden_decl(tree_decl_scope* self, tree_decl* decl)
@@ -386,13 +381,13 @@ extern tree_decl* tree_new_decl_group(
         return d;
 }
 
-extern errcode tree_add_decl_in_group(tree_decl* self, tree_context* context, tree_decl* decl)
+extern void tree_add_decl_in_group(tree_decl* self, tree_context* context, tree_decl* decl)
 {
         assert(decl);
         assert(tree_get_decl_kind(decl) != TDK_GROUP
                 && "Decl group cannot contain other decl group");
 
-        return tree_array_append_ptr(context, &self->group.decls, decl);
+        tree_array_append_ptr(context, &self->group.decls, decl);
 }
 
 

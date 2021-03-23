@@ -467,7 +467,7 @@ extern tree_expr* tree_new_call_expr(
         tree_location loc,
         tree_expr* lhs);
 
-extern errcode tree_add_call_arg(tree_expr* self, tree_context* context, tree_expr* arg);
+extern void tree_add_call_arg(tree_expr* self, tree_context* context, tree_expr* arg);
 
 static TREE_INLINE void tree_set_call_args(tree_expr* self, tree_array* args)
 {
@@ -787,7 +787,7 @@ static TREE_INLINE void tree_set_designator_index(tree_designator* self, tree_ex
 
 extern tree_expr* tree_new_designation(tree_context* context, tree_location loc, tree_expr* init);
 
-extern errcode tree_add_designation_designator(
+extern void tree_add_designation_designator(
         tree_expr* self, tree_context* context, tree_designator* d);
 
 static TREE_INLINE tree_designator** tree_get_designation_designators_begin(const tree_expr* self)
@@ -816,7 +816,7 @@ static TREE_INLINE void tree_set_designation_init(tree_expr* self, tree_expr* in
                 ITNAME != ENDNAME; ITNAME++)
 
 extern tree_expr* tree_new_init_list_expr(tree_context* context, tree_location loc);
-extern errcode tree_add_init_list_expr(tree_expr* self, tree_context* context, tree_expr* expr);
+extern void tree_add_init_list_expr(tree_expr* self, tree_context* context, tree_expr* expr);
 
 static TREE_INLINE tree_expr** tree_get_init_list_exprs_begin(const tree_expr* self)
 {

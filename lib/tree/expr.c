@@ -102,10 +102,10 @@ extern tree_expr* tree_new_call_expr(
         return e;
 }
 
-extern errcode tree_add_call_arg(tree_expr* self, tree_context* context, tree_expr* arg)
+extern void tree_add_call_arg(tree_expr* self, tree_context* context, tree_expr* arg)
 {
         assert(arg);
-        return tree_array_append_ptr(context, &self->call.args, arg);
+        tree_array_append_ptr(context, &self->call.args, arg);
 }
 
 extern tree_expr* tree_new_subscript_expr(
@@ -308,11 +308,11 @@ extern tree_expr* tree_new_designation(tree_context* context, tree_location loc,
         return e;
 }
 
-extern errcode tree_add_designation_designator(
+extern void tree_add_designation_designator(
         tree_expr* self, tree_context* context, tree_designator* d)
 {
         assert(d);
-        return tree_array_append_ptr(context, &self->designation.designators, d);
+        tree_array_append_ptr(context, &self->designation.designators, d);
 }
 
 extern tree_expr* tree_new_init_list_expr(tree_context* context, tree_location loc)
@@ -327,9 +327,9 @@ extern tree_expr* tree_new_init_list_expr(tree_context* context, tree_location l
         return e;
 }
 
-extern errcode tree_add_init_list_expr(tree_expr* self, tree_context* context, tree_expr* expr)
+extern void tree_add_init_list_expr(tree_expr* self, tree_context* context, tree_expr* expr)
 {
-        return tree_array_append_ptr(context, &self->init_list.exprs, expr);
+        tree_array_append_ptr(context, &self->init_list.exprs, expr);
 }
 
 extern tree_expr* tree_new_impl_init_expr(tree_context* context, tree_expr* expr)
@@ -454,4 +454,3 @@ extern bool tree_expr_designates_bitfield(const tree_expr* self)
 {
         return false; // todo
 }
-

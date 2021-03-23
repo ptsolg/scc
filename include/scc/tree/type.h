@@ -261,7 +261,7 @@ struct _tree_func_type
 };
 
 extern tree_type* tree_new_func_type(tree_context* context, tree_type* restype);
-extern errcode tree_add_func_type_param(tree_type* self, tree_context* context, tree_type* param);
+extern void tree_add_func_type_param(tree_type* self, tree_context* context, tree_type* param);
 
 static TREE_INLINE struct _tree_func_type* _tree_func_type(tree_type* self)
 {

@@ -1,26 +1,21 @@
 #include "scc/tree/context.h"
+#include "scc/core/allocator.h"
+#include "scc/core/strpool.h"
 #include "scc/tree/target.h"
 
 extern void tree_init(tree_context* self, tree_target_info* target)
 {
-        tree_init_ex(self, target, STDALLOC);
-}
-
-extern void tree_init_ex(tree_context* self, tree_target_info* target, allocator* alloc)
-{
         self->target = target;
-        self->alloc = alloc;
-        obstack_init_ex(&self->nodes, alloc);
-        strpool_init_ex(&self->strings, self->alloc);
-
+        init_stack_alloc(&self->nodes);
+        init_strpool(&self->strings);
         for (tree_builtin_type_kind i = TBTK_INVALID; i < TBTK_SIZE; i++)
                 tree_init_builtin_type(tree_get_builtin_type(self, i), i);
 }
 
 extern void tree_dispose(tree_context* self)
 {
-        strpool_dispose(&self->strings);
-        obstack_dispose(&self->nodes);
+        drop_strpool(&self->strings);
+        drop_stack_alloc(&self->nodes);
 }
 
 extern tree_type* tree_get_builtin_type(tree_context* self, tree_builtin_type_kind k)
