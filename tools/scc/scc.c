@@ -1,4 +1,5 @@
 #include "scc.h"
+#include "scc/core/common.h"
 #include <string.h>
 #include <stdarg.h>
 #include <scc/cc/cc.h>
@@ -34,7 +35,8 @@ static errcode scc_add_cd_dir(scc_env* self)
         char cd[MAX_PATH_LEN + 1];
         if (EC_FAILED(path_get_cd(cd)))
                 return EC_ERROR;
-        return cc_add_source_dir(&self->cc, cd);
+        cc_add_source_dir(&self->cc, cd);
+        return EC_NO_ERROR;
 }
 
 static errcode scc_add_stdlibc_dir(scc_env* self, const char* exec_path)
@@ -45,7 +47,8 @@ static errcode scc_add_stdlibc_dir(scc_env* self, const char* exec_path)
         if (EC_FAILED(path_join(dir, "libstdc")))
                 return EC_ERROR;
 
-        return cc_add_source_dir(&self->cc, dir);
+        cc_add_source_dir(&self->cc, dir);
+        return EC_NO_ERROR;
 }
 
 static errcode scc_add_stdlibc_libs(scc_env* self, const char* exec_dir)
@@ -59,8 +62,7 @@ static errcode scc_add_stdlibc_libs(scc_env* self, const char* exec_dir)
         {
                 return EC_ERROR;
         }
-        if (EC_FAILED(cc_add_lib_dir(&self->cc, dir)))
-                return EC_ERROR;
+        cc_add_lib_dir(&self->cc, dir);
         if (EC_FAILED(cc_add_lib(&self->cc, "msvcrt.lib")))
                 return EC_ERROR;
         if (EC_FAILED(cc_add_lib(&self->cc, "legacy_stdio_definitions.lib")))
@@ -79,8 +81,7 @@ static errcode scc_add_tm_sources(scc_env* self, const char* exec_dir)
 
         if (EC_FAILED(path_join(path, "libtm")))
                 return EC_ERROR;
-        if (EC_FAILED(cc_add_source_dir(&self->cc, path)))
-                return EC_ERROR;
+        cc_add_source_dir(&self->cc, path);
         if (EC_FAILED(path_join(path, "_tm.h")))
                 return EC_ERROR;
         if (!(self->cc.input.tm_decls = file_get(&self->cc.input.source_lookup, path)))

@@ -1,4 +1,5 @@
 #include "cc-impl.h"
+#include "scc/cc/cc.h"
 #include "scc/cc/llvm.h"
 #include "scc/c-common/context.h"
 #include "scc/lex/lexer.h"
@@ -83,12 +84,12 @@ static void cc_context_dispose(cc_context* self)
 
 static file_entry** cc_sources_begin(cc_instance* self)
 {
-        return (file_entry**)ptrvec_begin(&self->input.sources);
+        return (file_entry**)vec_begin(&self->input.sources);
 }
 
 static file_entry** cc_sources_end(cc_instance* self)
 {
-        return (file_entry**)ptrvec_end(&self->input.sources);
+        return (file_entry**)vec_end(&self->input.sources);
 }
 
 #define CC_FOREACH_SOURCE(PCC, ITNAME, ENDNAME) \
@@ -97,12 +98,12 @@ static file_entry** cc_sources_end(cc_instance* self)
 
 static file_entry** cc_builtin_sources_begin(cc_instance* self)
 {
-        return (file_entry**)ptrvec_begin(&self->input.builtin_sources);
+        return (file_entry**)vec_begin(&self->input.builtin_sources);
 }
 
 static file_entry** cc_builtin_sources_end(cc_instance* self)
 {
-        return (file_entry**)ptrvec_end(&self->input.builtin_sources);
+        return (file_entry**)vec_end(&self->input.builtin_sources);
 }
 
 #define CC_FOREACH_BUILTIN_SOURCE(PCC, ITNAME, ENDNAME) \
@@ -111,12 +112,12 @@ static file_entry** cc_builtin_sources_end(cc_instance* self)
 
 static file_entry** cc_libs_begin(cc_instance* self)
 {
-        return (file_entry**)ptrvec_begin(&self->input.libs);
+        return (file_entry**)vec_begin(&self->input.libs);
 }
 
 static file_entry** cc_libs_end(cc_instance* self)
 {
-        return (file_entry**)ptrvec_end(&self->input.libs);
+        return (file_entry**)vec_end(&self->input.libs);
 }
 
 #define CC_FOREACH_LIB(PCC, ITNAME, ENDNAME) \
@@ -165,7 +166,7 @@ static void cc_print_tokens(
         cc_instance* self,
         cc_context* context,
         FILE* output,
-        const ptrvec* tokens)
+        const struct vec* tokens)
 {
         fwrite_cb write;
         fwrite_cb_init(&write, output);
@@ -184,10 +185,10 @@ extern errcode cc_dump_tokens(cc_instance* self)
         errcode result = EC_ERROR;
         jmp_buf fatal;
         cc_context context;
-        ptrvec tokens;
+        struct vec tokens;
 
         cc_context_init(&context, self, fatal);
-        ptrvec_init_ex(&tokens, self->alloc);
+        vec_init(&tokens);
 
         if (setjmp(fatal))
                 goto cleanup;
@@ -199,7 +200,7 @@ extern errcode cc_dump_tokens(cc_instance* self)
                 cc_print_tokens(self, &context, self->output.file, &tokens);
 
 cleanup:
-        ptrvec_dispose(&tokens);
+        vec_drop(&tokens);
         cc_context_dispose(&context);
         return result;
 }
@@ -533,24 +534,20 @@ static errcode cc_link(cc_instance* self, llvm_linker* lld)
         {
                 if (EC_FAILED(get_file_as(obj_file, *it, OBJ_EXT)))
                         return EC_ERROR;
-                if (EC_FAILED(llvm_linker_add_file(lld, obj_file)))
-                        return EC_ERROR;
+                llvm_linker_add_file(lld, obj_file);
         }
         CC_FOREACH_BUILTIN_SOURCE(self, it, end)
         {
                 if (EC_FAILED(get_file_as(obj_file, *it, OBJ_EXT)))
                         return EC_ERROR;
-                if (EC_FAILED(llvm_linker_add_file(lld, obj_file)))
-                        return EC_ERROR;
+                llvm_linker_add_file(lld, obj_file);
         }
 
         CC_FOREACH_LIB(self, it, end)
-                if (EC_FAILED(llvm_linker_add_file(lld, file_get_path(*it))))
-                        return EC_ERROR;
+                llvm_linker_add_file(lld, file_get_path(*it));
 
         FLOOKUP_FOREACH_DIR(&self->input.lib_lookup, it, end)
-                if (EC_FAILED(llvm_linker_add_dir(lld, *it)))
-                        return EC_ERROR;
+                llvm_linker_add_dir(lld, *it);
 
         int code;
         if (EC_FAILED(llvm_link(lld, &code)))

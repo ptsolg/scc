@@ -1,25 +1,20 @@
 #include "scc/cc/cc.h"
 #include "cc-impl.h"
+#include "scc/core/common.h"
 
 extern void cc_init(cc_instance* self, FILE* message)
 {
-        cc_init_ex(self, message, STDALLOC);
-}
-
-extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc)
-{
-        self->alloc = alloc;
         self->opts.name = "cc";
 
         self->input.llc_path = NULL;
         self->input.lld_path = NULL;
         self->input.entry = NULL;
         self->input.tm_decls = NULL;
-        ptrvec_init_ex(&self->input.sources, alloc);
-        ptrvec_init_ex(&self->input.builtin_sources, alloc);
-        ptrvec_init_ex(&self->input.libs, alloc);
-        flookup_init_ex(&self->input.source_lookup, alloc);
-        flookup_init_ex(&self->input.lib_lookup, alloc);
+        vec_init(&self->input.sources);
+        vec_init(&self->input.builtin_sources);
+        vec_init(&self->input.libs);
+        flookup_init(&self->input.source_lookup);
+        flookup_init(&self->input.lib_lookup);
 
         self->output.kind = COK_EXEC;
         self->output.message = message;
@@ -46,9 +41,9 @@ extern void cc_dispose(cc_instance* self)
 
         flookup_dispose(&self->input.lib_lookup);
         flookup_dispose(&self->input.source_lookup);
-        ptrvec_dispose(&self->input.libs);
-        ptrvec_dispose(&self->input.sources);
-        ptrvec_dispose(&self->input.builtin_sources);
+        vec_drop(&self->input.libs);
+        vec_drop(&self->input.sources);
+        vec_drop(&self->input.builtin_sources);
 }
 
 extern void cc_set_output_stream(cc_instance* self, FILE* out)
@@ -72,9 +67,9 @@ extern errcode cc_set_output_file(cc_instance* self, const char* file)
         return EC_NO_ERROR;
 }
 
-extern errcode cc_add_lib_dir(cc_instance* self, const char* dir)
+extern void cc_add_lib_dir(cc_instance* self, const char* dir)
 {
-        return flookup_add(&self->input.lib_lookup, dir);
+        flookup_add(&self->input.lib_lookup, dir);
 }
 
 extern errcode cc_add_lib(cc_instance* self, const char* lib)
@@ -86,13 +81,13 @@ extern errcode cc_add_lib(cc_instance* self, const char* lib)
                 return EC_ERROR;
         }
 
-        ptrvec_push(&self->input.libs, file);
+        vec_push(&self->input.libs, file);
         return EC_NO_ERROR;
 }
 
-extern errcode cc_add_source_dir(cc_instance* self, const char* dir)
+extern void cc_add_source_dir(cc_instance* self, const char* dir)
 {
-        return flookup_add(&self->input.source_lookup, dir);
+        flookup_add(&self->input.source_lookup, dir);
 }
 
 extern errcode cc_add_source_file(cc_instance* self, const char* file, bool builtin)
@@ -104,7 +99,7 @@ extern errcode cc_add_source_file(cc_instance* self, const char* file, bool buil
                 return EC_ERROR;
         }
 
-        ptrvec_push(builtin ? &self->input.builtin_sources : &self->input.sources, source);
+        vec_push(builtin ? &self->input.builtin_sources : &self->input.sources, source);
         return EC_NO_ERROR;
 }
 
@@ -116,7 +111,7 @@ extern errcode cc_emulate_source_file(
                 return EC_ERROR;
 
         if (add_to_input)
-                ptrvec_push(builtin ? &self->input.builtin_sources : &self->input.sources, source);
+                vec_push(builtin ? &self->input.builtin_sources : &self->input.sources, source);
 
         return EC_NO_ERROR;
 }

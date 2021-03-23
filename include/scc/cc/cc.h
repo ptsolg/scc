@@ -2,6 +2,7 @@
 #define CC_H
 
 #include "scc/core/file.h"
+#include "scc/core/vec.h"
 
 typedef enum
 {
@@ -23,9 +24,9 @@ typedef enum
 
 typedef struct
 {
-        ptrvec sources;
-        ptrvec builtin_sources;
-        ptrvec libs;
+        struct vec sources;
+        struct vec builtin_sources;
+        struct vec libs;
         file_lookup source_lookup;
         file_lookup lib_lookup;
         file_entry* tm_decls;
@@ -75,19 +76,17 @@ typedef struct _cc_instance
         cc_input input;
         cc_output output;
         cc_opts opts;
-        allocator* alloc;
 } cc_instance;
 
 extern void cc_init(cc_instance* self, FILE* message);
-extern void cc_init_ex(cc_instance* self, FILE* message, allocator* alloc);
 extern void cc_dispose(cc_instance* self);
 
 extern void cc_set_output_stream(cc_instance* self, FILE* out);
 extern errcode cc_set_output_file(cc_instance* self, const char* file);
 
-extern errcode cc_add_lib_dir(cc_instance* self, const char* dir);
+extern void cc_add_lib_dir(cc_instance* self, const char* dir);
 extern errcode cc_add_lib(cc_instance* self, const char* lib);
-extern errcode cc_add_source_dir(cc_instance* self, const char* dir);
+extern void cc_add_source_dir(cc_instance* self, const char* dir);
 extern errcode cc_add_source_file(cc_instance* self, const char* file, bool builtin);
 extern errcode cc_emulate_source_file(
         cc_instance* self, const char* file, const char* content, bool builtin, bool add_to_input);

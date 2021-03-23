@@ -1,6 +1,8 @@
 #include "scc.h"
 #include "scc/core/cmd.h"
 
+#include <string.h>
+
 static void scc_missing_argument(scc_env* self, const char* arg)
 {
         scc_error(self, "argument to '%s' is missing", arg);

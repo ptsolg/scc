@@ -1,6 +1,7 @@
 #ifndef CC_LLVM_H
 #define CC_LLVM_H
 
+#include "scc/core/common.h"
 #include "scc/core/vec.h"
 
 typedef enum
@@ -43,17 +44,16 @@ typedef struct
         const char* path;
         const char* output;
         const char* entry;
-        ptrvec files;
-        ptrvec dirs;
-        allocator* alloc;
+        struct vec files;
+        struct vec dirs;
 } llvm_linker;
 
 #define LLD_NAME "lld-link.exe"
 
 extern void llvm_linker_init(llvm_linker* self, const char* path);
 extern void llvm_linker_dispose(llvm_linker* self);
-extern errcode llvm_linker_add_dir(llvm_linker* self, const char* dir);
-extern errcode llvm_linker_add_file(llvm_linker* self, const char* file);
+extern void llvm_linker_add_dir(llvm_linker* self, const char* dir);
+extern void llvm_linker_add_file(llvm_linker* self, const char* file);
 extern errcode llvm_link(llvm_linker* self, int* exit_code);
 
 #endif

@@ -64,56 +64,33 @@ extern errcode llvm_compile(llvm_compiler* self, int* exit_code)
                 arg_append(&args, self->output);
         }
 
-        //for (int i = 0; i < args.argc; i++)
+        // for (int i = 0; i < args.argc; i++)
         //        printf("llc >> %s\n", args.argv[i]);
 
         return execute(self->path, exit_code, args.argc, args.argv);
 }
 
-extern errcode llvm_linker_add_dir(llvm_linker* self, const char* dir)
+extern void llvm_linker_add_dir(llvm_linker* self, const char* dir)
 {
 #if OS_WIN
         size_t len = strlen(dir) + sizeof("/LIBPATH:\"\"");
-        char* copy = allocate(self->alloc, len + 1);
-        if (!copy)
-                return EC_ERROR;
-
+        char* copy = alloc(len + 1);
         snprintf(copy, len, "/LIBPATH:\"%s\"", dir);
-        if (EC_FAILED(ptrvec_push(&self->dirs, copy)))
-        {
-                deallocate(self->alloc, copy);
-                return EC_ERROR;
-        }
-        return EC_NO_ERROR;
+        vec_push(&self->dirs, copy);
 #elif OS_OSX
-        char* copy = allocate(self->alloc, strlen(dir) + 1);
-        if (!copy)
-                return EC_ERROR;
-        if (EC_FAILED(ptrvec_push(&self->dirs, copy)))
-        {
-                deallocate(self->alloc, copy);
-                return EC_ERROR;
-        }
+        char* copy = alloc(strlen(dir) + 1);
+        vec_push(&self->dirs, copy);
         strcpy(copy, dir);
-        return EC_NO_ERROR;
 #else
 #error
 #endif
 }
 
-extern errcode llvm_linker_add_file(llvm_linker* self, const char* file)
+extern void llvm_linker_add_file(llvm_linker* self, const char* file)
 {
-        char* copy = allocate(self->alloc, strlen(file) + 1);
-        if (!copy)
-                return EC_ERROR;
-
+        char* copy = alloc(strlen(file) + 1);
         strcpy(copy, file);
-        if (EC_FAILED(ptrvec_push(&self->files, copy)))
-        {
-                deallocate(self->alloc, copy);
-                return EC_ERROR;
-        }
-        return EC_NO_ERROR;
+        vec_push(&self->files, copy);
 }
 
 extern void llvm_linker_init(llvm_linker* self, const char* path)
@@ -121,27 +98,26 @@ extern void llvm_linker_init(llvm_linker* self, const char* path)
         self->path = path;
         self->output = NULL;
         self->entry = NULL;
-        self->alloc = STDALLOC;
-        ptrvec_init_ex(&self->files, self->alloc);
-        ptrvec_init_ex(&self->dirs, self->alloc);
+        vec_init(&self->files);
+        vec_init(&self->dirs);
 }
 
 extern void llvm_linker_dispose(llvm_linker* self)
 {
-        for (void** it = ptrvec_begin(&self->files),
-                **end = ptrvec_end(&self->files); it != end; it++)
+        for (void** it = vec_begin(&self->files),
+                **end = vec_end(&self->files); it != end; it++)
         {
-                deallocate(self->alloc, *it);
+                dealloc(*it);
         }
 
-        for (void** it = ptrvec_begin(&self->dirs),
-                **end = ptrvec_end(&self->dirs); it != end; it++)
+        for (void** it = vec_begin(&self->dirs),
+                **end = vec_end(&self->dirs); it != end; it++)
         {
-                deallocate(self->alloc, *it);
+                dealloc(*it);
         }
 
-        ptrvec_dispose(&self->files);
-        ptrvec_dispose(&self->dirs);
+        vec_drop(&self->files);
+        vec_drop(&self->dirs);
 }
 
 extern errcode llvm_link(llvm_linker* self, int* exit_code)
@@ -149,14 +125,14 @@ extern errcode llvm_link(llvm_linker* self, int* exit_code)
         arg_info args;
         arg_info_init(&args);
 
-        for (void** it = ptrvec_begin(&self->files),
-                **end = ptrvec_end(&self->files); it != end; it++)
+        for (void** it = vec_begin(&self->files),
+                **end = vec_end(&self->files); it != end; it++)
         {
                 arg_append(&args, *it);
         }
 
-        for (void** it = ptrvec_begin(&self->dirs),
-                **end = ptrvec_end(&self->dirs); it != end; it++)
+        for (void** it = vec_begin(&self->dirs),
+                **end = vec_end(&self->dirs); it != end; it++)
         {
                 arg_append(&args, *it);
         }
@@ -193,8 +169,8 @@ extern errcode llvm_link(llvm_linker* self, int* exit_code)
 #error
 #endif
 
-        //printf("lld >> %s\n", self->path);
-        //for (int i = 0; i < args.argc; i++)
+        // printf("lld >> %s\n", self->path);
+        // for (int i = 0; i < args.argc; i++)
         //        printf("lld >> %s\n", args.argv[i]);
 
         return execute(self->path, exit_code, args.argc, args.argv);
