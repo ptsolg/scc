@@ -103,17 +103,16 @@ static void _c_initialize_subobject_with(c_object* self, tree_expr* e)
         }
 }
 
-#define VEC_FN(N) c_object_vec_##N
-#define VEC_TP    c_object_vec
-#define VEC_VTP   c_object
-#include "scc/core/vec-type.h"
+#define VEC   c_object_vec
+#define VEC_T c_object
+#include "scc/core/vec.inc"
 
 typedef struct
 {
         c_object* object;
         tree_storage_class object_sc;
         bool build_semantic_initializer;
-        c_object_vec objects;
+        struct c_object_vec objects;
         c_sema* sema;
 } c_initialization_context;
 
@@ -165,15 +164,17 @@ static void c_init_initialization_context(
         self->sema = sema;
         self->object_sc = object_sc;
         self->build_semantic_initializer = build_semantic_initializer;
-        c_object_vec_init_ex(&self->objects, c_context_get_allocator(sema->ccontext));
+        c_object_vec_init(&self->objects);
 
-        self->object = c_object_vec_push_e(&self->objects);
-        c_init_object(self, self->object, object);
+        c_object o;
+        c_init_object(self, &o, object);
+        c_object_vec_push(&self->objects, o);
+        self->object = c_object_vec_last_ptr(&self->objects);
 }
 
 static void c_dispose_initialization_context(c_initialization_context* self)
 {
-        c_object_vec_dispose(&self->objects);
+        c_object_vec_drop(&self->objects);
 }
 
 static void c_set_object_field(c_initialization_context* ic, tree_decl* field)
@@ -261,7 +262,7 @@ static c_object* c_get_object_parent(const c_initialization_context* ic)
         assert(ic->objects.size);
         return ic->objects.size == 1
                 ? NULL
-                : ic->objects.elems + ic->objects.size - 2;
+                : ic->objects.items + ic->objects.size - 2;
 }
 
 static void c_sema_set_incomplete_array_size(c_sema* self, tree_type* arr, uint size)
@@ -349,8 +350,10 @@ static void c_enter_subobject(c_initialization_context* ic)
 {
         tree_type* t = c_get_subobject_type(ic);
         assert(t && ic->objects.size > 0);
-        ic->object = c_object_vec_push_e(&ic->objects);
-        c_init_object(ic, ic->object, t);
+        c_object o;
+        c_init_object(ic, &o, t);
+        c_object_vec_push(&ic->objects, o);
+        ic->object = c_object_vec_last_ptr(&ic->objects);
 }
 
 static bool c_can_exit_subobject(const c_initialization_context* ic)
@@ -363,7 +366,7 @@ static void c_exit_subobject(c_initialization_context* ic)
         assert(c_can_exit_subobject(ic));
         c_finish_subobject(ic);
         c_object_vec_pop(&ic->objects);
-        ic->object = c_object_vec_last_p(&ic->objects);
+        ic->object = c_object_vec_last_ptr(&ic->objects);
 }
 
 static bool c_sema_check_field_designator(
@@ -541,17 +544,15 @@ static bool c_sema_check_string_initializer(c_sema* self, c_initialization_conte
                 return false;
         }
 
-        strentry entry;
-        tree_get_id_strentry(self->context, tree_get_string_literal(str), &entry);
-
-        uint size = (uint)(is_constant_array ? entry.size - 1 : entry.size);
+        struct strentry* entry = tree_get_id_strentry(self->context, tree_get_string_literal(str));
+        uint size = (uint)(is_constant_array ? entry->size - 1 : entry->size);
         if (is_constant_array && tree_get_array_size(ic->object->type) < size)
         {
                 c_error_initializer_string_is_too_long(self->ccontext, str);
                 return false;
         }
 
-        c_initialize_object_with_string(ic, entry.data, size);
+        c_initialize_object_with_string(ic, (uint8_t*)entry->data, size);
         return true;
 }
 

@@ -72,13 +72,13 @@ extern void c_declarator_init(c_declarator* self, c_sema* sema, c_declarator_kin
         self->context = sema->ccontext;
 
         c_type_chain_init(&self->type);
-        ptrvec_init_ex(&self->params, c_context_get_allocator(sema->ccontext));
+        vec_init(&self->params);
 }
 
 extern void c_declarator_dispose(c_declarator* self)
 {
-        for (void** p = ptrvec_begin(&self->params);
-                p != ptrvec_end(&self->params); p++)
+        for (void** p = vec_begin(&self->params);
+                p != vec_end(&self->params); p++)
         {
                 // todo: delete(*p)
         }
@@ -184,7 +184,7 @@ extern void c_sema_add_declarator_param(c_sema* self, c_declarator* d, c_param* 
 
         tree_add_func_type_param(t, self->context, c_param_get_type(p));
         if (!d->params_initialized)
-                ptrvec_push(&d->params, p);
+                vec_push(&d->params, p);
         else
                 ;// todo delete(p)
 }
@@ -886,12 +886,12 @@ static tree_decl* c_sema_define_param_decl(c_sema* self, c_param* p)
         return csema_add_decl_to_scope(self, self->locals, d);
 }
 
-static bool c_sema_set_function_params(c_sema* self, tree_decl* func, ptrvec* params)
+static bool c_sema_set_function_params(c_sema* self, tree_decl* func, struct vec* params)
 {
         c_sema_enter_decl_scope(self, tree_get_func_params(func));
 
         for (size_t i = 0; i < params->size; i++)
-                if (!c_sema_define_param_decl(self, ptrvec_get(params, i)))
+                if (!c_sema_define_param_decl(self, vec_get(params, i)))
                 {
                         c_sema_exit_decl_scope(self);
                         return false;
@@ -922,10 +922,10 @@ static bool c_sema_check_function_decl(
         if (!tree_type_is_void(restype) && !c_sema_require_complete_type(self, func_loc, restype))
                 return false;
 
-        const ptrvec* params = &d->params;
+        const struct vec* params = &d->params;
         for (size_t i = 0; i < params->size; i++)
         {
-                c_param* param = ptrvec_get(params, i);
+                c_param* param = vec_get(params, i);
                 tree_location param_loc = param->specs.loc.begin;
 
                 if (param->declarator.name == TREE_EMPTY_ID)

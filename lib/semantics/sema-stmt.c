@@ -111,7 +111,7 @@ extern tree_stmt* c_sema_finish_default_stmt(c_sema* self, tree_stmt* stmt, tree
 extern tree_stmt* c_sema_new_labeled_stmt(c_sema* self, tree_decl* label, tree_stmt* stmt)
 {
         if (c_sema_in_transaction_safe_block(self))
-                strmap_insert(&self->tm_info.atomic_labels, tree_get_decl_name(label), label);
+                hashmap_insert(&self->tm_info.atomic_labels, tree_get_decl_name(label), label);
 
         tree_set_label_decl_stmt(label, stmt);
         return tree_new_labeled_stmt(self->context, tree_get_decl_loc(label), label);
@@ -276,7 +276,7 @@ extern tree_stmt* c_sema_new_goto_stmt(
         tree_stmt* goto_stmt = tree_new_goto_stmt(
                 self->context, tree_create_xloc(kw_loc, semicolon_loc), l);
         if (!(scope_flags & SCOPE_FLAG_ATOMIC))
-                ptrvec_push(&self->tm_info.non_atomic_gotos, goto_stmt);
+                vec_push(&self->tm_info.non_atomic_gotos, goto_stmt);
 
         return goto_stmt;
 }
@@ -322,11 +322,11 @@ static bool c_sema_check_top_level_compound_stmt(const c_sema* self, const tree_
                         return false;
                 }
 
-        for (void** it = ptrvec_begin(&self->tm_info.non_atomic_gotos),
-                **end = ptrvec_end(&self->tm_info.non_atomic_gotos); it != end; it++)
+        for (void** it = vec_begin(&self->tm_info.non_atomic_gotos),
+                **end = vec_end(&self->tm_info.non_atomic_gotos); it != end; it++)
         {
                 tree_decl* goto_dest = tree_get_goto_label(*it);
-                if (!strmap_has(&self->tm_info.atomic_labels, tree_get_decl_name(goto_dest)))
+                if (!hashmap_has(&self->tm_info.atomic_labels, tree_get_decl_name(goto_dest)))
                         continue;
 
                 c_error_jumping_into_the_atomic_block_is_prohibited(

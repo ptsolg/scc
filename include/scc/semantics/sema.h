@@ -23,30 +23,17 @@ typedef struct _tree_type tree_type;
 typedef struct _tree_expr tree_expr;
 typedef struct _c_param c_param;
 
-#define C_CASEMAP_EMPTY_KEY (-1)
-#define C_CASEMAP_DELETED_KEY (-2)
-
-#define HTAB_FN(N) c_casemap_##N
-#define HTAB_TP    c_casemap
-#define HTAB_ETP   c_casemap_entry
-#define HTAB_KTP   uint32_t
-#define HTAB_EK    C_CASEMAP_EMPTY_KEY
-#define HTAB_DK    C_CASEMAP_DELETED_KEY
-#define HTAB_VTP   void*
-#include "scc/core/htab-type.h"
-
 typedef struct
 {
         tree_stmt* switch_stmt;
-        c_casemap labels;
+        struct hashmap labels;
         bool has_default_label;
         bool in_atomic_block;
 } c_switch_stmt;
 
-#define VEC_FN(N) c_switch_stack_##N
-#define VEC_TP    c_switch_stack
-#define VEC_VTP   c_switch_stmt
-#include "scc/core/vec-type.h"
+#define VEC   c_switch_stack
+#define VEC_T c_switch_stmt
+#include "scc/core/vec.inc"
 
 // this is used for semantic analysis and building AST
 typedef struct _c_sema
@@ -57,15 +44,15 @@ typedef struct _c_sema
         tree_decl_scope* globals;
         tree_decl_scope* labels;
         tree_decl_scope* locals;
-        c_switch_stack switch_stack;
+        struct c_switch_stack switch_stack;
         tree_scope* scope;
         tree_module* module;
         tree_target_info* target;
 
         struct
         {
-                ptrvec non_atomic_gotos;
-                strmap atomic_labels;
+                struct vec non_atomic_gotos;
+                struct hashmap atomic_labels;
                 int atomic_stmt_nesting;
         } tm_info;
 } c_sema;
@@ -177,7 +164,7 @@ typedef struct _c_declarator
         tree_id name;
         tree_location name_loc;
         tree_xlocation loc;
-        ptrvec params;
+        struct vec params;
         bool params_initialized;
         c_context* context;
 } c_declarator;

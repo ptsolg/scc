@@ -68,12 +68,11 @@ extern tree_type* c_sema_get_logical_operation_type(c_sema* self)
 
 extern tree_type* c_sema_get_type_for_string_literal(c_sema* self, tree_id id)
 {
-        strentry entry;
-        bool found = tree_get_id_strentry(self->context, id, &entry);
-        assert(found);
+        struct strentry* entry = tree_get_id_strentry(self->context, id);
+        assert(entry);
 
         int_value size;
-        int_init(&size, 32, false, entry.size);
+        int_init(&size, 32, false, entry->size);
 
         return tree_new_constant_array_type(self->context, c_sema_get_char_type(self), NULL, &size);
 }

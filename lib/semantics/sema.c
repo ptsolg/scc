@@ -1,4 +1,5 @@
 #include "scc/semantics/sema.h"
+#include "scc/core/hashmap.h"
 #include "scc/tree/decl.h"
 #include "scc/tree/stmt.h"
 #include "scc/tree/context.h"
@@ -18,10 +19,9 @@ extern void c_sema_init(c_sema* self, c_context* context)
         self->scope = NULL;
         self->tm_info.atomic_stmt_nesting = 0;
 
-        allocator* alloc = c_context_get_allocator(self->ccontext);
-        c_switch_stack_init_ex(&self->switch_stack, alloc);
-        ptrvec_init_ex(&self->tm_info.non_atomic_gotos, alloc);
-        strmap_init_ex(&self->tm_info.atomic_labels, alloc);
+        c_switch_stack_init(&self->switch_stack);
+        vec_init(&self->tm_info.non_atomic_gotos);
+        hashmap_init(&self->tm_info.atomic_labels);
 }
 
 extern void c_sema_dispose(c_sema* self)
@@ -141,8 +141,8 @@ extern void c_sema_exit_function(c_sema* self)
         self->function = NULL;
         c_sema_exit_decl_scope(self);
 
-        ptrvec_resize(&self->tm_info.non_atomic_gotos, 0);
-        strmap_clear(&self->tm_info.atomic_labels);
+        vec_resize(&self->tm_info.non_atomic_gotos, 0);
+        hashmap_clear(&self->tm_info.atomic_labels);
 }
 
 extern void c_sema_push_scope(c_sema* self)
@@ -156,13 +156,13 @@ extern void c_sema_push_switch_stmt_info(c_sema* self, tree_stmt* switch_stmt)
         info.has_default_label = false;
         info.in_atomic_block = false;
         info.switch_stmt = switch_stmt;
-        c_casemap_init_ex(&info.labels, c_context_get_allocator(self->ccontext));
+        hashmap_init(&info.labels);
         c_switch_stack_push(&self->switch_stack, info);
 }
 
 extern void c_sema_pop_switch_stmt_info(c_sema* self)
 {
-        c_casemap_dispose(&c_sema_get_switch_stmt_info(self)->labels);
+        hashmap_drop(&c_sema_get_switch_stmt_info(self)->labels);
         c_switch_stack_pop(&self->switch_stack);
 }
 
@@ -178,7 +178,7 @@ extern void c_sema_set_switch_stmt_in_atomic_block(c_sema* self)
 
 extern c_switch_stmt* c_sema_get_switch_stmt_info(const c_sema* self)
 {
-        return c_switch_stack_last_p(&self->switch_stack);
+        return c_switch_stack_last_ptr(&self->switch_stack);
 }
 
 extern bool c_sema_in_switch_stmt(const c_sema* self)
@@ -201,18 +201,18 @@ extern bool c_sema_switch_stmt_register_case_label(const c_sema* self, tree_stmt
         const int_value* val = tree_get_case_cvalue(label);
         uint32_t key = int_get_u32(val);
 
-        c_casemap* labels = &c_sema_get_switch_stmt_info(self)->labels;
+        struct hashmap* labels = &c_sema_get_switch_stmt_info(self)->labels;
         for (uint32_t i = 1; ; i++)
         {
-                c_casemap_entry* entry = c_casemap_lookup(labels, key);
+                struct hashmap_entry* entry = hashmap_lookup(labels, key);
                 if (entry && int_cmp(val, tree_get_case_cvalue(entry->value)) == CR_EQ)
                         return false;
-                else if (key != C_CASEMAP_EMPTY_KEY && key != C_CASEMAP_DELETED_KEY)
+                else if (hashmap_key_ok(key))
                         break;
                 key += i;
         }
 
-        c_casemap_insert(labels, key, label);
+        hashmap_insert(labels, key, label);
         return true;
 }
 
