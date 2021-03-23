@@ -1,6 +1,7 @@
 #include "scc/lex/macro-lexer.h"
 #include "scc/c-common/context.h"
 #include "scc/c-common/limits.h"
+#include "scc/core/vec.h"
 #include "scc/lex/token.h"
 #include "scc/lex/token-lexer.h"
 #include "scc/lex/misc.h"
@@ -18,7 +19,7 @@ extern void c_macro_lexer_init(
         self->macro = macro;
         self->loc = loc;
         self->pos = NULL;
-        ptrvec_init_ex(&self->tokens, c_context_get_allocator(context));
+        vec_init(&self->tokens);
 }
 
 static c_token* _c_macro_lexer_concat(c_macro_lexer* self, c_token* l, c_token* r, tree_location loc)
@@ -50,19 +51,17 @@ static c_token* _c_macro_lexer_concat(c_macro_lexer* self, c_token* l, c_token* 
         return result;
 }
 
-static c_token* c_macro_lexer_concat(c_macro_lexer* self, const ptrvec* tokens, tree_location loc)
+static c_token* c_macro_lexer_concat(c_macro_lexer* self, const struct vec* tokens, tree_location loc)
 {
         size_t size = tokens->size;
         assert(size >= 2);
 
-        c_token* concat = _c_macro_lexer_concat(self,
-                ptrvec_get(tokens, 0),
-                ptrvec_get(tokens, 1), loc);
+        c_token* concat = _c_macro_lexer_concat(self, tokens->items[0], tokens->items[1], loc);
         if (!concat)
                 return NULL;
 
         for (size_t i = 2; i < size; i++)
-                if (!(concat = _c_macro_lexer_concat(self, concat, ptrvec_get(tokens, i), loc)))
+                if (!(concat = _c_macro_lexer_concat(self, concat, vec_get(tokens, i), loc)))
                         return NULL;
 
         return concat;
@@ -71,7 +70,7 @@ static c_token* c_macro_lexer_concat(c_macro_lexer* self, const ptrvec* tokens, 
 static inline c_token* c_macro_lexer_stringify_macro_arg(
         c_macro_lexer* self, c_macro_args* args, c_token** arg, tree_location hash_loc)
 {
-        ptrvec* tokens;
+        struct vec* tokens;
         if (arg == c_macro_get_tokens_end(self->macro) 
                 || !c_token_is(*arg, CTK_ID) 
                 || !(tokens = c_macro_args_get(args, c_token_get_string(*arg))))
@@ -80,8 +79,8 @@ static inline c_token* c_macro_lexer_stringify_macro_arg(
                 return NULL;
         }
 
-        c_token** begin = (c_token**)ptrvec_begin(tokens);
-        c_token** end = (c_token**)ptrvec_end(tokens);
+        c_token** begin = (c_token**)vec_begin(tokens);
+        c_token** end = (c_token**)vec_end(tokens);
 
         c_token** from = begin;
         while (from != end && c_token_is(*from, CTK_WSPACE))
@@ -106,19 +105,19 @@ extern errcode c_macro_lexer_substitute_macro_args(c_macro_lexer* self, c_macro_
 {
         C_FOREACH_MACRO_TOKEN(self->macro, it, end)
         {
-                ptrvec* tokens;
+                struct vec* tokens;
                 c_token* t = *it;
                 if (c_token_is(t, CTK_WSPACE) || c_token_is(t, CTK_EOL))
                         continue;
                 else if (c_token_is(t, CTK_ID)
                         && (tokens = c_macro_args_get(args, c_token_get_string(t))))
                 {
-                        PTRVEC_FOREACH(tokens, arg_it, arg_end)
+                        for (size_t i = 0; i < tokens->size; i++)
                         {
-                                if (c_token_is(*arg_it, CTK_WSPACE) || c_token_is(*arg_it, CTK_EOL))
+                                c_token* tok = vec_get(tokens, i);
+                                if (c_token_is(tok, CTK_WSPACE) || c_token_is(tok, CTK_EOL))
                                         continue;
-                                ptrvec_push(&self->tokens,
-                                        c_token_copy_with_new_loc(self->context, *arg_it, self->loc));
+                                vec_push(&self->tokens, c_token_copy_with_new_loc(self->context, tok, self->loc));
                         }
                         continue;
                 }
@@ -127,36 +126,36 @@ extern errcode c_macro_lexer_substitute_macro_args(c_macro_lexer* self, c_macro_
                         if (!(t = c_macro_lexer_stringify_macro_arg(self, args, ++it, c_token_get_loc(t))))
                                 return EC_ERROR;
 
-                ptrvec_push(&self->tokens, t);
+                vec_push(&self->tokens, t);
         }
 
-        self->pos = (c_token**)ptrvec_begin(&self->tokens);
+        self->pos = (c_token**)self->tokens.items;
         return EC_NO_ERROR;
 }
 
 extern c_token* c_macro_lexer_lex_token(c_macro_lexer* self)
 {
-        c_token** end = (c_token**)ptrvec_end(&self->tokens);
+        c_token** end = (c_token**)vec_end(&self->tokens);
         if (self->pos == end)
                 return c_token_new_end_of_macro(self->context, self->loc, self->macro->name);
 
         if (end - self->pos > 1 && c_token_is(*(self->pos + 1), CTK_HASH2))
         {
-                ptrvec tokens_to_concat;
-                ptrvec_init_ex(&tokens_to_concat, c_context_get_allocator(self->context));
-                ptrvec_push(&tokens_to_concat, *self->pos);
+                struct vec tokens_to_concat;
+                vec_init(&tokens_to_concat);
+                vec_push(&tokens_to_concat, *self->pos);
                 self->pos++;
 
                 while (self->pos != end && c_token_is(*self->pos, CTK_HASH2))
                 {
                         while (c_token_is(*self->pos, CTK_HASH2))
                                 self->pos++;
-                        ptrvec_push(&tokens_to_concat, *self->pos);
+                        vec_push(&tokens_to_concat, *self->pos);
                         self->pos++;
                 }
 
                 c_token* concat = c_macro_lexer_concat(self, &tokens_to_concat, self->loc);
-                ptrvec_dispose(&tokens_to_concat);
+                vec_drop(&tokens_to_concat);
                 if (!concat)
                         return false;
 

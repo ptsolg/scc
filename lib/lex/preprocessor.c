@@ -2,6 +2,7 @@
 #include "scc/c-common/context.h"
 #include "scc/c-common/source.h"
 #include "scc/c-common/limits.h"
+#include "scc/core/hashmap.h"
 #include "scc/lex/token.h"
 #include "scc/lex/reswords.h"
 #include "scc/lex/misc.h"
@@ -98,7 +99,7 @@ extern void c_preprocessor_init(
         c_init_lexer_stack(&self->lexer_stack, context);
         self->lookahead.next_unexpanded_token = NULL;
         self->lookahead.next_expanded_token = NULL;
-        strmap_init_ex(&self->macro_lookup, c_context_get_allocator(context));
+        hashmap_init(&self->macro_lookup);
         self->reswords = reswords;
         self->context = context;
         self->id.defined = tree_get_id_for_string(self->context->tree, "defined");
@@ -111,7 +112,7 @@ extern void c_preprocessor_dispose(c_preprocessor* self)
         while (c_lexer_stack_depth(&self->lexer_stack))
                 c_preprocessor_exit(self);
         c_dispose_lexer_stack(&self->lexer_stack);
-        strmap_dispose(&self->macro_lookup);
+        hashmap_drop(&self->macro_lookup);
 }
 
 extern errcode c_preprocessor_enter_source(c_preprocessor* self, c_source* source)
@@ -160,7 +161,7 @@ extern void c_preprocessor_exit(c_preprocessor* self)
 
 extern c_macro* c_preprocessor_get_macro(const c_preprocessor* self, tree_id name)
 {
-        strmap_entry* entry = strmap_lookup(&self->macro_lookup, name);
+        struct hashmap_entry* entry = hashmap_lookup(&self->macro_lookup, name);
         return entry ? entry->value : NULL;
 }
 
@@ -171,7 +172,7 @@ extern bool c_preprocessor_define_macro(c_preprocessor* self, c_macro* macro)
                 c_error_macro_redefenition(self->context, macro->name, macro->loc);
                 return false;
         }
-        strmap_insert(&self->macro_lookup, macro->name, macro);
+        hashmap_insert(&self->macro_lookup, macro->name, macro);
         return true;
 }
 
@@ -182,7 +183,7 @@ extern bool c_preprocessor_macro_defined(const c_preprocessor* self, tree_id nam
 
 extern bool c_preprocessor_undef(c_preprocessor* self, tree_id name)
 {
-        return strmap_erase(&self->macro_lookup, name);
+        return hashmap_erase(&self->macro_lookup, name);
 }
 
 extern c_token* c_preprocess_non_comment(c_preprocessor* self)
@@ -432,7 +433,7 @@ extern c_token* c_preprocess_non_macro(c_preprocessor* self)
         }
 }
 
-static bool c_preprocessor_collect_adjacent_strings(c_preprocessor* self, ptrvec* result)
+static bool c_preprocessor_collect_adjacent_strings(c_preprocessor* self, struct vec* result)
 {
         while (1)
         {
@@ -446,19 +447,23 @@ static bool c_preprocessor_collect_adjacent_strings(c_preprocessor* self, ptrvec
                         return true;
                 }
 
-                ptrvec_push(result, t);
+                vec_push(result, t);
         }
 }
 
-static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, ptrvec* strings)
+#define VEC   i8vec
+#define VEC_T int8_t
+#include "scc/core/vec.inc"
+
+static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, struct vec* strings)
 {
         assert(strings->size);
 
-        i8vec concat;
-        i8vec_init_ex(&concat, c_context_get_allocator(self->context));
+        struct i8vec concat;
+        i8vec_init(&concat);
         for (size_t i = 0; i < strings->size; i++)
         {
-                c_token* t = ptrvec_get(strings, i);
+                c_token* t = vec_get(strings, i);
                 const char* string = tree_get_id_string(self->context->tree, c_token_get_string(t));
                 char escaped[C_MAX_LINE_LENGTH + 1];
                 size_t size = c_get_escaped_string(escaped, ARRAY_SIZE(escaped), string, strlen(string) + 1);
@@ -469,8 +474,8 @@ static c_token* c_preprocessor_concat_and_escape_strings(c_preprocessor* self, p
 
         tree_id concat_ref = tree_get_id_for_string_s(self->context->tree,
                 (char*)i8vec_begin(&concat), concat.size);
-        tree_location loc = c_token_get_loc(ptrvec_get(strings, 0));
-        i8vec_dispose(&concat);
+        tree_location loc = c_token_get_loc(vec_get(strings, 0));
+        i8vec_drop(&concat);
 
         return c_token_new_string(self->context, loc, concat_ref);
 }
@@ -486,14 +491,14 @@ extern c_token* c_preprocess(c_preprocessor* self)
         if (!c_token_is(t, CTK_CONST_STRING))
                 return t;
 
-        ptrvec adjacent_strings;
-        ptrvec_init_ex(&adjacent_strings, c_context_get_allocator(self->context));
-        ptrvec_push(&adjacent_strings, t);
+        struct vec adjacent_strings;
+        vec_init(&adjacent_strings);
+        vec_push(&adjacent_strings, t);
 
         c_token* result = c_preprocessor_collect_adjacent_strings(self, &adjacent_strings)
                 ? c_preprocessor_concat_and_escape_strings(self, &adjacent_strings)
                 : NULL;
 
-        ptrvec_dispose(&adjacent_strings);
+        vec_drop(&adjacent_strings);
         return result;
 }

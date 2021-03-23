@@ -133,8 +133,7 @@ extern errcode c_token_lexer_enter(c_token_lexer* self, c_source* source)
 
         tree_location start_loc = c_source_get_loc_begin(source);
         // save first line location
-        if (EC_FAILED(c_source_save_line_loc(source, start_loc)))
-                return EC_ERROR;
+        c_source_save_line_loc(source, start_loc);
 
         self->source = source;
         c_token_lexer_enter_char_stream(self, buf, start_loc);

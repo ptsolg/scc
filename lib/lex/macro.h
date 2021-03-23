@@ -12,8 +12,8 @@ typedef struct _c_macro
         bool builtin;
         bool function_like;
         bool used;
-        ptrvec tokens;
-        u32vec params;
+        struct vec tokens;
+        struct u32vec* params;
         tree_location loc;
         tree_id name;
 } c_macro;
@@ -44,7 +44,7 @@ extern size_t c_macro_get_params_size(const c_macro* self);
 
 typedef struct _c_macro_args
 {
-        strmap args;
+        struct hashmap args;
         c_context* context;
 } c_macro_args;
 
@@ -52,6 +52,6 @@ extern void c_macro_args_init(c_macro_args* self, c_context* context);
 extern void c_macro_args_dispose(c_macro_args* self);
 extern void c_macro_args_add(c_macro_args* self, tree_id arg, c_token* token);
 extern void c_macro_args_set_empty(c_macro_args* self, tree_id arg);
-extern ptrvec* c_macro_args_get(c_macro_args* self, tree_id arg);
+extern struct vec* c_macro_args_get(c_macro_args* self, tree_id arg);
 
 #endif

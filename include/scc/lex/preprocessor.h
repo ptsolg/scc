@@ -11,7 +11,7 @@ typedef struct _c_preprocessor
         c_pp_lexer* lexer;
         size_t token_lexer_depth;
         c_lexer_stack lexer_stack;
-        strmap macro_lookup;
+        struct hashmap macro_lookup;
         const c_reswords* reswords;
         c_context* context;
         c_pragma_handlers pragma_handlers;

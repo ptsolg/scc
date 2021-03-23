@@ -21,10 +21,9 @@ typedef enum
         CPLK_MACRO,
 } c_pp_lexer_kind;
 
-#define VEC_FN(N) c_cond_stack_##N
-#define VEC_TP    c_cond_stack
-#define VEC_VTP   c_cond_directive
-#include "scc/core/vec-type.h"
+#define VEC   c_cond_stack
+#define VEC_T c_cond_directive
+#include "scc/core/vec.inc"
 
 typedef struct _c_pp_lexer
 {
@@ -34,7 +33,7 @@ typedef struct _c_pp_lexer
                 struct
                 {
                         c_token_lexer token_lexer;
-                        c_cond_stack cond_stack;
+                        struct c_cond_stack cond_stack;
                 };
                 c_macro_lexer macro_lexer;
         };
@@ -59,14 +58,13 @@ extern c_cond_directive* c_get_cond_directive(const c_pp_lexer* self);
 extern void c_pop_cond_directive(c_pp_lexer* self);
 extern size_t c_cond_stack_depth(const c_pp_lexer* self);
 
-#define VEC_FN(N) c_pp_lexer_stack_##N
-#define VEC_TP    c_pp_lexer_stack
-#define VEC_VTP   c_pp_lexer
-#include "scc/core/vec-type.h"
+#define VEC   c_pp_lexer_stack
+#define VEC_T c_pp_lexer
+#include "scc/core/vec.inc"
 
 typedef struct _c_lexer_stack
 {
-        c_pp_lexer_stack lexers;
+        struct c_pp_lexer_stack lexers;
 } c_lexer_stack;
 
 extern void c_init_lexer_stack(c_lexer_stack* self, c_context* context);

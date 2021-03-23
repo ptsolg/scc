@@ -20,6 +20,6 @@ extern void c_lexer_dispose(c_lexer* self);
 
 extern c_token* c_lex(c_lexer* self);
 
-extern errcode c_lex_source(c_context* context, file_entry* source, FILE* error, ptrvec* result);
+extern errcode c_lex_source(c_context* context, file_entry* source, FILE* error, struct vec* result);
 
 #endif

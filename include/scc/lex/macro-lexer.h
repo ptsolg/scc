@@ -13,7 +13,7 @@ typedef struct _c_reswords c_reswords;
 typedef struct _c_macro_lexer
 {
         c_token** pos;
-        ptrvec tokens;
+        struct vec tokens;
         c_context* context;
         c_macro* macro;
         tree_location loc;

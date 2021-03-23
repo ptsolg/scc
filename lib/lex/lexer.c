@@ -99,7 +99,7 @@ extern c_token* c_lex(c_lexer* self)
         return t;
 }
 
-extern errcode c_lex_source(c_context* context, file_entry* source, FILE* error, ptrvec* result)
+extern errcode c_lex_source(c_context* context, file_entry* source, FILE* error, struct vec* result)
 {
         errcode code = EC_ERROR;
         c_lexer lexer;
@@ -111,9 +111,9 @@ extern errcode c_lex_source(c_context* context, file_entry* source, FILE* error,
         while (1)
         {
                 c_token* t = c_lex(&lexer);
-                if (!t || EC_FAILED(ptrvec_push(result, t)))
+                if (!t)
                         goto cleanup;
-
+                vec_push(result, t);
                 if (c_token_is(t, CTK_EOF))
                 {
                         code = EC_NO_ERROR;
