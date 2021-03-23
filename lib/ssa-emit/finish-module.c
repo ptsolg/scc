@@ -23,7 +23,7 @@ static bool ssa_start_transaction(ssa_module_emitter* self, ssa_block* entry, ss
                 return false;
 
         ssa_init_builder(&b, self->context, ssa_get_block_instrs_end(ontrue));
-        ssa_value* val = ssa_build_call_1(&b, self->tm_info.setjmp, onabort);
+        ssa_value* val = ssa_build_call_1(&b, self->tm_info.set_jmp, onabort);
         if (!val || !(val = ssa_build_neq_zero(&b, val)))
                 return false;
 

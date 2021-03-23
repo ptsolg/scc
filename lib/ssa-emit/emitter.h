@@ -1,9 +1,7 @@
 #ifndef SSA_EMITTER_H
 #define SSA_EMITTER_H
 
-//#include "scc/ssa/value.h"
 #include "scc/ssa/builder.h"
-#include "scc/core/htab.h"
 #include "scc/core/vec.h"
 
 typedef struct _ssa_module ssa_module;
@@ -26,13 +24,13 @@ typedef struct
                 ssa_value* commit_n;
                 ssa_value* alloca;
                 ssa_value* active;
-                ssa_value* setjmp;
+                ssa_value* set_jmp;
                 tree_type* word;
                 size_t word_size;
         } tm_info;
 
-        strmap globals;
-        ptrset emitted_records;
+        struct hashmap globals;
+        struct ptrset* emitted_records;
 } ssa_module_emitter;
 
 extern bool ssa_record_is_emmited(ssa_module_emitter* self, const tree_decl* decl);
@@ -45,10 +43,9 @@ extern void ssa_emit_type(ssa_module_emitter* self, const tree_type* type);
 extern bool ssa_emit_global_decl(ssa_module_emitter* self, tree_decl* decl);
 extern ssa_module* ssa_finish_module(ssa_module_emitter* self);
 
-#define VEC_FN(N) ssa_scope_stack_##N
-#define VEC_TP    ssa_scope_stack
-#define VEC_VTP   strmap
-#include "scc/core/vec-type.h"
+#define VEC ssa_scope_stack
+#define VEC_T struct hashmap
+#include "scc/core/vec.inc"
 
 typedef struct
 {
@@ -60,12 +57,12 @@ typedef struct
         ssa_builder builder;
         unsigned atomic_stmt_nesting;
 
-        strmap labels;
-        ssa_scope_stack defs;
+        struct hashmap labels;
+        struct ssa_scope_stack defs;
 
-        ptrvec continue_stack;
-        ptrvec break_stack;
-        ptrvec switch_stack;
+        struct vec continue_stack;
+        struct vec break_stack;
+        struct vec switch_stack;
 } ssa_function_emitter;
 
 extern void ssa_init_function_emitter(

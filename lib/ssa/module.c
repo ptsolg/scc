@@ -8,21 +8,21 @@ extern ssa_module* ssa_new_module(ssa_context* context)
         if (!m)
                 return NULL;
 
-        ptrvec_init_ex(&m->globals, ssa_get_alloc(context));
-        ptrvec_init_ex(&m->type_decls, ssa_get_alloc(context));
+        vec_init(&m->globals);
+        vec_init(&m->type_decls);
         return m;
 }
 
 extern void ssa_add_module_global(ssa_module* self, ssa_value* val)
 {
         assert(val);
-        ptrvec_push(&self->globals, val);
+        vec_push(&self->globals, val);
 }
 
 extern void ssa_add_module_type_decl(ssa_module* self, tree_decl* decl)
 {
         assert(decl);
-        ptrvec_push(&self->type_decls, decl);
+        vec_push(&self->type_decls, decl);
 }
 
 extern void ssa_number_module_values(ssa_module* self)
@@ -40,20 +40,20 @@ extern void ssa_number_module_values(ssa_module* self)
 
 extern ssa_value** ssa_get_module_globals_begin(const ssa_module* self)
 {
-        return (ssa_value**)ptrvec_begin(&self->globals);
+        return (ssa_value**)vec_begin(&self->globals);
 }
 
 extern ssa_value** ssa_get_module_globals_end(const ssa_module* self)
 {
-        return (ssa_value**)ptrvec_end(&self->globals);
+        return (ssa_value**)vec_end(&self->globals);
 }
 
 extern tree_decl** ssa_get_module_type_decls_begin(const ssa_module* self)
 {
-        return (tree_decl**)ptrvec_begin(&self->type_decls);
+        return (tree_decl**)vec_begin(&self->type_decls);
 }
 
 extern tree_decl** ssa_get_module_type_decls_end(const ssa_module* self)
 {
-        return (tree_decl**)ptrvec_end(&self->type_decls);
+        return (tree_decl**)vec_end(&self->type_decls);
 }

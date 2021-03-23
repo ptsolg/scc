@@ -18,8 +18,8 @@ typedef struct _tree_decl tree_decl;
 
 typedef struct _ssa_module
 {
-        ptrvec globals;
-        ptrvec type_decls;
+        struct vec globals;
+        struct vec type_decls;
 } ssa_module;
 
 extern ssa_module* ssa_new_module(ssa_context* context);

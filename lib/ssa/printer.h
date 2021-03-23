@@ -8,14 +8,13 @@
 typedef struct _tree_decl tree_decl;
 typedef struct _ssa_context ssa_context;
 
-#define HTAB_FN(N) ssa_recmap_##N
-#define HTAB_TP    ssa_recmap
-#define HTAB_ETP   ssa_recmap_entry
-#define HTAB_KTP   const void*
-#define HTAB_EK    (const void*)0
-#define HTAB_DK    (const void*)1
-#define HTAB_VTP   uint
-#include "scc/core/htab-type.h"
+#define HTAB ssa_recmap
+#define HTAB_K const void*
+#define HTAB_K_EMPTY (const void *)0
+#define HTAB_K_DEL (const void *)1
+#define HTAB_K_TO_U32(K) (unsigned)(size_t)(K)
+#define HTAB_V uint
+#include "scc/core/htab.inc"
 
 typedef struct
 {
@@ -26,7 +25,7 @@ typedef struct
         {
                 uint tmp_id;
                 uint rec_id;
-                ssa_recmap rec_to_id;
+                struct ssa_recmap rec_to_id;
         } llvm;
 } ssa_printer;
 

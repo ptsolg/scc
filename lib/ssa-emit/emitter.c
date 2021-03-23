@@ -1,30 +1,38 @@
 #include "emitter.h"
+#include "scc/core/hashmap.h"
 #include "scc/ssa/context.h"
 #include "scc/ssa/module.h"
 #include "scc/ssa/block.h"
 #include "scc/ssa-emit/emit.h"
 #include "scc/ssa-optimize/optimize.h"
 
+#define HTAB_K const void*
+#define HTAB_K_EMPTY (const void*)0
+#define HTAB_K_DEL (const void*)1
+#define HTAB_K_TO_U32(K) (unsigned)(size_t)(K)
+#define HTAB ptrset
+#include "scc/core/htab.inc"
+
 extern bool ssa_record_is_emmited(ssa_module_emitter* self, const tree_decl* decl)
 {
-        return ptrset_has(&self->emitted_records, decl);
+        return ptrset_has(self->emitted_records, decl);
 }
 
 extern void ssa_set_record_emmited(ssa_module_emitter* self, const tree_decl* decl)
 {
         assert(decl);
-        ptrset_insert(&self->emitted_records, decl);
+        ptrset_insert(self->emitted_records, decl);
 }
 
 extern void ssa_set_global_decl(ssa_module_emitter* self, tree_decl* decl, ssa_value* val)
 {
         assert(decl);
-        strmap_insert(&self->globals, tree_get_decl_name(decl), val);
+        hashmap_insert(&self->globals, tree_get_decl_name(decl), val);
 }
 
 extern ssa_value* ssa_get_global_decl(ssa_module_emitter* self, const tree_decl* decl)
 {
-        strmap_entry* entry = strmap_lookup(&self->globals, tree_get_decl_name(decl));
+        struct hashmap_entry* entry = hashmap_lookup(&self->globals, tree_get_decl_name(decl));
         return entry ? entry->value : NULL;
 }
 
@@ -102,7 +110,7 @@ static bool ssa_load_implicit_modules(
         self->tm_info.commit_n = ssa_get_global_decl(self, decls[COMMIT_N]);
         self->tm_info.alloca = ssa_get_global_decl(self, decls[ALLOCA]);
         self->tm_info.active = ssa_get_global_decl(self, decls[ACTIVE]);
-        self->tm_info.setjmp = ssa_get_global_decl(self, decls[SETJMP]);
+        self->tm_info.set_jmp = ssa_get_global_decl(self, decls[SETJMP]);
 
         return true;
 }
@@ -123,18 +131,18 @@ static void ssa_init_module_emitter(ssa_module_emitter* self, ssa_context* conte
         self->tm_info.commit_n = NULL;
         self->tm_info.alloca = NULL;
         self->tm_info.active = NULL;
-        self->tm_info.setjmp = NULL;
+        self->tm_info.set_jmp = NULL;
         self->tm_info.word = NULL;
         self->tm_info.word_size = 0;
 
-        strmap_init_ex(&self->globals, ssa_get_alloc(context));
-        ptrset_init_ex(&self->emitted_records, ssa_get_alloc(context));
+        hashmap_init(&self->globals);
+        self->emitted_records = ptrset_new();
 }
 
 static void ssa_dispose_module_emitter(ssa_module_emitter* self)
 {
-        strmap_dispose(&self->globals);
-        ptrset_dispose(&self->emitted_records);
+        hashmap_drop(&self->globals);
+        ptrset_del(self->emitted_records);
 }
 
 extern ssa_module* ssa_emit_module(
@@ -183,21 +191,20 @@ extern void ssa_init_function_emitter(
         self->alloca_insertion_pos = ssa_get_block_instrs_end(self->block);
         ssa_init_builder(&self->builder, self->context, ssa_get_block_instrs_end(self->block));
 
-        allocator* alloc = ssa_get_alloc(self->context);
-        strmap_init_ex(&self->labels, alloc);
-        ssa_scope_stack_init_ex(&self->defs, alloc);
-        ptrvec_init_ex(&self->continue_stack, alloc);
-        ptrvec_init_ex(&self->break_stack, alloc);
-        ptrvec_init_ex(&self->switch_stack, alloc);
+        hashmap_init(&self->labels);
+        ssa_scope_stack_init(&self->defs);
+        vec_init(&self->continue_stack);
+        vec_init(&self->break_stack);
+        vec_init(&self->switch_stack);
 }
 
 extern void ssa_dispose_function_emitter(ssa_function_emitter* self)
 {
-        strmap_dispose(&self->labels);
-        ssa_scope_stack_dispose(&self->defs);
-        ptrvec_dispose(&self->continue_stack);
-        ptrvec_dispose(&self->break_stack);
-        ptrvec_dispose(&self->switch_stack);
+        hashmap_drop(&self->labels);
+        ssa_scope_stack_drop(&self->defs);
+        vec_drop(&self->continue_stack);
+        vec_drop(&self->break_stack);
+        vec_drop(&self->switch_stack);
 }
 
 extern void ssa_enter_block(ssa_function_emitter* self, ssa_block* block)
@@ -229,41 +236,43 @@ extern bool ssa_current_block_is_terminated(const ssa_function_emitter* self)
         return terminator && ssa_get_instr_kind(terminator) == SIK_TERMINATOR;
 }
 
-static inline strmap* ssa_get_last_scope(const ssa_function_emitter* self)
+static inline struct hashmap* ssa_get_last_scope(const ssa_function_emitter* self)
 {
-        return ssa_scope_stack_last_p(&self->defs);
+        return ssa_scope_stack_last_ptr(&self->defs);
 }
 
 extern void ssa_push_scope(ssa_function_emitter* self)
 {
-        ssa_scope_stack_push(&self->defs, strmap_create_ex(ssa_get_alloc(self->context)));
+        struct hashmap h;
+        hashmap_init(&h);
+        ssa_scope_stack_push(&self->defs, h);
 }
 
 extern void ssa_pop_scope(ssa_function_emitter* self)
 {
-        strmap_dispose(ssa_get_last_scope(self));
+        hashmap_drop(ssa_get_last_scope(self));
         ssa_scope_stack_pop(&self->defs);
 }
 
 extern void ssa_set_def(ssa_function_emitter* self, const tree_decl* var, ssa_value* def)
 {
         assert(def);
-        strmap* last = ssa_get_last_scope(self);
+        struct hashmap* last = ssa_get_last_scope(self);
         tree_id id = tree_get_decl_name(var);
 
-        assert(!strmap_has(last, id));
-        strmap_insert(last, id, def);
+        assert(!hashmap_has(last, id));
+        hashmap_insert(last, id, def);
 }
 
 extern ssa_value* ssa_get_def(ssa_function_emitter* self, const tree_decl* var)
 {
-        strmap* first = ssa_scope_stack_begin(&self->defs);
-        strmap* it = ssa_get_last_scope(self);
+        struct hashmap* first = ssa_scope_stack_begin(&self->defs);
+        struct hashmap* it = ssa_get_last_scope(self);
         tree_id id = tree_get_decl_name(var);
 
         while (it >= first)
         {
-                strmap_entry* entry = strmap_lookup(it, id);
+                struct hashmap_entry* entry = hashmap_lookup(it, id);
                 if (entry)
                         return entry->value;
                 it--;
@@ -274,58 +283,58 @@ extern ssa_value* ssa_get_def(ssa_function_emitter* self, const tree_decl* var)
 extern ssa_block* ssa_get_block_for_label(ssa_function_emitter* self, const tree_decl* label)
 {
         tree_id id = tree_get_decl_name(label);
-        strmap_entry* entry = strmap_lookup(&self->labels, id);
+        struct hashmap_entry *entry = hashmap_lookup(&self->labels, id);
         if (entry)
                 return entry->value;
 
         ssa_block* b = ssa_new_function_block(self);
-        strmap_insert(&self->labels, id, b);
+        hashmap_insert(&self->labels, id, b);
         return b;
 }
 
 extern void ssa_push_continue_dest(ssa_function_emitter* self, ssa_block* block)
 {
-        ptrvec_push(&self->continue_stack, block);
+        vec_push(&self->continue_stack, block);
 }
 
 extern void ssa_push_break_dest(ssa_function_emitter* self, ssa_block* block)
 {
-        ptrvec_push(&self->break_stack, block);
+        vec_push(&self->break_stack, block);
 }
 
 extern void ssa_push_switch_instr(ssa_function_emitter* self, ssa_instr* switch_instr)
 {
-        ptrvec_push(&self->switch_stack, switch_instr);
+        vec_push(&self->switch_stack, switch_instr);
 }
 
 extern void ssa_pop_continue_dest(ssa_function_emitter* self)
 {
-        ptrvec_pop(&self->continue_stack);
+        vec_pop(&self->continue_stack);
 }
 
 extern void ssa_pop_break_dest(ssa_function_emitter* self)
 {
-        ptrvec_pop(&self->break_stack);
+        vec_pop(&self->break_stack);
 }
 
 extern void ssa_pop_switch_instr(ssa_function_emitter* self)
 {
-        ptrvec_pop(&self->switch_stack);
+        vec_pop(&self->switch_stack);
 }
 
 extern ssa_block* ssa_get_continue_dest(ssa_function_emitter* self)
 {
-        return ptrvec_last(&self->continue_stack);
+        return vec_last(&self->continue_stack);
 }
 
 extern ssa_block* ssa_get_break_dest(ssa_function_emitter* self)
 {
-        return ptrvec_last(&self->break_stack);
+        return vec_last(&self->break_stack);
 }
 
 extern ssa_instr* ssa_get_switch_instr(ssa_function_emitter* self)
 {
-        return ptrvec_last(&self->switch_stack);
+        return vec_last(&self->switch_stack);
 }
 
 extern bool ssa_in_atomic_block(const ssa_function_emitter* self)

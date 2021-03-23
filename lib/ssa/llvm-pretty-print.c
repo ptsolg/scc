@@ -690,14 +690,14 @@ static void ssa_print_string_value(ssa_printer* self, const ssa_value* val)
         ssa_prints(self, " = private constant ");
         ssa_print_type(self, ssa_get_value_type(val));
         
-        strentry entry;
-        if (!tree_get_id_strentry(self->context->tree, ssa_get_string_value(val), &entry))
+        struct strentry* entry = tree_get_id_strentry(self->context->tree, ssa_get_string_value(val));
+        if (!entry)
                 return;
 
         ssa_prints(self, " c\"");
-        for (size_t i = 0; i < entry.size; i++)
+        for (size_t i = 0; i < entry->size; i++)
         {
-                int c = entry.data[i];
+                int c = entry->data[i];
                 ssa_printf(self, (isprint(c) ? "%c" : "\\%02X"), c);
 
         }

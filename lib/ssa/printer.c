@@ -11,13 +11,13 @@ extern void ssa_init_printer(ssa_printer* self, ssa_context* context, write_cb* 
         self->indent_lvl = 0;
         self->llvm.tmp_id = 0;
         self->llvm.rec_id = 0;
-        ssa_recmap_init_ex(&self->llvm.rec_to_id, ssa_get_alloc(context));
+        ssa_recmap_init(&self->llvm.rec_to_id);
 }
 
 extern void ssa_dispose_printer(ssa_printer* self)
 {
         writebuf_flush(&self->buf);
-        ssa_recmap_dispose(&self->llvm.rec_to_id);
+        ssa_recmap_drop(&self->llvm.rec_to_id);
 }
 
 extern void ssa_prints(ssa_printer* self, const char* s)
@@ -62,7 +62,7 @@ extern void ssa_print_tree_id(ssa_printer* self, tree_id id)
 extern void ssa_print_record_id(ssa_printer* self, const tree_decl* rec)
 {
         uint id;
-        ssa_recmap_entry* entry = ssa_recmap_lookup(&self->llvm.rec_to_id, rec);
+        struct ssa_recmap_entry* entry = ssa_recmap_lookup(&self->llvm.rec_to_id, rec);
         if (entry)
                 id = entry->value;
         else

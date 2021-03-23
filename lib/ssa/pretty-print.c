@@ -20,14 +20,14 @@ static inline void ssa_print_label_ref(ssa_printer* self, ssa_id id)
 
 static inline void ssa_print_string_value(ssa_printer* self, const ssa_value* val)
 {
-        strentry entry;
-        if (!tree_get_id_strentry(ssa_get_tree(self->context), ssa_get_string_value(val), &entry))
+        struct strentry* entry = tree_get_id_strentry(ssa_get_tree(self->context), ssa_get_string_value(val));
+        if (!entry)
                 return;
 
         ssa_printc(self, '"');
-        for (size_t i = 0; i < entry.size; i++)
+        for (size_t i = 0; i < entry->size; i++)
         {
-                int c = entry.data[i];
+                int c = entry->data[i];
                 ssa_printf(self, (isprint(c) ? "\\%02X" : "%c"), c);
 
         }
