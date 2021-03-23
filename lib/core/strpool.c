@@ -1,75 +1,47 @@
 #include "scc/core/strpool.h"
-#include <stdarg.h>
 
-typedef struct
-{
-        size_t size;
-        uint8_t data[0];
-} strentry_impl;
+#include "scc/core/hash.h"
 
-extern void strpool_init(strpool* self)
+#include <string.h> // memcmp
+
+void init_strpool(struct strpool* self)
 {
-        strpool_init_ex(self, STDALLOC);
+        hashmap_init(&self->map);
+        init_stack_alloc(&self->alloc);
 }
 
-extern void strpool_init_ex(strpool* self, allocator* alloc)
+void drop_strpool(struct strpool* self)
 {
-        strmap_init_ex(&self->map, alloc);
-        obstack_init_ex(&self->string_alloc, alloc);
+        hashmap_drop(&self->map);
+        drop_stack_alloc(&self->alloc);
 }
 
-extern void strpool_dispose(strpool* self)
+int strpool_has(const struct strpool* self, unsigned ref)
 {
-        strmap_dispose(&self->map);
-        obstack_dispose(&self->string_alloc);
+        return hashmap_has(&self->map, ref);
 }
 
-extern bool strpool_get(const strpool* self, strref ref, strentry* result)
+unsigned strpool_insert(struct strpool* self, const void* data, size_t size)
 {
-        result->data = NULL;
-        result->size = 0;
-
-        strmap_entry* map_entry = strmap_lookup(&self->map, ref);
-        if (!map_entry)
-                return false;
-
-        strentry_impl* entry = map_entry->value;
-        result->data = entry->data;
-        result->size = entry->size;
-        return true;
-}
-
-extern bool strpooled(const strpool* self, strref ref)
-{
-        return strmap_has(&self->map, ref);
-}
-
-extern strref strpool_insert(strpool* self, const void* data, size_t size)
-{
-        strref ref = STRREFL(data, size);
-        for (strref i = 1; ; i++)
-        {
-                strentry pooled;
-                if (strpool_get(self, ref, &pooled)
-                        && pooled.size == size 
-                        && memcmp(pooled.data, data, size) == 0)
-                {
+        unsigned ref = hash(data, size);
+        for (unsigned i = 1; ; i++) {
+                struct strentry* entry = strpool_lookup(self, ref);
+                if (entry && entry->size == size && memcmp(entry->data, data, size) == 0)
                         return ref;
-                }
-                else if (!STRREF_IS_INVALID(ref))
+                else if (hashmap_key_ok(ref))
                         break;
-
                 ref += i;
         }
 
-        strentry_impl* copy = obstack_allocate(&self->string_alloc, sizeof(strentry_impl) + size);
-        if (!copy)
-                return STRREF_INVALID;
-
+        struct strentry* copy = stack_alloc(&self->alloc, sizeof(struct strentry) + size);
         copy->size = size;
         memcpy(copy->data, data, size);
-        if (EC_FAILED(strmap_insert(&self->map, ref, copy)))
-                return STRREF_INVALID;
-
+        hashmap_insert(&self->map, ref, copy);
         return ref;
+}
+
+struct strentry* strpool_lookup(const struct strpool* self, unsigned ref)
+{
+        struct hashmap_entry* e = hashmap_lookup(&self->map, ref);
+        return e ? e->value : 0;
 }

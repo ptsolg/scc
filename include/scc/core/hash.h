@@ -1,15 +1,8 @@
-#ifndef SCC_CORE_HASH_H
-#define SCC_CORE_HASH_H
+#ifndef HASH_H
+#define HASH_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "common.h"
+#include "scc/core/common.h"
+#include <string.h>
 
 static inline uint32_t rotl32(uint32_t v, uint32_t n)
 {
@@ -27,20 +20,18 @@ static inline uint32_t mix32(uint32_t v)
         return v;
 }
 
-static inline uint32_t murmurhash3_86_32(const void* data, uint32_t seed, int len)
+static inline uint32_t hash(const void* data, size_t len)
 {
         const uint8_t* bytes = (const uint8_t*)data;
-        const int nblocks = len / 4;
+        const int nblocks = (int)len / 4;
         int i;
 
-        uint32_t h1 = seed;
-
-        uint32_t c1 = 0xcc9e2d51;
-        uint32_t c2 = 0x1b873593;
+        uint32_t h1 = 391585969U;
+        uint32_t c1 = 0xcc9e2d51U;
+        uint32_t c2 = 0x1b873593U;
 
         const uint32_t* blocks = (const uint32_t*)(bytes + nblocks * 4);
-        for (i = -nblocks; i; i++)
-        {
+        for (i = -nblocks; i; i++) {
                 uint32_t k1 = blocks[i];
 
                 k1 *= c1;
@@ -55,8 +46,7 @@ static inline uint32_t murmurhash3_86_32(const void* data, uint32_t seed, int le
         const uint8_t* tail = (const uint8_t*)(bytes + nblocks * 4);
         uint32_t k1 = 0;
 
-        switch (len & 3)
-        {
+        switch (len & 3) {
                 case 3: k1 ^= tail[2] << 16;
                 case 2: k1 ^= tail[1] << 8;
                 case 1: k1 ^= tail[0];
@@ -72,8 +62,9 @@ static inline uint32_t murmurhash3_86_32(const void* data, uint32_t seed, int le
         return h1;
 }
 
-#ifdef __cplusplus
+static inline uint32_t strhash(const char* s)
+{
+        return hash(s, strlen(s) + 1);
 }
-#endif
 
 #endif

@@ -1,18 +1,9 @@
 #ifndef SCC_CORE_FILE_H
 #define SCC_CORE_FILE_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "common.h"
 #include "read-write.h"
-#include "htab.h"
-#include "vec.h"
+#include "hashmap.h"
+
 #include <stdio.h>
 
 extern errcode path_get_cd(char* path);
@@ -74,15 +65,13 @@ extern size_t file_size(const file_entry* entry);
 
 typedef struct _file_lookup
 {
-        strmap lookup;
-        ptrvec dirs;
-        allocator* alloc;
+        struct hashmap lookup;
+        struct dirs* dirs;
 } file_lookup;
 
 extern void flookup_init(file_lookup* self);
-extern void flookup_init_ex(file_lookup* self, allocator* alloc);
 extern void flookup_dispose(file_lookup* self);
-extern errcode flookup_add(file_lookup* self, const char* dir);
+extern void flookup_add(file_lookup* self, const char* dir);
 
 extern const char** flookup_dirs_begin(const file_lookup* self);
 extern const char** flookup_dirs_end(const file_lookup* self);
@@ -97,9 +86,5 @@ extern file_entry* file_get(file_lookup* lookup, const char* path);
 extern file_entry* file_emulate(
         file_lookup* lookup, const char* path, const char* content);
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

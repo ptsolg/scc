@@ -1,14 +1,6 @@
 #ifndef SCC_CORE_MISC_H
 #define SCC_CORE_MISC_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 #include <math.h>
 
@@ -43,16 +35,6 @@ static inline uint prev_powerof2(uint v)
 
 #define IS_POWEROF2(X) ((X) && !((X) & ((X) - 1)))
 
-static inline void* align_pointer(void* p, size_t alignment)
-{
-        return (void*)(((size_t)p + alignment - 1) & ~(size_t)(alignment - 1));
-}
-
-static inline size_t pointer_adjustment(void* p, size_t alignment)
-{
-        return (char*)align_pointer(p, alignment) - (char*)p;
-}
-
 // returns number of digits in n
 static inline int ndigits(int n)
 {
@@ -79,10 +61,6 @@ typedef enum
 #define SORT_MAX_OBJECT_SIZE 1024
 
 extern void sort(void* data, size_t n, size_t obsize,
-        cmp_result(*const cmp_fn)(void*, const void*, const void*), void* ex_data);
-
-#ifdef __cplusplus
-}
-#endif
+                 cmp_result(* const cmp_fn)(void*, const void*, const void*), void* ex_data);
 
 #endif

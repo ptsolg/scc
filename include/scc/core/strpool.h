@@ -1,38 +1,25 @@
-#ifndef SCC_CORE_STRPOOL_H
-#define SCC_CORE_STRPOOL_H
+#ifndef STRPOOL_H
+#define STRPOOL_H
 
-#ifdef HAS_PRAGMA
-#pragma once
-#endif
+#include "allocator.h"
+#include "hashmap.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "htab.h"
-
-typedef struct _strentry
+struct strentry
 {
         size_t size;
-        const uint8_t* data;
-} strentry;
+        char data[];
+};
 
-// a set of unique strings that can be accessed through strref
-typedef struct
+struct strpool
 {
-        strmap map;
-        obstack string_alloc;
-} strpool;
+        struct hashmap map;
+        struct stack_alloc alloc;
+};
 
-extern void strpool_init(strpool* self);
-extern void strpool_init_ex(strpool* self, allocator* alloc);
-extern void strpool_dispose(strpool* self);
-extern bool strpool_get(const strpool* self, strref ref, strentry* result);
-extern bool strpooled(const strpool* self, strref ref);
-extern strref strpool_insert(strpool* self, const void* data, size_t size);
-
-#ifdef __cplusplus
-}
-#endif
+void init_strpool(struct strpool* self);
+void drop_strpool(struct strpool* self);
+int strpool_has(const struct strpool* self, unsigned ref);
+unsigned strpool_insert(struct strpool* self, const void* data, size_t size);
+struct strentry* strpool_lookup(const struct strpool* self, unsigned ref);
 
 #endif

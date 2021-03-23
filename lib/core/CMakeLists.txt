@@ -1,9 +1,8 @@
 add_scc_lib(core
+	alloc.c
+	allocator.c
 	cmd.c
 	file.c
-	heap-debug.c
-	malloc.c
-	memory.c
 	misc.c
 	read-write.c
 	string.c
