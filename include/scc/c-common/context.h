@@ -5,7 +5,7 @@
 
 #include "scc/c-common/lang-opts.h"
 #include "scc/c-common/source.h"
-#include "scc/core/memory.h"
+#include "scc/core/allocator.h"
 
 typedef struct _tree_context tree_context;
 
@@ -25,8 +25,7 @@ typedef struct _c_error_handler
 
 typedef struct _c_context
 {
-        mempool memory;
-        obstack nodes;
+        struct stack_alloc alloc;
         tree_context* tree;
         c_source_manager source_manager;
         c_lang_opts lang_opts;
@@ -41,14 +40,6 @@ extern void c_context_init(
         c_error_handler* error_handler,
         jmp_buf on_bad_alloc);
 
-extern void c_context_init_ex(
-        c_context* self,
-        tree_context* tree,
-        file_lookup* lookup,
-        c_error_handler* error_handler,
-        jmp_buf on_bad_alloc,
-        allocator* alloc);
-
 extern void c_context_dispose(c_context* self);
 
 extern void c_error(
@@ -58,24 +49,9 @@ extern void c_error(
         const char* format,
         ...);
 
-static inline allocator* c_context_get_allocator(c_context* self)
-{
-        return mempool_to_allocator(&self->memory);
-}
-
 static inline void* c_context_allocate_node(c_context* self, size_t bytes)
 {
-        return obstack_allocate(&self->nodes, bytes);
-}
-
-static inline void* c_context_allocate(c_context* self, size_t bytes)
-{
-        return mempool_allocate(&self->memory, bytes);
-}
-
-static inline void c_context_deallocate(c_context* self, void* block)
-{
-        mempool_deallocate(&self->memory, block);
+        return stack_alloc(&self->alloc, bytes);
 }
 
 #endif

@@ -2,6 +2,7 @@
 #define C_SOURCE_H
 
 #include "scc/core/file.h"
+#include "scc/core/vec.h"
 #include "scc/tree/common.h"
 
 typedef struct _c_source_manager c_source_manager;
@@ -13,7 +14,7 @@ typedef struct _c_source
         file_entry* file;
         tree_location begin;
         tree_location end;
-        u32vec lines;
+        struct u32vec* lines;
 } c_source;
 
 extern bool c_source_has(const c_source* self, tree_location loc);
@@ -22,7 +23,7 @@ extern int c_source_get_line(const c_source* self, tree_location loc);
 // returns 0 if location is invalid
 extern int c_source_get_col(const c_source* self, tree_location loc);
 // assumes that loc is beginning of a line
-extern errcode c_source_save_line_loc(c_source* self, tree_location loc);
+extern void c_source_save_line_loc(c_source* self, tree_location loc);
 extern const char* c_source_get_name(const c_source* self);
 extern const char* c_source_get_path(const c_source* self);
 extern tree_location c_source_get_loc_begin(const c_source* self);
@@ -34,13 +35,12 @@ extern void c_source_close(c_source* self);
 typedef struct _c_source_manager
 {
         file_lookup* lookup;
-        strmap file_to_source;
-        ptrvec sources;
-        c_context* context;
+        struct hashmap file_to_source;
+        struct vec sources;
 } c_source_manager;
 
 extern void c_source_manager_init(
-        c_source_manager* self, file_lookup* lookup, c_context* context);
+        c_source_manager* self, file_lookup* lookup);
 extern void c_source_manager_dispose(c_source_manager* self);
 
 extern bool c_source_exists(c_source_manager* self, const char* path);

@@ -1,6 +1,7 @@
 #include "scc/c-common/context.h"
 #include <setjmp.h>
 #include <stdarg.h>
+
 extern void c_context_init(
         c_context* self,
         tree_context* tree,
@@ -8,31 +9,18 @@ extern void c_context_init(
         c_error_handler* error_handler,
         jmp_buf on_bad_alloc)
 {
-        c_context_init_ex(self, tree, lookup, error_handler, on_bad_alloc, STDALLOC);
-}
-
-extern void c_context_init_ex(
-        c_context* self,
-        tree_context* tree,
-        file_lookup* lookup,
-        c_error_handler* error_handler,
-        jmp_buf on_bad_alloc,
-        allocator* alloc)
-{
         self->errors_disabled = false;
         self->tree = tree;
         self->error_handler = error_handler;
-        mempool_init_ex(&self->memory, NULL, on_bad_alloc, alloc);
-        obstack_init_ex(&self->nodes, c_context_get_allocator(self));
-        c_source_manager_init(&self->source_manager, lookup, self);
+        init_stack_alloc(&self->alloc);
+        c_source_manager_init(&self->source_manager, lookup);
         c_lang_opts_init(&self->lang_opts);
 }
 
 extern void c_context_dispose(c_context* self)
 {
         c_source_manager_dispose(&self->source_manager);
-        obstack_dispose(&self->nodes);
-        mempool_dispose(&self->memory);
+        drop_stack_alloc(&self->alloc);
 }
 
 extern void c_error(
