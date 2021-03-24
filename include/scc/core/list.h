@@ -1,151 +1,73 @@
-#ifndef SCC_CORE_LIST_H
-#define SCC_CORE_LIST_H
+#ifndef LIST_H
+#define LIST_H
 
-#include "common.h"
-
-typedef struct _list_node
+struct list
 {
-        struct _list_node* next;
-        struct _list_node* prev;
-} list_node;
+        struct list* next, * prev;
+};
 
-static inline void list_node_init(list_node* self)
+#define LIST_FOREACH(PLIST, ITTYPE, ITNAME) \
+        for (ITTYPE ITNAME = (ITTYPE)((const struct list*)PLIST)->next;\
+                ITNAME != (ITTYPE)((const struct list*)PLIST);\
+                ITNAME = (ITTYPE)((const struct list*)ITNAME)->next)
+
+static void init_list(struct list* self)
 {
-        self->next = NULL;
-        self->prev = NULL;
+        self->next = self;
+        self->prev = self;
 }
 
-// inserts other node after self node
-// if other node is already in list the behaviour is undefined
-static inline void list_node_add_after(list_node* self, list_node* other)
+static int is_list_empty(const struct list* self)
 {
-        list_node* next = self->next;
-        if (next)
-                next->prev = other;
-
-        other->next = next;
-        other->prev = self;
-        self->next = other;
+        return self->next == self;
 }
 
-// inserts other node before self node
-// if other node is already in list the behaviour is undefined
-static inline void list_node_add_before(list_node* self, list_node* other)
-{
-        list_node* prev = self->prev;
-        if (prev)
-                prev->next = other;
-
-        other->prev = prev;
-        other->next = self;
-        self->prev = other;
-}
-
-static inline list_node* list_node_remove(list_node* self)
+static struct list* list_remove(struct list* self) 
 {
         self->prev->next = self->next;
         self->next->prev = self->prev;
         return self;
 }
 
-typedef struct _list_head
+static void list_push(struct list* self, struct list* other)
 {
-        union
-        {
-                list_node as_node;
-                struct
-                {
-                        list_node* head;
-                        list_node* tail;
-                };
-        };
-} list_head;
-
-static inline list_node* list_end(list_head* self)
-{
-        return &self->as_node;
+        struct list* tail = self->prev;
+        other->prev = tail;
+        tail->next = other;
+        self->prev = other;
+        other->next = self;
 }
 
-static inline const list_node* list_end_c(const list_head* self)
+static struct list* list_pop(struct list* self) 
 {
-        return &self->as_node;
+        return list_remove(self->prev);
 }
 
-static inline void list_init(list_head* self)
+static void list_shift(struct list* self, struct list* other) 
 {
-        self->head = list_end(self);
-        self->tail = list_end(self);
+        struct list* head = self->next;
+        other->next = head;
+        head->prev = other;
+        self->next = other;
+        other->prev = self;
 }
 
-static inline list_head list_create(list_node* first, list_node* last)
+static struct list* list_unshift(struct list* self) 
 {
-        list_head h = { first, last };
-        return h;
+        return list_remove(self->next);
 }
 
-static inline bool list_empty(const list_head* self)
+static void list_append(struct list* self, struct list* other) 
 {
-        return self->head == &self->as_node;
-}
-
-static inline void list_push_back(list_head* self, list_node* node)
-{
-        list_node_add_before(list_end(self), node);
-        if (list_empty(self))
-        {
-                self->head = node;
-                node->prev = list_end(self);
-        }
-}
-
-static inline void list_push_front(list_head* self, list_node* node)
-{
-        list_node_add_after(list_end(self), node);
-        if (list_empty(self))
-        {
-                self->tail = node;
-                node->next = list_end(self);
-        }
-}
-
-static inline void list_push_back_list(list_head* self, list_head* other)
-{
-        if (list_empty(other))
+        if (is_list_empty(other))
                 return;
-
-        list_node* head = other->head;
-        list_node* tail = other->tail;
-
-        head->prev = self->tail;
-        tail->next = list_end(self);
-        self->tail->next = head;
-        self->tail = tail;
-        list_init(other);
+        struct list* head = other->next;
+        struct list* tail = other->prev;
+        self->prev->next = head;
+        head->prev = self->prev;
+        tail->next = self;
+        self->prev = tail;
+        init_list(other);
 }
-
-static inline list_node* list_pop_back(list_head* self)
-{
-        return list_node_remove(self->tail);
-}
-
-static inline list_node* list_pop_front(list_head* self)
-{
-        return list_node_remove(self->head);
-}
-
-static inline void list_init_array(list_head* self, list_node nodes[], size_t count)
-{
-        list_init(self);
-        for (size_t i = 0; i < count; i++)
-        {
-                list_node_init(nodes + i);
-                list_push_back(self, nodes + i);
-        }
-}
-
-#define LIST_FOREACH(PLIST, ITTYPE, ITNAME) \
-        for (ITTYPE ITNAME = (ITTYPE)((const list_head*)PLIST)->head; \
-                ITNAME != (ITTYPE)list_end_c(((const list_head*)PLIST)); \
-                ITNAME = (ITTYPE)((const list_node*)ITNAME)->next)
 
 #endif

@@ -19,7 +19,7 @@ struct stack_alloc
 {
         char* chunk_pos;
         char* chunk_end;
-        list_head chunks;
+        struct list chunks;
 };
 
 void init_stack_alloc(struct stack_alloc* self);

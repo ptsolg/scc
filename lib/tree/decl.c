@@ -7,7 +7,7 @@ extern void tree_init_decl_scope(
         tree_decl_scope* self, tree_context* context, tree_decl_scope* parent)
 {
         tree_set_decl_scope_parent(self, parent);
-        list_init(&self->decls);
+        init_list(&self->decls);
         self->lookup[TLK_DECL] = NULL;
         self->lookup[TLK_TAG] = NULL;
 }
@@ -84,7 +84,7 @@ extern void tree_decl_scope_add_hidden_decl(tree_decl_scope* self, tree_decl* de
 {
         assert(decl && tree_get_decl_scope(decl) == self);
 
-        list_push_back(&self->decls, &decl->base.node);
+        list_push(&self->decls, &decl->base.node);
 }
 
 extern tree_decl* tree_new_decl(
@@ -98,7 +98,7 @@ extern tree_decl* tree_new_decl(
         if (!d)
                 return NULL;
 
-        list_node_init(&d->base.node);
+        init_list(&d->base.node);
         tree_set_decl_implicit(d, false);
         tree_set_decl_kind(d, kind);
         tree_set_decl_loc(d, loc);

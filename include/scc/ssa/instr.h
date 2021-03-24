@@ -34,13 +34,13 @@ struct _ssa_instr_node
 {
         union
         {
-                list_node node;
-                list_head list;
+                struct list node;
+                struct list list;
         };
         ssa_block* block;
 };
 
-extern void _ssa_init_instr_node(struct _ssa_instr_node* self, ssa_block* block, bool init_as_list);
+extern void _ssa_init_instr_node(struct _ssa_instr_node* self, ssa_block* block);
 extern void _ssa_add_instr_node_after(struct _ssa_instr_node* self, struct _ssa_instr_node* pos);
 extern void _ssa_add_instr_node_before(struct _ssa_instr_node* self, struct _ssa_instr_node* pos);
 extern void _ssa_remove_instr_node(struct _ssa_instr_node* self);

@@ -2,6 +2,7 @@
 #define SSA_OPT_H
 
 #include "scc/ssa/pass.h"
+#include <stdbool.h>
 
 extern void ssa_fold_constants(const ssa_pass* pass);
 extern void ssa_eliminate_dead_code(const ssa_pass* pass);

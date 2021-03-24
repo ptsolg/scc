@@ -21,7 +21,7 @@ typedef enum
 typedef struct _tree_decl_scope
 {
         struct _tree_decl_scope* parent;
-        list_head decls;
+        struct list decls;
         struct hashmap* lookup[2];
 } tree_decl_scope;
 
@@ -52,22 +52,22 @@ static TREE_INLINE void tree_set_decl_scope_parent(tree_decl_scope* self, tree_d
 
 static TREE_INLINE tree_decl* tree_get_decl_scope_decls_begin(const tree_decl_scope* self)
 {
-        return (tree_decl*)self->decls.head;
+        return (tree_decl*)self->decls.next;
 }
 
 static TREE_INLINE tree_decl* tree_get_decl_scope_decls_end(tree_decl_scope* self)
 {
-        return (tree_decl*)list_end(&self->decls);
+        return (tree_decl*)&self->decls;
 }
 
 static TREE_INLINE const tree_decl* tree_get_decl_scope_decls_cend(const tree_decl_scope* self)
 {
-        return (const tree_decl*)list_end_c(&self->decls);
+        return (const tree_decl*)&self->decls;
 }
 
 static TREE_INLINE bool tree_decl_scope_is_empty(const tree_decl_scope* self)
 {
-        return list_empty(&self->decls);
+        return is_list_empty(&self->decls);
 }
 
 #define TREE_FOREACH_DECL_IN_SCOPE(PSCOPE, ITNAME) \
@@ -121,7 +121,7 @@ typedef enum
 
 struct _tree_decl_base
 {
-        list_node node;
+        struct list node;
         tree_decl_kind kind;
         tree_decl_scope* scope;
         tree_xlocation loc;

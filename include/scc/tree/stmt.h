@@ -12,7 +12,7 @@ typedef struct _tree_scope
 {
         tree_scope* parent;
         tree_decl_scope decls;
-        list_head stmts;
+        struct list stmts;
 } tree_scope;
 
 extern void tree_init_scope(
@@ -38,12 +38,12 @@ static TREE_INLINE const tree_decl_scope* tree_get_scope_cdecls(const tree_scope
 
 static TREE_INLINE tree_stmt* tree_get_scope_stmts_begin(const tree_scope* self)
 {
-        return (tree_stmt*)self->stmts.head;
+        return (tree_stmt*)self->stmts.next;
 }
 
 static TREE_INLINE const tree_stmt* tree_get_scope_stmts_end(const tree_scope* self)
 {
-        return (const tree_stmt*)list_end_c(&self->stmts);
+        return (const tree_stmt*)&self->stmts;
 }
 
 static TREE_INLINE tree_scope* tree_get_scope_parent(const tree_scope* self)
@@ -80,7 +80,7 @@ typedef enum _tree_stmt_kind
 
 struct _tree_stmt_base
 {
-        list_node node;
+        struct list node;
         tree_stmt_kind kind;
         tree_xlocation loc;
 };

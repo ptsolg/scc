@@ -13,7 +13,7 @@ typedef struct _ssa_block ssa_block;
 
 typedef struct _ssa_value_use
 {
-        list_node node;
+        struct list node;
         ssa_instr* instr;
         ssa_value* value;
 } ssa_value_use;
@@ -48,7 +48,7 @@ struct _ssa_value_base
         ssa_id id;
         tree_type* type;
         void* metadata;
-        list_head use_list;
+        struct list use_list;
 };
 
 extern void ssa_init_value(ssa_value* self, ssa_value_kind kind, tree_type* type);
@@ -157,7 +157,7 @@ struct _ssa_function
 {
         struct _ssa_value_base base;
         tree_decl* entity;
-        list_head blocks;
+        struct list blocks;
         ssa_array params;
 };
 
@@ -246,12 +246,12 @@ static inline const struct _ssa_value_base* _ssa_value_cbase(const ssa_value* se
 
 static inline ssa_value_use* ssa_get_value_uses_begin(const ssa_value* self)
 {
-        return (ssa_value_use*)_ssa_value_cbase(self)->use_list.head;
+        return (ssa_value_use*)_ssa_value_cbase(self)->use_list.next;
 }
 
 static inline ssa_value_use* ssa_get_value_uses_end(ssa_value* self)
 {
-        return (ssa_value_use*)list_end(&_ssa_value_base(self)->use_list);
+        return (ssa_value_use*)&_ssa_value_base(self)->use_list;
 }
 
 static inline size_t ssa_get_value_uses_size(ssa_value* self)
@@ -261,7 +261,7 @@ static inline size_t ssa_get_value_uses_size(ssa_value* self)
 
 static inline const ssa_value_use* ssa_get_value_uses_cend(const ssa_value* self)
 {
-        return (const ssa_value_use*)list_end_c(&_ssa_value_cbase(self)->use_list);
+        return (const ssa_value_use*)&_ssa_value_cbase(self)->use_list;
 }
 
 static inline ssa_value_kind ssa_get_value_kind(const ssa_value* self)
@@ -409,17 +409,17 @@ static inline tree_decl* ssa_get_function_entity(const ssa_value* self)
 
 static inline ssa_block* ssa_get_function_blocks_begin(const ssa_value* self)
 {
-        return (ssa_block*)_ssa_cfunction(self)->blocks.head;
+        return (ssa_block*)_ssa_cfunction(self)->blocks.next;
 }
 
 static inline ssa_block* ssa_get_function_blocks_end(ssa_value* self)
 {
-        return (ssa_block*)list_end(&_ssa_function(self)->blocks);
+        return (ssa_block*)&_ssa_function(self)->blocks;
 }
 
 static inline ssa_block* ssa_get_function_blocks_cend(const ssa_value* self)
 {
-        return (ssa_block*)list_end_c(&_ssa_cfunction(self)->blocks);
+        return (ssa_block*)&_ssa_cfunction(self)->blocks;
 }
 
 static inline ssa_value** ssa_get_function_params_begin(const ssa_value* self)
@@ -434,7 +434,7 @@ static inline ssa_value** ssa_get_function_params_end(const ssa_value* self)
 
 static inline bool ssa_function_has_body(const ssa_value* self)
 {
-        return !list_empty(&_ssa_cfunction(self)->blocks);
+        return !is_list_empty(&_ssa_cfunction(self)->blocks);
 }
 
 static inline void ssa_set_function_entity(ssa_value* self, tree_decl* func)

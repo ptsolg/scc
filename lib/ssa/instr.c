@@ -1,31 +1,28 @@
 #include "scc/ssa/instr.h"
 #include "scc/ssa/context.h"
 
-extern void _ssa_init_instr_node(struct _ssa_instr_node* self, ssa_block* block, bool init_as_list)
+extern void _ssa_init_instr_node(struct _ssa_instr_node* self, ssa_block* block)
 {
         self->block = block;
-        if (init_as_list)
-                list_init(&self->list);
-        else
-                list_node_init(&self->node);
+        init_list(&self->list);
 }
 
 extern void _ssa_add_instr_node_after(struct _ssa_instr_node* self, struct _ssa_instr_node* pos)
 {
         self->block = pos->block;
-        list_node_add_after(&pos->node, &self->node);
+        list_shift(&pos->node, &self->node);
 }
 
 extern void _ssa_add_instr_node_before(struct _ssa_instr_node* self, struct _ssa_instr_node* pos)
 {
         self->block = pos->block;
-        list_node_add_before(&pos->node, &self->node);
+        list_push(&pos->node, &self->node);
 }
 
 extern void _ssa_remove_instr_node(struct _ssa_instr_node* self)
 {
         self->block = NULL;
-        list_node_remove(&self->node);
+        list_remove(&self->node);
 }
 
 extern ssa_instr* ssa_new_instr(
@@ -45,7 +42,7 @@ extern ssa_instr* ssa_new_instr(
         ssa_array* ops = &_ssa_instr_base(instr)->operands;
         ssa_init_array(ops);
 
-        _ssa_init_instr_node(_ssa_instr_node(instr), NULL, false);
+        _ssa_init_instr_node(_ssa_instr_node(instr), NULL);
         return instr;
 }
 
@@ -85,7 +82,7 @@ static void ssa_init_value_use(ssa_value_use* self, ssa_instr* user)
 {
         self->instr = user;
         self->value = NULL;
-        list_node_init(&self->node);
+        init_list(&self->node);
 }
 
 extern ssa_value_use* ssa_add_instr_operand(ssa_instr* self, ssa_context* context, ssa_value* value)

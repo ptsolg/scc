@@ -10,7 +10,6 @@ typedef struct _c_context c_context;
 
 typedef struct _c_source
 {
-        list_node node;
         file_entry* file;
         tree_location begin;
         tree_location end;

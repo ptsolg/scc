@@ -4,7 +4,7 @@
 
 extern void ssa_init_pass(ssa_pass* self, ssa_pass_kind kind, void(*run)(const ssa_pass*))
 {
-        list_node_init(&self->node);
+        init_list(&self->node);
         self->kind = kind;
         self->module = NULL;
         self->function = NULL;
@@ -14,12 +14,12 @@ extern void ssa_init_pass(ssa_pass* self, ssa_pass_kind kind, void(*run)(const s
 
 extern void ssa_init_pass_manager(ssa_pass_manager* self)
 {
-        list_init(&self->passes);
+        init_list(&self->passes);
 }
 
 extern void ssa_pass_manager_add_pass(ssa_pass_manager* self, ssa_pass* pass)
 {
-        list_push_back(&self->passes, &pass->node);
+        list_push(&self->passes, &pass->node);
 }
 
 extern void ssa_pass_manager_run(ssa_pass_manager* self, ssa_context* context, ssa_module* module)

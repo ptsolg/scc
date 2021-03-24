@@ -19,7 +19,7 @@ typedef enum _ssa_pass_kind
 
 typedef struct _ssa_pass
 {
-        list_node node;
+        struct list node;
         ssa_pass_kind kind;
         ssa_module* module;
         ssa_value* function;
@@ -31,7 +31,7 @@ extern void ssa_init_pass(ssa_pass* self, ssa_pass_kind kind, void(*entry)(const
 
 typedef struct _ssa_pass_manager
 {
-        list_head passes;
+        struct list passes;
 } ssa_pass_manager;
 
 extern void ssa_init_pass_manager(ssa_pass_manager* self);

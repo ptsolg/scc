@@ -2,6 +2,7 @@
 #define SSA_BLOCK_H
 
 #include "common.h"
+#include "scc/core/list.h"
 #include "value.h"
 #include "instr.h" // struct _ssa_instr_node
 
@@ -9,7 +10,7 @@ typedef struct _ssa_context ssa_context;
 
 typedef struct _ssa_block
 {
-        list_node node;
+        struct list node;
         struct _ssa_label entry;
         struct _ssa_instr_node instr_node;
         bool atomic;
@@ -64,24 +65,24 @@ static inline const ssa_value* ssa_get_block_clabel(const ssa_block* self)
 
 static inline ssa_instr* ssa_get_block_instrs_begin(const ssa_block* self)
 {
-        return (ssa_instr*)self->instr_node.list.head;
+        return (ssa_instr*)self->instr_node.list.next;
 }
 
 static inline ssa_instr* ssa_get_block_instrs_end(ssa_block* self)
 {
-        return (ssa_instr*)list_end(&self->instr_node.list);
+        return (ssa_instr*)&self->instr_node.list;
 }
 
 static inline ssa_instr* ssa_get_block_terminator(const ssa_block* self)
 {
-        return list_empty(&self->instr_node.list)
+        return is_list_empty(&self->instr_node.list)
                 ? NULL
-                : (ssa_instr*)self->instr_node.list.tail;
+                : (ssa_instr*)self->instr_node.list.prev;
 }
 
 static inline const ssa_instr* ssa_get_block_instrs_cend(const ssa_block* self)
 {
-        return (const ssa_instr*)list_end_c(&self->instr_node.list);
+        return (const ssa_instr*)&self->instr_node.list;
 }
 
 static inline ssa_block* ssa_get_next_block(const ssa_block* self)
@@ -106,7 +107,7 @@ static inline void ssa_remove_block(ssa_block* self)
         SSA_FOREACH_BLOCK_INSTR(self, instr)
                 ssa_remove_instr(instr); // if we fail here then one of the block' instructions is used in the other block
 
-        list_node_remove(&self->node);
+        list_remove(&self->node);
         ssa_set_value_kind(ssa_get_block_label(self), SVK_INVALID);
 }
 

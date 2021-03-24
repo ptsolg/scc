@@ -14,7 +14,6 @@ static c_source* c_source_new(c_source_manager* manager, file_entry* entry)
         s->end = TREE_INVALID_LOC;
         s->file = entry;
         s->lines = u32vec_new();
-        list_node_init(&s->node);
         return s;
 }
 

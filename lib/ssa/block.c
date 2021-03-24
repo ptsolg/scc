@@ -1,4 +1,5 @@
 #include "scc/ssa/block.h"
+#include "scc/core/list.h"
 #include "scc/ssa/context.h"
 #include "scc/ssa/instr.h"
 
@@ -11,8 +12,8 @@ extern ssa_block* ssa_new_block(ssa_context* context, bool atomic)
         ssa_init_label(ssa_get_block_label(b), ssa_get_type_for_label(context));
 
         b->atomic = atomic;
-        _ssa_init_instr_node(&b->instr_node, b, true);
-        list_node_init(&b->node);
+        _ssa_init_instr_node(&b->instr_node, b);
+        init_list(&b->node);
         return b;
 }
 
@@ -24,12 +25,12 @@ extern void ssa_move_block_instrs(ssa_block* from, ssa_block* to)
 
 extern void ssa_add_block_after(ssa_block* block, ssa_block* pos)
 {
-        list_node_add_after(&pos->node, &block->node);
+        list_shift(&pos->node, &block->node);
 }
 
 extern void ssa_add_block_before(ssa_block* block, ssa_block* pos)
 {
-        list_node_add_before(&pos->node, &block->node);
+        list_push(&pos->node, &block->node);
 }
 
 extern ssa_instr* ssa_block_get_first_phi(const ssa_block* self)

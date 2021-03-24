@@ -1,4 +1,5 @@
 #include "scc/ssa/value.h"
+#include "scc/core/list.h"
 #include "scc/ssa/context.h"
 #include "scc/ssa/instr.h"
 #include "scc/ssa/block.h"
@@ -9,7 +10,7 @@ extern void ssa_init_value(ssa_value* self, ssa_value_kind kind, tree_type* type
         _ssa_value_base(self)->id = 0;
         ssa_set_value_type(self, type);
         ssa_set_value_metadata(self, NULL);
-        list_init(&_ssa_value_base(self)->use_list);
+        init_list(&_ssa_value_base(self)->use_list);
 }
 
 extern ssa_value* ssa_new_value(ssa_context* context,
@@ -28,22 +29,21 @@ extern void ssa_replace_value_with(ssa_value* what, ssa_value* with)
         SSA_FOREACH_VALUE_USE(what, it, end)
                 it->value = with;
 
-        list_head* uses = &_ssa_value_base(what)->use_list;
-        list_push_back_list(&_ssa_value_base(with)->use_list, uses);
-        list_init(uses);
+        struct list* uses = &_ssa_value_base(what)->use_list;
+        list_append(&_ssa_value_base(with)->use_list, uses);
 }
 
 extern void _ssa_remove_value_use(ssa_value_use* self)
 {
         self->value = NULL;
-        list_node_remove(&self->node);
+        list_remove(&self->node);
 }
 
 extern void _ssa_add_value_use(ssa_value* val, ssa_value_use* use)
 {
         assert(use->value == NULL);
         use->value = val;
-        list_push_back(&_ssa_value_base(val)->use_list, &use->node);
+        list_push(&_ssa_value_base(val)->use_list, &use->node);
 }
 
 extern ssa_block* ssa_get_value_use_block(const ssa_value_use* self)
@@ -130,7 +130,7 @@ extern ssa_value* ssa_new_function(ssa_context* context, tree_decl* func)
 
         struct _ssa_function* f = _ssa_function(val);
         f->entity = func;
-        list_init(&f->blocks);
+        init_list(&f->blocks);
         ssa_init_array(&f->params);
 
         return val;
@@ -139,7 +139,7 @@ extern ssa_value* ssa_new_function(ssa_context* context, tree_decl* func)
 extern void ssa_add_function_block(ssa_value* self, ssa_block* block)
 {
         assert(block);
-        list_push_back(&_ssa_function(self)->blocks, &block->node);
+        list_push(&_ssa_function(self)->blocks, &block->node);
 }
 
 extern void ssa_add_function_param(ssa_value* self, ssa_context* context, ssa_value* param)
