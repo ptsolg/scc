@@ -1,7 +1,6 @@
 #include "scc/core/file.h"
 
 #include "scc/core/hash.h"
-#include "scc/core/string.h"
 
 #include <stdio.h>
 
@@ -126,7 +125,7 @@ extern bool path_is_valid(const char* path)
 
 extern char* path_get_file(char* path)
 {
-        char* end = strend(path);
+        char* end = path + strlen(path);
         while (end != path) {
                 end--;
                 if (*end == PATH_DELIMETER)
@@ -137,7 +136,7 @@ extern char* path_get_file(char* path)
 
 extern const char* path_get_cfile(const char* path)
 {
-        const char* end = cstrend(path);
+        const char* end = path + strlen(path);
         while (end != path) {
                 end--;
                 if (*end == PATH_DELIMETER)
@@ -197,7 +196,7 @@ extern void path_fix_delimeter(char* path)
 extern errcode path_change_ext(char* path, const char* ext)
 {
         path_fix_delimeter(path);
-        char* end = strend(path);
+        char* end = path + strlen(path);
         char* pos = end;
         while (pos != path && *pos != '.' && *pos != PATH_DELIMETER)
                 pos--;

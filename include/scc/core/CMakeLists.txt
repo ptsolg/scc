@@ -10,7 +10,6 @@ add_scc_target_sources(core
 	list.h
 	misc.h
 	read-write.h
-	string.h
 	strpool.h
 	value.h
 	vec.inc

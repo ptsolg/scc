@@ -2,7 +2,6 @@
 #include "scc/c-common/context.h"
 #include "scc/c-common/source.h"
 #include "scc/c-common/limits.h"
-#include "scc/core/string.h"
 #include "scc/lex/charset.h"
 #include "scc/lex/token.h"
 #include "scc/lex/reswords-info.h"
@@ -185,6 +184,18 @@ static void c_print_token_value(c_printer* self, const c_token* token)
         c_print_endl(self);
 }
 
+static char* strfill(char* string, int v, size_t n)
+{
+        memset(string, v, n);
+        string[n] = '\0';
+        return string;
+}
+
+static char* append_chars(char* string, int v, size_t n)
+{
+        return strfill(string + strlen(string), v, n);
+}
+
 extern void c_print_token(c_printer* self, const c_token* token, const c_token_print_info* info)
 {
         c_location loc;
@@ -193,19 +204,13 @@ extern void c_print_token(c_printer* self, const c_token* token, const c_token_p
         char file[MAX_PATH_LEN];
         file[0] = '\0';
 
-        if (false) // todo: -print-token-file
-        {
-                strncpy(file, path_get_cfile(loc.file), MAX_PATH_LEN);
-                strfill(strend(file), ' ', 1 + info->max_file_len - strlen(file));
-        }
-
         char col[32];
         sprintf(col, "%d", loc.column);
-        strfill(strend(col), ' ', 1 + info->max_col - ndigits(loc.column));
+        append_chars(col, ' ', 1 + info->max_col - ndigits(loc.column));
 
         char line[32];
         sprintf(line, "%d", loc.line);
-        strfill(strend(line), ' ', 1 + info->max_line - ndigits(loc.line));
+        append_chars(line, ' ', 1 + info->max_line - ndigits(loc.line));
 
         const char* kind = c_get_token_kind_string(c_token_get_kind(token));
         char trail[32];

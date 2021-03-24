@@ -5,7 +5,6 @@ add_scc_lib(core
 	file.c
 	misc.c
 	read-write.c
-	string.c
 	strpool.c
 	value.c
 

@@ -1,8 +1,8 @@
 #include "scc/core/cmd.h"
-#include "scc/core/string.h"
 #include "scc/core/file.h"
 #include <stdlib.h> // strtoi
 #include <stdio.h> // strtoi
+#include <string.h>
 
 extern void cmd_handler_init(cmd_handler* self,
         const char* prefix, void(*oncmd)(void*, cmd_parser*), void* data)
