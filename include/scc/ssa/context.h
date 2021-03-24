@@ -45,7 +45,7 @@ static inline errcode ssa_resize_array(
         if (!new_data)
                 return EC_ERROR;
 
-        size_t num_objects = MIN(new_size, array->size);
+        size_t num_objects = new_size < array->size ? new_size : array->size;
         memcpy(new_data, array->data, num_objects * object_size);
         dealloc(array->data);
         array->data = new_data;

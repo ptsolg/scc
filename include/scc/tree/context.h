@@ -58,7 +58,7 @@ static void tree_resize_array(
         const size_t new_size)
 {
         uint8_t* new_data = alloc(object_size * new_size);
-        size_t num_objects = MIN(new_size, array->size);
+        size_t num_objects = new_size < array->size ? new_size : array->size;
         memcpy(new_data, array->data, array->size * object_size);
         dealloc(array->data);
         array->data = new_data;

@@ -2,12 +2,14 @@
 #include "scc/c-common/context.h"
 #include "scc/c-common/source.h"
 #include "scc/c-common/limits.h"
+#include "scc/core/list.h"
 #include "scc/lex/charset.h"
 #include "scc/lex/token.h"
 #include "scc/lex/reswords-info.h"
 #include "scc/lex/misc.h"
 #include "scc/tree/tree.h"
 #include <stdarg.h>
+#include <math.h>
 
 extern void c_printer_opts_init(c_printer_opts* self)
 {
@@ -194,6 +196,11 @@ static char* strfill(char* string, int v, size_t n)
 static char* append_chars(char* string, int v, size_t n)
 {
         return strfill(string + strlen(string), v, n);
+}
+
+static inline int ndigits(int n)
+{
+        return n ? (int)log10(n) + 1 : 1;
 }
 
 extern void c_print_token(c_printer* self, const c_token* token, const c_token_print_info* info)

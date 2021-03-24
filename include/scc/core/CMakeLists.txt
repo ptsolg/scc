@@ -8,7 +8,6 @@ add_scc_target_sources(core
 	hashmap.h
 	htab.inc
 	list.h
-	misc.h
 	read-write.h
 	strpool.h
 	value.h

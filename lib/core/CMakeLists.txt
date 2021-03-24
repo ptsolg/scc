@@ -3,7 +3,6 @@ add_scc_lib(core
 	allocator.c
 	cmd.c
 	file.c
-	misc.c
 	read-write.c
 	strpool.c
 	value.c

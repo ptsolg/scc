@@ -1,5 +1,4 @@
 #include "scc/core/value.h"
-#include "scc/core/misc.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -265,6 +264,16 @@ extern void int_set_signed(int_value* self, bool issigned)
 extern uint int_get_bits(const int_value* self)
 {
         return self->bits;
+}
+
+static inline uint64_t mod2(uint64_t x, uint pow)
+{
+        assert(pow <= 64);
+        if (pow == 64)
+                return x;
+
+        uint64_t y = (((uint64_t)1) << pow);
+        return (x & (y - 1));
 }
 
 extern op_result int_add(int_value* self, const int_value* rhs)

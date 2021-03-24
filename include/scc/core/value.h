@@ -1,7 +1,14 @@
 #ifndef SCC_CORE_VALUE_H
 #define SCC_CORE_VALUE_H
 
-#include "misc.h"
+#include "common.h"
+
+typedef enum
+{
+        CR_EQ,
+        CR_LE,
+        CR_GR,
+} cmp_result;
 
 typedef enum
 {
