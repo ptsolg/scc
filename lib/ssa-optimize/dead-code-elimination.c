@@ -1,3 +1,4 @@
+#include "scc/core/num.h"
 #include "scc/ssa-optimize/optimize.h"
 #include "scc/ssa/block.h"
 
@@ -17,7 +18,7 @@ static void ssa_constant_fold_conditional_jumps(ssa_context* context, ssa_value*
                 if (ssa_get_value_kind(cond) != SVK_CONSTANT)
                         continue;
 
-                bool cond_val = avalue_is_zero(ssa_get_constant_cvalue(cond));
+                bool cond_val = num_is_zero(ssa_get_constant_cvalue(cond));
                 ssa_value* live_branch = ssa_get_instr_operand_value(cond_jump, cond_val ? 2 : 1);
                 ssa_instr* inderect_jump = ssa_new_inderect_jump(context, live_branch);
 

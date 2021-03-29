@@ -1,3 +1,4 @@
+#include "scc/core/num.h"
 #include "scc/semantics/sema.h"
 #include "scc/tree/context.h"
 #include "scc/tree/eval.h"
@@ -523,7 +524,7 @@ static bool c_sema_compute_enumerator_value(
         tree_location name_loc,
         tree_id name,
         tree_expr* init,
-        int_value* result)
+        struct num* result)
 {
         uint i32_nbits = (uint)(8 * tree_get_builtin_type_size(self->target, TBTK_INT32));
         if (init)
@@ -534,8 +535,8 @@ static bool c_sema_compute_enumerator_value(
                         c_error_enumerator_value_isnt_constant(self->ccontext, name_loc, name);
                         return false;
                 }
-                *result = avalue_get_int(&r.value);
-                int_resize(result, i32_nbits);
+                *result = r.value;
+                result->num_bits = i32_nbits;
                 return true;
         }
 
@@ -544,17 +545,17 @@ static bool c_sema_compute_enumerator_value(
         if (!tree_decl_scope_is_empty(s))
         {
                 tree_decl* last = tree_get_prev_decl(tree_get_decl_scope_decls_end(s));
-                value = int_get_i32(tree_get_enumerator_cvalue(last)) + 1;
+                value = num_i64(tree_get_enumerator_cvalue(last)) + 1;
         }
 
-        int_init(result, i32_nbits, true, value);
+        init_int(result, value, i32_nbits);
         return true;
 }
 
 static tree_decl* c_sema_new_enumerator(
         c_sema* self, tree_decl* enum_, tree_location name_loc, tree_id name, tree_expr* init)
 {
-        int_value value;
+        struct num value;
         if (!c_sema_compute_enumerator_value(self, enum_, name_loc, name, init, &value))
                 return NULL;
 
@@ -726,19 +727,19 @@ static bool c_sema_check_field_decl(const c_sema* self, const tree_decl* field)
                 return false;
         }
 
-        if (avalue_is_zero(&r.value))
+        if (num_is_zero(&r.value))
         {
                 c_error_bitfield_width_is_zero(self->ccontext, field);
                 return false;
         }
 
-        if (avalue_is_signed(&r.value) && avalue_get_i64(&r.value) < 0)
+        if (r.value.kind == NUM_INT && num_i64(&r.value) < 0)
         {
                 c_error_negative_bitfield_width(self->ccontext, field);
                 return false;
         }
 
-        if (avalue_get_u64(&r.value) > 8 * tree_get_sizeof(self->target, mt))
+        if (num_as_u64(&r.value) > 8 * tree_get_sizeof(self->target, mt))
         {
                 c_error_bitfield_width_exceeds_type(self->ccontext, field);
                 return false;

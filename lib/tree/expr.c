@@ -1,4 +1,5 @@
 #include "scc/tree/expr.h"
+#include "scc/core/num.h"
 #include "scc/tree/context.h"
 #include "scc/tree/eval.h"
 #include "scc/tree/target.h"
@@ -174,7 +175,7 @@ extern tree_expr* tree_new_floating_literal(
         tree_context* context,
         tree_type* type,
         tree_location loc,
-        const float_value* value)
+        const struct num* value)
 {
         tree_expr* e = tree_new_expr(context, TEK_FLOATING_LITERAL, TVK_RVALUE, type, loc,
                 sizeof(struct _tree_floating_literal_expr));
@@ -447,7 +448,7 @@ extern bool tree_expr_is_null_pointer_constant(tree_context* context, const tree
         if (!tree_eval_expr_as_integer(context, expr, &result))
                 return false;
 
-        return avalue_is_zero(&result.value);
+        return num_is_zero(&result.value);
 }
 
 extern bool tree_expr_designates_bitfield(const tree_expr* self)

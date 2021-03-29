@@ -3,6 +3,7 @@
 #include "scc/c-common/source.h"
 #include "scc/c-common/limits.h"
 #include "scc/core/list.h"
+#include "scc/core/num.h"
 #include "scc/lex/charset.h"
 #include "scc/lex/token.h"
 #include "scc/lex/reswords-info.h"
@@ -441,11 +442,11 @@ static void c_print_decl_expr(c_printer* self, const tree_expr* expr)
 
 static void c_print_floating_literal(c_printer* self, const tree_expr* expr)
 {
-        const float_value* value = tree_get_floating_literal_cvalue(expr);
+        const struct num* v = tree_get_floating_literal_cvalue(expr);
         if (tree_builtin_type_is(tree_get_expr_type(expr), TBTK_FLOAT))
-                c_print_float(self, float_get_sp(value));
+                c_print_float(self, num_f32(v));
         else
-                c_print_double(self, float_get_dp(value));
+                c_print_double(self, num_f64(v));
 }
 
 static void c_print_integer(c_printer* self, const tree_type* t, uint64_t v)
@@ -1192,11 +1193,11 @@ static void c_print_expr_stmt(c_printer* self, const tree_stmt* s)
                 {
                         tree_type* t = tree_get_expr_type(expr);
                         if (tree_type_is_integer(t))
-                                c_print_integer(self, t, avalue_get_u64(&r.value));
+                                c_print_integer(self, t, num_as_u64(&r.value));
                         else if (tree_builtin_type_is(t, TBTK_FLOAT))
-                                c_print_float(self, avalue_get_sp(&r.value));
+                                c_print_float(self, num_f32(&r.value));
                         else if (tree_builtin_type_is(t, TBTK_DOUBLE))
-                                c_print_double(self, avalue_get_dp(&r.value));
+                                c_print_double(self, num_f64(&r.value));
                 }
         }
 }

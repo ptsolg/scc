@@ -1,34 +1,37 @@
+#include "scc/core/num.h"
 #include "scc/ssa-optimize/optimize.h"
 #include "scc/ssa/block.h"
 #include "scc/ssa/context.h"
+#include "scc/tree/target.h"
+#include "scc/tree/type.h"
 
-static op_result ssa_eval_cmp(cmp_result r1, cmp_result r2, avalue* l, avalue* r)
+static op_result ssa_eval_cmp(int r1, int r2, struct num* l, struct num* r)
 {
-        cmp_result cr = avalue_cmp(l, r);
-        avalue_init_int(l, 32, true, cr == r1 || cr == r2 ? 1 : 0);
+        int cr = num_cmp(l, r);
+        init_int(l, cr == r1 || cr == r2, 32);
         return OR_OK;
 }
 
-static op_result ssa_eval_binop(ssa_binop_kind opcode, avalue *l, avalue* r)
+static op_result ssa_eval_binop(ssa_binop_kind opcode, struct num* l, struct num* r)
 {
         switch (opcode)
         {
-                case SBIK_MUL: return avalue_mul(l, r);
-                case SBIK_DIV: return avalue_div(l, r);
-                case SBIK_MOD: return avalue_mod(l, r);
-                case SBIK_ADD: return avalue_add(l, r);
-                case SBIK_SUB: return avalue_sub(l, r);
-                case SBIK_SHL: return avalue_shl(l, r);
-                case SBIK_SHR: return avalue_shr(l, r);
-                case SBIK_AND: return avalue_and(l, r);
-                case SBIK_OR: return avalue_or(l, r);
-                case SBIK_XOR: return avalue_xor(l, r);
-                case SBIK_LE: return ssa_eval_cmp(CR_LE, CR_LE, l, r);
-                case SBIK_GR: return ssa_eval_cmp(CR_GR, CR_GR, l, r);
-                case SBIK_LEQ: return ssa_eval_cmp(CR_LE, CR_EQ, l, r);
-                case SBIK_GEQ: return ssa_eval_cmp(CR_GR, CR_EQ, l, r);
-                case SBIK_EQ: return ssa_eval_cmp(CR_EQ, CR_EQ, l, r);
-                case SBIK_NEQ: return ssa_eval_cmp(CR_LE, CR_GR, l, r);
+                case SBIK_MUL: return num_mul(l, r);
+                case SBIK_DIV: return num_div(l, r);
+                case SBIK_MOD: return num_mod(l, r);
+                case SBIK_ADD: return num_add(l, r);
+                case SBIK_SUB: return num_sub(l, r);
+                case SBIK_SHL: return num_bit_shl(l, r);
+                case SBIK_SHR: return num_bit_shr(l, r);
+                case SBIK_AND: return num_bit_and(l, r);
+                case SBIK_OR: return num_bit_or(l, r);
+                case SBIK_XOR: return num_bit_xor(l, r);
+                case SBIK_LE: return ssa_eval_cmp(-1, -1, l, r);
+                case SBIK_GR: return ssa_eval_cmp(1, 1, l, r);
+                case SBIK_LEQ: return ssa_eval_cmp(-1, 0, l, r);
+                case SBIK_GEQ: return ssa_eval_cmp(1, 0, l, r);
+                case SBIK_EQ: return ssa_eval_cmp(0, 0, l, r);
+                case SBIK_NEQ: return ssa_eval_cmp(-1, 1, l, r);
 
                 default:
                         assert(0 && "Invalid binary instruction");
@@ -47,8 +50,8 @@ static ssa_value* ssa_constant_fold_binop(ssa_context* context, ssa_instr* instr
                 return NULL;
         }
 
-        avalue l = *ssa_get_constant_cvalue(lhs);
-        avalue r = *ssa_get_constant_cvalue(rhs);
+        struct num l = *ssa_get_constant_cvalue(lhs);
+        struct num r = *ssa_get_constant_cvalue(rhs);
         ssa_eval_binop(ssa_get_binop_kind(instr), &l, &r);
         return ssa_new_constant(context,
                 ssa_get_value_type(ssa_get_instr_cvar(instr)), &l);
@@ -60,17 +63,21 @@ static ssa_value* ssa_constant_fold_cast(ssa_context* context, ssa_instr* instr)
         if (ssa_get_value_kind(operand) != SVK_CONSTANT)
                 return NULL;
 
-        avalue v = *ssa_get_constant_cvalue(operand);
+        struct num v = *ssa_get_constant_cvalue(operand);
         tree_type* to = ssa_get_value_type(ssa_get_instr_cvar(instr));
         const tree_target_info* target = ssa_get_target(context);
 
-        if (tree_type_is_integer(to))
-                avalue_to_int(&v, 8 * tree_get_sizeof(target, to),
-                        tree_type_is_signed_integer(to));
+        if (tree_type_is_integer(to)) {
+                unsigned num_bits = 8 * tree_get_sizeof(target, to);
+                if (tree_type_is_signed_integer(to))
+                        num_to_int(&v, num_bits);
+                else
+                        num_to_uint(&v, num_bits);
+        }
         else if (tree_builtin_type_is(to, TBTK_FLOAT))
-                avalue_to_sp(&v);
+                num_to_f32(&v);
         else if (tree_builtin_type_is(to, TBTK_DOUBLE))
-                avalue_to_dp(&v);
+                num_to_f64(&v);
         else
                 return NULL; // probably cast to pointer
 

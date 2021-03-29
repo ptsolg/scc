@@ -1,3 +1,4 @@
+#include "scc/core/num.h"
 #include "scc/semantics/sema.h"
 #include "scc/tree/eval.h"
 #include "scc/tree/context.h"
@@ -25,7 +26,7 @@ static tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, t
                 assert(tree_array_is(obj, TAK_CONSTANT));
                 tree_type* et = tree_get_array_eltype(obj);
                 tree_expr* init = tree_new_init_list_expr(self->context, TREE_INVALID_LOC);
-                uint size = int_get_u32(tree_get_array_size_value_c(obj));
+                uint size = num_as_u64(tree_get_array_size_value_c(obj));
                 assert(size);
                 for (uint i = 0; i < size; i++)
                         tree_add_init_list_expr(init, self->context,
@@ -269,11 +270,9 @@ static void c_sema_set_incomplete_array_size(c_sema* self, tree_type* arr, uint 
 {
         assert(tree_array_is(arr, TAK_INCOMPLETE));
 
-        int_value size_value;
-        int_init(&size_value,
-                8 * tree_get_sizeof(self->context->target, c_sema_get_size_t_type(self)),
-                false,
-                size);
+        struct num size_value;
+        init_int(&size_value, size,
+                8 * tree_get_sizeof(self->context->target, c_sema_get_size_t_type(self)));
         tree_init_constant_array_type(arr, tree_get_array_eltype(arr), NULL, &size_value);
 }
 
@@ -419,7 +418,7 @@ static bool c_sema_check_array_designator(
                 return false;
         }
 
-        uint index_val = avalue_get_u32(&eval_result.value);
+        uint index_val = num_as_u64(&eval_result.value);
         if (tree_array_is(ic->object->type, TAK_CONSTANT))
         {
                 if (index_val >= tree_get_array_size(ic->object->type))

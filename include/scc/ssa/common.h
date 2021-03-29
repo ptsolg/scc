@@ -1,7 +1,7 @@
 #ifndef SSA_COMMON_H
 #define SSA_COMMON_H
 
-#include "scc/core/value.h"
+#include "scc/core/num.h"
 #include "scc/tree/common.h"
 
 // a unique identifier

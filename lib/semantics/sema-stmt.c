@@ -56,7 +56,7 @@ extern tree_stmt* c_sema_start_case_stmt(
                 return NULL;
         }
         
-        int_value value = avalue_get_int(&r.value);
+        struct num value = r.value;
         tree_stmt* switch_ = c_sema_get_switch_stmt_info(self)->switch_stmt;
         expr = c_sema_new_impl_cast(self, expr,
                 tree_get_expr_type(tree_get_switch_expr(switch_)));

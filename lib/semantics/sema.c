@@ -29,73 +29,12 @@ extern void c_sema_dispose(c_sema* self)
         // todo
 }
 
-static void c_sema_init_builtin_function(c_sema* self, tree_function_builtin_kind kind, const char* name, const char* decl)
-{
-//        c_source* s = c_source_emulate(&self->ccontext->source_manager, name, decl);
-//        c_lexer lexer;
-//        c_lexer_init(&lexer, self->ccontext);
-//        if (!s || EC_FAILED(c_lexer_enter_source_file(&lexer, s)))
-//                goto error;
-//
-//        c_parser parser;
-//        c_parser_init(&parser, self->ccontext, &lexer, self);
-//        jmp_buf on_parser_error;
-//        c_parser_set_on_error(&parser, on_parser_error);
-//        if (setjmp(on_parser_error))
-//                goto error;
-//        
-//        c_parser_enter_token_stream(&parser);
-//        tree_decl* func = c_parse_decl(&parser);
-//        if (!func)
-//                goto error;
-//
-//        tree_set_func_builtin_kind(func, kind);
-//        tree_set_decl_implicit(func, true);
-//        return;
-//
-//error:
-//        assert(0 && "unexpected error");
-}
-
-static void c_sema_init_builtin_functions(c_sema* self)
-{
-        //c_sema_init_builtin_function(self,
-        //        TFBK_ATOMIC_CMPXCHG_32_WEAK_SEQ_CST, "__atomic_cmpxchg_32_weak_seq_cst",
-        //        "static int __atomic_cmpxchg_32_weak_seq_cst("
-        //                "volatile unsigned* ptr, unsigned expected, unsigned desired);");
-
-        //c_sema_init_builtin_function(self,
-        //        TFBK_ATOMIC_ADD_FETCH_32_SEQ_CST, "__atomic_add_fetch_32_seq_cst",
-        //        "static unsigned __atomic_add_fetch_32_seq_cst(volatile unsigned* ptr, unsigned value);");
-
-        //c_sema_init_builtin_function(self,
-        //        TFBK_ATOMIC_XCHG_32_SEQ_CST, "__atomic_xchg_32_seq_cst",
-        //        "static void __atomic_xchg_32_seq_cst(volatile unsigned* ptr, unsigned value);");
-
-        //c_sema_init_builtin_function(self,
-        //        TFBK_ATOMIC_FENCE_ST_SEQ_CST, "__atomic_fence_st_seq_cst",
-        //        "static void __atomic_fence_st_seq_cst();");
-
-        //c_sema_init_builtin_function(self,
-        //        TFBK_ATOMIC_FENCE_ST_ACQ, "__atomic_fence_st_acq",
-        //        "static void __atomic_fence_st_acq();");
-
-        //c_sema_init_builtin_function(self,
-        //        TFBK_ATOMIC_FENCE_ST_REL, "__atomic_fence_st_rel",
-        //        "static void __atomic_fence_st_rel();");
-
-        //c_sema_init_builtin_function(self,
-        //        TFBK_ATOMIC_FENCE_ST_ACQ_REL, "__atomic_fence_st_acq_rel",
-        //        "static void __atomic_fence_st_acq_rel();");
-}
-
 extern tree_module* c_sema_new_module(c_sema* self)
 {
         self->module = tree_new_module(self->context);
         self->globals = tree_get_module_globals(self->module);
         self->target = tree_get_module_target(self->module);
         self->locals = self->globals;
-        c_sema_init_builtin_functions(self);
         return self->module;
 }
 
@@ -198,14 +137,14 @@ extern bool c_sema_switch_stmt_in_atomic_block(const c_sema* self)
 
 extern bool c_sema_switch_stmt_register_case_label(const c_sema* self, tree_stmt* label)
 {
-        const int_value* val = tree_get_case_cvalue(label);
-        uint32_t key = int_get_u32(val);
+        const struct num* val = tree_get_case_cvalue(label);
+        uint32_t key = num_as_u64(val);
 
         struct hashmap* labels = &c_sema_get_switch_stmt_info(self)->labels;
         for (uint32_t i = 1; ; i++)
         {
                 struct hashmap_entry* entry = hashmap_lookup(labels, key);
-                if (entry && int_cmp(val, tree_get_case_cvalue(entry->value)) == CR_EQ)
+                if (entry && num_cmp(val, tree_get_case_cvalue(entry->value)) == 0)
                         return false;
                 else if (hashmap_key_ok(key))
                         break;

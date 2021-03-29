@@ -3,6 +3,8 @@
 
 #include "common.h"
 #include "decl.h" // tree_decl_kind
+#include "scc/core/num.h"
+#include <assert.h>
 
 typedef struct _tree_type tree_type;
 typedef struct _tree_decl tree_decl;
@@ -352,7 +354,7 @@ struct _tree_array_type
 {
         struct _tree_chain_type base;
         tree_expr* size_expr;
-        int_value size_value;
+        struct num size_value;
 };
 
 extern void tree_init_array_type(tree_type* self, tree_array_kind kind, tree_type* eltype);
@@ -363,13 +365,13 @@ extern void tree_init_incomplete_array_type(tree_type* self, tree_type* eltype);
 extern tree_type* tree_new_incomplete_array_type(tree_context* context, tree_type* eltype);
 
 extern void tree_init_constant_array_type(
-        tree_type* self, tree_type* eltype, tree_expr* size_expr, const int_value* size_value);
+        tree_type* self, tree_type* eltype, tree_expr* size_expr, const struct num* size_value);
 
 extern tree_type* tree_new_constant_array_type(
         tree_context* context,
         tree_type* eltype,
         tree_expr* size_expr,
-        const int_value* size_value);
+        const struct num* size_value);
 
 static TREE_INLINE tree_type* tree_get_array_eltype(const tree_type* self)
 {
@@ -417,14 +419,14 @@ static TREE_INLINE tree_expr* tree_get_array_size_expr(const tree_type* self)
         return _tree_array_type_c(self)->size_expr;
 }
 
-static TREE_INLINE const int_value* tree_get_array_size_value_c(const tree_type* self)
+static TREE_INLINE const struct num* tree_get_array_size_value_c(const tree_type* self)
 {
         return &_tree_array_type_c(self)->size_value;
 }
 
 static TREE_INLINE uint tree_get_array_size(const tree_type* self)
 {
-        return int_get_u32(tree_get_array_size_value_c(self));
+        return num_as_u64(tree_get_array_size_value_c(self));
 }
 
 static TREE_INLINE void tree_set_array_size_expr(tree_type* self, tree_expr* size)
@@ -432,7 +434,7 @@ static TREE_INLINE void tree_set_array_size_expr(tree_type* self, tree_expr* siz
         _tree_array_type(self)->size_expr = size;
 }
 
-static TREE_INLINE void tree_set_array_size_value(tree_type* self, const int_value* size)
+static TREE_INLINE void tree_set_array_size_value(tree_type* self, const struct num* size)
 {
         _tree_array_type(self)->size_value = *size;
 }

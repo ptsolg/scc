@@ -119,7 +119,7 @@ extern tree_type* tree_new_incomplete_array_type(tree_context* context, tree_typ
 }
 
 extern void tree_init_constant_array_type(
-        tree_type* self, tree_type* eltype, tree_expr* size_expr, const int_value* size_value)
+        tree_type* self, tree_type* eltype, tree_expr* size_expr, const struct num* size_value)
 {
         tree_init_array_type(self, TAK_CONSTANT, eltype);
         tree_set_array_size_expr(self, size_expr);
@@ -130,7 +130,7 @@ extern tree_type* tree_new_constant_array_type(
         tree_context* context,
         tree_type* eltype,
         tree_expr* size_expr,
-        const int_value* size_value)
+        const struct num* size_value)
 {
         tree_type* t = tree_new_array_type(context, TAK_CONSTANT, eltype);
         if (!t)

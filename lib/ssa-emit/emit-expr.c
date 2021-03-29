@@ -1,4 +1,5 @@
 #include "emitter.h"
+#include "scc/core/num.h"
 #include "scc/ssa/block.h"
 #include "scc/ssa/context.h"
 #include "scc/ssa/module.h"
@@ -112,13 +113,13 @@ static inline ssa_value* _ssa_emit_binary_expr(
                 tree_type* rt = ssa_get_value_type(rhs);
                 if (tree_type_is_pointer(lt) && ssa_get_value_kind(rhs) == SVK_CONSTANT)
                 {
-                        if (avalue_is_zero(ssa_get_constant_value(rhs)))
+                        if (num_is_zero(ssa_get_constant_value(rhs)))
                                 if (!(rhs = ssa_build_zero(&self->builder, lt)))
                                         return NULL;
                 }
                 else if (tree_type_is_pointer(rt) && ssa_get_value_kind(lhs) == SVK_CONSTANT)
                 {
-                        if (avalue_is_zero(ssa_get_constant_value(lhs)))
+                        if (num_is_zero(ssa_get_constant_value(lhs)))
                                 if (!(lhs = ssa_build_zero(&self->builder, rt)))
                                         return NULL;
                 }
@@ -458,11 +459,11 @@ extern ssa_value* ssa_emit_character_literal(ssa_function_emitter* self, const t
 extern ssa_value* ssa_emit_floating_literal(ssa_function_emitter* self, const tree_expr* expr)
 {
         tree_type* type = tree_get_expr_type(expr);
-        const float_value* value = tree_get_floating_literal_cvalue(expr);
+        const struct num* value = tree_get_floating_literal_cvalue(expr);
 
         return tree_builtin_type_is(type, TBTK_FLOAT)
-                ? ssa_build_sp_constant(&self->builder, type, float_get_sp(value))
-                : ssa_build_dp_constant(&self->builder, type, float_get_dp(value));
+                ? ssa_build_sp_constant(&self->builder, type, num_f32(value))
+                : ssa_build_dp_constant(&self->builder, type, num_f64(value));
 }
 
 extern ssa_value* ssa_emit_string_literal(ssa_function_emitter* self, const tree_expr* expr)
@@ -496,7 +497,7 @@ extern ssa_value* ssa_emit_decl_expr(ssa_function_emitter* self, const tree_expr
 
         if (tree_decl_is(decl, TDK_ENUMERATOR))
                 return ssa_build_i32_constant(&self->builder,
-                        int_get_i32(tree_get_enumerator_cvalue(decl)));
+                        num_i64(tree_get_enumerator_cvalue(decl)));
 
         ssa_value* def = tree_decl_is_global(decl)
                 ? ssa_emit_global_decl_ptr(self, decl)

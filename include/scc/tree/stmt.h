@@ -96,7 +96,7 @@ struct _tree_case_stmt
         struct _tree_stmt_base base;
         tree_expr* expr;
         tree_stmt* body;
-        int_value value;
+        struct num value;
 };
 
 struct _tree_default_stmt
@@ -262,7 +262,7 @@ extern tree_stmt* tree_new_case_stmt(
         tree_context* context,
         tree_xlocation loc,
         tree_expr* expr,
-        const int_value* value,
+        const struct num* value,
         tree_stmt* body);
 
 static TREE_INLINE tree_expr* tree_get_case_expr(const tree_stmt* self)
@@ -270,7 +270,7 @@ static TREE_INLINE tree_expr* tree_get_case_expr(const tree_stmt* self)
         return self->case_stmt.expr;
 }
 
-static TREE_INLINE const int_value* tree_get_case_cvalue(const tree_stmt* self)
+static TREE_INLINE const struct num* tree_get_case_cvalue(const tree_stmt* self)
 {
         return &self->case_stmt.value;
 }
@@ -290,7 +290,7 @@ static TREE_INLINE void tree_set_case_body(tree_stmt* self, tree_stmt* body)
         self->case_stmt.body = body;
 }
 
-static TREE_INLINE void tree_set_case_value(tree_stmt* self, const int_value* value)
+static TREE_INLINE void tree_set_case_value(tree_stmt* self, const struct num* value)
 {
         self->case_stmt.value = *value;
 }

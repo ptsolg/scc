@@ -1,5 +1,6 @@
 #include "preprocessor-directive.h"
 #include "scc/c-common/context.h"
+#include "scc/core/num.h"
 #include "scc/lex/preprocessor.h"
 #include "scc/lex/token.h"
 #include "scc/lex/reswords.h"
@@ -148,7 +149,7 @@ extern bool c_preprocessor_handle_if_directive(c_preprocessor* self, c_token* to
         c_preprocessor_push_conditional_directive(self, tok);
 
         c_token* last;
-        int_value val;
+        struct num val;
         if (!(last = c_preprocessor_evaluate_expr(self, &val)))
                 return false;
         if (!c_token_is(last, CTK_EOD))
@@ -157,7 +158,7 @@ extern bool c_preprocessor_handle_if_directive(c_preprocessor* self, c_token* to
                 return false;
         }
 
-        return c_preprocessor_finish_conditional_directive(self, !int_is_zero(&val));
+        return c_preprocessor_finish_conditional_directive(self, !num_is_zero(&val));
 }
 
 static c_token* c_preprocessor_read_macro_name(c_preprocessor* self, c_token_kind directive)
@@ -232,7 +233,7 @@ extern bool c_preprocessor_handle_elif_directive(c_preprocessor* self, c_token* 
         info->token = tok;
 
         c_token* last;
-        int_value val;
+        struct num val;
         if (!(last = c_preprocessor_evaluate_expr(self, &val)))
                 return false;
         if (!c_token_is(last, CTK_EOD))
@@ -241,7 +242,7 @@ extern bool c_preprocessor_handle_elif_directive(c_preprocessor* self, c_token* 
                 return false;
         }
 
-        return c_preprocessor_finish_conditional_directive(self, !info->condition && !int_is_zero(&val));
+        return c_preprocessor_finish_conditional_directive(self, !info->condition && !num_is_zero(&val));
 }
 
 extern bool c_preprocessor_handle_else_directive(c_preprocessor* self, c_token* tok)

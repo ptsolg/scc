@@ -1,3 +1,4 @@
+#include "scc/core/num.h"
 #include "scc/ssa/pretty-print.h"
 #include "scc/ssa/value.h"
 #include "scc/ssa/module.h"
@@ -100,18 +101,18 @@ static void ssa_print_value_type(ssa_printer* self, const ssa_value* value)
 
 static void ssa_print_constant_value(ssa_printer* self, const ssa_value* value)
 {
-        const avalue* val = ssa_get_constant_cvalue(value);
-        if (avalue_is_zero(val) && tree_type_is_pointer(ssa_get_value_type(value)))
+        const struct num* val = ssa_get_constant_cvalue(value);
+        if (num_is_zero(val) && tree_type_is_pointer(ssa_get_value_type(value)))
         {
                 ssa_prints(self, "null");
                 return;
         }
 
         char num[128];
-        if (avalue_is_float(val))
-                avalue_print_as_hex(val, num, ARRAY_SIZE(num));
+        if (val->kind == NUM_FLOAT)
+                num_to_hex(val, num, ARRAY_SIZE(num));
         else
-                avalue_print(val, num, ARRAY_SIZE(num), 0);
+                num_to_str(val, num, ARRAY_SIZE(num));
         ssa_prints(self, num);
 }
 

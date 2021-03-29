@@ -200,7 +200,7 @@ struct _tree_character_literal_expr
 struct _tree_floating_literal_expr
 {
         struct _tree_expr_base base;
-        float_value value;
+        struct num value;
 };
 
 struct _tree_string_literal_expr
@@ -597,14 +597,14 @@ extern tree_expr* tree_new_floating_literal(
         tree_context* context,
         tree_type* type,
         tree_location loc,
-        const float_value* value);
+        const struct num* value);
 
-static TREE_INLINE const float_value* tree_get_floating_literal_cvalue(const tree_expr* self)
+static TREE_INLINE const struct num* tree_get_floating_literal_cvalue(const tree_expr* self)
 {
         return &self->floating_literal.value;
 }
 
-static TREE_INLINE void tree_set_floating_literal_value(tree_expr* self, const float_value* value)
+static TREE_INLINE void tree_set_floating_literal_value(tree_expr* self, const struct num* value)
 {
         self->floating_literal.value = *value;
 }

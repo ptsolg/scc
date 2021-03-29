@@ -1,5 +1,6 @@
 #include "preprocessor-expression.h"
 #include "scc/c-common/context.h"
+#include "scc/core/num.h"
 #include "scc/lex/token.h"
 #include "scc/lex/preprocessor.h"
 #include "scc/tree/context.h"
@@ -7,11 +8,14 @@
 #include "numeric-literal.h"
 #include "errors.h"
 
-static void c_preprocessor_init_int(c_preprocessor* self, int_value* val, bool is_signed, uint64_t v)
+static void c_preprocessor_init_int(c_preprocessor* self, struct num* val, bool is_signed, uint64_t v)
 {
         size_t intmax_t_bits = 8 * tree_get_intmax_t_size(self->context->tree->target);
         size_t uintmax_t_bits = 8 * tree_get_uintmax_t_size(self->context->tree->target);
-        int_init(val, is_signed ? intmax_t_bits : uintmax_t_bits, is_signed, v);
+        if (is_signed)
+                init_int(val, v, intmax_t_bits);
+        else
+                init_uint(val, v, uintmax_t_bits);
 }
 
 static bool c_preprocessor_require(const c_preprocessor* self, c_token_kind k, const c_token* t)
@@ -24,9 +28,9 @@ static bool c_preprocessor_require(const c_preprocessor* self, c_token_kind k, c
         return true;
 }
 
-static c_token* _c_preprocessor_evaluate_expr(c_preprocessor*, c_token*, int_value*);
+static c_token* _c_preprocessor_evaluate_expr(c_preprocessor*, c_token*, struct num*);
 
-static bool c_preprocessor_evaluate_primary_expr(c_preprocessor* self, c_token* tok, int_value* result)
+static bool c_preprocessor_evaluate_primary_expr(c_preprocessor* self, c_token* tok, struct num* result)
 {
         c_token_kind k = c_token_get_kind(tok);
         tree_location loc = c_token_get_loc(tok);
@@ -77,7 +81,7 @@ static bool c_preprocessor_evaluate_primary_expr(c_preprocessor* self, c_token* 
         return false;
 }
 
-static bool c_preprocessor_evaluate_defined(c_preprocessor* self, int_value* result)
+static bool c_preprocessor_evaluate_defined(c_preprocessor* self, struct num* result)
 {
         c_token* tok = c_preprocess_non_wspace(self);
         if (!tok)
@@ -107,7 +111,7 @@ static bool c_preprocessor_evaluate_defined(c_preprocessor* self, int_value* res
         return true;
 }
 
-static bool c_preprocessor_evaluate_unary_expr(c_preprocessor* self, c_token* tok, int_value* result)
+static bool c_preprocessor_evaluate_unary_expr(c_preprocessor* self, c_token* tok, struct num* result)
 {
         c_token_kind k = c_token_get_kind(tok);
         if (k == CTK_ID && c_token_get_string(tok) == self->id.defined)
@@ -121,11 +125,11 @@ static bool c_preprocessor_evaluate_unary_expr(c_preprocessor* self, c_token* to
                 return false;
 
         if (k == CTK_MINUS)
-                int_neg(result);
+                num_neg(result);
         else if (k == CTK_TILDE)
-                int_not(result);
+                num_bit_neg(result);
         else if (k == CTK_EXCLAIM)
-                c_preprocessor_init_int(self, result, true, int_is_zero(result) ? 1 : 0);
+                c_preprocessor_init_int(self, result, true, num_is_zero(result) ? 1 : 0);
         else if (k == CTK_PLUS)
                 ;
         else
@@ -134,27 +138,27 @@ static bool c_preprocessor_evaluate_unary_expr(c_preprocessor* self, c_token* to
         return true;
 }
 
-static void c_pp_arithmetic_conversion(int_value* lhs, int_value* rhs)
+static void c_pp_arithmetic_conversion(struct num* lhs, struct num* rhs)
 {
-        if (!int_is_signed(lhs))
-                int_set_signed(rhs, false);
-        else if (!int_is_signed(rhs))
-                int_set_signed(lhs, false);
+        if (lhs->kind == NUM_UINT)
+                num_to_uint(rhs, rhs->num_bits);
+        else if (rhs->kind == NUM_UINT)
+                num_to_uint(lhs, lhs->num_bits);
 }
 
 static bool c_preprocessor_evaluate_binary_expr(
-        c_preprocessor* self, const c_token* op, int_value* lhs, int_value* rhs)
+        c_preprocessor* self, const c_token* op, struct num* lhs, struct num* rhs)
 {
         tree_location oploc = c_token_get_loc(op);
         c_pp_arithmetic_conversion(lhs, rhs);
-        cmp_result cr;
+        int cr;
         switch (c_token_get_kind(op))
         {
                 case CTK_STAR:
-                        int_mul(lhs, rhs);
+                        num_mul(lhs, rhs);
                         return true;
                 case CTK_SLASH:
-                        if (int_div(lhs, rhs) == OR_DIV_BY_ZERO)
+                        if (num_div(lhs, rhs) == OR_DIV_BY_ZERO)
                         {
                                 c_error_division_by_zero_in_preprocessor_expression(
                                         self->context, oploc);
@@ -162,7 +166,7 @@ static bool c_preprocessor_evaluate_binary_expr(
                         }
                         return true;
                 case CTK_PERCENT:
-                        if (int_mod(lhs, rhs) == OR_DIV_BY_ZERO)
+                        if (num_mod(lhs, rhs) == OR_DIV_BY_ZERO)
                         {
                                 c_error_division_by_zero_in_preprocessor_expression(
                                         self->context, oploc);
@@ -170,59 +174,53 @@ static bool c_preprocessor_evaluate_binary_expr(
                         }
                         return true;
                 case CTK_PLUS:
-                        int_add(lhs, rhs);
+                        num_add(lhs, rhs);
                         return true;
                 case CTK_MINUS:
-                        int_sub(lhs, rhs);
+                        num_sub(lhs, rhs);
                         return true;
                 case CTK_LE2:
-                        int_shl(lhs, rhs);
+                        num_bit_shl(lhs, rhs);
                         return true;
                 case CTK_GR2:
-                        int_shr(lhs, rhs);
+                        num_bit_shr(lhs, rhs);
                         return true;
                 case CTK_LE:
-                        c_preprocessor_init_int(self, lhs, true,
-                                int_cmp(lhs, rhs) == CR_LE ? 1 : 0);
+                        c_preprocessor_init_int(self, lhs, true, num_cmp(lhs, rhs) == -1);
                         return true;
                 case CTK_GR:
-                        c_preprocessor_init_int(self, lhs, true,
-                                int_cmp(lhs, rhs) == CR_GR ? 1 : 0);
+                        c_preprocessor_init_int(self, lhs, true, num_cmp(lhs, rhs) == 1);
                         return true;
                 case CTK_LEQ:
-                        cr = int_cmp(lhs, rhs);
-                        c_preprocessor_init_int(self, lhs, true,
-                                cr == CR_LE || cr == CR_EQ ? 1 : 0);
+                        cr = num_cmp(lhs, rhs);
+                        c_preprocessor_init_int(self, lhs, true, cr <= 0);
                         return true;
                 case CTK_GREQ:
-                        cr = int_cmp(lhs, rhs);
-                        c_preprocessor_init_int(self, lhs, true,
-                                cr == CR_GR || cr == CR_EQ ? 1 : 0);
+                        cr = num_cmp(lhs, rhs);
+                        c_preprocessor_init_int(self, lhs, true, cr >= 0);
                         return true;
                 case CTK_EQ2:
-                        c_preprocessor_init_int(self, lhs, true,
-                                int_cmp(lhs, rhs) == CR_EQ ? 1 : 0);
+                        c_preprocessor_init_int(self, lhs, true, num_cmp(lhs, rhs) == 0);
                         return true;
                 case CTK_EXCLAIM_EQ:
-                        c_preprocessor_init_int(self, lhs, true,
-                                int_cmp(lhs, rhs) != CR_EQ ? 1 : 0);
+                        c_preprocessor_init_int(self, lhs, true, num_cmp(lhs, rhs) != 0);
                         return true;
                 case CTK_AMP:
-                        int_and(lhs, rhs);
+                        num_bit_and(lhs, rhs);
                         return true;
                 case CTK_CARET:
-                        int_xor(lhs, rhs);
+                        num_bit_xor(lhs, rhs);
                         return true;
                 case CTK_VBAR:
-                        int_or(lhs, rhs);
+                        num_bit_or(lhs, rhs);
                         return true;
                 case CTK_AMP2:
                         c_preprocessor_init_int(self, lhs, true,
-                                !int_is_zero(lhs) && !int_is_zero(rhs) ? 1 : 0);
+                                !num_is_zero(lhs) && !num_is_zero(rhs) ? 1 : 0);
                         return true;
                 case CTK_VBAR2:
                         c_preprocessor_init_int(self, lhs, true,
-                                !int_is_zero(lhs) || !int_is_zero(rhs) ? 1 : 0);
+                                !num_is_zero(lhs) || !num_is_zero(rhs) ? 1 : 0);
                         return true;
                 default:
                         c_error_token_is_not_valid_in_preprocessor_expressions(self->context, op);
@@ -302,7 +300,7 @@ static inline int get_operator_precedence(const c_token* t)
 }
 
 static c_token* c_preprocessor_evaluate_rhs_of_binary_expr(
-        c_preprocessor* self, c_token* tok, int_value* lhs, int min_prec)
+        c_preprocessor* self, c_token* tok, struct num* lhs, int min_prec)
 {
         while (1)
         {
@@ -314,7 +312,7 @@ static c_token* c_preprocessor_evaluate_rhs_of_binary_expr(
                 if (!(tok = c_preprocess_non_macro(self)))
                         return NULL;
 
-                int_value ternary_middle;
+                struct num ternary_middle;
                 if (c_token_is(optoken, CTK_QUESTION))
                 {
                         if (!(tok = _c_preprocessor_evaluate_expr(self, tok, &ternary_middle)))
@@ -325,7 +323,7 @@ static c_token* c_preprocessor_evaluate_rhs_of_binary_expr(
                                 return NULL;
                 }
 
-                int_value rhs;
+                struct num rhs;
                 if (!c_preprocessor_evaluate_unary_expr(self, tok, &rhs))
                         return NULL;
 
@@ -342,14 +340,14 @@ static c_token* c_preprocessor_evaluate_rhs_of_binary_expr(
                 if (c_token_is(optoken, CTK_QUESTION))
                 {
                         c_pp_arithmetic_conversion(&rhs, &ternary_middle);
-                        *lhs = int_is_zero(lhs) ? rhs : ternary_middle;
+                        *lhs = num_is_zero(lhs) ? rhs : ternary_middle;
                 }
                 else if (!c_preprocessor_evaluate_binary_expr(self, optoken, lhs, &rhs))
                         return NULL;
         }
 }
 
-static c_token* _c_preprocessor_evaluate_expr(c_preprocessor* self, c_token* tok, int_value* result)
+static c_token* _c_preprocessor_evaluate_expr(c_preprocessor* self, c_token* tok, struct num* result)
 {
         if (!c_preprocessor_evaluate_unary_expr(self, tok, result))
                 return NULL;
@@ -360,7 +358,7 @@ static c_token* _c_preprocessor_evaluate_expr(c_preprocessor* self, c_token* tok
         return c_preprocessor_evaluate_rhs_of_binary_expr(self, tok, result, PRECEDENCE_COMMA);
 }
 
-extern c_token* c_preprocessor_evaluate_expr(c_preprocessor* self, int_value* result)
+extern c_token* c_preprocessor_evaluate_expr(c_preprocessor* self, struct num* result)
 {
         c_token* t = c_preprocess_non_macro(self);
         if (!t)

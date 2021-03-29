@@ -341,7 +341,7 @@ extern tree_decl* tree_new_enumerator_decl(
         tree_id name,
         tree_type* type,
         tree_expr* expr,
-        const int_value* val)
+        const struct num* val)
 {
         tree_decl* d = tree_new_typed_decl(context,
                 TDK_ENUMERATOR, scope, loc, name, type, sizeof(struct _tree_enumerator_decl));

@@ -1,7 +1,9 @@
 #include "scc/tree/eval.h"
+#include "scc/core/num.h"
 #include "scc/tree/expr.h"
 #include "scc/tree/target.h"
 #include "scc/tree/context.h"
+#include "scc/tree/type.h"
 
 static bool tree_eval_binop(tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
@@ -22,65 +24,65 @@ static bool tree_eval_binop(tree_context* context, const tree_expr* expr, tree_e
                 return true;
         }
 
-        avalue* lv = &result->value;
-        avalue* rv = &rr.value;
-        cmp_result cr;
+        struct num* lv = &result->value;
+        struct num* rv = &rr.value;
+        int cr;
 
         switch (tree_get_binop_kind(expr))
         {
                 case TBK_MUL:
-                        avalue_mul(lv, rv);
+                        num_mul(lv, rv);
                         return true;
                 case TBK_DIV:
-                        return avalue_div(lv, rv) != OR_DIV_BY_ZERO;
+                        return num_div(lv, rv) != OR_DIV_BY_ZERO;
                 case TBK_MOD:
-                        return avalue_mod(lv, rv) == OR_OK;
+                        return num_mod(lv, rv) == OR_OK;
                 case TBK_ADD:
-                        avalue_add(lv, rv);
+                        num_add(lv, rv);
                         return true;
                 case TBK_SUB:
-                        avalue_sub(lv, rv);
+                        num_sub(lv, rv);
                         return true;
                 case TBK_SHL:
-                        avalue_shl(lv, rv);
+                        num_bit_shl(lv, rv);
                         return true;
                 case TBK_SHR:
-                        avalue_shr(lv, rv);
+                        num_bit_shr(lv, rv);
                         return true;
                 case TBK_LE:
-                        avalue_init_int(lv, 32, true, avalue_cmp(lv, rv) == CR_LE);
+                        init_int(lv, num_cmp(lv, rv) == -1, 32);
                         return true;
                 case TBK_GR:
-                        avalue_init_int(lv, 32, true, avalue_cmp(lv, rv) == CR_GR);
+                        init_int(lv, num_cmp(lv, rv) == 1, 32);
                         return true;
                 case TBK_LEQ:
-                        cr = avalue_cmp(lv, rv);
-                        avalue_init_int(lv, 32, true, cr == CR_LE || cr == CR_EQ);
+                        cr = num_cmp(lv, rv);
+                        init_int(lv, cr <= 0, 32);
                         return true;
                 case TBK_GEQ:
-                        cr = avalue_cmp(lv, rv);
-                        avalue_init_int(lv, 32, true, cr == CR_GR || cr == CR_EQ);
+                        cr = num_cmp(lv, rv);
+                        init_int(lv, cr >= 0, 32);
                         return true;
                 case TBK_EQ:
-                        avalue_init_int(lv, 32, true, avalue_cmp(lv, rv) == CR_EQ);
+                        init_int(lv, num_cmp(lv, rv) == 0, 32);
                         return true;
                 case TBK_NEQ:
-                        avalue_init_int(lv, 32, true, avalue_cmp(lv, rv) != CR_EQ);
+                        init_int(lv, num_cmp(lv, rv) != 0, 32);
                         return true;
                 case TBK_AND:
-                        avalue_and(lv, rv);
+                        num_bit_and(lv, rv);
                         return true;
                 case TBK_XOR:
-                        avalue_xor(lv, rv);
+                        num_bit_xor(lv, rv);
                         return true;
                 case TBK_OR:
-                        avalue_or(lv, rv);
+                        num_bit_or(lv, rv);
                         return true;
                 case TBK_LOG_AND:
-                        avalue_init_int(lv, 32, true, !avalue_is_zero(lv) && !avalue_is_zero(rv));
+                        init_int(lv, !num_is_zero(lv) && !num_is_zero(rv), 32);
                         return true;
                 case TBK_LOG_OR:        
-                        avalue_init_int(lv, 32, true, !avalue_is_zero(lv) || !avalue_is_zero(rv));
+                        init_int(lv, !num_is_zero(lv) || !num_is_zero(rv), 32);
                         return true;
 
                 default:
@@ -133,15 +135,14 @@ static bool tree_eval_unop(
                 case TUK_PLUS:
                         return true;
                 case TUK_MINUS:
-                        avalue_neg(&result->value);
+                        num_neg(&result->value);
                         return true;
                 case TUK_NOT:
-                        avalue_not(&result->value);
+                        num_bit_neg(&result->value);
                         return true;
                 case TUK_LOG_NOT:
                         result->kind = TERK_INTEGER;
-                        avalue_init_int(&result->value, 32, true,
-                                avalue_is_zero(&result->value) ? 1 : 0);
+                        init_int(&result->value, num_is_zero(&result->value), 32);
                         return true;
    
                 default:
@@ -162,7 +163,7 @@ static bool tree_eval_conditional(
         if (!tree_eval_expr_as_arithmetic(context, tree_get_conditional_condition(expr), &cond))
                 return false;
         
-        return avalue_is_zero(&cond.value)
+        return num_is_zero(&cond.value)
                 ? tree_eval_expr(context, tree_get_conditional_rhs(expr), result)
                 : tree_eval_expr(context, tree_get_conditional_lhs(expr), result);
 }
@@ -175,12 +176,12 @@ static bool tree_eval_integer_literal(
                 || tree_builtin_type_is(t, TBTK_UINT64);
 
         result->kind = TERK_INTEGER;
-        avalue_init_int(
-                &result->value,
-                ext ? 64 : 32,
-                tree_type_is_signed_integer(t),
-                tree_get_integer_literal(expr));
-
+        uint64_t lit = tree_get_integer_literal(expr);
+        unsigned bits = ext ? 64 : 32;
+        if (tree_type_is_signed_integer(t))
+                init_int(&result->value, lit, bits);
+        else
+                init_uint(&result->value, lit, bits);
         return true;
 }
 
@@ -188,7 +189,7 @@ static bool tree_eval_character_literal(
         tree_context* context, const tree_expr* expr, tree_eval_result* result)
 {
         result->kind = TERK_INTEGER;
-        avalue_init_int(&result->value, 8, true, tree_get_character_literal(expr));
+        init_int(&result->value, tree_get_character_literal(expr), 8);
         return true;
 }
 
@@ -197,11 +198,11 @@ static bool tree_eval_floating_literal(
 {
         result->kind = TERK_FLOATING;
 
-        const float_value* value = tree_get_floating_literal_cvalue(expr);
+        const struct num* value = tree_get_floating_literal_cvalue(expr);
         if (tree_builtin_type_is(tree_get_expr_type(expr), TBTK_FLOAT))
-                avalue_init_sp(&result->value, float_get_sp(value));
+                init_f32(&result->value, num_f32(value));
         else
-                avalue_init_dp(&result->value, float_get_dp(value));
+                init_f64(&result->value, num_f64(value));
 
         return true;
 }
@@ -233,12 +234,12 @@ static bool tree_eval_cast(
         if (builtin == TBTK_FLOAT)
         {
                 result->kind = TERK_FLOATING;
-                avalue_to_sp(&result->value);
+                num_to_f32(&result->value);
         }
         else if (builtin == TBTK_DOUBLE)
         {
                 result->kind = TERK_FLOATING;
-                avalue_to_dp(&result->value);
+                num_to_f64(&result->value);
         }
         else
         {
@@ -246,7 +247,10 @@ static bool tree_eval_cast(
 
                 result->kind = TERK_INTEGER;
                 uint bits = 8 * tree_get_builtin_type_size(context->target, builtin);
-                avalue_to_int(&result->value, bits, tree_type_is_signed_integer(cast_type));
+                if (tree_type_is_signed_integer(cast_type))
+                        num_to_int(&result->value, bits);
+                else
+                        num_to_uint(&result->value, bits);
         }
 
         return true;
@@ -259,11 +263,10 @@ static bool tree_eval_sizeof(tree_context* context, const tree_expr* expr, tree_
                 : tree_get_expr_type(tree_get_sizeof_expr(expr));
 
         result->kind = TERK_INTEGER;
-        avalue_init_int(
+        init_uint(
                 &result->value,
-                tree_get_pointer_size(context->target) * 8,
-                false,
-                tree_get_sizeof(context->target, t));
+                tree_get_sizeof(context->target, t),
+                tree_get_pointer_size(context->target) * 8);
 
         return true;
 }
@@ -289,10 +292,9 @@ static bool tree_eval_decl(
                 return false;
 
         result->kind = TERK_INTEGER;
-        avalue_init_int(&result->value,
-                8 * tree_get_builtin_type_size(context->target, TBTK_INT32),
-                true,
-                int_get_i32(tree_get_enumerator_cvalue(decl)));
+        init_int(&result->value,
+                num_i64(tree_get_enumerator_cvalue(decl)),
+                8 * tree_get_builtin_type_size(context->target, TBTK_INT32));
 
         return true;
 }
@@ -330,7 +332,7 @@ static bool _tree_eval_expr(
 
         result->kind = TERK_INVALID;
         result->error = expr;
-        avalue_init_int(&result->value, 32, false, 0);
+        init_uint(&result->value, 0, 32);
 
         if (!expr)
                 return TERK_INVALID;

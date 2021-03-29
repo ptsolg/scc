@@ -4,10 +4,10 @@
 #include "scc/core/common.h"
 
 typedef struct _c_preprocessor c_preprocessor;
-typedef struct _int_value int_value;
 typedef struct _c_token c_token;
+struct num;
 
 // returns token after expression
-extern c_token* c_preprocessor_evaluate_expr(c_preprocessor* self, int_value* result);
+extern c_token* c_preprocessor_evaluate_expr(c_preprocessor* self, struct num* result);
 
 #endif

@@ -1,3 +1,4 @@
+#include "scc/core/num.h"
 #include "scc/semantics/sema.h"
 #include "scc/tree/eval.h"
 #include "scc/tree/target.h"
@@ -71,8 +72,8 @@ extern tree_type* c_sema_get_type_for_string_literal(c_sema* self, tree_id id)
         struct strentry* entry = tree_get_id_strentry(self->context, id);
         assert(entry);
 
-        int_value size;
-        int_init(&size, 32, false, entry->size);
+        struct num size;
+        init_int(&size, entry->size, 32);
 
         return tree_new_constant_array_type(self->context, c_sema_get_char_type(self), NULL, &size);
 }
@@ -137,10 +138,10 @@ extern tree_type* c_sema_new_array_type(
         // we'll check size-value later
         tree_eval_expr(self->context, size, &result);
         
-        int_value size_value;
-        int_init(&size_value, 32, false, 0);
-        if (avalue_is_int(&result.value))
-                size_value = avalue_get_int(&result.value);
+        struct num size_value;
+        init_int(&size_value, 0, 32);
+        if (num_is_integral(&result.value))
+                size_value = result.value;
 
         return tree_new_constant_array_type(self->context, eltype, size, &size_value);
 }
@@ -148,8 +149,8 @@ extern tree_type* c_sema_new_array_type(
 extern tree_type* c_sema_new_constant_array_type(
         c_sema* self, tree_type_quals quals, tree_type* eltype, uint size)
 {
-        int_value value;
-        int_init(&value, 32, false, size);
+        struct num value;
+        init_int(&value, size, 32);
         
         return tree_new_constant_array_type(self->context, eltype, NULL, &value);
 }
@@ -187,9 +188,9 @@ extern bool c_sema_check_array_type(const c_sema* self, const tree_type* t, tree
                 return false;
         }
 
-        const int_value* size_value = tree_get_array_size_value_c(t);
-        if (int_is_zero(size_value)
-                || (int_is_signed(size_value) && int_get_i64(size_value) < 0))
+        const struct num* size_value = tree_get_array_size_value_c(t);
+        if (num_is_zero(size_value)
+                || (size_value->kind == NUM_INT && num_i64(size_value) < 0))
         {
                 c_error_array_must_be_greater_than_zero(self->ccontext, l);
                 return false;

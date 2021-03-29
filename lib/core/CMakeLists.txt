@@ -3,9 +3,9 @@ add_scc_lib(core
 	allocator.c
 	cmd.c
 	file.c
+	num.c
 	read-write.c
 	strpool.c
-	value.c
 
 	INCLUDE
 	${SCC_INC_DIR}

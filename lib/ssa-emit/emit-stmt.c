@@ -61,7 +61,7 @@ extern bool ssa_emit_case_stmt(ssa_function_emitter* self, const tree_stmt* stmt
         ssa_block* body = ssa_new_function_block(self);
         ssa_value* case_val = ssa_build_int_constant(&self->builder,
                 tree_get_expr_type(tree_get_case_expr(stmt)),
-                int_get_u64(tree_get_case_cvalue(stmt)));
+                num_as_u64(tree_get_case_cvalue(stmt)));
 
         if (!ssa_emit_jmp_opt(self, body))
                 return false;

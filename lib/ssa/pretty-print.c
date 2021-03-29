@@ -1,11 +1,13 @@
 #include "scc/ssa/pretty-print.h"
 #include "printer.h"
+#include "scc/core/num.h"
 #include "scc/ssa/block.h"
 #include "scc/ssa/instr.h"
 #include "scc/ssa/value.h"
 #include "scc/ssa/context.h"
 #include "scc/ssa/module.h"
 #include <ctype.h>
+#include <stdio.h>
 
 static inline void ssa_print_id(ssa_printer* self, ssa_id id)
 {
@@ -53,7 +55,11 @@ static inline void ssa_print_value_ref(ssa_printer* self, const ssa_value* val)
         else if (k == SVK_CONSTANT)
         {
                 char buf[64];
-                avalue_print(ssa_get_constant_cvalue(val), buf, 64, 4);
+                const struct num* v = ssa_get_constant_cvalue(val);
+                if (num_is_integral(v))
+                        snprintf(buf, ARRAY_SIZE(buf), "%llu", num_as_u64(v));
+                else
+                        snprintf(buf, ARRAY_SIZE(buf), "%.4f", num_f64(v));
                 ssa_prints(self, buf);
         }
         else if (k == SVK_FUNCTION || k == SVK_GLOBAL_VAR)

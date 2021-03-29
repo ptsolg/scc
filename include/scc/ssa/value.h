@@ -118,18 +118,18 @@ static inline void ssa_set_global_var_entity(ssa_value* self, tree_decl* var);
 struct _ssa_constant
 {
         struct _ssa_value_base base;
-        avalue value;
+        struct num value;
 };
 
-extern ssa_value* ssa_new_constant(ssa_context* context, tree_type* type, const avalue* val);
+extern ssa_value* ssa_new_constant(ssa_context* context, tree_type* type, const struct num* val);
 
 static inline struct _ssa_constant* _ssa_constant(ssa_value* self);
 static inline const struct _ssa_constant* _ssa_cconstant(const ssa_value* self);
 
-static inline const avalue* ssa_get_constant_cvalue(const ssa_value* self);
-static inline avalue* ssa_get_constant_value(ssa_value* self);
+static inline const struct num* ssa_get_constant_cvalue(const ssa_value* self);
+static inline struct num* ssa_get_constant_value(ssa_value* self);
 
-static inline void ssa_set_constant_value(ssa_value* self, const avalue* value);
+static inline void ssa_set_constant_value(ssa_value* self, const struct num* value);
 
 struct _ssa_label
 {
@@ -347,17 +347,17 @@ static inline const struct _ssa_constant* _ssa_cconstant(const ssa_value* self)
         return (const struct _ssa_constant*)self;
 }
 
-static inline const avalue* ssa_get_constant_cvalue(const ssa_value* self)
+static inline const struct num* ssa_get_constant_cvalue(const ssa_value* self)
 {
         return &_ssa_cconstant(self)->value;
 }
 
-static inline avalue* ssa_get_constant_value(ssa_value* self)
+static inline struct num* ssa_get_constant_value(ssa_value* self)
 {
         return &_ssa_constant(self)->value;
 }
 
-static inline void ssa_set_constant_value(ssa_value* self, const avalue* value)
+static inline void ssa_set_constant_value(ssa_value* self, const struct num* value)
 {
         *ssa_get_constant_value(self) = *value;
 }

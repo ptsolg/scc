@@ -201,8 +201,8 @@ extern tree_expr* c_sema_new_decl_expr(c_sema* self, tree_id id, tree_location i
 
 extern tree_expr* c_sema_new_sp_floating_literal(c_sema* self, tree_location loc, float v)
 {
-        float_value value;
-        float_init_sp(&value, v);
+        struct num value;
+        init_f32(&value, v);
 
         return tree_new_floating_literal(self->context,
                 c_sema_get_float_type(self), loc, &value);
@@ -210,8 +210,8 @@ extern tree_expr* c_sema_new_sp_floating_literal(c_sema* self, tree_location loc
 
 extern tree_expr* c_sema_new_dp_floating_literal(c_sema* self, tree_location loc, ldouble v)
 {
-        float_value value;
-        float_init_dp(&value, v);
+        struct num value;
+        init_f64(&value, v);
 
         return tree_new_floating_literal(self->context,
                 c_sema_get_double_type(self), loc, &value);

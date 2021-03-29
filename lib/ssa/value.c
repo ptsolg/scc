@@ -85,7 +85,7 @@ extern ssa_value* ssa_new_global_var(ssa_context* context, tree_decl* var)
         return v;
 }
 
-extern ssa_value* ssa_new_constant(ssa_context* context, tree_type* type, const avalue* val)
+extern ssa_value* ssa_new_constant(ssa_context* context, tree_type* type, const struct num* val)
 {
         ssa_value* c = ssa_new_value(context,
                 SVK_CONSTANT, type, sizeof(struct _ssa_constant));

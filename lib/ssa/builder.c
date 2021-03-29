@@ -340,8 +340,11 @@ extern ssa_value* ssa_build_int_constant(ssa_builder* self, tree_type* type, uin
         assert(tree_type_is_integer(type) || tree_type_is_pointer(type));
         uint bits = (uint)tree_get_sizeof(ssa_get_target(self->context), type) * 8;
 
-        avalue v;
-        avalue_init_int(&v, bits, tree_type_is_signed_integer(type), val);
+        struct num v;
+        if (tree_type_is_signed_integer(type))
+                init_int(&v, val, bits);
+        else
+                init_uint(&v, val, bits);
 
         return ssa_new_constant(self->context, type, &v);
 }
@@ -379,8 +382,8 @@ extern ssa_value* ssa_build_sp_constant(ssa_builder* self, tree_type* type, floa
         type = tree_desugar_type(type);
         assert(tree_builtin_type_is(type, TBTK_FLOAT));
 
-        avalue v;
-        avalue_init_sp(&v, val);
+        struct num v;
+        init_f32(&v, val);
 
         return ssa_new_constant(self->context, type, &v);
 }
@@ -390,8 +393,8 @@ extern ssa_value* ssa_build_dp_constant(ssa_builder* self, tree_type* type, doub
         type = tree_desugar_type(type);
         assert(tree_builtin_type_is(type, TBTK_DOUBLE));
 
-        avalue v;
-        avalue_init_dp(&v, val);
+        struct num v;
+        init_f64(&v, val);
 
         return ssa_new_constant(self->context, type, &v);
 }

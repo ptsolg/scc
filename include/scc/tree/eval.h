@@ -1,7 +1,7 @@
 #ifndef TREE_EVAL_H
 #define TREE_EVAL_H
 
-#include "scc/core/value.h"
+#include "scc/core/num.h"
 
 typedef struct _tree_context tree_context;
 typedef struct _tree_expr tree_expr;
@@ -17,7 +17,7 @@ typedef enum
 typedef struct _tree_eval_result
 {
         tree_eval_result_kind kind;
-        avalue value;
+        struct num value;
         const tree_expr* error;
 } tree_eval_result;
 

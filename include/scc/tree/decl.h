@@ -2,7 +2,7 @@
 #define TREE_DECL_H
 
 #include "common.h"
-#include "scc/core/value.h"
+#include "scc/core/num.h"
 
 typedef struct _tree_decl_scope tree_decl_scope;
 typedef struct _tree_context tree_context;
@@ -217,7 +217,7 @@ struct _tree_enumerator_decl
 {
         struct _tree_typed_decl base;
         tree_expr* expr;
-        int_value value;
+        struct num value;
 };
 
 struct _tree_label_decl
@@ -687,14 +687,14 @@ extern tree_decl* tree_new_enumerator_decl(
         tree_id name,
         tree_type* type,
         tree_expr* expr,
-        const int_value* val);
+        const struct num* val);
 
 static TREE_INLINE tree_expr* tree_get_enumerator_expr(const tree_decl* self)
 {
         return self->enumerator.expr;
 }
 
-static TREE_INLINE const int_value* tree_get_enumerator_cvalue(const tree_decl* self)
+static TREE_INLINE const struct num* tree_get_enumerator_cvalue(const tree_decl* self)
 {
         return &self->enumerator.value;
 }
@@ -704,7 +704,7 @@ static TREE_INLINE void tree_set_enumerator_expr(tree_decl* self, tree_expr* exp
         self->enumerator.expr = expr;
 }
 
-static TREE_INLINE void tree_set_enumerator_value(tree_decl* self, const int_value* val)
+static TREE_INLINE void tree_set_enumerator_value(tree_decl* self, const struct num* val)
 {
         self->enumerator.value = *val;
 }

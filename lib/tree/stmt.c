@@ -50,7 +50,7 @@ extern tree_stmt* tree_new_case_stmt(
         tree_context* context,
         tree_xlocation loc,
         tree_expr* expr,
-        const int_value* value,
+        const struct num* value,
         tree_stmt* body)
 {
         tree_stmt* s = tree_new_stmt(context, TSK_CASE, loc, sizeof(struct _tree_case_stmt));
