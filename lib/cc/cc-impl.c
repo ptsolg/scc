@@ -2,6 +2,7 @@
 #include "scc/cc/cc.h"
 #include "scc/cc/llvm.h"
 #include "scc/c-common/context.h"
+#include "scc/core/file.h"
 #include "scc/lex/lexer.h"
 #include "scc/syntax/parser.h"
 #include "scc/syntax/printer.h"
@@ -12,6 +13,7 @@
 #include "scc/tree/context.h"
 #include "scc/tree/target.h"
 #include <stdarg.h>
+#include <string.h>
 
 #define LL_EXT "ll"
 #define SSA_EXT "ssa"
@@ -52,7 +54,7 @@ static void cc_handle_error(void* eh, c_error_severity severity, c_location loc,
         fprintf(
                 context->instance->output.message,
                 "%s:%d:%d: %s: %s\n",
-                path_get_cfile(loc.file),
+                pathfile(loc.file),
                 loc.line,
                 loc.column,
                 c_error_severity_to_str[severity],
@@ -322,20 +324,21 @@ cleanup:
         return result;
 }
 
-static errcode get_file_as(char* buffer, const file_entry* file, const char* ext)
+static void get_file_as(struct pathbuf* path, const file_entry* file, const char* ext)
 {
-        strncpy(buffer, file_get_path(file), MAX_PATH_LEN);
-        return path_change_ext(buffer, ext);
+        *path = pathbuf_from_str(file_get_path(file));
+        char* ext_pos = (char*)pathext(path->buf);
+        if (*ext_pos)
+                strcpy(ext_pos, ext);
 }
 
 static errcode cc_codegen_file(cc_instance* self, file_entry* file, bool emit_llvm_ir)
 {
         const char* ext = emit_llvm_ir ? LL_EXT : SSA_EXT;
-        char out[MAX_PATH_LEN + 1];
-        if (EC_FAILED(get_file_as(out, file, ext)))
-                return EC_ERROR;
+        struct pathbuf path;
+        get_file_as(&path, file, ext);
 
-        FILE* fout = fopen(out, "w");
+        FILE* fout = fopen(path.buf, "w");
         if (!fout)
                 return EC_ERROR;
 
@@ -346,23 +349,17 @@ static errcode cc_codegen_file(cc_instance* self, file_entry* file, bool emit_ll
 
 static void cc_cleanup_codegen(cc_instance* self, bool emit_llvm_ir)
 {
+        const char* ext = emit_llvm_ir ? LL_EXT : SSA_EXT;
+        struct pathbuf file;
         CC_FOREACH_SOURCE(self, it, end)
         {
-                const char* ext = emit_llvm_ir ? LL_EXT : SSA_EXT;
-                char file[MAX_PATH_LEN + 1];
-                if (EC_FAILED(get_file_as(file, *it, ext)))
-                        return;
-
-                path_delete_file(file);
+                get_file_as(&file, *it, ext);
+                fs_delfile(file.buf);
         }
         CC_FOREACH_BUILTIN_SOURCE(self, it, end)
         {
-                const char* ext = emit_llvm_ir ? LL_EXT : SSA_EXT;
-                char file[MAX_PATH_LEN + 1];
-                if (EC_FAILED(get_file_as(file, *it, ext)))
-                        return;
-
-                path_delete_file(file);
+                get_file_as(&file, *it, ext);
+                fs_delfile(file.buf);
         }
 }
 
@@ -398,22 +395,21 @@ static errcode cc_compile_file(cc_instance* self,
         if (EC_FAILED(cc_codegen_file(self, file, true)))
                 return EC_ERROR;
 
-        char ll_file[MAX_PATH_LEN + 1];
-        if (EC_FAILED(get_file_as(ll_file, file, LL_EXT)))
-                return EC_ERROR;
+        struct pathbuf ll_file;
+        get_file_as(&ll_file, file, LL_EXT);
 
         int exit_code;
         llvm_compiler llc;
         llvm_compiler_init(&llc, self->input.llc_path);
         llc.opt_level = self->opts.optimization.level > LCOL_O3 
                 ? LCOL_O3 : self->opts.optimization.level;
-        llc.file = ll_file;
+        llc.file = ll_file.buf;
         llc.output_kind = output_kind;
         llc.arch = self->opts.target == CTK_X86_32 ? LCAK_X86 : LCAK_X86_64;
         llc.output = output;
 
         bool failed = EC_FAILED(llvm_compile(&llc, &exit_code));
-        path_delete_file(ll_file);
+        fs_delfile(ll_file.buf);
         if (failed)
                 return EC_ERROR;
 
@@ -423,23 +419,16 @@ static errcode cc_compile_file(cc_instance* self,
 static void cc_cleanup_compilation(cc_instance* self, llvm_compiler_output_kind output_kind)
 {
         const char* ext = output_kind == LCOK_ASM ? ASM_EXT : OBJ_EXT;
+        struct pathbuf file;
         CC_FOREACH_SOURCE(self, it, end)
         {
-                char file[MAX_PATH_LEN + 1];
-                strncpy(file, file_get_path(*it), MAX_PATH_LEN);
-                if (EC_FAILED(path_change_ext(file, ext)))
-                        continue;
-
-                path_delete_file(file);
+                get_file_as(&file, *it, ext);
+                fs_delfile(file.buf);
         }
         CC_FOREACH_BUILTIN_SOURCE(self, it, end)
         {
-                char file[MAX_PATH_LEN + 1];
-                strncpy(file, file_get_path(*it), MAX_PATH_LEN);
-                if (EC_FAILED(path_change_ext(file, ext)))
-                        continue;
-
-                path_delete_file(file);
+                get_file_as(&file, *it, ext);
+                fs_delfile(file.buf);
         }
 }
 
@@ -529,18 +518,16 @@ extern errcode cc_generate_llvm_ir(cc_instance* self)
 
 static errcode cc_link(cc_instance* self, llvm_linker* lld)
 {
-        char obj_file[MAX_PATH_LEN + 1];
+        struct pathbuf obj_file;
         CC_FOREACH_SOURCE(self, it, end)
         {
-                if (EC_FAILED(get_file_as(obj_file, *it, OBJ_EXT)))
-                        return EC_ERROR;
-                llvm_linker_add_file(lld, obj_file);
+                get_file_as(&obj_file, *it, OBJ_EXT);
+                llvm_linker_add_file(lld, obj_file.buf);
         }
         CC_FOREACH_BUILTIN_SOURCE(self, it, end)
         {
-                if (EC_FAILED(get_file_as(obj_file, *it, OBJ_EXT)))
-                        return EC_ERROR;
-                llvm_linker_add_file(lld, obj_file);
+                get_file_as(&obj_file, *it, OBJ_EXT);
+                llvm_linker_add_file(lld, obj_file.buf);
         }
 
         CC_FOREACH_LIB(self, it, end)

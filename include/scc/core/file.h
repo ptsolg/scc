@@ -3,26 +3,28 @@
 
 #include "read-write.h"
 #include "hashmap.h"
+#include "scc/core/common.h"
 
 #include <stdio.h>
 
-extern errcode path_get_cd(char* path);
-extern errcode path_add_trailing_slash(char* path);
-extern errcode path_join(char* path, const char* other);
-extern void path_goto_parent_dir(char* path);
-extern bool path_has_trailing_slash(const char* path);
-extern void path_strip_file(char* path);
-extern bool path_is_dir(const char* path);
-extern bool path_is_file(const char* path);
-extern bool path_is_valid(const char* path);
-extern char* path_get_file(char* path);
-extern const char* path_get_cfile(const char* path);
-extern size_t path_get_size(const char* path);
-extern bool path_is_abs(const char* path);
-extern errcode path_get_abs(char* abs, const char* loc);
-extern void path_fix_delimeter(char* path);
-extern errcode path_change_ext(char* path, const char* ext);
-extern errcode path_delete_file(const char* path);
+struct pathbuf
+{
+        char buf[MAX_PATH_LEN + 1];
+};
+
+struct pathbuf pathbuf_from_str(const char* s);
+void cwd(struct pathbuf* path);
+void addsep(struct pathbuf* path);
+void join(struct pathbuf* path, const char* extra);
+int abspath(struct pathbuf* dst, const char* src);
+int isdir(const char* path);
+int isfile(const char* path);
+const char* pathfile(const char* path);
+const char* basename(const char* path);
+const char* pathext(const char* path);
+
+size_t fs_filesize(const char* path);
+int fs_delfile(const char* file);
 
 typedef struct _fread_cb
 {

@@ -244,7 +244,7 @@ extern void c_print_tokens(c_printer* self, const struct vec* tokens)
                 if (ndigits(loc.column) > info.max_col)
                         info.max_col = ndigits(loc.column);
 
-                int len = (int)strlen(path_get_cfile(loc.file));
+                int len = (int)strlen(pathfile(loc.file));
                 if (len > info.max_file_len)
                         info.max_file_len = len;
 

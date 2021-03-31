@@ -1,5 +1,7 @@
 #include "scc.h"
+#include "scc/cc/cc.h"
 #include "scc/core/cmd.h"
+#include "scc/core/file.h"
 
 #include <string.h>
 
@@ -14,14 +16,10 @@ extern FILE* scc_open_file(scc_env* self, const char* file, const char* mode)
         if (f)
                 return f;
 
-        char path[MAX_PATH_LEN + 1];
-        if (EC_FAILED(path_get_cd(path)
-                || EC_FAILED(path_join(path, file))) || !(f = fopen(path, mode)))
-        {
-                return NULL;
-        }
-
-        return f;
+        struct pathbuf path;
+        cwd(&path);
+        join(&path, file);
+        return fopen(path.buf, mode);
 }
 
 static void scc_S(scc_env* self, cmd_parser* parser)
@@ -222,13 +220,9 @@ static void scc_source_file(scc_env* self, cmd_parser* parser)
         if (!file || EC_FAILED(cc_add_source_file(&self->cc, file, false)))
                 return;
 
-        char dir[MAX_PATH_LEN];
-        strncpy(dir, file, MAX_PATH_LEN);
-        path_strip_file(dir);
-        if (!*dir)
-                return;
-
-        cc_add_source_dir(&self->cc, dir);
+        struct pathbuf dir = pathbuf_from_str(file);
+        basename(dir.buf);
+        cc_add_source_dir(&self->cc, dir.buf);
 }
 
 extern errcode scc_parse_opts(scc_env* self, int argc, const char** argv)

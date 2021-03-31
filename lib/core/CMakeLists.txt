@@ -9,4 +9,7 @@ add_scc_lib(core
 
 	INCLUDE
 	${SCC_INC_DIR}
+
+	LINK
+	shlwapi
 )

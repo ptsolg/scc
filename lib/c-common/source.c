@@ -2,6 +2,7 @@
 #include "scc/c-common/context.h"
 #include "scc/core/hash.h"
 #include "scc/core/hashmap.h"
+#include <string.h>
 
 #define VEC u32vec
 #define VEC_T unsigned
@@ -68,7 +69,7 @@ extern void c_source_save_line_loc(c_source* self, tree_location loc)
 
 extern const char* c_source_get_name(const c_source* self)
 {
-        return path_get_cfile(file_get_path(self->file));
+        return pathfile(file_get_path(self->file));
 }
 
 extern const char* c_source_get_path(const c_source* self)

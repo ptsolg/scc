@@ -2,6 +2,7 @@
 #define SCC_H
 
 #include "scc/cc/cc.h"
+#include "scc/core/file.h"
 
 typedef enum
 {
@@ -19,8 +20,8 @@ typedef struct
 {
         cc_instance cc;
         bool link_stdlib;
-        char llc_path[MAX_PATH_LEN];
-        char lld_path[MAX_PATH_LEN];
+        struct pathbuf llc_path;
+        struct pathbuf lld_path;
         scc_run_mode mode;
 } scc_env;
 

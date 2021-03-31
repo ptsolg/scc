@@ -1,245 +1,152 @@
 #include "scc/core/file.h"
 
+#include "scc/core/common.h"
 #include "scc/core/hash.h"
 
 #include <stdio.h>
 
-#if OS_WIN
 #include <Windows.h>
 #include <FileApi.h>
 #include <Shlwapi.h>
+#include <string.h>
 
-#if COMPILER_MSVC
-#pragma comment(lib, "shlwapi.lib")
-#else
-#error //todo
-#endif
-
-#elif OS_OSX
-#include <sys/stat.h>
-#include <unistd.h>
-#include <stdlib.h> // realpath
-#else
-#error todo
-#endif
-
-extern errcode path_get_cd(char* path)
+static int is_sep(int sep)
 {
-#if OS_WIN
-        if (!GetCurrentDirectory(MAX_PATH_LEN, path))
-                return EC_ERROR;
-#elif OS_OSX
-        if (!getcwd(path, MAX_PATH_LEN))
-                return EC_ERROR;
-#else
-#error todo
-#endif
-        return path_add_trailing_slash(path);
+        return sep == '\\' || sep == '/';
 }
 
-extern errcode path_add_trailing_slash(char* path)
+static int has_slash(const char* s)
 {
-        if (!path_has_trailing_slash(path)) {
-                size_t len = strlen(path);
+        size_t len = strlen(s);
+        return len && is_sep(s[len - 1]);
+}
+
+struct pathbuf pathbuf_from_str(const char* s)
+{
+        struct pathbuf pb;
+        strncpy(pb.buf, s, MAX_PATH_LEN);
+        return pb;
+}
+
+void cwd(struct pathbuf* path)
+{
+        if (!GetCurrentDirectory(MAX_PATH_LEN, path->buf))
+                UNREACHABLE();
+        addsep(path);
+}
+
+void addsep(struct pathbuf* path)
+{
+        if (!has_slash(path->buf))
+        {       
+                size_t len = strlen(path->buf);
                 if (len + 1 >= MAX_PATH_LEN)
-                        return EC_ERROR;
-
-                path[len++] = PATH_DELIMETER;
-                path[len] = '\0';
+                        UNREACHABLE();
+                path->buf[len++] = PATH_DELIMETER;
+                path->buf[len] = '\0';
         }
-        return EC_NO_ERROR;
 }
 
-extern errcode path_join(char* path, const char* other)
+static void fixpath(struct pathbuf* path)
 {
-        if (strlen(path) + strlen(other) >= MAX_PATH_LEN)
-                return EC_ERROR;
-
-        if (*path && !path_has_trailing_slash(path))
-                if (EC_FAILED(path_add_trailing_slash(path)))
-                        return EC_ERROR;
-
-        strcat(path, other);
-        return EC_NO_ERROR;
+        char* it = path->buf;
+        while (*it)
+        {
+                if (is_sep(*it))
+                        *it = PATH_DELIMETER;
+                it++;
+        }
 }
 
-extern void path_goto_parent_dir(char* path)
+void join(struct pathbuf* path, const char* extra)
 {
-        char* file = path_get_file(path);
-        if (file == path) {
-                *path = '\0';
+        if (!extra || !*extra)
                 return;
-        }
-        *(file - 1) = '\0';
-        path_strip_file(path);
+        if (strlen(path->buf) + strlen(extra) >= MAX_PATH_LEN)
+                UNREACHABLE();
+        if (!has_slash(path->buf) && !is_sep(*extra))
+                addsep(path);
+        if (is_sep(*extra))
+                extra++;
+        strcat(path->buf, extra);
+        fixpath(path);
 }
 
-extern bool path_has_trailing_slash(const char* path)
+int abspath(struct pathbuf* dst, const char* src)
 {
-        size_t len = strlen(path);
-        return len && path[len - 1] == PATH_DELIMETER;
+        return !GetFullPathName(src, MAX_PATH_LEN, dst->buf, NULL)
+                ? -1 : 0;
 }
 
-extern void path_strip_file(char* path)
+int isdir(const char* path)
 {
-        char* file = path_get_file(path);
-        *file = '\0';
-}
-
-extern bool path_is_dir(const char* path)
-{
-#if OS_WIN
         return PathIsDirectory(path);
-#elif OS_OSX
-        struct stat s;
-        if (stat(path, &s) != 0)
-                return false;
-        return S_ISDIR(s.st_mode);
-#else
-#error
-#endif
 }
 
-extern bool path_is_file(const char* path)
+int isfile(const char* path)
 {
-#if OS_WIN
         DWORD att = GetFileAttributes(path);
         if (att == INVALID_FILE_ATTRIBUTES)
                 return false;
 
         return !(att & FILE_ATTRIBUTE_DIRECTORY);
-#elif OS_OSX
-        struct stat s;
-        if (stat(path, &s) != 0)
-                return false;
-        return S_ISREG(s.st_mode);
-#else
-#error
-#endif
 }
 
-extern bool path_is_valid(const char* path)
+const char* pathfile(const char* path)
 {
-        return path_is_file(path) || path_is_dir(path);
-}
-
-extern char* path_get_file(char* path)
-{
-        char* end = path + strlen(path);
-        while (end != path) {
-                end--;
-                if (*end == PATH_DELIMETER)
-                        return end + 1;
+        size_t len = strlen(path);
+        const char* it = path + len;
+        while (it != path)
+        {
+                it--;
+                if (is_sep(*it))
+                        return it + 1;
         }
-        return end;
+        return it;
 }
 
-extern const char* path_get_cfile(const char* path)
+const char* basename(const char* path)
 {
-        const char* end = path + strlen(path);
-        while (end != path) {
-                end--;
-                if (*end == PATH_DELIMETER)
-                        return end + 1;
+        size_t len = strlen(path);
+        if (!len)
+                return path;
+
+        const char* it = path + len - is_sep(path[len - 1]) - 1;
+        while (it != path)
+        {
+                if (is_sep(*it))
+                        return it + 1;
+                it--;
         }
-        return end;
+        return path;
 }
 
-extern size_t path_get_size(const char* path)
+const char* pathext(const char* path)
 {
-        size_t res = 0;
-#if OS_WIN
+        size_t len = strlen(path);
+        for (const char* it = path + len; it != path && !is_sep(*it); it--)
+                if (*it == '.')
+                        return it + 1;
+        return path + len;
+}
+
+size_t fs_filesize(const char* path)
+{
+        size_t size = 0;
         HANDLE h = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL,
                               OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
         if (h != INVALID_HANDLE_VALUE) {
                 LARGE_INTEGER i;
                 if (GetFileSizeEx(h, &i))
-                        res = (size_t)i.QuadPart;
+                        size = (size_t)i.QuadPart;
                 CloseHandle(h);
         }
-        return res;
-
-#elif OS_OSX
-        struct stat st;
-        if (stat(path, &st) != 0)
-                return 0;
-        return st.st_size;
-#else
-#error todo
-#endif
+        return size;
 }
 
-extern bool path_is_abs(const char* path)
+int fs_delfile(const char* file)
 {
-#if OS_WIN
-        return !PathIsRelative(path);
-#elif OS_OSX
-        return false;
-#else
-#error todo
-#endif
-}
-
-extern void path_fix_delimeter(char* path)
-{
-        while (1) {
-                int c = *path;
-                if (!c)
-                        return;
-
-                if (c == '\\' || c == '/')
-                        *path = PATH_DELIMETER;
-                path++;
-        }
-}
-
-extern errcode path_change_ext(char* path, const char* ext)
-{
-        path_fix_delimeter(path);
-        char* end = path + strlen(path);
-        char* pos = end;
-        while (pos != path && *pos != '.' && *pos != PATH_DELIMETER)
-                pos--;
-
-        if (pos == path || *pos == PATH_DELIMETER)
-                pos = end;
-
-        size_t rem = MAX_PATH_LEN - strlen(path);
-        if (strlen(ext) + 1 >= rem)
-                return EC_ERROR;
-
-        *pos++ = '.';
-        strcpy(pos, ext);
-        return EC_NO_ERROR;
-}
-
-extern errcode path_delete_file(const char* path)
-{
-#if OS_WIN
-        return DeleteFile(path) ? EC_NO_ERROR : EC_ERROR;
-#elif OS_OSX
-        return remove(path) == 0 ? EC_NO_ERROR : EC_ERROR;
-#endif
-}
-
-extern errcode path_get_abs(char* abs, const char* loc)
-{
-        if (path_is_abs(loc)) {
-                strcpy(abs, loc);
-                return EC_NO_ERROR;
-        }
-
-#if OS_WIN
-        if (!GetFullPathName(loc, MAX_PATH_LEN, abs, NULL))
-                return EC_ERROR;
-#elif OS_OSX
-        if (!realpath(loc, abs))
-                return EC_ERROR;
-#else
-#error todo
-#endif
-
-        return EC_NO_ERROR;
+        return DeleteFile(file) ? 0 : -1;
 }
 
 static size_t fread_cb_read(fread_cb* self, void* buf, size_t bytes)
@@ -348,9 +255,9 @@ extern const char* file_get_content(const file_entry* entry)
 
 extern size_t file_size(const file_entry* entry)
 {
-        return file_emulated(entry)
+        return file_emulated(entry) 
                 ? strlen(file_get_content(entry))
-                : path_get_size(file_get_path(entry));
+                : fs_filesize(entry->path);
 }
 
 static file_entry* flookup_new_entry(file_lookup* self, const char* path, const char* content)
@@ -406,35 +313,31 @@ extern bool file_exists(file_lookup* lookup, const char* path)
 
 static file_entry* file_get_without_lookup(file_lookup* self, const char* path)
 {
-        char abs[MAX_PATH_LEN + 1];
-        if (EC_FAILED(path_get_abs(abs, path)))
+        struct pathbuf abs;
+        if (abspath(&abs, path))
                 return NULL;
-
-        struct hashmap_entry* entry = hashmap_lookup(&self->lookup, strhash(abs));
+        struct hashmap_entry* entry = hashmap_lookup(&self->lookup, strhash(abs.buf));
         if (entry)
                 return entry->value;
-        if (!path_is_file(abs))
+        if (!isfile(abs.buf))
                 return NULL;
-
-        return flookup_new_entry(self, abs, NULL);
+        return flookup_new_entry(self, abs.buf, NULL);
 }
 
 static file_entry* file_get_with_lookup(file_lookup* self, const char* path)
 {
-        char abs[MAX_PATH_LEN + 1];
+        struct pathbuf abs;
         for (size_t i = 0; i < self->dirs->size; i++) {
-                if (EC_FAILED(path_get_abs(abs, self->dirs->items[i])))
+                if (abspath(&abs, self->dirs->items[i]))
                         continue;
-                if (EC_FAILED(path_join(abs, path)))
-                        continue;
-                path_fix_delimeter(abs);
+                join(&abs, path);
 
-                struct hashmap_entry* entry = hashmap_lookup(&self->lookup, strhash(abs));
+                struct hashmap_entry* entry = hashmap_lookup(&self->lookup, strhash(abs.buf));
                 if (entry)
                         return entry->value;
 
-                if (path_is_file(abs))
-                        return flookup_new_entry(self, abs, NULL);
+                if (isfile(abs.buf))
+                        return flookup_new_entry(self, abs.buf, NULL);
         }
         return NULL;
 }
@@ -448,11 +351,8 @@ extern file_entry* file_get(file_lookup* lookup, const char* path)
 extern file_entry* file_emulate(
         file_lookup* lookup, const char* path, const char* content)
 {
-        char abs[MAX_PATH_LEN + 1];
-        if (EC_FAILED(path_get_cd(abs)))
-                return NULL;
-        if (EC_FAILED(path_join(abs, path)))
-                return NULL;
-
-        return flookup_new_entry(lookup, abs, content);
+        struct pathbuf abs;
+        cwd(&abs);
+        join(&abs, path);
+        return flookup_new_entry(lookup, abs.buf, content);
 }
