@@ -46,6 +46,13 @@ static void VEC_F(clear)(struct VEC* self)
         VEC_F(init)(self);
 }
 
+static void VEC_F(move)(struct VEC* to, struct VEC* from)
+{
+        VEC_F(clear)(to);
+        *to = *from;
+        VEC_F(init)(from);
+}
+
 static void VEC_F(drop)(struct VEC* self)
 {
         VEC_F(clear)(self);
@@ -101,6 +108,20 @@ static inline void VEC_F(resize)(struct VEC* self, const size_t new_size)
         self->items = new_items;
         self->capacity = new_size;
         self->size = new_size;
+}
+
+static inline struct VEC VEC_F(with_size)(size_t size)
+{
+        struct VEC v;
+        VEC_F(init)(&v);
+        VEC_F(resize)(&v, size);
+        return v;
+}
+
+static inline void VEC_F(append_buf)(struct VEC* self, const VEC_T* items, size_t num_items)
+{
+        VEC_F(resize)(self, self->size + num_items);
+        memcpy(self->items + self->size, items, sizeof(VEC_T) * num_items);
 }
 
 static inline void VEC_F(push)(struct VEC* self, VEC_T v)
