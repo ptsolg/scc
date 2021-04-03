@@ -41,7 +41,7 @@ static void scc_add_cd_dir(scc_env* self)
 static void scc_add_stdlibc_dir(scc_env* self, const char* exec_path)
 {
         struct pathbuf dir = pathbuf_from_str(exec_path);
-        basename(dir.buf);
+        join(&dir, "\\..\\libstdc\\");
         cc_add_source_dir(&self->cc, dir.buf);
 }
 
