@@ -4,6 +4,8 @@
 #include <stdio.h> // strtoi
 #include <string.h>
 
+#define MAX_CMD_SIZE 4096
+
 extern void cmd_handler_init(cmd_handler* self,
         const char* prefix, void(*oncmd)(void*, cmd_parser*), void* data)
 {
@@ -102,8 +104,6 @@ static void cmd_data_append(cmd_data* self, int c)
 
 static void _arg_to_cmd(cmd_data* cmd, const char* arg)
 {
-#if OS_WIN
-
         const char* quote_pos = strchr(arg, '"');
         const char* space_pos = strchr(arg, ' ');
         bool has_spaces = quote_pos
@@ -115,21 +115,6 @@ static void _arg_to_cmd(cmd_data* cmd, const char* arg)
                 cmd_data_append(cmd, *arg++);
         if (has_spaces)
                 cmd_data_append(cmd, '"');
-
-#elif OS_OSX
-        while (*arg)
-        {
-                int c = *arg++;
-                if (!c)
-                        break;
-
-                if (c == ' ')
-                        cmd_data_append(cmd, '\\');
-                cmd_data_append(cmd, c);
-        }
-#else
-#error todo
-#endif
 }
 
 extern int arg_to_cmd(char* buffer, size_t buffer_size, const char* arg)
@@ -142,10 +127,7 @@ extern int arg_to_cmd(char* buffer, size_t buffer_size, const char* arg)
 
 static int _argv_to_cmd(cmd_data* cmd, const char* first, int argc, const char** argv)
 {
-#if OS_WIN
         cmd_data_append(cmd, '"');
-#endif
-
         if (first)
         {
                 _arg_to_cmd(cmd, first);
@@ -159,11 +141,7 @@ static int _argv_to_cmd(cmd_data* cmd, const char* first, int argc, const char**
                 if (i + 1 != argc)
                         cmd_data_append(cmd, ' ');
         }
-
-#if OS_WIN
         cmd_data_append(cmd, '"');
-#endif
-
         return cmd->total_len;
 }
 

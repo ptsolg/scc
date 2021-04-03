@@ -5,6 +5,8 @@
 #include "common.h"
 #include "hashmap.h"
 
+#define MAX_PATH_LEN 255
+
 struct pathbuf
 {
         char buf[MAX_PATH_LEN + 1];

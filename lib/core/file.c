@@ -12,6 +12,8 @@
 #include <Shlwapi.h>
 #include <string.h>
 
+#define PATH_DELIMETER '\\'
+
 static int is_sep(int sep)
 {
         return sep == '\\' || sep == '/';

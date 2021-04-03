@@ -72,18 +72,10 @@ extern errcode llvm_compile(llvm_compiler* self, int* exit_code)
 
 extern void llvm_linker_add_dir(llvm_linker* self, const char* dir)
 {
-#if OS_WIN
         size_t len = strlen(dir) + sizeof("/LIBPATH:\"\"");
         char* copy = alloc(len + 1);
         snprintf(copy, len, "/LIBPATH:\"%s\"", dir);
         vec_push(&self->dirs, copy);
-#elif OS_OSX
-        char* copy = alloc(strlen(dir) + 1);
-        vec_push(&self->dirs, copy);
-        strcpy(copy, dir);
-#else
-#error
-#endif
 }
 
 extern void llvm_linker_add_file(llvm_linker* self, const char* file)
@@ -137,7 +129,6 @@ extern errcode llvm_link(llvm_linker* self, int* exit_code)
                 arg_append(&args, *it);
         }
 
-#if OS_WIN
         char output[MAX_PATH_LEN + sizeof("/OUT:\"\"")];
         if (self->output)
         {
@@ -151,23 +142,6 @@ extern errcode llvm_link(llvm_linker* self, int* exit_code)
                 snprintf(entry, ARRAY_SIZE(entry), "/ENTRY:%s", self->entry);
                 arg_append(&args, entry);
         }
-#elif OS_OSX
-        if (self->output)
-        {
-                arg_append(&args, "-o");
-                arg_append(&args, self->output);
-        }
-        if (self->entry)
-        {
-                arg_append(&args, "-e");
-                arg_append(&args, self->entry);
-        }
-        arg_append(&args, "-lSystem");
-        arg_append(&args, "-macosx_version_min");
-        arg_append(&args, "10.12");
-#else
-#error
-#endif
 
         // printf("lld >> %s\n", self->path);
         // for (int i = 0; i < args.argc; i++)

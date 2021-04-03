@@ -17,13 +17,7 @@
 
 #define LL_EXT "ll"
 #define SSA_EXT "ssa"
-#if OS_WIN
 #define OBJ_EXT "obj"
-#elif OS_OSX
-#define OBJ_EXT "o"
-#else
-#error
-#endif
 #define ASM_EXT "s"
 
 static errcode cc_handle_pragma_link(void* cc, const char* lib)

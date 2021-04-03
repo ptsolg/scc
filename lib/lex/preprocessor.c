@@ -76,21 +76,15 @@ static void c_preprocessor_init_builtin_macro(c_preprocessor* self)
         _c_preprocessor_init_builtin_macro(self, "__STDC_VERSION__", CTK_PP_NUM, "199901L");
         
         _c_preprocessor_init_builtin_macro(self, "__SCC__", CTK_PP_NUM, "1");
-#if OS_WIN
-        if (self->context->tree->target->kind == TTAK_X86_32)
-                _c_preprocessor_init_builtin_macro(self, "_WIN32", CTK_PP_NUM, "1");
-        else
-                _c_preprocessor_init_builtin_macro(self, "_WIN64", CTK_PP_NUM, "1");
-#elif OS_OSX
-        _c_preprocessor_init_builtin_macro(self, "__APPLE__", CTK_PP_NUM, "1");
-#else
-#error todo
-#endif
 
-        if (self->context->tree->target->kind == TTAK_X86_32)
+        if (self->context->tree->target->kind == TTAK_X86_32) {
+                _c_preprocessor_init_builtin_macro(self, "_WIN32", CTK_PP_NUM, "1");
                 _c_preprocessor_init_builtin_macro(self, "_M32", CTK_PP_NUM, "1");
-        else
+        }
+        else {
+                _c_preprocessor_init_builtin_macro(self, "_WIN64", CTK_PP_NUM, "1");
                 _c_preprocessor_init_builtin_macro(self, "_M64", CTK_PP_NUM, "1");
+        }       
 }
 
 extern void c_preprocessor_init(
