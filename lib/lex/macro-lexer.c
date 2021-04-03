@@ -32,12 +32,7 @@ static c_token* _c_macro_lexer_concat(c_macro_lexer* self, c_token* l, c_token* 
         n += c_token_to_string(self->context->tree, r, buf + n, C_MAX_LINE_LENGTH - n);
         buf[n] = '\0';
 
-        sread_cb cb;
-        sread_cb_init(&cb, buf);
-        readbuf rb;
-        readbuf_init(&rb, sread_cb_base(&cb));
-
-        c_token_lexer_enter_char_stream(&lexer, &rb, loc);
+        c_token_lexer_enter_str(&lexer, buf, loc);
         self->context->errors_disabled = true;
         c_token* result = c_token_lexer_lex_token(&lexer);
         self->context->errors_disabled = false;

@@ -1,7 +1,7 @@
 #ifndef SSA_PRINTER_H
 #define SSA_PRINTER_H
 
-#include "scc/core/read-write.h"
+#include "scc/core/buf-io.h"
 #include "scc/ssa/common.h"
 #include "scc/tree/common.h"
 
@@ -18,7 +18,7 @@ typedef struct _ssa_context ssa_context;
 
 typedef struct
 {
-        writebuf buf;
+        struct buf_writer buf;
         const ssa_context* context;
         int indent_lvl;
         struct
@@ -29,7 +29,7 @@ typedef struct
         } llvm;
 } ssa_printer;
 
-extern void ssa_init_printer(ssa_printer* self, ssa_context* context, write_cb* cb);
+extern void ssa_init_printer(ssa_printer* self, ssa_context* context, FILE* fout);
 extern void ssa_dispose_printer(ssa_printer* self);
 
 extern void ssa_prints(ssa_printer* self, const char* s);

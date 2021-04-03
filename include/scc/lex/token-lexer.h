@@ -2,9 +2,9 @@
 #define C_TOKEN_LEXER_H
 
 #include "scc/c-common/limits.h"
+#include "scc/core/buf-io.h"
 #include "scc/tree/common.h"
 
-typedef struct _readbuf readbuf;
 typedef struct _c_reswords c_reswords;
 typedef struct _c_source c_source;
 typedef struct _c_context c_context;
@@ -15,7 +15,15 @@ typedef struct _c_token_lexer
         int c;
         int nextc;
 
-        readbuf* input;
+        struct
+        {
+                bool is_file;
+                union
+                {
+                        struct buf_reader reader;
+                        const char* str;      
+                };
+        } input;
 
         bool angle_string_expected;
         bool hash_expected;
@@ -31,14 +39,9 @@ typedef struct _c_token_lexer
 } c_token_lexer;
 
 extern void c_token_lexer_init(c_token_lexer* self, c_context* context);
-
-extern void c_token_lexer_enter_char_stream(
-        c_token_lexer* self, readbuf* input, tree_location start_loc);
-
-extern errcode c_token_lexer_enter(c_token_lexer* self, c_source* source);
-
 extern bool c_token_lexer_at_eof(const c_token_lexer* self);
-
+extern errcode c_token_lexer_enter(c_token_lexer* self, c_source* source);
+extern void c_token_lexer_enter_str(c_token_lexer* self, const char* str, tree_location start_loc);
 // c99 6.4 preprocessing-token:
 //      identifier
 //      pp-number

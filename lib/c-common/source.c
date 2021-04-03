@@ -1,5 +1,6 @@
 #include "scc/c-common/source.h"
 #include "scc/c-common/context.h"
+#include "scc/core/file.h"
 #include "scc/core/hash.h"
 #include "scc/core/hashmap.h"
 #include <string.h>
@@ -22,7 +23,6 @@ static void c_source_delete(c_source_manager* manager, c_source* source)
 {
         if (!source)
                 return;
-        file_close(source->file);
         u32vec_del(source->lines);
         dealloc(source);
 }
@@ -69,12 +69,12 @@ extern void c_source_save_line_loc(c_source* self, tree_location loc)
 
 extern const char* c_source_get_name(const c_source* self)
 {
-        return pathfile(file_get_path(self->file));
+        return pathfile(self->file->path);
 }
 
-extern const char* c_source_get_path(const c_source* self)
+extern file_entry* c_source_get_file(c_source* self)
 {
-        return file_get_path(self->file);
+        return self->file;
 }
 
 extern tree_location c_source_get_loc_begin(const c_source* self)
@@ -85,17 +85,6 @@ extern tree_location c_source_get_loc_begin(const c_source* self)
 extern tree_location c_source_get_loc_end(const c_source* self)
 {
         return self->end;
-}
-
-extern readbuf* c_source_open(c_source* self)
-{
-        u32vec_clear(self->lines);
-        return file_open(self->file);
-}
-
-extern void c_source_close(c_source* self)
-{
-        file_close(self->file);
 }
 
 extern void c_source_manager_init(
@@ -124,7 +113,7 @@ extern c_source* c_source_get_from_file(c_source_manager* self, file_entry* file
         if (!file)
                 return NULL;
 
-        unsigned ref = strhash(file_get_path(file));
+        unsigned ref = strhash(file->path);
         struct hashmap_entry* entry = hashmap_lookup(&self->file_to_source, ref);
         if (entry)
                 return entry->value;

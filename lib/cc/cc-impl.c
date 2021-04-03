@@ -170,10 +170,8 @@ static void cc_print_tokens(
         FILE* output,
         const struct vec* tokens)
 {
-        fwrite_cb write;
-        fwrite_cb_init(&write, output);
         c_printer printer;
-        c_printer_init(&printer, &write.base, &context->c);
+        c_printer_init(&printer, &context->c, output);
         cc_set_cprinter_opts(self, &printer);
         c_print_tokens(&printer, tokens);
         c_printer_dispose(&printer);
@@ -210,10 +208,8 @@ cleanup:
 static void cc_print_tree_module(cc_instance* self,
         cc_context* context, FILE* output, const tree_module* module)
 {
-        fwrite_cb write;
-        fwrite_cb_init(&write, output);
         c_printer printer;
-        c_printer_init(&printer, &write.base, &context->c);
+        c_printer_init(&printer, &context->c, output);
         cc_set_cprinter_opts(self, &printer);
         c_print_module(&printer, module);
         c_printer_dispose(&printer);
@@ -303,9 +299,6 @@ static errcode cc_codegen_file_ex(cc_instance* self, file_entry* file, bool emit
                 if (!(am.tm = cc_parse_file(self, &context, self->input.tm_decls)))
                         goto cleanup;
 
-        fwrite_cb write;
-        fwrite_cb_init(&write, output);
-
         ssa_optimizer_opts opts;
         cc_set_ssa_optimizer_opts(self, &opts);
       
@@ -314,9 +307,9 @@ static errcode cc_codegen_file_ex(cc_instance* self, file_entry* file, bool emit
                 goto cleanup;
 
         if (emit_llvm_ir)
-                ssa_pretty_print_module_llvm(&write.base, &context.ssa, sm);
+                ssa_pretty_print_module_llvm(output, &context.ssa, sm);
         else
-                ssa_pretty_print_module(&write.base, &context.ssa, sm);
+                ssa_pretty_print_module(output, &context.ssa, sm);
         
         result = EC_NO_ERROR;
 cleanup:
@@ -326,7 +319,7 @@ cleanup:
 
 static void get_file_as(struct pathbuf* path, const file_entry* file, const char* ext)
 {
-        *path = pathbuf_from_str(file_get_path(file));
+        *path = pathbuf_from_str(file->path);
         char* ext_pos = (char*)pathext(path->buf);
         if (*ext_pos)
                 strcpy(ext_pos, ext);
@@ -531,7 +524,7 @@ static errcode cc_link(cc_instance* self, llvm_linker* lld)
         }
 
         CC_FOREACH_LIB(self, it, end)
-                llvm_linker_add_file(lld, file_get_path(*it));
+                llvm_linker_add_file(lld, (*it)->path);
 
         FLOOKUP_FOREACH_DIR(&self->input.lib_lookup, it, end)
                 llvm_linker_add_dir(lld, *it);

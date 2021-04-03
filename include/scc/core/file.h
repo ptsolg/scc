@@ -1,11 +1,9 @@
 #ifndef SCC_CORE_FILE_H
 #define SCC_CORE_FILE_H
 
-#include "read-write.h"
+#include "buf-io.h"
+#include "common.h"
 #include "hashmap.h"
-#include "scc/core/common.h"
-
-#include <stdio.h>
 
 struct pathbuf
 {
@@ -26,43 +24,13 @@ const char* pathext(const char* path);
 size_t fs_filesize(const char* path);
 int fs_delfile(const char* file);
 
-typedef struct _fread_cb
-{
-        read_cb base;
-        FILE* in;
-} fread_cb;
-
-extern void fread_cb_init(fread_cb* self, FILE* in);
-
-typedef struct _fwrite_cb
-{
-        write_cb base;
-        FILE* out;
-} fwrite_cb;
-
-extern void fwrite_cb_init(fwrite_cb* self, FILE* out);
-
 typedef struct _file_entry
 {
         char* path;
-        bool opened;
-        bool emulated;
-        char* content;
-        readbuf rb;
-        FILE* file;
-        union
-        {
-                fread_cb fread;
-                sread_cb sread;
-        };
+        int is_virtual;
+        char* virtual_content;
 } file_entry;
 
-extern readbuf* file_open(file_entry* entry);
-extern void file_close(file_entry* entry);
-extern bool file_opened(const file_entry* entry);
-extern bool file_emulated(const file_entry* entry);
-extern const char* file_get_path(const file_entry* entry);
-extern const char* file_get_content(const file_entry* entry);
 extern size_t file_size(const file_entry* entry);
 
 typedef struct _file_lookup
@@ -87,6 +55,5 @@ extern bool file_exists(file_lookup* lookup, const char* path);
 extern file_entry* file_get(file_lookup* lookup, const char* path);
 extern file_entry* file_emulate(
         file_lookup* lookup, const char* path, const char* content);
-
 
 #endif

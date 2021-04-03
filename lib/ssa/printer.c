@@ -1,12 +1,13 @@
 #include "printer.h"
+#include "scc/core/buf-io.h"
 #include "scc/ssa/context.h"
 #include "scc/tree/context.h"
 #include <stdarg.h>
 #include <stdio.h>
 
-extern void ssa_init_printer(ssa_printer* self, ssa_context* context, write_cb* cb)
+extern void ssa_init_printer(ssa_printer* self, ssa_context* context, FILE* fout)
 {
-        writebuf_init(&self->buf, cb);
+        init_buf_writer(&self->buf, fout);
         self->context = context;
         self->indent_lvl = 0;
         self->llvm.tmp_id = 0;
@@ -16,19 +17,19 @@ extern void ssa_init_printer(ssa_printer* self, ssa_context* context, write_cb* 
 
 extern void ssa_dispose_printer(ssa_printer* self)
 {
-        writebuf_flush(&self->buf);
+        drop_buf_writer(&self->buf);
         ssa_recmap_drop(&self->llvm.rec_to_id);
 }
 
 extern void ssa_prints(ssa_printer* self, const char* s)
 {
         if (s)
-                writebuf_writes(&self->buf, s);
+                buf_write_str(&self->buf, s);
 }
 
 extern void ssa_printc(ssa_printer* self, int c)
 {
-        writebuf_writec(&self->buf, c);
+        buf_write_char(&self->buf, c);
 }
 
 extern void ssa_printf(ssa_printer* self, const char* f, ...)

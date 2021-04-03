@@ -1,5 +1,7 @@
 #include "scc/core/file.h"
 
+#include "scc/core/alloc.h"
+#include "scc/core/buf-io.h"
 #include "scc/core/common.h"
 #include "scc/core/hash.h"
 
@@ -149,122 +151,40 @@ int fs_delfile(const char* file)
         return DeleteFile(file) ? 0 : -1;
 }
 
-static size_t fread_cb_read(fread_cb* self, void* buf, size_t bytes)
+static file_entry* new_file_entry(const char* path, const char* content)
 {
-        return fread(buf, 1, bytes, self->in);
-}
-
-extern void fread_cb_init(fread_cb* self, FILE* in)
-{
-        self->in = in;
-        read_cb_init(&self->base, &fread_cb_read);
-}
-
-static size_t fwrite_cb_write(fwrite_cb* self, const void* data, size_t bytes)
-{
-        return fwrite(data, 1, bytes, self->out);
-}
-
-extern void fwrite_cb_init(fwrite_cb* self, FILE* out)
-{
-        self->out = out;
-        write_cb_init(&self->base, &fwrite_cb_write);
-}
-
-static file_entry* file_entry_new(const char* path, const char* content)
-{
-        file_entry* entry = alloc(sizeof(*entry));
-        char* path_copy = alloc(strlen(path) + 1);
-        char* content_copy = content ? alloc(strlen(content) + 1) : NULL;
-
-        strcpy(path_copy, path);
-        entry->path = path_copy;
-        entry->content = content_copy;
-        entry->file = NULL;
-        entry->opened = false;
-        entry->emulated = false;
-
-        if (content) {
-                strcpy(content_copy, content);
-                entry->emulated = true;
+        file_entry* e = alloc(sizeof(*e));
+        e->path = alloc(strlen(path) + 1);
+        strcpy(e->path, path);
+        if (content)
+        {
+                e->is_virtual = 1;
+                e->virtual_content = alloc(strlen(content) + 1);
+                strcpy(e->virtual_content, content);
         }
-
-        return entry;
+        return e;
 }
 
-static void file_entry_delete(file_entry* entry)
+static void del_file_entry(file_entry* e)
 {
-        file_close(entry);
-        dealloc(entry->path);
-        dealloc(entry->content);
-        dealloc(entry);
+        dealloc(e->path);
+        if (e->is_virtual)
+                dealloc(e->virtual_content);
+        dealloc(e);
 }
 
-extern readbuf* file_open(file_entry* entry)
+extern size_t file_size(const file_entry* e)
 {
-        file_close(entry);
-
-        read_cb* read;
-        if (file_emulated(entry)) {
-                sread_cb_init(&entry->sread, entry->content);
-                read = sread_cb_base(&entry->sread);
-        } else {
-                if (!(entry->file = fopen(entry->path, "rb")))
-                        return NULL;
-
-                fread_cb_init(&entry->fread, entry->file);
-                read = &entry->fread.base;
-        }
-
-        entry->opened = true;
-        readbuf_init(&entry->rb, read);
-        return &entry->rb;
-}
-
-extern void file_close(file_entry* entry)
-{
-        if (!entry)
-                return;
-
-        entry->opened = false;
-        if (!file_emulated(entry) && entry->file) {
-                fclose(entry->file);
-                entry->file = NULL;
-        }
-}
-
-extern bool file_opened(const file_entry* entry)
-{
-        return entry->opened;
-}
-
-extern bool file_emulated(const file_entry* entry)
-{
-        return entry->emulated;
-}
-
-extern const char* file_get_path(const file_entry* entry)
-{
-        return entry->path;
-}
-
-extern const char* file_get_content(const file_entry* entry)
-{
-        return entry->content;
-}
-
-extern size_t file_size(const file_entry* entry)
-{
-        return file_emulated(entry) 
-                ? strlen(file_get_content(entry))
-                : fs_filesize(entry->path);
+        return e->is_virtual
+                ? strlen(e->virtual_content)
+                : fs_filesize(e->path);
 }
 
 static file_entry* flookup_new_entry(file_lookup* self, const char* path, const char* content)
 {
-        file_entry* entry = file_entry_new(path, content);
-        hashmap_insert(&self->lookup, strhash(path), entry);
-        return entry;
+        file_entry* e = new_file_entry(path, content);
+        hashmap_insert(&self->lookup, strhash(path), e);
+        return e;
 }
 
 #define VEC dirs
@@ -280,7 +200,7 @@ extern void flookup_init(file_lookup* self)
 extern void flookup_dispose(file_lookup* self)
 {
         HASHMAP_FOREACH(&self->lookup, it)
-                file_entry_delete(it.pos->value);
+                del_file_entry(it.pos->value);
         hashmap_drop(&self->lookup);
 
         for (int i = 0; i < self->dirs->size; i++)

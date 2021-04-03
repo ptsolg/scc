@@ -2,8 +2,9 @@
 #define C_PRINTER_H
 
 #include <stdio.h>
-#include "scc/core/read-write.h"
+#include "scc/core/buf-io.h"
 #include "scc/core/vec.h"
+#include <stdbool.h>
 
 typedef struct _c_token c_token;
 typedef struct _c_context c_context;
@@ -33,7 +34,7 @@ extern void c_printer_opts_init(c_printer_opts* self);
 
 typedef struct _c_printer
 {
-        writebuf buf;
+        struct buf_writer buf;
         tree_context* context;
         const c_context* ccontext;
         // used when we need to print constant expression result
@@ -43,7 +44,7 @@ typedef struct _c_printer
         int indent_level;
 } c_printer;
 
-extern void c_printer_init(c_printer* self, write_cb* write, const c_context* context);
+extern void c_printer_init(c_printer* self, const c_context* context, FILE* fout);
 extern void c_printer_dispose(c_printer* self);
 
 typedef struct

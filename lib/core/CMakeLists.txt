@@ -1,10 +1,10 @@
 add_scc_lib(core
 	alloc.c
 	allocator.c
+	buf-io.c
 	cmd.c
 	file.c
 	num.c
-	read-write.c
 	strpool.c
 
 	INCLUDE

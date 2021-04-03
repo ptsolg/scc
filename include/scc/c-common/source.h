@@ -24,12 +24,9 @@ extern int c_source_get_col(const c_source* self, tree_location loc);
 // assumes that loc is beginning of a line
 extern void c_source_save_line_loc(c_source* self, tree_location loc);
 extern const char* c_source_get_name(const c_source* self);
-extern const char* c_source_get_path(const c_source* self);
+extern file_entry* c_source_get_file(c_source* self);
 extern tree_location c_source_get_loc_begin(const c_source* self);
 extern tree_location c_source_get_loc_end(const c_source* self);
-
-extern readbuf* c_source_open(c_source* self);
-extern void c_source_close(c_source* self);
 
 typedef struct _c_source_manager
 {

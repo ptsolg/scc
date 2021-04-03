@@ -3,6 +3,8 @@
 #include "scc/c-common/source.h"
 #include "scc/c-common/limits.h"
 #include "scc/core/hashmap.h"
+#include "scc/lex/pragma.h"
+#include "scc/lex/preprocessor-lexer.h"
 #include "scc/lex/token.h"
 #include "scc/lex/reswords.h"
 #include "scc/lex/misc.h"
@@ -32,7 +34,7 @@ static void c_preprocessor_set_file(c_preprocessor* self, const c_source* source
         file[0] = '\0';
         if (source)
         {
-                const char* path = c_source_get_path(source);
+                const char* path = source->file->path;
                 c_get_unescaped_string(file, ARRAY_SIZE(file), path, strlen(path) + 1);
         }
 
@@ -105,6 +107,7 @@ extern void c_preprocessor_init(
         self->id.defined = tree_get_id_for_string(self->context->tree, "defined");
         self->id.link = tree_get_id_for_string(self->context->tree, "link");
         c_preprocessor_init_builtin_macro(self);
+        c_pragma_handlers_init(&self->pragma_handlers, 0);
 }
 
 extern void c_preprocessor_dispose(c_preprocessor* self)
@@ -137,11 +140,9 @@ static void c_preprocessor_enter_macro(
 
 extern void c_preprocessor_exit(c_preprocessor* self)
 {
-        if (self->lexer->kind == CPLK_TOKEN)
-                c_source_close(self->lexer->token_lexer.source);
-        else if (self->lexer->kind == CPLK_MACRO)
+        if (self->lexer->kind == CPLK_MACRO)
                 self->lexer->macro_lexer.macro->used = false;
-        else
+        else if (self->lexer->kind != CPLK_TOKEN)
                 UNREACHABLE();
 
         c_pop_lexer(&self->lexer_stack);

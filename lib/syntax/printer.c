@@ -2,6 +2,7 @@
 #include "scc/c-common/context.h"
 #include "scc/c-common/source.h"
 #include "scc/c-common/limits.h"
+#include "scc/core/buf-io.h"
 #include "scc/core/list.h"
 #include "scc/core/num.h"
 #include "scc/lex/charset.h"
@@ -11,6 +12,7 @@
 #include "scc/tree/tree.h"
 #include <stdarg.h>
 #include <math.h>
+#include <stdio.h>
 
 extern void c_printer_opts_init(c_printer_opts* self)
 {
@@ -23,26 +25,26 @@ extern void c_printer_opts_init(c_printer_opts* self)
         self->force_brackets = false;
 }
 
-extern void c_printer_init(c_printer* self, write_cb* write, const c_context* context)
+extern void c_printer_init(c_printer* self, const c_context* context, FILE* fout)
 {
         self->context = context->tree;
         self->ccontext = context;
         self->source_manager = &context->source_manager;
         self->target = self->context->target;
         self->indent_level = 0;
-        writebuf_init(&self->buf, write);
+        init_buf_writer(&self->buf, fout);
         c_printer_opts_init(&self->opts);
 }
 
 extern void c_printer_dispose(c_printer* self)
 {
-        writebuf_flush(&self->buf);
+        drop_buf_writer(&self->buf);
 }
 
 static inline void c_prints(c_printer* self, const char* s)
 {
         if (s)
-                writebuf_writes(&self->buf, s);
+                buf_write_str(&self->buf, s);
 }
 
 static inline void c_printf(c_printer* self, const char* f, ...)
@@ -91,7 +93,7 @@ static inline void c_print_llu(c_printer* self, uint64_t v)
 
 static inline void c_printc(c_printer* self, int c)
 {
-        writebuf_writec(&self->buf, c);
+        buf_write_char(&self->buf, c);
 }
 
 static inline void c_printcn(c_printer* self, int c, int n)

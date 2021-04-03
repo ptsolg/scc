@@ -360,10 +360,10 @@ static bool ssa_print_function(ssa_printer* self, const ssa_value* func)
 }
 
 extern void ssa_pretty_print_module(
-        write_cb* cb, ssa_context* context, const ssa_module* module)
+        FILE* fout, ssa_context* context, const ssa_module* module)
 {
         ssa_printer p;
-        ssa_init_printer(&p, context, cb);
+        ssa_init_printer(&p, context, fout);
         SSA_FOREACH_MODULE_GLOBAL(module, it, end)
                 if (ssa_get_value_kind(*it) == SVK_FUNCTION && ssa_print_function(&p, *it))
                         ssa_printc(&p, '\n');

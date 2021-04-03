@@ -1,11 +1,15 @@
 #include "scc/lex/token-lexer.h"
+#include "scc/core/buf-io.h"
+#include "scc/core/file.h"
 #include "scc/lex/token-kind.h"
 #include "scc/c-common/source.h"
 #include "scc/c-common/context.h"
+#include "scc/tree/common.h"
 #include "scc/tree/context.h"
 #include "scc/lex/charset.h"
 #include "errors.h"
 #include <ctype.h> // toupper
+#include <stdio.h>
 
 typedef struct
 {
@@ -47,10 +51,7 @@ static tree_id c_sequence_get_id(c_sequence* self)
 
 extern void c_token_lexer_init(c_token_lexer* self, c_context* context)
 {
-        self->c = RB_ENDC;
-        self->nextc = RB_ENDC;
-
-        self->input = NULL;
+        self->c = self->nextc = -1;
 
         self->angle_string_expected = false;
         self->hash_expected = true;
@@ -65,10 +66,23 @@ extern void c_token_lexer_init(c_token_lexer* self, c_context* context)
         self->tab_to_space = 4;
 }
 
+static inline int readc(c_token_lexer* self)
+{
+        if (self->input.is_file)
+                return buf_read_char(&self->input.reader);
+        int c = *self->input.str;
+        if (c)
+        {
+                self->input.str++;
+                return c;
+        }
+        return -1;
+}
+
 static inline void _c_token_lexer_readc(c_token_lexer* self)
 {
         self->c = self->nextc;
-        self->nextc = readbuf_readc(self->input);
+        self->nextc = readc(self);
         self->loc++;
 
         if (self->c == '\r')
@@ -76,7 +90,7 @@ static inline void _c_token_lexer_readc(c_token_lexer* self)
                 if (self->nextc == '\n')
                 {
                         self->c = self->nextc;
-                        self->nextc = readbuf_readc(self->input);
+                        self->nextc = readc(self);
                 }
                 else
                         self->c = '\n';
@@ -103,10 +117,33 @@ static inline int c_token_lexer_readc(c_token_lexer* self)
         return self->c;
 }
 
-extern void c_token_lexer_enter_char_stream(
-        c_token_lexer* self, readbuf* input, tree_location start_loc)
+extern errcode c_token_lexer_enter(c_token_lexer* self, c_source* source)
 {
-        self->input = input;
+        if (!source)
+                return EC_ERROR;
+        file_entry* fe = c_source_get_file(source);
+        if (!fe->is_virtual)
+        {
+                self->input.is_file = 1;
+                FILE* f = fopen(fe->path, "r");
+                if (!f)
+                {
+                        c_error_cannot_open_source_file(self->context, 0, c_source_get_name(source));
+                        return EC_ERROR;
+                }
+                init_buf_reader(&self->input.reader, f);
+        }
+        else
+        {
+                self->input.is_file = 0;
+                self->input.str = fe->virtual_content;
+        }
+
+        tree_location start_loc = c_source_get_loc_begin(source);
+        // save first line location
+        c_source_save_line_loc(source, start_loc);
+        self->source = source;
+
         c_token_lexer_readc(self);
         c_token_lexer_readc(self);
 
@@ -117,32 +154,26 @@ extern void c_token_lexer_enter_char_stream(
         c_location loc;
         c_source_find_loc(&self->context->source_manager, &loc, start_loc);
         self->line = loc.line;
+
+        return EC_NO_ERROR;
 }
 
-extern errcode c_token_lexer_enter(c_token_lexer* self, c_source* source)
+extern void c_token_lexer_enter_str(c_token_lexer* self, const char* str, tree_location start_loc)
 {
-        if (!source)
-                return EC_ERROR;
-
-        readbuf* buf = c_source_open(source);
-        if (!buf)
-        {
-                c_error_cannot_open_source_file(self->context, 0, c_source_get_name(source));
-                return EC_ERROR;
-        }
-
-        tree_location start_loc = c_source_get_loc_begin(source);
-        // save first line location
-        c_source_save_line_loc(source, start_loc);
-
-        self->source = source;
-        c_token_lexer_enter_char_stream(self, buf, start_loc);
-        return EC_NO_ERROR;
+        self->input.is_file = 0;
+        self->input.str = str;
+        c_token_lexer_readc(self);
+        c_token_lexer_readc(self);
+        self->source = 0;
+        self->loc = start_loc;
+        self->hash_expected = true;
+        self->in_directive = false;
+        self->line = 0;
 }
 
 extern bool c_token_lexer_at_eof(const c_token_lexer* self)
 {
-        return self->c == RB_ENDC;
+        return self->c == -1;
 }
 
 static c_token* c_token_lexer_lex_identifier(c_token_lexer* self, c_sequence* seq)
@@ -310,7 +341,7 @@ static c_token* _c_token_lexer_lex_token(c_token_lexer* self)
 
         switch (c)
         {
-                case RB_ENDC:
+                case -1:
                 case '\0':
                         if (!self->eod_before_eof_returned && self->in_directive)
                         {
@@ -358,7 +389,7 @@ static c_token* _c_token_lexer_lex_token(c_token_lexer* self)
                 case ';': c_token_lexer_readc(self); kind = CTK_SEMICOLON; break;
 
                 case '.':
-                        if (self->nextc != RB_ENDC && c_char_is_digit(self->nextc))
+                        if (self->nextc != -1 && c_char_is_digit(self->nextc))
                                 return c_token_lexer_lex_numeric_literal(self, &seq);
 
                         c_token_lexer_readc(self);

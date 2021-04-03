@@ -790,10 +790,10 @@ static void ssa_print_global_value(ssa_printer* self, const ssa_value* val)
 }
 
 extern void ssa_pretty_print_module_llvm(
-        write_cb* cb, ssa_context* context, const ssa_module* module)
+        FILE* fout, ssa_context* context, const ssa_module* module)
 {
         ssa_printer p;
-        ssa_init_printer(&p, context, cb);
+        ssa_init_printer(&p, context, fout);
         SSA_FOREACH_MODULE_TYPE_DECL(module, it, end)
                 if (tree_decl_is(*it, TDK_RECORD))
                 {

@@ -1,6 +1,7 @@
 add_scc_target_sources(core
 	alloc.h
 	allocator.h
+	buf-io.h
 	cmd.h
 	common.h
 	file.h
@@ -9,7 +10,6 @@ add_scc_target_sources(core
 	htab.inc
 	list.h
 	num.h
-	read-write.h
 	strpool.h
 	vec.inc
 	vec.h
