@@ -156,6 +156,8 @@ static file_entry* new_file_entry(const char* path, const char* content)
         file_entry* e = alloc(sizeof(*e));
         e->path = alloc(strlen(path) + 1);
         strcpy(e->path, path);
+        e->is_virtual = 0;
+        e->virtual_content = 0;
         if (content)
         {
                 e->is_virtual = 1;
