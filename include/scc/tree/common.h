@@ -14,7 +14,7 @@
 
 typedef unsigned tree_id;
 
-#define TREE_EMPTY_ID (strhash(""))
+#define TREE_EMPTY_ID 0
 
 typedef uint32_t tree_location;
 
