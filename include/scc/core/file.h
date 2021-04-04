@@ -1,5 +1,5 @@
-#ifndef SCC_CORE_FILE_H
-#define SCC_CORE_FILE_H
+#ifndef FILE_H
+#define FILE_H
 
 #include "buf-io.h"
 #include "common.h"

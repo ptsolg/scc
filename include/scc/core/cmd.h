@@ -1,5 +1,5 @@
-#ifndef SCC_CORE_CMD_H
-#define SCC_CORE_CMD_H
+#ifndef CMD_H
+#define CMD_H
 
 #include "common.h"
 
