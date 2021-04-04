@@ -3,39 +3,29 @@
 
 #include "common.h"
 
-typedef struct _cmd_parser cmd_parser;
-
-typedef struct
+struct arg_handler
 {
         const char* prefix;
-        void(*oncmd)(void*, cmd_parser*);
-        void* data;
-} cmd_handler;
+        void(*fn)(void*);
+};
 
-#define CMD_HANDLER_INIT(PREFIX, CB, DATA) \
-        { PREFIX, ((void(*)(void*, cmd_parser*))CB), DATA }
+#define ARG_HANDLER(P, FN) { (const char*)P, (void(*)(void*))FN }
 
-extern void cmd_handler_init(cmd_handler* self,
-        const char* prefix, void(*oncmd)(void*, cmd_parser*), void* data);
-
-typedef struct _cmd_parser
+struct arg_parser
 {
-        int argc;
         int pos;
+        int argc;
         const char** argv;
-} cmd_parser;
+};
 
-extern void cmd_parser_init(cmd_parser* self, int argc, const char** argv);
-                
-extern void cmd_parser_run(
-        cmd_parser* self, cmd_handler* handlers, size_t nhandlers, cmd_handler* def);
-extern int cmd_parser_cmds_remain(const cmd_parser* self);
-extern const char* cmd_parser_get_string(cmd_parser* self);
-extern errcode cmd_parser_get_int(cmd_parser* self, int* result);
+void init_arg_parser(struct arg_parser* self, int argc, const char** argv);
+const char* arg_parser_next_str(struct arg_parser* self);
+int* arg_parser_next_int(struct arg_parser* self, int* result);
+void run_arg_parser(struct arg_parser* self,
+        const struct arg_handler* handlers,
+        unsigned num_handlers,
+        const struct arg_handler* unknown);
 
-extern int arg_to_cmd(char* buffer, size_t buffer_size, const char* arg);
-extern int argv_to_cmd(char* buffer, size_t buffer_size, int argc, const char** argv);
-
-extern errcode execute(const char* path, int* code, int argc, const char** argv);
+int execute(const char* path, int argc, const char** argv);
 
 #endif

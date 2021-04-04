@@ -38,7 +38,7 @@ extern void llvm_compiler_init(llvm_compiler* self, const char* path)
         self->output = NULL;
 }
 
-extern errcode llvm_compile(llvm_compiler* self, int* exit_code)
+extern errcode llvm_compile(llvm_compiler* self)
 {
         arg_info args;
         arg_info_init(&args);
@@ -67,7 +67,7 @@ extern errcode llvm_compile(llvm_compiler* self, int* exit_code)
         // for (int i = 0; i < args.argc; i++)
         //        printf("llc >> %s\n", args.argv[i]);
 
-        return execute(self->path, exit_code, args.argc, args.argv);
+        return execute(self->path, args.argc, args.argv);
 }
 
 extern void llvm_linker_add_dir(llvm_linker* self, const char* dir)
@@ -112,7 +112,7 @@ extern void llvm_linker_dispose(llvm_linker* self)
         vec_drop(&self->dirs);
 }
 
-extern errcode llvm_link(llvm_linker* self, int* exit_code)
+extern int llvm_link(llvm_linker* self)
 {
         arg_info args;
         arg_info_init(&args);
@@ -147,5 +147,5 @@ extern errcode llvm_link(llvm_linker* self, int* exit_code)
         // for (int i = 0; i < args.argc; i++)
         //        printf("lld >> %s\n", args.argv[i]);
 
-        return execute(self->path, exit_code, args.argc, args.argv);
+        return execute(self->path, args.argc, args.argv);
 }

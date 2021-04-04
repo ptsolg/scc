@@ -385,7 +385,7 @@ static errcode cc_compile_file(cc_instance* self,
         struct pathbuf ll_file;
         get_file_as(&ll_file, file, LL_EXT);
 
-        int exit_code;
+        
         llvm_compiler llc;
         llvm_compiler_init(&llc, self->input.llc_path);
         llc.opt_level = self->opts.optimization.level > LCOL_O3 
@@ -395,11 +395,8 @@ static errcode cc_compile_file(cc_instance* self,
         llc.arch = self->opts.target == CTK_X86_32 ? LCAK_X86 : LCAK_X86_64;
         llc.output = output;
 
-        bool failed = EC_FAILED(llvm_compile(&llc, &exit_code));
+        int exit_code = llvm_compile(&llc);
         fs_delfile(ll_file.buf);
-        if (failed)
-                return EC_ERROR;
-
         return cc_check_return_code(self, "llc", exit_code);
 }
 
@@ -523,11 +520,8 @@ static errcode cc_link(cc_instance* self, llvm_linker* lld)
         FLOOKUP_FOREACH_DIR(&self->input.lib_lookup, it, end)
                 llvm_linker_add_dir(lld, *it);
 
-        int code;
-        if (EC_FAILED(llvm_link(lld, &code)))
-                return EC_ERROR;
-
-        return cc_check_return_code(self, "lld", code);
+        int exit_code = llvm_link(lld);
+        return cc_check_return_code(self, "lld", exit_code);
 }
 
 extern errcode cc_generate_exec(cc_instance* self)
