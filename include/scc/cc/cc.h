@@ -62,6 +62,7 @@ typedef struct
                 bool print_expr_type;
                 bool print_impl_casts;
                 bool print_eval_result;
+                bool print_semantic_init;
                 bool force_brackets;
         } cprint;
 

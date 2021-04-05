@@ -25,6 +25,7 @@ typedef struct
         bool print_expr_value;
         bool print_impl_casts;
         bool print_eval_result;
+        bool print_semantic_init;
         bool force_brackets;
         int float_precision;
         int double_precision;

@@ -20,6 +20,7 @@ extern void c_printer_opts_init(c_printer_opts* self)
         self->print_expr_value = false;
         self->print_impl_casts = false;
         self->print_eval_result = false;
+        self->print_semantic_init = false;
         self->double_precision = 4;
         self->float_precision = 4;
         self->force_brackets = false;
@@ -1015,6 +1016,8 @@ static void c_print_var_decl(c_printer* self, const tree_decl* v, int opts)
         _c_print_type_name(self, tree_get_decl_type(v), v, opts);
 
         const tree_expr* init = tree_get_var_init(v);
+        if (self->opts.print_semantic_init)
+                init = tree_get_var_semantic_init(v);
         if (init)
         {
                 c_print_space(self);

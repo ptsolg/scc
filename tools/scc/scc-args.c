@@ -110,6 +110,11 @@ static void scc_fprint_expr_type(struct parser* p)
         p->env->cc.opts.cprint.print_expr_type = true;
 }
 
+static void scc_fprint_sem_init(struct parser* p)
+{
+        p->env->cc.opts.cprint.print_semantic_init = true;
+}
+
 static void scc_fprint_impl_casts(struct parser* p)
 {
         p->env->cc.opts.cprint.print_impl_casts = true;
@@ -247,6 +252,7 @@ extern void scc_parse_opts(scc_env* self, int argc, const char** argv)
                 ARG_HANDLER("-fprint-eval-result", &scc_fprint_eval_result),
                 ARG_HANDLER("-fprint-expr-value",  &scc_fprint_expr_value),
                 ARG_HANDLER("-fprint-expr-type", &scc_fprint_expr_type),
+                ARG_HANDLER("-fprint-sem-init", &scc_fprint_sem_init),
                 ARG_HANDLER("-fprint-impl-casts", &scc_fprint_impl_casts),
                 ARG_HANDLER("-fforce-brackets", &scc_fforce_brackets),
                 ARG_HANDLER("-fdce", &scc_fdce),

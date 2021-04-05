@@ -156,6 +156,7 @@ static void cc_set_cprinter_opts(cc_instance* self, c_printer* printer)
         printer->opts.print_expr_value = self->opts.cprint.print_expr_value;
         printer->opts.print_impl_casts = self->opts.cprint.print_impl_casts;
         printer->opts.force_brackets = self->opts.cprint.force_brackets;
+        printer->opts.print_semantic_init = self->opts.cprint.print_semantic_init;
 }
 
 static void cc_print_tokens(
