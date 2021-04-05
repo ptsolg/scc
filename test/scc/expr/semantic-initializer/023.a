@@ -1,0 +1,5 @@
+enum A {
+	B,
+};
+
+enum A c = 0;
