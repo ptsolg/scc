@@ -569,7 +569,7 @@ static bool c_sema_check_initializer_list(
 
         c_initializer_check_result result;
         if (!c_sema_check_initializer(self,
-                subobject_type, ic->object_sc, list, &result, ic->build_semantic_initializer))
+                subobject_type, ic->object_sc, list, &result, !ic->build_semantic_initializer))
         {
                 return false;
         }
