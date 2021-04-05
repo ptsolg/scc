@@ -1009,7 +1009,7 @@ static tree_decl* c_sema_new_var_decl(
 
         tree_expr* sem_init = NULL;
         tree_type* decl_type = d->type.head;
-        if (!has_init)
+        if (!has_init && d->name != TREE_EMPTY_ID)
                 sem_init = c_sema_get_default_initializer(self, decl_type, specs->storage_class);
 
         return tree_new_var_decl(self->context, self->locals, specs->loc, d->name,
