@@ -81,10 +81,8 @@ static void scc_setup_llc_lld(scc_env* self, const char* exec_dir)
 
 extern errcode scc_setup(scc_env* self, int argc, const char** argv)
 {
-        extern errcode scc_parse_opts(scc_env*, int, const char**);
-
-        if (EC_FAILED(scc_parse_opts(self, argc, argv)))
-                return EC_ERROR;
+        extern void scc_parse_opts(scc_env*, int, const char**);
+        scc_parse_opts(self, argc, argv);
 
         self->cc.input.entry = self->link_stdlib ? NULL : "main";
         struct pathbuf exec_dir;
