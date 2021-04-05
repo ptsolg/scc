@@ -376,6 +376,7 @@ typedef struct _c_initializer_check_result
         bool check_only;
 } c_initializer_check_result;
 
+extern tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, tree_storage_class sc);
 extern bool c_sema_check_initializer(
         c_sema* self,
         tree_type* object,

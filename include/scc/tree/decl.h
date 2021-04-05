@@ -198,6 +198,7 @@ struct _tree_var_decl
 {
         struct _tree_value_decl base;
         tree_expr* init;
+        tree_expr* semantic_init;
 };
 
 struct _tree_field_decl
@@ -597,7 +598,8 @@ extern tree_decl* tree_new_var_decl(
         tree_storage_duration sd,
         tree_dll_storage_class dll_sc,
         tree_type* type,
-        tree_expr* init);
+        tree_expr* init,
+        tree_expr* semantic_init);
 
 extern tree_decl* tree_new_param_decl(
         tree_context* context,
@@ -611,9 +613,19 @@ static TREE_INLINE tree_expr* tree_get_var_init(const tree_decl* self)
         return self->var.init;
 }
 
+static TREE_INLINE tree_expr* tree_get_var_semantic_init(const tree_decl* self)
+{
+        return self->var.semantic_init;
+}
+
 static TREE_INLINE void tree_set_var_init(tree_decl* self, tree_expr* init)
 {
         self->var.init = init;
+}
+
+static TREE_INLINE void tree_set_var_semantic_init(tree_decl* self, tree_expr* init)
+{
+        self->var.semantic_init = init;
 }
 
 extern tree_decl* tree_new_field_decl(

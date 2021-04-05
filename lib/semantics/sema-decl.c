@@ -1,6 +1,7 @@
 #include "scc/core/num.h"
 #include "scc/semantics/sema.h"
 #include "scc/tree/context.h"
+#include "scc/tree/decl.h"
 #include "scc/tree/eval.h"
 #include "scc/tree/target.h"
 #include "errors.h"
@@ -1006,9 +1007,14 @@ static tree_decl* c_sema_new_var_decl(
         if (!c_sema_check_var_decl(self, specs, d, has_init))
                 return NULL;
 
+        tree_expr* sem_init = NULL;
+        tree_type* decl_type = d->type.head;
+        if (!has_init)
+                sem_init = c_sema_get_default_initializer(self, decl_type, specs->storage_class);
+
         return tree_new_var_decl(self->context, self->locals, specs->loc, d->name,
                 specs->storage_class, specs->storage_duration, specs->dll_storage_class,
-                d->type.head, NULL);
+                decl_type, NULL, sem_init);
 }
 
 static tree_decl* c_sema_new_external_decl(
@@ -1103,6 +1109,7 @@ extern bool c_sema_set_var_init(c_sema* self, tree_decl* var, tree_expr* init)
         }
 
         tree_set_var_init(var, r.syntactical_initializer);
+        tree_set_var_semantic_init(var, r.semantic_initializer);
         return true;
 }
 

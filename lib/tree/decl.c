@@ -258,7 +258,8 @@ extern tree_decl* tree_new_var_decl(
         tree_storage_duration sd,
         tree_dll_storage_class dll_sc,
         tree_type* type,
-        tree_expr* init)
+        tree_expr* init,
+        tree_expr* semantic_init)
 {
         tree_decl* d = tree_new_value_decl(context,
                 TDK_VAR, scope, loc, name, sc, sd, dll_sc, type, sizeof(struct _tree_var_decl));
@@ -266,6 +267,7 @@ extern tree_decl* tree_new_var_decl(
                 return NULL;
 
         tree_set_var_init(d, init);
+        tree_set_var_semantic_init(d, semantic_init);
         return d;
 }
 

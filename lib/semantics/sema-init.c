@@ -5,7 +5,7 @@
 #include "scc/tree/target.h"
 #include "errors.h"
 
-static tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, tree_storage_class sc)
+extern tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, tree_storage_class sc)
 {
         // todo: avoid allocating integer literals
         obj = tree_desugar_type(obj);
