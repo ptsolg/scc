@@ -13,7 +13,7 @@ extern tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, t
         // todo: avoid allocating integer literals
         obj = tree_desugar_type(obj);
         tree_type_kind k = tree_get_type_kind(obj);
-        if (k == TTK_BUILTIN || k == TTK_POINTER)
+        if (k == TTK_BUILTIN || k == TTK_POINTER || tree_type_is_enumerated(obj))
         {
                 if (sc == TSC_NONE)
                         return tree_new_unknown_expr(self->context);
