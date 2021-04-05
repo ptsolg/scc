@@ -1,0 +1,5 @@
+typedef struct {
+	int a[5];
+} Array;
+
+Array a = { { 0, 0, 10, 0, 0 } };

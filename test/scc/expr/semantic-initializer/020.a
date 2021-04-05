@@ -1,0 +1,9 @@
+typedef struct {
+	int c;
+	struct {
+		int a;
+	};
+	int b;
+} S;
+
+S a = { 0, { 10 }, 0 };
