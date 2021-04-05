@@ -6,7 +6,7 @@
 void init_arg_parser(struct arg_parser* self, int argc, const char** argv)
 {
         self->argc = argc;
-        self->pos = 0;
+        self->pos = 1;
         self->argv = argv;
 }
 
