@@ -7,6 +7,9 @@
 
 extern tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, tree_storage_class sc)
 {
+        if (sc == TSC_EXTERN)
+                return NULL;
+
         // todo: avoid allocating integer literals
         obj = tree_desugar_type(obj);
         tree_type_kind k = tree_get_type_kind(obj);
