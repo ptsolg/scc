@@ -76,13 +76,14 @@ static void append_cmd(struct cmdbuf* buf, const char* arg)
         bool has_spaces = quote_pos
                 ? space_pos && space_pos < quote_pos
                 : space_pos != NULL;
-        snprintf(buf->buf, rem, (has_spaces ? "\"%s\"" : "%s"), arg);
+        buf->pos += snprintf(buf->pos, rem, (has_spaces ? "\"%s\" " : "%s "), arg);
 }
 
 int execute(const char* path, int argc, const char** argv)
 {
         struct cmdbuf cmd;
         cmd.pos = cmd.buf;
+        append_cmd(&cmd, path);
         for (int i = 0; i < argc; i++)
                 append_cmd(&cmd, argv[i]);
         return system(cmd.buf);
