@@ -559,16 +559,12 @@ extern ssa_value* ssa_emit_sizeof_expr(ssa_function_emitter* self, const tree_ex
         return ssa_build_int_constant(&self->builder, tree_get_expr_type(expr), size);
 }
 
-extern ssa_value* ssa_emit_init_expr(ssa_function_emitter* self, const tree_expr* expr)
-{
-        return NULL;
-}
-
 extern ssa_value* ssa_emit_expr(ssa_function_emitter* self, const tree_expr* expr)
 {
         assert(expr);
         switch (tree_get_expr_kind(expr))
         {
+                case TEK_UNKNOWN:           return ssa_build_undef(&self->builder, tree_get_expr_type(expr));
                 case TEK_BINARY:            return ssa_emit_binary_expr(self, expr);
                 case TEK_UNARY:             return ssa_emit_unary_expr(self, expr);
                 case TEK_CALL:              return ssa_emit_call_expr(self, expr);
@@ -583,11 +579,10 @@ extern ssa_value* ssa_emit_expr(ssa_function_emitter* self, const tree_expr* exp
                 case TEK_CAST:              return ssa_emit_cast_expr(self, expr);
                 case TEK_SIZEOF:            return ssa_emit_sizeof_expr(self, expr);
                 case TEK_PAREN:             return ssa_emit_expr(self, tree_get_paren_expr(expr));
-                case TEK_INIT_LIST:         return ssa_emit_init_expr(self, expr);
-                case TEK_IMPL_INIT:         return ssa_emit_expr(self, tree_get_impl_init_expr(expr));
 
+                case TEK_INIT_LIST:
+                case TEK_IMPL_INIT:
                 case TEK_DESIGNATION:
-                        assert(0 && "todo");
                 default:
                         assert(0 && "Invalid expr");
                         return NULL;
@@ -620,4 +615,87 @@ extern ssa_value* ssa_emit_expr_as_condition(ssa_function_emitter* self, const t
                 default:
                         return ssa_build_neq_zero(&self->builder, v);
         }
+}
+
+static void remove_value_opt(ssa_value* val)
+{
+        if (!ssa_value_is_used(val))
+                ssa_remove_instr(ssa_get_var_instr(val));
+}
+
+static bool ssa_emit_record_initializer(ssa_function_emitter* self, ssa_value* record, const tree_expr* init)
+{
+        assert(tree_get_init_list_exprs_size(init));
+        tree_decl* decl = tree_get_decl_type_entity(
+                tree_desugar_type(tree_get_pointer_target(ssa_get_value_type(record))));
+        if (tree_record_is_union(decl))
+        {
+                tree_decl* first_field = tree_skip_non_field_decls(tree_get_record_fields_begin(decl));
+                ssa_value* ssa_first_field = ssa_build_getfieldaddr(
+                        &self->builder, record, first_field);
+                if (!ssa_first_field || !ssa_emit_initializer(self, ssa_first_field, init))
+                        return false;
+                remove_value_opt(ssa_first_field);
+                return true;
+        }
+
+        size_t i = 0;
+        TREE_FOREACH_DECL_IN_SCOPE(tree_get_record_fields(decl), it)
+        {
+                if (!tree_decl_is(it, TDK_FIELD))
+                        continue;
+
+                assert(i < tree_get_init_list_exprs_size(init));
+                const tree_expr* e = tree_get_init_list_expr(init, i++);
+                ssa_value* field = ssa_build_getfieldaddr(&self->builder, record, it);
+                if (!field || !ssa_emit_initializer(self, field, e))
+                        return false;
+                remove_value_opt(field);
+        }
+        return true;
+}
+
+static bool ssa_emit_array_initializer(ssa_function_emitter* self, ssa_value* array, const tree_expr* init)
+{
+        tree_type* et = tree_get_array_eltype(
+                tree_desugar_type(tree_get_pointer_target(ssa_get_value_type(array))));
+        tree_type* ptr = tree_new_pointer_type(self->context->tree, et);
+        array = ssa_build_cast(&self->builder, ptr, array);
+        assert(array);
+
+        size_t index = 0;
+        TREE_FOREACH_INIT_LIST_EXPR(init, it, end)
+        {
+                ssa_value* ssa_index = ssa_build_int_constant(&self->builder,
+                        tree_get_size_type(self->context->tree), index++);
+                ssa_value* elt = ssa_build_ptradd(&self->builder, array, ssa_index);
+                if (!ssa_index || !elt || !ssa_emit_initializer(self, elt, *it))
+                        return false;
+                remove_value_opt(elt);
+        }
+        remove_value_opt(array);
+        return true;
+}
+
+extern bool ssa_emit_initializer(ssa_function_emitter* self, ssa_value* var, const tree_expr* init)
+{
+        tree_type* t = ssa_get_value_type(var);
+        assert(tree_type_is_pointer(t));
+        t = tree_get_pointer_target(t);
+
+        if (tree_type_is_array(t))
+                return ssa_emit_array_initializer(self, var, init);
+        else if (tree_type_is_record(t))
+                return ssa_emit_record_initializer(self, var, init);
+
+        if (tree_expr_is(init, TEK_INIT_LIST))
+        {
+                assert(tree_get_init_list_exprs_size(init) == 1);
+                init = tree_get_init_list_expr(init, 0);
+        }
+        if (!init || tree_expr_is(init, TEK_UNKNOWN))
+                return true;
+
+        ssa_value* val = ssa_emit_expr(self, init);
+        return val && ssa_emit_store(self, val, var);
 }

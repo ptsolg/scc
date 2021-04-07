@@ -207,12 +207,8 @@ static bool ssa_emit_local_var_decl(ssa_function_emitter* self, tree_decl* var)
         if (!(val = ssa_emit_alloca(self, tree_get_decl_type(var))))
                 return false;
 
-        tree_expr* init = tree_get_var_init(var);
-        ssa_value* init_value = NULL;
-
-        if (init && !(init_value = ssa_emit_expr(self, init)))
-                return false;
-        if (init && !ssa_emit_store(self, init_value, val))
+        const tree_expr* init = tree_get_var_semantic_init(var);
+        if (init && !ssa_emit_initializer(self, val, init))
                 return false;
 
         ssa_set_def(self, var, val);

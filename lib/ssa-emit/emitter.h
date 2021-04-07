@@ -109,5 +109,6 @@ extern ssa_value* ssa_emit_load(ssa_function_emitter* self, ssa_value* what);
 extern ssa_value* ssa_emit_store(ssa_function_emitter* self, ssa_value* what, ssa_value* where);
 extern ssa_value* ssa_emit_expr(ssa_function_emitter* self, const tree_expr* expr);
 extern ssa_value* ssa_emit_expr_as_condition(ssa_function_emitter* self, const tree_expr* expr);
+extern bool ssa_emit_initializer(ssa_function_emitter* self, ssa_value* var, const tree_expr* init);
 
 #endif
