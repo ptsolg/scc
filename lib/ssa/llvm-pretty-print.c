@@ -395,10 +395,11 @@ static void ssa_print_call_instr(ssa_printer* self, const ssa_instr* instr)
         ssa_prints(self, "call ");
 
         ssa_value* func = ssa_get_called_func(instr);
-        tree_type* func_type = tree_desugar_type(tree_get_pointer_target(ssa_get_value_type(func)));
+        tree_type* func_type = tree_desugar_type(
+                tree_get_pointer_target(tree_desugar_type(ssa_get_value_type(func))));
         ssa_print_cc(self, func_type);
 
-        ssa_print_type(self, tree_get_pointer_target(ssa_get_value_type(func)));
+        ssa_print_type(self, func_type);
         ssa_printc(self, ' ');
         ssa_print_value(self, ssa_get_called_func(instr), false);
 

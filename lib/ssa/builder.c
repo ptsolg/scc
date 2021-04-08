@@ -244,7 +244,7 @@ extern ssa_value* ssa_build_call_n_ex(
 {
         assert(func);
         tree_type* func_type = tree_desugar_type(
-                tree_get_pointer_target(ssa_get_value_type(func)));
+                tree_get_pointer_target(tree_desugar_type(ssa_get_value_type(func))));
         assert(tree_type_is(func_type, TTK_FUNCTION));
 
         ssa_instr* call = ssa_new_call(self->context, tree_get_func_type_result(func_type), func);
