@@ -2,6 +2,7 @@ add_scc_target_sources(ssa
 	block.h
 	builder.h
 	common.h
+	const.h
 	context.h
 	instr.h
 	module.h

@@ -1,6 +1,7 @@
 add_scc_lib(ssa
 	block.c
 	builder.c
+	const.c
 	context.c
 	instr.c
 	llvm-pretty-print.c
