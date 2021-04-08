@@ -42,6 +42,7 @@ extern ssa_value* ssa_get_global_decl(ssa_module_emitter* self, const tree_decl*
 extern void ssa_emit_type(ssa_module_emitter* self, const tree_type* type);
 extern bool ssa_emit_global_decl(ssa_module_emitter* self, tree_decl* decl);
 extern ssa_module* ssa_finish_module(ssa_module_emitter* self);
+extern ssa_const* ssa_emit_const_expr(ssa_module_emitter* self, const tree_expr* expr);
 
 #define VEC ssa_scope_stack
 #define VEC_T struct hashmap
@@ -109,6 +110,7 @@ extern ssa_value* ssa_emit_load(ssa_function_emitter* self, ssa_value* what);
 extern ssa_value* ssa_emit_store(ssa_function_emitter* self, ssa_value* what, ssa_value* where);
 extern ssa_value* ssa_emit_expr(ssa_function_emitter* self, const tree_expr* expr);
 extern ssa_value* ssa_emit_expr_as_condition(ssa_function_emitter* self, const tree_expr* expr);
-extern bool ssa_emit_initializer(ssa_function_emitter* self, ssa_value* var, const tree_expr* init);
+
+extern bool ssa_emit_local_var_initializer(ssa_function_emitter* self, ssa_value* var, const tree_expr* init);
 
 #endif

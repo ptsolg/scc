@@ -1,4 +1,5 @@
 #include "scc/core/num.h"
+#include "scc/ssa/const.h"
 #include "scc/ssa/pretty-print.h"
 #include "scc/ssa/value.h"
 #include "scc/ssa/module.h"
@@ -99,10 +100,9 @@ static void ssa_print_value_type(ssa_printer* self, const ssa_value* value)
         }
 }
 
-static void ssa_print_constant_value(ssa_printer* self, const ssa_value* value)
+static void ssa_print_constant_value(ssa_printer* self, tree_type* type, const struct num* val)
 {
-        const struct num* val = ssa_get_constant_cvalue(value);
-        if (num_is_zero(val) && tree_type_is_pointer(ssa_get_value_type(value)))
+        if (num_is_zero(val) && tree_type_is_pointer(type))
         {
                 ssa_prints(self, "null");
                 return;
@@ -128,7 +128,8 @@ static void ssa_print_value(ssa_printer* self, const ssa_value* value, bool prin
         if (k == SVK_LOCAL_VAR || k == SVK_PARAM)
                 ssa_printf(self, "%%%u", ssa_get_value_id(value));
         else if (k == SVK_CONSTANT)
-                ssa_print_constant_value(self, value);
+                ssa_print_constant_value(self, 
+                        ssa_get_value_type(value), ssa_get_constant_cvalue(value));
         else if (k == SVK_GLOBAL_VAR || k == SVK_FUNCTION)
         {
                 tree_decl* entity = k == SVK_FUNCTION
@@ -760,6 +761,89 @@ static void ssa_print_function(ssa_printer* self, const ssa_value* val)
         ssa_prints(self, "\n}");
 }
 
+static void ssa_print_const(ssa_printer* self, ssa_const* cst, bool print_type)
+{
+        ssa_const_kind kind = ssa_get_const_kind(cst);
+        tree_type* t = ssa_get_const_type(cst);
+        if (print_type)
+        {
+                if (kind == SCK_ADDRESS)
+                        ssa_print_value_type(self, ssa_get_const_addr(cst));
+                else
+                        ssa_print_type(self, t);
+                ssa_printc(self, ' ');
+        }
+        switch (kind)
+        {
+                case SCK_LITERAL:
+                        ssa_print_constant_value(self, ssa_get_const_type(cst), ssa_get_const_literal(cst));
+                        break;
+                case SCK_LIST:
+                {
+                        struct vec* list = ssa_get_const_list(cst);
+                        if (tree_type_is_record(t))
+                                ssa_prints(self, "<{ ");
+                        else if (tree_type_is_array(t))
+                                ssa_prints(self, "[ ");
+                        for (int i = 0; i < list->size; i++)
+                        {
+                                ssa_print_const(self, list->items[i], true);
+                                if (i + 1 < list->size)
+                                        ssa_prints(self, ", ");
+                        }
+                        if (tree_type_is_record(t))
+                                ssa_prints(self, " }> ");
+                        else if (tree_type_is_array(t))
+                                ssa_prints(self, " ] ");
+                        break;
+                }
+                case SCK_ADDRESS:
+                        ssa_print_value(self, ssa_get_const_addr(cst), false);
+                        break;
+                case SCK_CAST:
+                        ssa_const* operand = ssa_get_const_expr_operand(cst, 0);
+                        tree_type* to = ssa_get_const_type(cst);
+                        llvm_cast_kind kind = ssa_get_llvm_cast_kind(
+                                self->context->target, ssa_get_const_type(operand), to);
+                        if (kind == LSK_INVALID)
+                                break;
+                        ssa_printf(self, "%s (", llvm_cast_table[kind]);
+                        ssa_print_const(self, operand, true);
+                        ssa_prints(self, " to ");
+                        ssa_print_type(self, to);
+                        ssa_prints(self, ")");
+                        break;
+                case SCK_PTRADD:
+                {
+                        ssa_const* op0 = ssa_get_const_expr_operand(cst, 0);
+                        ssa_prints(self, "getelementptr(");
+                        ssa_print_type(self, tree_get_pointer_target(ssa_get_const_type(op0)));
+                        ssa_prints(self, ", ");
+                        ssa_print_const(self, ssa_get_const_expr_operand(cst, 0), true);
+                        ssa_prints(self, ", ");
+                        ssa_print_const(self, ssa_get_const_expr_operand(cst, 1), true);
+                        ssa_printc(self, ')');
+                        break;
+                }
+
+                case SCK_GETFIELDADDR:
+                {
+                        ssa_const* var = ssa_get_const_field_addr_var(cst);
+                        tree_type* rec_ptr = ssa_get_const_type(var);
+                        unsigned index = ssa_get_const_field_addr_index(cst);
+                        ssa_prints(self, "getelementptr inbounds(");
+                        ssa_print_type(self, tree_get_pointer_target(rec_ptr));
+                        ssa_prints(self, ", ");
+                        ssa_print_const(self, var, true);
+                        ssa_printf(self, ", i32 0, i32 %u", index);
+                        ssa_printc(self, ')');
+                        break;
+                }
+                default:
+                        break;
+        }
+}
+
 static void ssa_print_global_var(ssa_printer* self, const ssa_value* val)
 {
         tree_decl* decl = ssa_get_global_var_entity(val);
@@ -767,9 +851,12 @@ static void ssa_print_global_var(ssa_printer* self, const ssa_value* val)
         ssa_prints(self, " = ");
         ssa_print_linkage(self, decl);
         ssa_prints(self, "global ");
-        ssa_print_type(self, tree_get_decl_type(decl));
-        if (tree_get_decl_storage_class(decl) != TSC_EXTERN)
-                ssa_prints(self, " zeroinitializer");
+        ssa_print_type(self, tree_get_pointer_target(ssa_get_value_type(val)));
+        ssa_const* cst = ssa_get_global_var_init(val);
+        if (!cst)
+                return;
+        ssa_printc(self, ' ');
+        ssa_print_const(self, cst, false);  
 }
 
 static void ssa_print_global_value(ssa_printer* self, const ssa_value* val)

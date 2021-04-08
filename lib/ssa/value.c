@@ -72,7 +72,8 @@ extern void ssa_init_local_var(ssa_value* self, tree_type* type)
         ssa_init_value(self, SVK_LOCAL_VAR, type);
 }
 
-extern ssa_value* ssa_new_global_var(ssa_context* context, tree_decl* var)
+extern ssa_value* ssa_new_global_var(
+        ssa_context* context, tree_decl* var, ssa_const* init)
 {
         assert(var);
         tree_type* t = tree_desugar_type(tree_get_decl_type(var));
@@ -82,6 +83,7 @@ extern ssa_value* ssa_new_global_var(ssa_context* context, tree_decl* var)
                 return NULL;
 
         _ssa_global_var(v)->entity = var;
+        ssa_set_global_var_init(v, init);
         return v;
 }
 

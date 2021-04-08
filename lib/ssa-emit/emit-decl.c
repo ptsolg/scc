@@ -139,22 +139,27 @@ static bool ssa_emit_global_var_decl(ssa_module_emitter* self, tree_decl* var)
 
         ssa_emit_type(self, tree_get_decl_type(var));
 
+
         ssa_value* val = ssa_get_global_decl(self, var);
         if (!val)
         {
-                val = ssa_new_global_var(self->context, var);
+                val = ssa_new_global_var(self->context, var, NULL);
                 ssa_add_module_global(self->module, val);
                 ssa_set_global_decl(self, var, val);
         }
-        else
+
+        tree_decl* entity = ssa_get_global_var_entity(val);
+        if (tree_get_decl_storage_class(entity) == TSC_EXTERN
+                || tree_get_var_semantic_init(entity) && ssa_get_global_var_init(val))
         {
-                tree_decl* e = ssa_get_global_var_entity(val);
-                if (tree_get_var_init(e) || tree_get_decl_storage_class(e) == TSC_IMPL_EXTERN)
-                        return true;
+                return true;
         }
 
-        // todo: initializer
+        ssa_const* init = ssa_emit_const_expr(self, tree_get_var_semantic_init(entity));
+        if (!init)
+                return false;
 
+        ssa_set_global_var_init(val, init);
         ssa_set_global_var_entity(val, var);
         return true;
 }
@@ -197,7 +202,7 @@ static bool ssa_emit_local_var_decl(ssa_function_emitter* self, tree_decl* var)
         tree_storage_duration sd = tree_get_decl_storage_duration(var);
         if (sd == TSD_STATIC || sd == TSD_THREAD)
         {
-                if (!(val = ssa_new_global_var(self->context, var)))
+                if (!(val = ssa_new_global_var(self->context, var, NULL)))
                         return false;
 
                 ssa_set_def(self, var, val);
@@ -208,7 +213,7 @@ static bool ssa_emit_local_var_decl(ssa_function_emitter* self, tree_decl* var)
                 return false;
 
         const tree_expr* init = tree_get_var_semantic_init(var);
-        if (init && !ssa_emit_initializer(self, val, init))
+        if (init && !ssa_emit_local_var_initializer(self, val, init))
                 return false;
 
         ssa_set_def(self, var, val);

@@ -1,4 +1,5 @@
 add_scc_lib(ssa-emit
+	emit-const.c
 	emit-decl.c
 	emit-expr.c
 	emit-stmt.c

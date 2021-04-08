@@ -633,7 +633,7 @@ static bool ssa_emit_record_initializer(ssa_function_emitter* self, ssa_value* r
                 tree_decl* first_field = tree_skip_non_field_decls(tree_get_record_fields_begin(decl));
                 ssa_value* ssa_first_field = ssa_build_getfieldaddr(
                         &self->builder, record, first_field);
-                if (!ssa_first_field || !ssa_emit_initializer(self, ssa_first_field, init))
+                if (!ssa_first_field || !ssa_emit_local_var_initializer(self, ssa_first_field, init))
                         return false;
                 remove_value_opt(ssa_first_field);
                 return true;
@@ -648,7 +648,7 @@ static bool ssa_emit_record_initializer(ssa_function_emitter* self, ssa_value* r
                 assert(i < tree_get_init_list_exprs_size(init));
                 const tree_expr* e = tree_get_init_list_expr(init, i++);
                 ssa_value* field = ssa_build_getfieldaddr(&self->builder, record, it);
-                if (!field || !ssa_emit_initializer(self, field, e))
+                if (!field || !ssa_emit_local_var_initializer(self, field, e))
                         return false;
                 remove_value_opt(field);
         }
@@ -669,7 +669,7 @@ static bool ssa_emit_array_initializer(ssa_function_emitter* self, ssa_value* ar
                 ssa_value* ssa_index = ssa_build_int_constant(&self->builder,
                         tree_get_size_type(self->context->tree), index++);
                 ssa_value* elt = ssa_build_ptradd(&self->builder, array, ssa_index);
-                if (!ssa_index || !elt || !ssa_emit_initializer(self, elt, *it))
+                if (!ssa_index || !elt || !ssa_emit_local_var_initializer(self, elt, *it))
                         return false;
                 remove_value_opt(elt);
         }
@@ -677,7 +677,7 @@ static bool ssa_emit_array_initializer(ssa_function_emitter* self, ssa_value* ar
         return true;
 }
 
-extern bool ssa_emit_initializer(ssa_function_emitter* self, ssa_value* var, const tree_expr* init)
+extern bool ssa_emit_local_var_initializer(ssa_function_emitter* self, ssa_value* var, const tree_expr* init)
 {
         tree_type* t = ssa_get_value_type(var);
         assert(tree_type_is_pointer(t));

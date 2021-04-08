@@ -3,6 +3,7 @@
 
 #include <scc/tree/tree.h>
 #include "common.h"
+#include "scc/core/vec.h"
 
 typedef struct _tree_type tree_type;
 typedef struct _tree_expr tree_expr;
@@ -10,6 +11,7 @@ typedef struct _ssa_instr ssa_instr;
 typedef struct _ssa_value ssa_value;
 typedef struct _ssa_context ssa_context;
 typedef struct _ssa_block ssa_block;
+typedef struct _ssa_const ssa_const;
 
 typedef struct _ssa_value_use
 {
@@ -104,16 +106,19 @@ struct _ssa_global_var
 {
         struct _ssa_value_base base;
         tree_decl* entity;
-        // todo: initializer
+        ssa_const* init;
 };
 
-extern ssa_value* ssa_new_global_var(ssa_context* self, tree_decl* var);
+extern ssa_value* ssa_new_global_var(
+        ssa_context* self, tree_decl* var, ssa_const* init);
 
 static inline struct _ssa_global_var* _ssa_global_var(ssa_value* self);
 static inline const struct _ssa_global_var* _ssa_global_cvar(const ssa_value* self);
 
 static inline tree_decl* ssa_get_global_var_entity(const ssa_value* self);
 static inline void ssa_set_global_var_entity(ssa_value* self, tree_decl* var);
+static inline ssa_const* ssa_get_global_var_init(const ssa_value* self);
+static inline void ssa_set_global_var_init(ssa_value* self, ssa_const* init);
 
 struct _ssa_constant
 {
@@ -333,6 +338,16 @@ static inline tree_decl* ssa_get_global_var_entity(const ssa_value* self)
 static inline void ssa_set_global_var_entity(ssa_value* self, tree_decl* var)
 {
         _ssa_global_var(self)->entity = var;
+}
+
+static inline ssa_const* ssa_get_global_var_init(const ssa_value* self)
+{
+        return _ssa_global_cvar(self)->init;
+}
+
+static inline void ssa_set_global_var_init(ssa_value* self, ssa_const* init)
+{
+        _ssa_global_var(self)->init = init;
 }
 
 static inline struct _ssa_constant* _ssa_constant(ssa_value* self)
