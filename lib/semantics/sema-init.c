@@ -29,6 +29,7 @@ extern tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, t
                 assert(tree_array_is(obj, TAK_CONSTANT));
                 tree_type* et = tree_get_array_eltype(obj);
                 tree_expr* init = tree_new_init_list_expr(self->context, TREE_INVALID_LOC);
+                tree_set_expr_type(init, obj);
                 uint size = num_as_u64(tree_get_array_size_value_c(obj));
                 assert(size);
                 for (uint i = 0; i < size; i++)
@@ -42,6 +43,7 @@ extern tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, t
                 assert(tree_declared_type_is(obj, TDK_RECORD));
                 tree_decl* rec = tree_get_decl_type_entity(obj);
                 tree_expr* list = tree_new_init_list_expr(self->context, TREE_INVALID_LOC);
+                tree_set_expr_type(list, obj);
 
                 if (tree_record_is_union(rec))
                 {
@@ -154,6 +156,7 @@ static void c_init_object(c_initialization_context* ic, c_object* o, tree_type* 
                 size = o->array.size;
 
         o->semantic_initializer = tree_new_init_list_expr(ic->sema->context, TREE_INVALID_LOC);
+        tree_set_expr_type(o->semantic_initializer, type);
         for (size_t i = 0; i < size; i++)
                 tree_add_init_list_expr(o->semantic_initializer, ic->sema->context, NULL);
 }
