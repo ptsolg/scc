@@ -73,10 +73,9 @@ static void ssa_print_type(ssa_printer* self, const tree_type* type)
                         ssa_printc(self, '*');
                         return;
                 case TTK_ARRAY:
-                        if (tree_get_array_kind(type) != TAK_CONSTANT)
-                                return;
-
-                        ssa_printf(self, "[%u x ", tree_get_array_size(type));
+                        unsigned size = tree_array_is(type, TAK_CONSTANT)
+                                ? tree_get_array_size(type) : 0;
+                        ssa_printf(self, "[%u x ", size);
                         ssa_print_type(self, tree_get_array_eltype(type));
                         ssa_printc(self, ']');
                         return;
