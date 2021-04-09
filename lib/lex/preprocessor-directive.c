@@ -267,6 +267,38 @@ extern bool c_preprocessor_handle_endif_directive(c_preprocessor* self, c_token*
         return c_preprocessor_require_end_of_directive(self, CTK_PP_ENDIF);
 }
 
+static c_source* last_source(c_preprocessor* self)
+{
+        for (int i = self->lexer_stack.lexers.size - 1; i >= 0; i--)
+        {
+                c_pp_lexer* lexer = c_lexer_stack_get(&self->lexer_stack, i);
+                if (lexer->kind == CPLK_TOKEN)
+                        return lexer->token_lexer.source;
+        }
+        return NULL;       
+}
+
+static c_source* _c_preprocessor_find_source(c_preprocessor* self, tree_location loc, const char* filename)
+{
+        c_source* last = last_source(self);
+        c_source* src = 0;
+        if (last)
+        {
+                struct pathbuf p = pathbuf_from_str(last->file->path);
+                *(char*)basename(p.buf) = 0;
+                join(&p, filename);
+                src = c_source_find(&self->context->source_manager, p.buf);
+        }
+        if (!src)
+                src = c_source_find(&self->context->source_manager, filename);
+        if (!src)
+        {
+                c_error_cannot_open_source_file(self->context, loc, filename);
+                return NULL;
+        }
+        return src;
+}
+
 static c_source* c_preprocessor_find_source(c_preprocessor* self, c_token* tok)
 {
         tree_location loc = c_token_get_loc(tok);
@@ -285,13 +317,7 @@ static c_source* c_preprocessor_find_source(c_preprocessor* self, c_token* tok)
                 return NULL;
         }
 
-        c_source* source = c_source_find(&self->context->source_manager, filename);
-        if (!source)
-        {
-                c_error_cannot_open_source_file(self->context, loc, filename);
-                return NULL;
-        }
-        return source;
+        return _c_preprocessor_find_source(self, loc, filename);
 }
 
 extern bool c_preprocessor_handle_include_directive(c_preprocessor* self)
