@@ -7,6 +7,7 @@
 #include "scc/ssa/context.h"
 #include "scc/ssa/block.h"
 #include "printer.h"
+#include "scc/tree/type.h"
 #include <ctype.h>
 
 static const char* llvm_builtin_type_table[] =
@@ -50,17 +51,21 @@ static void ssa_print_record_name(ssa_printer* self, const tree_decl* rec)
         ssa_print_record_id(self, rec);
 }
 
-static void ssa_print_type(ssa_printer* self, const tree_type* type)
+static void _ssa_print_type(ssa_printer* self, const tree_type* type, int print_void)
 {
         type = tree_desugar_type_c(type);
         tree_type* target;
+        tree_builtin_type_kind btk;
         switch (tree_get_type_kind(type))
         {
                 case TTK_BUILTIN:
-                        ssa_prints(self, llvm_builtin_type_table[tree_get_builtin_type_kind(type)]);
+                        btk = tree_get_builtin_type_kind(type);
+                        if (btk == TBTK_VOID && !print_void)
+                                btk = TBTK_INT8;
+                        ssa_prints(self, llvm_builtin_type_table[btk]);
                         return;
                 case TTK_FUNCTION:
-                        ssa_print_type(self, tree_get_func_type_result(type));
+                        _ssa_print_type(self, tree_get_func_type_result(type), 1);
                         ssa_printc(self, ' ');
                         ssa_print_func_type_params(self, type);
                         return;
@@ -83,6 +88,11 @@ static void ssa_print_type(ssa_printer* self, const tree_type* type)
                         if (tree_declared_type_is(type, TDK_RECORD))
                                 ssa_print_record_name(self, tree_get_decl_type_entity(type));
         }
+}
+
+static void ssa_print_type(ssa_printer* self, const tree_type* type)
+{
+        _ssa_print_type(self, type, 0);
 }
 
 static void ssa_print_value_type(ssa_printer* self, const ssa_value* value)
@@ -740,7 +750,7 @@ static void ssa_print_function(ssa_printer* self, const ssa_value* val)
         ssa_print_linkage(self, func);
         ssa_print_dll_storage_class(self, func);
         ssa_print_cc(self, func_type);
-        ssa_print_type(self, tree_get_func_type_result(func_type));
+        _ssa_print_type(self, tree_get_func_type_result(func_type), 1);
         ssa_prints(self, " @");
         ssa_print_tree_id(self, tree_get_decl_name(func));
         ssa_print_func_type_params(self, func_type);
