@@ -57,11 +57,13 @@ static TREE_INLINE tree_decl* tree_get_decl_scope_decls_begin(const tree_decl_sc
 
 static TREE_INLINE tree_decl* tree_get_decl_scope_decls_end(tree_decl_scope* self)
 {
+        assert(self);
         return (tree_decl*)&self->decls;
 }
 
 static TREE_INLINE const tree_decl* tree_get_decl_scope_decls_cend(const tree_decl_scope* self)
 {
+        assert(self);
         return (const tree_decl*)&self->decls;
 }
 
@@ -652,16 +654,18 @@ static TREE_INLINE tree_decl* _tree_skip_non_field_decls(tree_decl* self, tree_d
         return self;
 }
 
-static TREE_INLINE tree_decl* tree_skip_non_field_decls(tree_decl* self)
-{
-        return _tree_skip_non_field_decls(self,
-                                          tree_get_decl_scope_decls_end(tree_get_decl_scope(self)));
-}
-
 static TREE_INLINE tree_decl* tree_get_next_field(const tree_decl* self)
 {
-        return _tree_skip_non_field_decls(tree_get_next_decl(self),
-                                          tree_get_decl_scope_decls_end(tree_get_decl_scope(self)));
+        tree_decl* end = tree_get_decl_scope_decls_end(tree_get_decl_scope(self));
+        return self == end 
+                ? end : _tree_skip_non_field_decls(tree_get_next_decl(self), end);
+}
+
+static TREE_INLINE tree_decl* tree_skip_non_field_decls(tree_decl* self)
+{
+        tree_decl* end = tree_get_decl_scope_decls_end(tree_get_decl_scope(self));
+        return self == end 
+                ? end : _tree_skip_non_field_decls(self, end);
 }
 
 static TREE_INLINE tree_expr* tree_get_field_bit_width(const tree_decl* self)
