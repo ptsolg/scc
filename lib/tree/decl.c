@@ -100,6 +100,7 @@ extern tree_decl* tree_new_decl(
 
         init_list(&d->base.node);
         tree_set_decl_implicit(d, false);
+        tree_set_decl_incomplete_last_field(d, false);
         tree_set_decl_kind(d, kind);
         tree_set_decl_loc(d, loc);
         tree_set_decl_scope(d, scope);

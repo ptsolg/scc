@@ -127,7 +127,8 @@ struct _tree_decl_base
         tree_decl_kind kind;
         tree_decl_scope* scope;
         tree_xlocation loc;
-        bool is_implicit;
+        bool is_implicit : 1;
+        bool is_incomplete_last_field : 1;
 };
 
 struct _tree_named_decl
@@ -325,6 +326,11 @@ static TREE_INLINE bool tree_decl_is_implicit(const tree_decl* self)
         return self->base.is_implicit;
 }
 
+static TREE_INLINE bool tree_decl_is_incomplete_last_field(const tree_decl* self)
+{
+        return self->base.is_incomplete_last_field;
+}
+
 static TREE_INLINE void tree_set_decl_scope(tree_decl* self, tree_decl_scope* scope)
 {
         self->base.scope = scope;
@@ -353,6 +359,11 @@ static TREE_INLINE void tree_set_decl_loc_end(tree_decl* self, tree_location l)
 static TREE_INLINE void tree_set_decl_implicit(tree_decl* self, bool v)
 {
         self->base.is_implicit = v;
+}
+
+static TREE_INLINE void tree_set_decl_incomplete_last_field(tree_decl* self, bool v)
+{
+        self->base.is_incomplete_last_field = v;
 }
 
 extern tree_decl* tree_new_named_decl(

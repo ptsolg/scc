@@ -55,7 +55,7 @@ extern tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, t
 
                 TREE_FOREACH_DECL_IN_SCOPE(tree_get_record_fields(rec), it)
                 {
-                        if (!tree_decl_is(it, TDK_FIELD))
+                        if (!tree_decl_is(it, TDK_FIELD) || tree_decl_is_incomplete_last_field(it))
                                 continue;
                         tree_add_init_list_expr(list, self->context,
                                 c_sema_get_default_initializer(self, tree_get_decl_type(it), sc));

@@ -692,29 +692,13 @@ extern tree_decl* c_sema_declare_record_decl(
         return c_sema_lookup_or_create_record_decl(self, kw_loc, name, is_union, true);
 }
 
-extern tree_decl* c_sema_complete_record_decl(c_sema* self, tree_decl* rec, tree_location end)
+static bool c_sema_check_field_bitwidth(const c_sema* self, const tree_decl* field)
 {
-        tree_set_tag_decl_complete(rec, true);
-        tree_set_decl_loc_end(rec, end);
-        return rec;
-}
-
-
-static bool c_sema_check_field_decl(const c_sema* self, const tree_decl* field)
-{
-        tree_type* mt = tree_desugar_type(tree_get_decl_type(field));
-        if (tree_type_is(mt, TTK_FUNCTION))
-        {
-                c_error_field_function(self->ccontext, field);
-                return false;
-        }
-        if (!c_sema_require_complete_type(self, tree_get_decl_loc_begin(field), mt))
-                return false;
-
         tree_expr* bit_width = tree_get_field_bit_width(field);
         if (!bit_width)
                 return true;
 
+        tree_type* mt = tree_desugar_type(tree_get_decl_type(field));
         if (!tree_type_is_integer(mt))
         {
                 c_error_invalid_bitfield_type(self->ccontext, field);
@@ -745,7 +729,92 @@ static bool c_sema_check_field_decl(const c_sema* self, const tree_decl* field)
                 c_error_bitfield_width_exceeds_type(self->ccontext, field);
                 return false;
         }
+        return true;
+}
+
+enum field_flags
+{
+        FIRST_FIELD = 1,
+        LAST_FIELD = 2,
+};
+
+static bool c_sema_check_field_type(const c_sema* self, 
+        tree_decl* field, const tree_type* ft, int flags)
+{
+        if (flags == LAST_FIELD && tree_type_is(ft, TTK_ARRAY))
+        {
+                if (tree_array_is(ft, TAK_CONSTANT) && tree_get_array_size(ft) == 0
+                        || tree_array_is(ft, TAK_INCOMPLETE))
+                {
+                        tree_set_decl_incomplete_last_field(field, true);
+                        ft = tree_get_array_eltype(ft);
+                }
+        }
+        tree_location loc = tree_get_decl_loc_begin(field);
+        return c_sema_require_complete_type(self, loc, ft)
+                && c_sema_check_type(self, ft, loc);
+}
+
+static bool c_sema_check_field_decl(const c_sema* self, tree_decl* field, int flags)
+{
+        tree_type* mt = tree_desugar_type(tree_get_decl_type(field));
+        if (tree_type_is(mt, TTK_FUNCTION))
+        {
+                c_error_field_function(self->ccontext, field);
+                return false;
+        }
+
+        if (!c_sema_check_field_type(self, field, mt, flags))
+                return false;
+
+        if (!c_sema_check_field_bitwidth(self, field))  
+                return false;
         return field;
+}
+
+static bool c_sema_check_record_fields(c_sema* self, tree_decl* rec, int parent_flags)
+{
+        assert(tree_decl_is(rec, TDK_RECORD));
+
+        tree_decl_scope* scope = tree_get_record_fields(rec);
+        tree_decl* begin = tree_skip_non_field_decls(tree_get_decl_scope_decls_begin(scope));
+        tree_decl* end = tree_get_decl_scope_decls_end(scope);
+
+        int field_flags = parent_flags & FIRST_FIELD;
+        int reset_first_field_mask = tree_record_is_union(rec)
+                ? 0xFFFFFFFF : ~FIRST_FIELD;
+        for (tree_decl* next, *it = begin; it != end;
+                it = next, field_flags &= reset_first_field_mask)
+        {
+                next = tree_get_next_field(it);
+                field_flags |= LAST_FIELD * ((parent_flags & LAST_FIELD) && next == end);
+
+                tree_type* ft = tree_get_decl_type(it);
+                if (tree_declared_type_is(ft, TDK_RECORD))
+                {
+                        tree_decl* entity = tree_get_decl_type_entity(ft);
+                        if (tree_tag_decl_is_complete(entity) && tree_decl_is_implicit(entity))
+                        {
+                                bool ok = c_sema_check_record_fields(self, entity, field_flags);
+                                if (!ok)
+                                        return false;
+                                continue;
+                        }
+                }
+                if (!c_sema_check_field_decl(self, it, field_flags))
+                        return false;
+        }
+        return true;
+}
+
+extern tree_decl* c_sema_complete_record_decl(c_sema* self, tree_decl* rec, tree_location end)
+{
+
+        if (tree_decl_is_global(rec) && !c_sema_check_record_fields(self, rec, FIRST_FIELD | LAST_FIELD))
+                return NULL;
+        tree_set_tag_decl_complete(rec, true);
+        tree_set_decl_loc_end(rec, end);
+        return rec;
 }
 
 static tree_decl* c_sema_new_field_decl(
@@ -754,17 +823,11 @@ static tree_decl* c_sema_new_field_decl(
         if (!c_sema_check_decl_specs(self, ds, d, TDK_FIELD, false))
                 return NULL;
 
-        tree_type* t = c_sema_finish_decl_type(self, ds, d);
+        tree_type* t = c_sema_add_declarator_type(self, d, ds->typespec);
         if (!t)
                 return NULL;
 
-        tree_decl* field = tree_new_field_decl(
-                self->context, self->locals, ds->loc, d->name, t, bit_width);
-
-        if (!c_sema_check_field_decl(self, field))
-                return NULL;
-
-        return field;
+        return tree_new_field_decl(self->context, self->locals, ds->loc, d->name, t, bit_width);
 }
 
 static bool c_sema_inject_anonymous_record_fields(
