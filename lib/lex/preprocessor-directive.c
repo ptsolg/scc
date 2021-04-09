@@ -373,9 +373,16 @@ static bool c_preprocessor_read_macro_body(c_preprocessor* self, c_macro* macro)
 
 static bool c_preprocessor_read_macro_params(c_preprocessor* self, c_macro* macro)
 {
-        while (1)
+        c_token* t = c_preprocess_non_wspace(self);
+        if (!t)
+                return false;
+        if (c_token_is(t, CTK_RBRACKET))
+                return true;
+
+        for (; ; t = c_preprocess_non_wspace(self))
         {
-                c_token* t = c_preprocess_non_wspace(self);
+                if (!t)
+                        return false;
                 if (!c_token_is(t, CTK_ID))
                 {
                         c_error_expected_identifier(self->context, c_token_get_loc(t));

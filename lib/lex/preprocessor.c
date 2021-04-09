@@ -353,7 +353,7 @@ static bool c_preprocessor_read_macro_args(
                         bracket_nesting--;
                         if (bracket_nesting == 0)
                         {
-                                if (empty_arg && !c_preprocessor_append_empty_macro_arg(self, &pp_args))
+                                if (empty_arg && pp_args.num_params && !c_preprocessor_append_empty_macro_arg(self, &pp_args))
                                         return false;
                                 return c_preprocessor_check_macro_args_underflow(self, &pp_args);
                         }
