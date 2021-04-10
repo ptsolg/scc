@@ -230,28 +230,35 @@ static bool tree_eval_cast(
                 return false;
         }
 
-        tree_builtin_type_kind builtin = tree_get_builtin_type_kind(cast_type);
-        if (builtin == TBTK_FLOAT)
+        if (tree_type_is_integer(cast_type))
+        {
+                tree_builtin_type_kind builtin = TBTK_INT32;
+                int is_signed = 1;
+                if (!tree_type_is_enumerated(cast_type))
+                {
+                        is_signed = tree_type_is_signed_integer(cast_type);
+                        builtin = tree_get_builtin_type_kind(cast_type);
+                }
+
+                result->kind = TERK_INTEGER;
+                uint bits = 8 * tree_get_builtin_type_size(context->target, builtin);
+                if (is_signed)
+                        num_to_int(&result->value, bits);
+                else
+                        num_to_uint(&result->value, bits);
+        }
+        else if (tree_builtin_type_is(cast_type, TBTK_FLOAT))
         {
                 result->kind = TERK_FLOATING;
                 num_to_f32(&result->value);
         }
-        else if (builtin == TBTK_DOUBLE)
+        else if (tree_builtin_type_is(cast_type, TBTK_DOUBLE))
         {
                 result->kind = TERK_FLOATING;
                 num_to_f64(&result->value);
         }
         else
-        {
-                assert(tree_type_is_integer(cast_type));
-
-                result->kind = TERK_INTEGER;
-                uint bits = 8 * tree_get_builtin_type_size(context->target, builtin);
-                if (tree_type_is_signed_integer(cast_type))
-                        num_to_int(&result->value, bits);
-                else
-                        num_to_uint(&result->value, bits);
-        }
+                UNREACHABLE();
 
         return true;
 }
