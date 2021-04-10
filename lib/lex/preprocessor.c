@@ -337,7 +337,10 @@ static bool c_preprocessor_read_macro_args(
         c_preprocessing_args_init(&pp_args, macro, args, loc);
         while (1)
         {
-                c_token* t = c_preprocess_non_comment(self);
+                
+                c_token* t = self->lexer->kind == CPLK_MACRO
+                        ? c_preprocess_non_macro(self)
+                        : c_preprocess_non_wspace(self);
                 if (!t)
                         return false;
 
