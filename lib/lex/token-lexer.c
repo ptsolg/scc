@@ -215,7 +215,7 @@ static bool c_token_lexer_read_till_quote(c_token_lexer* self, c_sequence* seq, 
                         c_error_missing_closing_quote(self->context, seq->loc);
                         return false;
                 }
-                else if (c == '\\')
+                else if (c == '\\' && !consume)
                         consume = true;
                 else if (c == quote && !consume)
                 {
