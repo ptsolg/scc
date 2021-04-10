@@ -159,9 +159,11 @@ extern bool ssa_function_returns_void(const ssa_value* self)
 extern void ssa_number_function_values(ssa_value* self)
 {
         ssa_id id = 0;
+        tree_type* ft = tree_get_pointer_target(ssa_get_value_type(self));
 
-        SSA_FOREACH_FUNCTION_PARAM(self, it)
-                _ssa_value_base(*it)->id = id++;
+        if (tree_get_semantic_func_type_params_size(ft))
+                SSA_FOREACH_FUNCTION_PARAM(self, it)
+                        _ssa_value_base(*it)->id = id++;
 
         SSA_FOREACH_FUNCTION_BLOCK(self, block)
         {

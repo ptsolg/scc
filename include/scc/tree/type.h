@@ -296,6 +296,15 @@ static TREE_INLINE tree_type* tree_get_func_type_param(const tree_type* self, si
         return tree_get_func_type_params_begin(self)[n];
 }
 
+static TREE_INLINE size_t tree_get_semantic_func_type_params_size(const tree_type* self)
+{
+        extern bool tree_type_is_void(const tree_type*);
+        
+        size_t size = tree_get_func_type_params_size(self);
+        return size == 1 && tree_type_is_void(tree_get_func_type_param(self, 0))
+                ? 0 : size;
+}
+
 static TREE_INLINE bool tree_func_type_is_vararg(const tree_type* self)
 {
         assert(tree_type_is(self, TTK_FUNCTION));

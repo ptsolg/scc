@@ -992,14 +992,18 @@ static bool c_sema_check_function_decl(
         {
                 c_param* param = vec_get(params, i);
                 tree_location param_loc = param->specs.loc.begin;
+                tree_type* param_type = param->declarator.type.head;
+                int is_unnamed = param->declarator.name == TREE_EMPTY_ID;
 
-                if (param->declarator.name == TREE_EMPTY_ID)
+                if (is_unnamed && params->size == 1 && tree_type_is_void(param_type))
+                        return true;
+
+                if (is_unnamed)
                 {
                         c_error_parameter_name_omitted(self->ccontext, param_loc);
                         return false;
                 }
 
-                tree_type* param_type = param->declarator.type.head;
                 if (!c_sema_require_complete_type(self, param_loc, param_type))
                         return false;
                 if (tree_func_type_is_transaction_safe(func_type)

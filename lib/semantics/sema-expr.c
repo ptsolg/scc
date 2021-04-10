@@ -328,7 +328,7 @@ extern tree_expr* c_sema_check_call_expr_args(c_sema* self, tree_expr* call)
         tree_expr* lhs = tree_get_call_lhs(call);
         tree_type* ft = tree_desugar_type(
                 tree_get_pointer_target(tree_desugar_type(tree_get_expr_type(lhs))));
-        size_t num_params = tree_get_func_type_params_size(ft);
+        size_t num_params = tree_get_semantic_func_type_params_size(ft);
         size_t num_args = tree_get_call_args_size(call);
 
         if (num_args < num_params)

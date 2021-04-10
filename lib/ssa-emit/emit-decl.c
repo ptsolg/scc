@@ -78,11 +78,12 @@ static bool ssa_emit_function_decl_body(
         ssa_push_scope(&fe); // params
 
         tree_decl_scope* params = tree_get_func_params(ssa_get_function_entity(func));
-        TREE_FOREACH_DECL_IN_SCOPE(params, it)
-                if (!ssa_emit_local_decl(&fe, it))
-                        goto cleanup;
-
         tree_type* func_type = tree_get_pointer_target(ssa_get_value_type(func));
+        if (tree_get_semantic_func_type_params_size(func_type))
+                TREE_FOREACH_DECL_IN_SCOPE(params, it)
+                        if (!ssa_emit_local_decl(&fe, it))
+                                goto cleanup;
+
         if (tree_func_type_is_transaction_safe(func_type))
         {
                 ssa_value* isactive = ssa_build_call_0(

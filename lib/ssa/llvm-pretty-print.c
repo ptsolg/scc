@@ -34,12 +34,13 @@ static void ssa_print_type(ssa_printer*, const tree_type*);
 static void ssa_print_func_type_params(ssa_printer* self, const tree_type* type)
 {
         ssa_printc(self, '(');
-        TREE_FOREACH_FUNC_TYPE_PARAM(type, it)
-        {
-                ssa_print_type(self, *it);
-                if (it + 1 != tree_get_func_type_params_end(type))
-                        ssa_prints(self, ", ");
-        }
+        if (tree_get_semantic_func_type_params_size(type))
+                TREE_FOREACH_FUNC_TYPE_PARAM(type, it)
+                {
+                        ssa_print_type(self, *it);
+                        if (it + 1 != tree_get_func_type_params_end(type))
+                                ssa_prints(self, ", ");
+                }
         if (tree_func_type_is_vararg(type))
                 ssa_prints(self, ", ...");
         ssa_printc(self, ')');
