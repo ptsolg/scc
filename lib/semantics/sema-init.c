@@ -534,7 +534,7 @@ static bool c_sema_check_string_initializer(c_sema* self, c_initialization_conte
                 c_enter_subobject(ic);
         }
 
-        if (ic->object->kind == COK_SCALAR)
+        if (ic->object->kind == COK_SCALAR || tree_type_is_pointer(eltype))
                 return c_sema_check_ordinary_initializer(self, ic, expr);
 
         assert(ic->object->kind == COK_ARRAY);
@@ -646,7 +646,9 @@ static bool c_sema_check_object_initializer(c_sema* self, c_initialization_conte
 {
         tree_expr_kind k = tree_get_expr_kind(tree_ignore_paren_exprs(init));
         if (ic->object->kind == COK_ARRAY)
-                return k == TEK_STRING_LITERAL || k == TEK_INIT_LIST;
+                return tree_type_is_pointer(tree_get_array_eltype(ic->object->type))
+                        ? k == TEK_INIT_LIST
+                        : k == TEK_STRING_LITERAL || k == TEK_INIT_LIST;
         else if (ic->object->kind != COK_SCALAR)
                 return k == TEK_INIT_LIST || !tree_type_is_scalar(tree_get_expr_type(init));
         return true;
