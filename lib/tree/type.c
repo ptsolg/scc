@@ -497,9 +497,12 @@ static bool tree_decl_types_are_same(const tree_type* a, const tree_type* b)
         tree_decl* db = tree_get_decl_type_entity(b);
         tree_decl_kind dk = tree_get_decl_kind(da);
 
-        if (dk != tree_get_decl_kind(db))
+        if (dk != tree_get_decl_kind(db) || !tree_decls_have_same_name(da, db))
                 return false;
-
+        if (dk == TDK_RECORD && tree_record_is_union(da) != tree_record_is_union(db))
+                return false;
+        if (tree_decl_type_is_referenced(a) || tree_decl_type_is_referenced(b))
+                return true;
         assert(dk == TDK_RECORD || dk == TDK_ENUM);
         return dk == TDK_RECORD
                 ? tree_records_are_same(da, db)
