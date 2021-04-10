@@ -433,6 +433,7 @@ extern const tree_expr* tree_desugar_cexpr(const tree_expr* self)
 
 extern bool tree_expr_is_null_pointer_constant(tree_context* context, const tree_expr* expr)
 {
+        expr = tree_desugar_cexpr(expr);
         while (tree_type_is_void_pointer(tree_get_expr_type(expr)))
         {
                 if (tree_expr_is(expr, TEK_CAST))
