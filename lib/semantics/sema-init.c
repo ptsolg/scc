@@ -648,7 +648,7 @@ static bool c_sema_check_object_initializer(c_sema* self, c_initialization_conte
         if (ic->object->kind == COK_ARRAY)
                 return k == TEK_STRING_LITERAL || k == TEK_INIT_LIST;
         else if (ic->object->kind != COK_SCALAR)
-                return k == TEK_INIT_LIST;
+                return k == TEK_INIT_LIST || !tree_type_is_scalar(tree_get_expr_type(init));
         return true;
 }
 
