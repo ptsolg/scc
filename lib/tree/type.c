@@ -545,9 +545,17 @@ static tree_type_equality_kind tree_compare_function_type_params(const tree_type
         return k;
 }
 
+static inline tree_type_equality_kind cmp_result(bool same_quals, bool same_attrs)
+{
+        if (same_attrs && same_quals)
+                return TTEK_EQ;
+        return !same_attrs ? TTEK_DIFFERENT_ATTRIBS : TTEK_DIFFERENT_QUALS;
+}
+
 extern tree_type_equality_kind tree_compare_types(const tree_type* a, const tree_type* b)
 {
         bool same_quals = true;
+        bool same_attrs = true;
         while (1)
         {
                 if (a == b)
@@ -557,7 +565,7 @@ extern tree_type_equality_kind tree_compare_types(const tree_type* a, const tree
                 a = tree_desugar_type_c(a);
                 b = tree_desugar_type_c(b);
                 if (tree_get_modified_type_c(a) == tree_get_modified_type_c(b))
-                        return same_quals ? TTEK_EQ : TTEK_DIFFERENT_QUALS;
+                        return cmp_result(same_quals, same_attrs);
 
                 tree_type_kind k = tree_get_type_kind(a);
                 if (k != tree_get_type_kind(b))
@@ -568,7 +576,7 @@ extern tree_type_equality_kind tree_compare_types(const tree_type* a, const tree
                         case TTK_BUILTIN:
                                 if (tree_get_builtin_type_kind(a) != tree_get_builtin_type_kind(b))
                                         return TTEK_NEQ;
-                                return same_quals ? TTEK_EQ : TTEK_DIFFERENT_QUALS;
+                                return cmp_result(same_quals, same_attrs);
                         case TTK_POINTER:
                                 a = tree_get_pointer_target(a);
                                 b = tree_get_pointer_target(b);
@@ -584,7 +592,7 @@ extern tree_type_equality_kind tree_compare_types(const tree_type* a, const tree
                                 if (tree_func_type_is_transaction_safe(a) != tree_func_type_is_transaction_safe(b)
                                         || tree_get_func_type_cc(a) != tree_get_func_type_cc(b))
                                 {
-                                        return TTEK_DIFFERENT_ATTRIBS;
+                                        same_attrs = false;
                                 }
                                 tree_type_equality_kind ek = tree_compare_function_type_params(a, b);
                                 if (ek == TTEK_NEQ)
@@ -598,7 +606,7 @@ extern tree_type_equality_kind tree_compare_types(const tree_type* a, const tree
                         case TTK_DECL:
                                 if (!tree_decl_types_are_same(a, b))
                                         return TTEK_NEQ;
-                                return same_quals ? TTEK_EQ : TTEK_DIFFERENT_QUALS;
+                                return cmp_result(same_quals, same_attrs);
 
                         default:
                                 assert(0 && "Invalid type");
