@@ -223,6 +223,11 @@ static bool tree_eval_cast(
                 result->error = expr;
                 return false;
         }
+        if (tree_type_is_pointer(cast_type) && result->kind == TERK_INTEGER)
+        {
+                result->kind = TERK_ADDRESS_CONSTANT;
+                return true;
+        }
 
         if (!tree_type_is_arithmetic(cast_type))
         {
