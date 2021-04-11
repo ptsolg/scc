@@ -82,8 +82,6 @@ extern bool c_sema_in_atomic_block(const c_sema* self);
 extern bool c_sema_in_transaction_safe_function(const c_sema* self);
 extern bool c_sema_in_transaction_safe_block(const c_sema* self);
 
-
-extern bool c_sema_types_are_same(const c_sema* self, const tree_type* a, const tree_type* b);
 extern bool c_sema_types_are_compatible(
         const c_sema* self, const tree_type* a, const tree_type* b, bool unqualify);
 extern bool c_sema_require_complete_type(const c_sema* self, tree_location loc, const tree_type* type);

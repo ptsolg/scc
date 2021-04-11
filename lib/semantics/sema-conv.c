@@ -5,7 +5,7 @@ extern tree_expr* c_sema_new_impl_cast(c_sema* self, tree_expr* e, tree_type* t)
 {
         tree_type* et = tree_desugar_type(tree_get_expr_type(e));
 
-        if (c_sema_types_are_same(self, tree_get_modified_type(et), tree_get_modified_type(t)))
+        if (c_sema_types_are_compatible(self, et, t, true))
                 return e;
   
         return tree_new_cast_expr(self->context,
@@ -145,7 +145,7 @@ extern tree_type* c_sema_usual_arithmetic_conversion(
 
         assert(tree_type_is_arithmetic(lt));
         assert(tree_type_is_arithmetic(rt)); 
-        if (c_sema_types_are_same(self, lt, rt))
+        if (c_sema_types_are_compatible(self, lt, rt, false))
                 return lt;
 
         tree_type* result = c_sema_get_type_for_usual_arithmetic_conversion(self, lt, rt);
@@ -256,7 +256,7 @@ extern tree_type* c_sema_assignment_conversion(
         {
                 if (!tree_type_is_record(rt))
                         return c_assignment_conversion_error(r, CACRK_RHS_NOT_A_RECORD);
-                if (!c_sema_types_are_same(self, lt, rt))
+                if (!c_sema_types_are_compatible(self, lt, rt, true))
                         return c_assignment_conversion_error(r, CACRK_INCOMPATIBLE_RECORDS);
         }
         else if (tree_type_is_pointer(lt) && tree_type_is_pointer(rt))

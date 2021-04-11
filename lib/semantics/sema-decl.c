@@ -1117,7 +1117,7 @@ static bool c_sema_check_external_decl_redefinition(
                 return false;
         }
 
-        if (!c_sema_types_are_same(self, tree_get_decl_type(decl), tree_get_decl_type(other)))
+        if (!c_sema_types_are_compatible(self, tree_get_decl_type(decl), tree_get_decl_type(other), false))
         {
                 c_error_conflicting_types(self->ccontext, decl);
                 return false;
