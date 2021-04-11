@@ -40,7 +40,7 @@ extern void ssa_emit_type(ssa_module_emitter* self, const tree_type* type)
                                 ssa_emit_type(self, *it);
                         type = tree_get_func_type_result(type);
                 }
-                else if (k == TTK_DECL)
+                else if (tree_type_is_record(type))
                 {
                         ssa_emit_record_decl(self, tree_get_decl_type_entity(type));
                         return;

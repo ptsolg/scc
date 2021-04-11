@@ -626,21 +626,27 @@ static void remove_value_opt(ssa_value* val)
 static bool ssa_emit_record_initializer(ssa_function_emitter* self, ssa_value* record, const tree_expr* init)
 {
         assert(tree_get_init_list_exprs_size(init));
-        tree_decl* decl = tree_get_decl_type_entity(
+        tree_decl* rec = tree_get_decl_type_entity(
                 tree_desugar_type(tree_get_pointer_target(ssa_get_value_type(record))));
-        if (tree_record_is_union(decl))
+        tree_decl_scope* fields = tree_get_record_fields(rec);
+
+        if (tree_record_is_union(rec))
         {
-                tree_decl* first_field = tree_skip_non_field_decls(tree_get_record_fields_begin(decl));
-                ssa_value* ssa_first_field = ssa_build_getfieldaddr(
-                        &self->builder, record, first_field);
-                if (!ssa_first_field || !ssa_emit_local_var_initializer(self, ssa_first_field, init))
+                assert(tree_get_init_list_exprs_size(init) == 1);
+                tree_expr* des = tree_get_init_list_expr(init, 0);
+                tree_designator* fd = tree_get_designation_designators_begin(des)[0];
+                tree_decl* field = tree_decl_scope_lookup(
+                        fields, TLK_DECL, tree_get_designator_field(fd), false);
+                assert(field);
+                ssa_value* ssa_field = ssa_build_getfieldaddr(&self->builder, record, field);
+                if (!ssa_emit_local_var_initializer(self, ssa_field, tree_get_designation_init(des)))
                         return false;
-                remove_value_opt(ssa_first_field);
+                remove_value_opt(ssa_field);
                 return true;
         }
 
         size_t i = 0;
-        TREE_FOREACH_DECL_IN_SCOPE(tree_get_record_fields(decl), it)
+        TREE_FOREACH_DECL_IN_SCOPE(fields, it)
         {
                 if (!tree_decl_is(it, TDK_FIELD))
                         continue;

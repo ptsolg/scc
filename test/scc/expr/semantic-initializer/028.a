@@ -1,0 +1,6 @@
+
+union
+{
+	int a;
+	int b;
+} c = { .b=20 };

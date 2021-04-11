@@ -48,8 +48,12 @@ extern tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, t
                 if (tree_record_is_union(rec))
                 {
                         tree_decl* first_field = tree_skip_non_field_decls(tree_get_record_fields_begin(rec));
-                        tree_add_init_list_expr(list, self->context,
+                        tree_designator* fd = tree_new_field_designator(
+                                self->context, TREE_INVALID_LOC, tree_get_decl_name(first_field));
+                        tree_expr* des = tree_new_designation(self->context, TREE_INVALID_LOC, 
                                 c_sema_get_default_initializer(self, tree_get_decl_type(first_field), sc));
+                        tree_add_designation_designator(des, self->context, fd);
+                        tree_add_init_list_expr(list, self->context, des);
                         return list;
                 }
 
@@ -96,10 +100,19 @@ typedef struct _c_object
         };
 } c_object;
 
-static void _c_initialize_subobject_with(c_object* self, tree_expr* e)
+static void _c_initialize_subobject_with(c_object* self, tree_context* ctx, tree_expr* e)
 {
         if (self->kind == COK_SCALAR)
                 self->semantic_initializer = e;
+        else if (self->kind == COK_UNION)
+        {
+                tree_location loc = tree_get_expr_loc(e);
+                tree_designator* fd = tree_new_field_designator(ctx, loc, tree_get_decl_name(self->record.field));
+                tree_expr* des = tree_new_designation(ctx, loc, e);
+                assert(fd && des);
+                tree_add_designation_designator(des, ctx, fd);
+                tree_set_init_list_expr(self->semantic_initializer, 0, des);
+        }
         else
         {
                 uint index = self->kind == COK_ARRAY
@@ -122,7 +135,41 @@ typedef struct
         c_sema* sema;
 } c_initialization_context;
 
-static void c_init_object(c_initialization_context* ic, c_object* o, tree_type* type)
+static bool maybe_init_from_parent(c_object* o, c_object* parent)
+{
+        if (!parent)
+                return false;
+        
+        tree_expr* init = parent->semantic_initializer;
+        assert(init);
+
+        if (parent->kind == COK_UNION)
+        {
+                tree_expr* des = tree_get_init_list_expr(init, 0);
+                if (!des)
+                        return false;
+                init = tree_get_designation_init(des);
+                assert(init);
+                if (tree_get_expr_type(init) == o->type)
+                {
+                        o->semantic_initializer = init;
+                        return true;
+                }
+                return false;
+        }
+
+        uint index = parent->kind == COK_ARRAY
+                ? parent->array.index
+                : tree_get_field_index(parent->record.field);
+        init = tree_get_init_list_expr(init, index);
+        if (!init || tree_expr_is(init, TEK_UNKNOWN))
+                return false;
+
+        o->semantic_initializer = init;
+        return true;
+}
+
+static void c_init_object(c_initialization_context* ic, c_object* o, tree_type* type, c_object* parent)
 {
         type = tree_desugar_type(type);
         o->type = type;
@@ -146,7 +193,9 @@ static void c_init_object(c_initialization_context* ic, c_object* o, tree_type* 
         else
                 o->kind = COK_SCALAR;
 
-        if (!ic->build_semantic_initializer || o->kind == COK_SCALAR)
+        if (!ic->build_semantic_initializer)
+                return;
+        if (maybe_init_from_parent(o, parent))
                 return;
 
         size_t size = 1;
@@ -174,7 +223,7 @@ static void c_init_initialization_context(
         c_object_vec_init(&self->objects);
 
         c_object o;
-        c_init_object(self, &o, object);
+        c_init_object(self, &o, object, NULL);
         c_object_vec_push(&self->objects, o);
         self->object = c_object_vec_last_ptr(&self->objects);
 }
@@ -261,7 +310,7 @@ static void c_goto_next_subobject(c_initialization_context* ic)
 static void c_initialize_subobject_with(c_initialization_context* ic, tree_expr* e)
 {
         if (ic->build_semantic_initializer)
-                _c_initialize_subobject_with(ic->object, e);
+                _c_initialize_subobject_with(ic->object, ic->sema->context, e);
 }
 
 static c_object* c_get_object_parent(const c_initialization_context* ic)
@@ -328,7 +377,7 @@ static void c_finish_subobject(c_initialization_context* ic)
         assert(o->semantic_initializer);
         c_object* parent = c_get_object_parent(ic);
         if (parent)
-                _c_initialize_subobject_with(parent, o->semantic_initializer);
+                _c_initialize_subobject_with(parent, ic->sema->context, o->semantic_initializer);
 }
 
 static void c_initialize_object_with_string(c_initialization_context* ic, const uint8_t* data, uint size)
@@ -356,7 +405,7 @@ static void c_enter_subobject(c_initialization_context* ic)
         tree_type* t = c_get_subobject_type(ic);
         assert(t && ic->objects.size > 0);
         c_object o;
-        c_init_object(ic, &o, t);
+        c_init_object(ic, &o, t, ic->object);
         c_object_vec_push(&ic->objects, o);
         ic->object = c_object_vec_last_ptr(&ic->objects);
 }
