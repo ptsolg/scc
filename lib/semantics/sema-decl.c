@@ -763,13 +763,9 @@ static bool c_sema_check_field_decl(const c_sema* self, tree_decl* field, int fl
                 c_error_field_function(self->ccontext, field);
                 return false;
         }
-
         if (!c_sema_check_field_type(self, field, mt, flags))
                 return false;
-
-        if (!c_sema_check_field_bitwidth(self, field))  
-                return false;
-        return field;
+        return c_sema_check_field_bitwidth(self, field);
 }
 
 static bool c_sema_check_record_fields(c_sema* self, tree_decl* rec, int parent_flags)
