@@ -781,13 +781,13 @@ static bool c_sema_check_record_fields(c_sema* self, tree_decl* rec, int parent_
         tree_decl* end = tree_get_decl_scope_decls_end(scope);
 
         int field_flags = parent_flags & FIRST_FIELD;
-        int reset_first_field_mask = tree_record_is_union(rec)
-                ? 0xFFFFFFFF : ~FIRST_FIELD;
+        int is_union = tree_record_is_union(rec);
+        int reset_first_field_mask = is_union ? 0xFFFFFFFF : ~FIRST_FIELD;
         for (tree_decl* next, *it = begin; it != end;
                 it = next, field_flags &= reset_first_field_mask)
         {
                 next = tree_get_next_field(it);
-                field_flags |= LAST_FIELD * ((parent_flags & LAST_FIELD) && next == end);
+                field_flags |= LAST_FIELD * ((parent_flags & LAST_FIELD) && (next == end || is_union));
 
                 tree_type* ft = tree_get_decl_type(it);
                 if (tree_declared_type_is(ft, TDK_RECORD))
@@ -809,7 +809,6 @@ static bool c_sema_check_record_fields(c_sema* self, tree_decl* rec, int parent_
 
 extern tree_decl* c_sema_complete_record_decl(c_sema* self, tree_decl* rec, tree_location end)
 {
-
         if (tree_decl_is_global(rec) && !c_sema_check_record_fields(self, rec, FIRST_FIELD | LAST_FIELD))
                 return NULL;
         tree_set_tag_decl_complete(rec, true);
