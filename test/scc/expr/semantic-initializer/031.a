@@ -1,0 +1,7 @@
+struct
+{
+	struct
+	{
+		int a, b;
+	} c;
+} d = { { 1, 2 } };

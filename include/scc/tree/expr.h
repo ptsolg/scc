@@ -159,14 +159,22 @@ struct _tree_paren_expr
         tree_expr* expr;
 };
 
+typedef enum _tree_designator_kind
+{
+        TREE_DESIGNATOR_INDEX,
+        TREE_DESIGNATOR_FIELD_NAME,
+        TREE_DESIGNATOR_FIELD,
+} tree_designator_kind;
+
 typedef struct _tree_designator
 {
-        bool is_field;
+        tree_designator_kind kind;
         tree_location loc;
 
         union
         {
-                tree_id field;
+                tree_id field_name;
+                tree_decl* field;
                 tree_expr* index;
         };
 } tree_designator;
@@ -736,8 +744,11 @@ static TREE_INLINE void tree_set_paren_expr(tree_expr* self, tree_expr* expr)
         self->paren.expr = expr;
 }
 
+extern tree_designator* tree_new_field_name_designator(
+        tree_context* context, tree_location loc, tree_id field_name);
+
 extern tree_designator* tree_new_field_designator(
-        tree_context* context, tree_location loc, tree_id field);
+        tree_context* context, tree_location loc, tree_decl* field);
 
 extern tree_designator* tree_new_array_designator(
         tree_context* context, tree_location loc, tree_expr* index);
@@ -747,34 +758,37 @@ static TREE_INLINE tree_location tree_get_designator_loc(const tree_designator* 
         return self->loc;
 }
 
-static TREE_INLINE bool tree_designator_is_field(const tree_designator* self)
+static TREE_INLINE tree_designator_kind tree_get_designator_kind(const tree_designator* self)
 {
-        return self->is_field;
+        return self->kind;
 }
 
-static TREE_INLINE tree_id tree_get_designator_field(const tree_designator* self)
+static TREE_INLINE bool tree_designator_is(const tree_designator* self, tree_designator_kind k)
 {
+        return self->kind == k;
+}
+
+static TREE_INLINE tree_id tree_get_designator_field_name(const tree_designator* self)
+{
+        assert(tree_designator_is(self, TREE_DESIGNATOR_FIELD_NAME));
+        return self->field_name;
+}
+
+static TREE_INLINE tree_decl* tree_get_designator_field(const tree_designator* self)
+{
+        assert(tree_designator_is(self, TREE_DESIGNATOR_FIELD));
         return self->field;
 }
 
 static TREE_INLINE tree_expr* tree_get_designator_index(const tree_designator* self)
 {
+        assert(tree_designator_is(self, TREE_DESIGNATOR_INDEX));
         return self->index;
 }
 
 static TREE_INLINE void tree_set_designator_loc(tree_designator* self, tree_location loc)
 {
         self->loc = loc;
-}
-
-static TREE_INLINE void tree_set_designator_member(tree_designator* self, tree_id field)
-{
-        self->field = field;
-}
-
-static TREE_INLINE void tree_set_designator_index(tree_designator* self, tree_expr* index)
-{
-        self->index = index;
 }
 
 extern tree_expr* tree_new_designation(tree_context* context, tree_location loc, tree_expr* init);

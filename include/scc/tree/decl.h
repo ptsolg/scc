@@ -514,6 +514,19 @@ static TREE_INLINE const tree_decl_scope* tree_get_record_cfields(const tree_dec
         return &self->record.fields;
 }
 
+static TREE_INLINE tree_decl* tree_get_first_union_field(tree_decl* self)
+{
+        tree_decl* it = tree_get_record_fields_begin(self);
+        tree_decl* end = tree_get_record_fields_end(self);
+        while (it != end)
+        {
+                if ((tree_decl_is(it, TDK_FIELD) || tree_decl_is(it, TDK_INDIRECT_FIELD)) && !tree_decl_is_anon(it))
+                        break;
+                it = tree_get_next_decl(it);
+        }
+        return it;
+}
+
 static TREE_INLINE bool tree_record_is_union(const tree_decl* self)
 {
         return self->record.is_union;

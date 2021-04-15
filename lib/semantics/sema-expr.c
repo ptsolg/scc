@@ -1107,7 +1107,7 @@ extern tree_expr* c_sema_set_designation_initializer(c_sema* self, tree_expr* de
 
 extern tree_designator* c_sema_new_field_designator(c_sema* self, tree_location loc, tree_id field)
 {
-        return tree_new_field_designator(self->context, loc, field);
+        return tree_new_field_name_designator(self->context, loc, field);
 }
 
 extern tree_designator* c_sema_new_array_designator(c_sema* self, tree_location loc, tree_expr* index)

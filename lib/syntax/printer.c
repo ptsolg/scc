@@ -545,17 +545,20 @@ static void c_print_designation(c_printer* self, const tree_expr* d)
 {
         TREE_FOREACH_DESIGNATION_DESIGNATOR(d, it, end)
         {
-                if (tree_designator_is_field(*it))
-                {
-                        c_printrw(self, CTK_DOT);
-                        c_print_id(self, tree_get_designator_field(*it));
-                }
-                else
+                tree_designator_kind dk = tree_get_designator_kind(*it);
+                if (dk == TREE_DESIGNATOR_INDEX)
                 {
                         c_print_lsbracket(self);
                         c_print_expr(self, tree_get_designator_index(*it));
                         c_print_rsbracket(self);
+                        continue;
                 }
+
+                tree_id name = dk == TREE_DESIGNATOR_FIELD_NAME
+                        ? tree_get_designator_field_name(*it)
+                        : tree_get_decl_name(tree_get_designator_field(*it));
+                c_printrw(self, CTK_DOT);
+                c_print_id(self, name);
         }
 
         c_print_space(self);

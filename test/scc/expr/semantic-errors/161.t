@@ -6,4 +6,4 @@ typedef struct {
 	int b;
 } S;
 
-S a = { 10, { .a = 10 } };
+S a = { 10, { .a = {{20}} } };

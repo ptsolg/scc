@@ -271,16 +271,29 @@ extern tree_expr* tree_new_paren_expr(
         return e;
 }
 
-extern tree_designator* tree_new_field_designator(
-        tree_context* context, tree_location loc, tree_id field)
+extern tree_designator* tree_new_field_name_designator(
+        tree_context* context, tree_location loc, tree_id field_name)
 {
         tree_designator* d = tree_allocate_node(context, sizeof(tree_designator));
         if (!d)
                 return NULL;
 
-        d->is_field = true;
+        d->kind = TREE_DESIGNATOR_FIELD_NAME;
+        d->field_name = field_name;
+        d->loc = loc;
+        return d;
+}
+
+extern tree_designator* tree_new_field_designator(
+        tree_context* context, tree_location loc, tree_decl* field)
+{
+        tree_designator* d = tree_allocate_node(context, sizeof(tree_designator));
+        if (!d)
+                return NULL;
+
+        d->kind = TREE_DESIGNATOR_FIELD;
         d->field = field;
-        tree_set_designator_loc(d, loc);
+        d->loc = loc;
         return d;
 }
 
@@ -291,9 +304,9 @@ extern tree_designator* tree_new_array_designator(
         if (!d)
                 return NULL;
 
-        d->is_field = false;
+        d->kind = TREE_DESIGNATOR_INDEX;
         d->index = index;
-        tree_set_designator_loc(d, loc);
+        d->loc = loc;
         return d;
 }
 

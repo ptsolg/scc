@@ -635,8 +635,7 @@ static bool ssa_emit_record_initializer(ssa_function_emitter* self, ssa_value* r
                 assert(tree_get_init_list_exprs_size(init) == 1);
                 tree_expr* des = tree_get_init_list_expr(init, 0);
                 tree_designator* fd = tree_get_designation_designators_begin(des)[0];
-                tree_decl* field = tree_decl_scope_lookup(
-                        fields, TLK_DECL, tree_get_designator_field(fd), false);
+                tree_decl* field = tree_get_designator_field(fd);
                 assert(field);
                 ssa_value* ssa_field = ssa_build_getfieldaddr(&self->builder, record, field);
                 if (!ssa_emit_local_var_initializer(self, ssa_field, tree_get_designation_init(des)))

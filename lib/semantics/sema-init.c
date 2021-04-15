@@ -47,9 +47,9 @@ extern tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, t
 
                 if (tree_record_is_union(rec))
                 {
-                        tree_decl* first_field = tree_skip_non_field_decls(tree_get_record_fields_begin(rec));
+                        tree_decl* first_field = tree_get_first_union_field(rec);
                         tree_designator* fd = tree_new_field_designator(
-                                self->context, TREE_INVALID_LOC, tree_get_decl_name(first_field));
+                                self->context, TREE_INVALID_LOC, first_field);
                         tree_expr* des = tree_new_designation(self->context, TREE_INVALID_LOC, 
                                 c_sema_get_default_initializer(self, tree_get_decl_type(first_field), sc));
                         tree_add_designation_designator(des, self->context, fd);
@@ -107,7 +107,7 @@ static void _c_initialize_subobject_with(c_object* self, tree_context* ctx, tree
         else if (self->kind == COK_UNION)
         {
                 tree_location loc = tree_get_expr_loc(e);
-                tree_designator* fd = tree_new_field_designator(ctx, loc, tree_get_decl_name(self->record.field));
+                tree_designator* fd = tree_new_field_designator(ctx, loc, self->record.field);
                 tree_expr* des = tree_new_designation(ctx, loc, e);
                 assert(fd && des);
                 tree_add_designation_designator(des, ctx, fd);
@@ -180,8 +180,12 @@ static void c_init_object(c_initialization_context* ic, c_object* o, tree_type* 
         if (tree_type_is_record(type))
         {
                 o->record.decl = tree_get_decl_type_entity(type);
-                o->kind = tree_record_is_union(o->record.decl) ? COK_UNION : COK_STRUCT;
-                o->record.field = tree_skip_non_field_decls(tree_get_record_fields_begin(o->record.decl));
+                int is_union = tree_record_is_union(o->record.decl);
+                tree_decl* begin = tree_get_record_fields_begin(o->record.decl);
+                o->kind = is_union ? COK_UNION : COK_STRUCT;
+                o->record.field = is_union
+                        ? tree_get_first_union_field(o->record.decl)
+                        : tree_skip_non_field_decls(begin);
         }
         else if (tree_type_is_array(type))
         {
@@ -433,7 +437,7 @@ static bool c_sema_check_field_designator(
         }
 
         tree_decl* rec = ic->object->record.decl;
-        tree_id name = tree_get_designator_field(designator);
+        tree_id name = tree_get_designator_field_name(designator);
         tree_id loc = tree_get_designator_loc(designator);
         tree_decl* field = c_sema_require_field_decl(self, rec, loc, name);
         if (!field)
@@ -497,7 +501,7 @@ static bool c_sema_check_designated_initializer(
 
         TREE_FOREACH_DESIGNATION_DESIGNATOR(designation, it, end)
         {
-                bool succeeded = tree_designator_is_field(*it)
+                bool succeeded = tree_designator_is(*it, TREE_DESIGNATOR_FIELD_NAME)
                         ? c_sema_check_field_designator(self, ic, *it)
                         : c_sema_check_array_designator(self, ic, *it);
                 if (!succeeded)
