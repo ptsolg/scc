@@ -374,6 +374,16 @@ extern ssa_value* ssa_emit_call_expr(ssa_function_emitter* self, const tree_expr
 
         ssa_value* call = ssa_build_call_n(&self->builder, func, (ssa_value**)args.data, args.size);
         ssa_dispose_array(self->context, &args);
+
+        tree_type* t = tree_get_expr_type(expr);
+        if (tree_expr_is_rvalue(expr) && tree_type_is_record(t))
+        {
+                ssa_value* result = ssa_emit_alloca(self, t);
+                if (!result || !ssa_emit_store(self, call, result))
+                        return NULL;
+                call = result;
+        }
+
         return call;
 }
 
