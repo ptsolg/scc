@@ -391,7 +391,7 @@ extern tree_expr* c_sema_new_member_expr(
 
         tree_decl* record = tree_get_decl_type_entity(lhs_type);
         if (tree_decl_type_is_referenced(lhs_type))
-                record = c_sema_global_lookup(self, tree_get_decl_name(record), TLK_TAG);
+                record = c_sema_local_lookup(self, tree_get_decl_name(record), TLK_TAG);
         assert(record);
 
         tree_decl* field = c_sema_require_field_decl(self, record, id_loc, id);

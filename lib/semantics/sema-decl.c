@@ -4,6 +4,7 @@
 #include "scc/tree/decl.h"
 #include "scc/tree/eval.h"
 #include "scc/tree/target.h"
+#include "scc/tree/stmt.h"
 #include "errors.h"
 
 extern tree_decl* c_sema_local_lookup(const c_sema* self, tree_id name, tree_lookup_kind lk)
@@ -641,26 +642,19 @@ extern tree_decl* c_sema_complete_enum_decl(c_sema* self, tree_decl* enum_, tree
         return enum_;
 }
 
-static tree_decl* c_sema_new_record_decl(
-        c_sema* self, tree_location kw_loc, tree_id name, bool is_union)
-{
-        return tree_new_record_decl(
-                self->context,
-                self->locals,
-                tree_create_xloc(kw_loc, kw_loc),
-                name,
-                is_union);
-}
-
 static tree_decl* c_sema_lookup_or_create_record_decl(
         c_sema* self, tree_location kw_loc, tree_id name, bool is_union, bool parent_lookup)
 {
         tree_decl* d = tree_decl_scope_lookup(self->locals, TLK_TAG, name, parent_lookup);
         if (!d)
         {
-                d = c_sema_new_record_decl(self, kw_loc, name, is_union);
+                tree_decl_scope* scope = parent_lookup
+                        ? self->scope ? tree_get_scope_decls(self->scope) : self->globals
+                        : self->locals;
+                tree_xlocation xloc = tree_create_xloc(kw_loc, kw_loc);
+                d = tree_new_record_decl(self->context, scope, xloc, name, is_union);
                 tree_set_decl_implicit(d, true);
-                if (!csema_add_decl_to_scope(self, self->locals, d))
+                if (!csema_add_decl_to_scope(self, scope, d))
                         return NULL;
         }
         else if (!tree_decl_is(d, TDK_RECORD) || tree_record_is_union(d) != is_union)
