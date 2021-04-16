@@ -35,6 +35,8 @@ extern ssa_instr* ssa_new_instr(
         ssa_instr* instr = ssa_allocate_node(context, size);
         if (!instr)
                 return NULL;
+        if (type && tree_type_is(type, TTK_ADJUSTED))
+                type = tree_desugar_type(tree_get_adjusted_type(type));
 
         ssa_init_local_var(ssa_get_instr_var(instr), type);
         ssa_set_instr_kind(instr, kind);
