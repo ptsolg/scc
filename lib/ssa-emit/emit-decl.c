@@ -197,7 +197,10 @@ extern bool ssa_emit_global_decl(ssa_module_emitter* self, tree_decl* decl)
 
 static bool ssa_emit_local_var_decl(ssa_function_emitter* self, tree_decl* var)
 {
-        ssa_emit_type(self->module_emitter, tree_get_decl_type(var));
+        tree_type* dt = tree_get_decl_type(var);
+        ssa_emit_type(self->module_emitter, dt);
+        if (tree_decl_is_anon(var))
+                return true;
 
         ssa_value* val;
         tree_storage_duration sd = tree_get_decl_storage_duration(var);
