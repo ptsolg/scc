@@ -609,7 +609,7 @@ static tree_decl* c_sema_lookup_or_create_enum_decl(
         }
         else if (tree_get_decl_kind(e) != TDK_ENUM)
         {
-                c_error_wrong_king_of_tag(self->ccontext, kw_loc, name);
+                c_error_wrong_kind_of_tag(self->ccontext, kw_loc, name);
                 return NULL;
         }
         return e;
@@ -665,7 +665,7 @@ static tree_decl* c_sema_lookup_or_create_record_decl(
         }
         else if (!tree_decl_is(d, TDK_RECORD) || tree_record_is_union(d) != is_union)
         {
-                c_error_wrong_king_of_tag(self->ccontext, kw_loc, name);
+                c_error_wrong_kind_of_tag(self->ccontext, kw_loc, name);
                 return NULL;
         }
         return d;

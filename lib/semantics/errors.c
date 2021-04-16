@@ -193,7 +193,7 @@ extern void c_error_enumerator_value_isnt_constant(c_context* self, tree_locatio
                 c_context_get_id_string(self, name));
 }
 
-extern void c_error_wrong_king_of_tag(c_context* self, tree_location loc, tree_id name)
+extern void c_error_wrong_kind_of_tag(c_context* self, tree_location loc, tree_id name)
 {
         c_error(self, CES_ERROR, loc, "'%s' defined as wrong kind of tag",
                 c_context_get_id_string(self, name));

@@ -45,7 +45,7 @@ extern void c_error_redefinition(c_context* self, tree_location loc, tree_id id)
 extern void c_error_decl_redefinition(c_context* self, const tree_decl* decl);
 extern void c_error_enumerator_value_isnt_constant(c_context* self, tree_location loc, tree_id name);
 
-extern void c_error_wrong_king_of_tag(c_context* self, tree_location loc, tree_id name);
+extern void c_error_wrong_kind_of_tag(c_context* self, tree_location loc, tree_id name);
 extern void c_error_field_function(c_context* self, const tree_decl* field);
 extern void c_error_invalid_bitfield_type(c_context* self, const tree_decl* field);
 extern void c_error_bitfield_width_isnt_constant(c_context* self, const tree_decl* field);
