@@ -73,6 +73,12 @@ static ssa_const* emit_decl_addr(ssa_module_emitter* self, tree_decl* decl)
                 ptr, ssa_get_global_decl(self, decl));
 }
 
+static ssa_const* emit_enumerator(ssa_module_emitter* self, tree_decl* e)
+{
+        return ssa_new_const_literal(self->context,
+                tree_get_decl_type(e), *tree_get_enumerator_cvalue(e));
+}
+
 static ssa_const* emit_member_addr(ssa_module_emitter* self, const tree_expr* expr)
 {
         ssa_const* var = ssa_emit_const_expr(self, tree_get_member_expr_lhs(expr));
@@ -162,7 +168,12 @@ extern ssa_const* ssa_emit_const_expr(ssa_module_emitter* self, const tree_expr*
         if (tree_expr_is_literal(expr))
                 return emit_literal(self, expr);
         else if (tree_expr_is(expr, TEK_DECL))
-                return emit_decl_addr(self, tree_get_decl_expr_entity(expr));
+        {
+                tree_decl* entity = tree_get_decl_expr_entity(expr);
+                return tree_decl_is(entity, TDK_ENUMERATOR)
+                        ? emit_enumerator(self, entity)
+                        : emit_decl_addr(self, entity);
+        }
         else if (tree_expr_is(expr, TEK_MEMBER))
                 return emit_member_addr(self, expr);
         else if (tree_expr_is(expr, TEK_SUBSCRIPT))
