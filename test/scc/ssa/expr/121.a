@@ -2,7 +2,7 @@
 @0:
     $1 = alloca 4
     $2 = getfieldaddr $1, 0
-    $3 = getfieldaddr $2, 0
+    $3 = cast $2
     $4 = getfieldaddr $3, 0
     store 0, $4
     ret
