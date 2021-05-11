@@ -1,1 +1,1 @@
-159.t:1:17: error: invalid initializer
+159.t:1:17: error: array of inappropriate type initialized from string constant

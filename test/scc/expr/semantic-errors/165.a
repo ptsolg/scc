@@ -1,1 +1,1 @@
-165.t:4:18: error: invalid initializer
+165.t:4:23: error: too many initializer values

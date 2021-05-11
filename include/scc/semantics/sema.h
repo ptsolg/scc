@@ -113,6 +113,8 @@ extern tree_type* c_sema_new_array_type(
 extern tree_type* c_sema_new_constant_array_type(
         c_sema* self, tree_type_quals quals, tree_type* eltype, uint size);
 
+extern void c_sema_set_incomplete_array_size(c_sema* sema, tree_type* arr, uint size);
+
 extern bool c_sema_typedef_name_exists(c_sema* self, tree_id name);
 
 extern bool c_sema_check_array_type(const c_sema* self, const tree_type* t, tree_location l);
@@ -367,21 +369,12 @@ extern tree_expr* c_sema_new_initializer_list(c_sema* self, tree_location loc);
 extern tree_expr* c_sema_add_initializer_list_expr(
         c_sema* self, tree_expr* list, tree_expr* expr);
 
-typedef struct _c_initializer_check_result
-{
-        tree_expr* syntactical_initializer;
-        tree_expr* semantic_initializer;
-        bool check_only;
-} c_initializer_check_result;
-
 extern tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, tree_storage_class sc);
-extern bool c_sema_check_initializer(
+extern tree_expr* c_sema_get_semantic_initializer(
         c_sema* self,
         tree_type* object,
         tree_storage_class object_sc,
-        tree_expr* init,
-        c_initializer_check_result* result,
-        bool check_only);
+        tree_expr** init);
 
 extern tree_expr* c_sema_new_designation(c_sema* self, tree_location start_loc);
 extern tree_expr* c_sema_add_designation_designator(

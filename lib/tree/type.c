@@ -380,6 +380,27 @@ extern bool tree_type_is_void_pointer(const tree_type* self)
         return false;
 }
 
+extern bool tree_type_is_char(const tree_type* self)
+{
+        self = tree_desugar_type_c(self);
+        return tree_builtin_type_is(self, TBTK_INT8)
+                || tree_builtin_type_is(self, TBTK_UINT8);
+}
+
+extern bool tree_type_is_char_pointer(const tree_type* self)
+{
+        self = tree_desugar_type_c(self);
+        return tree_type_is(self, TTK_POINTER)
+                && tree_type_is_char(tree_get_pointer_target(self));
+}
+
+extern bool tree_type_is_char_array(const tree_type* self)
+{
+        self = tree_desugar_type_c(self);
+        return tree_type_is(self, TTK_ARRAY)
+                && tree_type_is_char(tree_get_array_eltype(self));
+}
+
 extern bool tree_type_is_incomplete(const tree_type* self)
 {
         if (!self)

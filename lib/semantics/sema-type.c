@@ -149,6 +149,16 @@ extern tree_type* c_sema_new_constant_array_type(
         return tree_new_constant_array_type(self->context, eltype, NULL, &value);
 }
 
+extern void c_sema_set_incomplete_array_size(c_sema* sema, tree_type* arr, uint size)
+{
+        assert(tree_array_is(arr, TAK_INCOMPLETE));
+
+        struct num size_value;
+        init_int(&size_value, size,
+                8 * tree_get_sizeof(sema->context->target, c_sema_get_size_t_type(sema)));
+        tree_init_constant_array_type(arr, tree_get_array_eltype(arr), NULL, &size_value);
+}
+
 extern bool c_sema_typedef_name_exists(c_sema* self, tree_id name)
 {
         tree_decl* d = c_sema_local_lookup(self, name, TLK_DECL);

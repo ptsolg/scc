@@ -615,6 +615,10 @@ extern bool tree_type_is_function_pointer(const tree_type* self);
 extern bool tree_type_is_object_pointer(const tree_type* self);
 extern bool tree_type_is_void_pointer(const tree_type* self);
 
+extern bool tree_type_is_char(const tree_type* self);
+extern bool tree_type_is_char_pointer(const tree_type* self);
+extern bool tree_type_is_char_array(const tree_type* self);
+
 // returns false if type size cannot be computed
 extern bool tree_type_is_incomplete(const tree_type* self);
 extern bool tree_type_is_incomplete_or_object(const tree_type* self);

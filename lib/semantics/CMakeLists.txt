@@ -1,4 +1,6 @@
 add_scc_lib(semantics
+	compound-object.c
+	compound-object.h
 	errors.c
 	errors.h
 	sema.c

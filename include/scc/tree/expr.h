@@ -811,6 +811,11 @@ static TREE_INLINE tree_expr* tree_get_designation_init(const tree_expr* self)
         return self->designation.init;
 }
 
+static TREE_INLINE tree_expr** tree_get_designation_init_ptr(tree_expr* self)
+{
+        return &self->designation.init;
+}
+
 static TREE_INLINE void tree_set_designation_init(tree_expr* self, tree_expr* init)
 {
         self->designation.init = init;

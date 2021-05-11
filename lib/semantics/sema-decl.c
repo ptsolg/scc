@@ -1157,15 +1157,13 @@ extern bool c_sema_set_var_init(c_sema* self, tree_decl* var, tree_expr* init)
         if (!init)
                 return false;
 
-        c_initializer_check_result r;
-        if (!c_sema_check_initializer(self, tree_get_decl_type(var),
-                tree_get_decl_storage_class(var), init, &r, false))
-        {
+        tree_expr* semantic_init = c_sema_get_semantic_initializer(self,
+                tree_get_decl_type(var), tree_get_decl_storage_class(var), &init);
+        if (!semantic_init)
                 return false;
-        }
 
-        tree_set_var_init(var, r.syntactical_initializer);
-        tree_set_var_semantic_init(var, r.semantic_initializer);
+        tree_set_var_init(var, init);
+        tree_set_var_semantic_init(var, semantic_init);
         return true;
 }
 
