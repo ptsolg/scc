@@ -697,12 +697,12 @@ static tree_type* c_sema_check_compare_expr(
         else if (tree_type_is_pointer(lt)
                 && tree_expr_is_null_pointer_constant(self->context, *rhs))
         {
-                ;
+                *rhs = c_sema_new_impl_cast(self, *rhs, lt);
         }
         else if (tree_type_is_pointer(rt)
                 && tree_expr_is_null_pointer_constant(self->context, *lhs))
         {
-                ;
+                *lhs = c_sema_new_impl_cast(self, *lhs, rt);
         }
         else if (tree_type_is_pointer(lt) && tree_type_is_pointer(rt))
         {

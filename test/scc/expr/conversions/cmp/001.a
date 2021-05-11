@@ -1,0 +1,4 @@
+void test()
+{
+	(int*)((void*)0) != ((int*)0);
+}
