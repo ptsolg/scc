@@ -27,10 +27,12 @@ extern tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, t
         }
         else if (k == TTK_ARRAY)
         {
-                assert(tree_array_is(obj, TAK_CONSTANT));
                 tree_type* et = tree_get_array_eltype(obj);
                 tree_expr* init = tree_new_init_list_expr(self->context, TREE_INVALID_LOC);
                 tree_set_expr_type(init, obj);
+                if (!tree_array_is(obj, TAK_CONSTANT))
+                        return init;
+
                 uint size = num_as_u64(tree_get_array_size_value_c(obj));
                 assert(size);
                 for (uint i = 0; i < size; i++)
@@ -60,7 +62,7 @@ extern tree_expr* c_sema_get_default_initializer(c_sema* self, tree_type* obj, t
 
                 TREE_FOREACH_DECL_IN_SCOPE(tree_get_record_fields(rec), it)
                 {
-                        if (!tree_decl_is(it, TDK_FIELD) || tree_decl_is_incomplete_last_field(it))
+                        if (!tree_decl_is(it, TDK_FIELD))
                                 continue;
                         tree_add_init_list_expr(list, self->context,
                                 c_sema_get_default_initializer(self, tree_get_decl_type(it), sc));
