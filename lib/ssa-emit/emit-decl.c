@@ -138,9 +138,8 @@ static bool ssa_emit_global_var_decl(ssa_module_emitter* self, tree_decl* var)
         if (tree_decl_is_anon(var))
                 return true;
 
-        ssa_emit_type(self, tree_get_decl_type(var));
-
-
+        tree_type* t = tree_desugar_type(tree_get_decl_type(var));
+        ssa_emit_type(self, t);
         ssa_value* val = ssa_get_global_decl(self, var);
         if (!val)
         {
@@ -148,20 +147,21 @@ static bool ssa_emit_global_var_decl(ssa_module_emitter* self, tree_decl* var)
                 ssa_add_module_global(self->module, val);
                 ssa_set_global_decl(self, var, val);
         }
-
-        tree_decl* entity = ssa_get_global_var_entity(val);
-        if (tree_get_decl_storage_class(entity) == TSC_EXTERN
-                || tree_get_var_semantic_init(entity) && ssa_get_global_var_init(val))
+        else
         {
-                return true;
+                tree_decl* entity = ssa_get_global_var_entity(val);
+                if (tree_get_decl_storage_class(entity) != TSC_EXTERN)
+                        return true;
         }
 
-        ssa_const* init = ssa_emit_const_expr(self, tree_get_var_semantic_init(entity));
-        if (!init)
+        tree_expr* init = tree_get_var_semantic_init(var);
+        ssa_const* ssa_init = NULL;
+        if (init && !(ssa_init = ssa_emit_const_expr(self, init)))
                 return false;
 
-        ssa_set_global_var_init(val, init);
+        ssa_set_global_var_init(val, ssa_init);
         ssa_set_global_var_entity(val, var);
+        ssa_set_value_type(val, tree_new_pointer_type(self->context->tree, t));
         return true;
 }
 
@@ -195,6 +195,24 @@ extern bool ssa_emit_global_decl(ssa_module_emitter* self, tree_decl* decl)
         }
 }
 
+static bool ssa_emit_static_var_decl(ssa_function_emitter* self, tree_decl* var)
+{
+        ssa_value* val = ssa_new_global_var(self->context, var, NULL);
+        if (!val)
+                return false;
+        
+        ssa_const* ssa_init = NULL;
+        const tree_expr* init = tree_get_var_semantic_init(var);
+        if (init && !(ssa_init = ssa_emit_const_expr(self->module_emitter, init)))
+                return false;
+
+        ssa_set_global_decl(self->module_emitter, var, val);
+        ssa_add_module_global(self->module_emitter->module, val);
+        ssa_set_def(self, var, val);
+        ssa_set_global_var_init(val, ssa_init);
+        return true;
+}
+
 static bool ssa_emit_local_var_decl(ssa_function_emitter* self, tree_decl* var)
 {
         tree_type* dt = tree_get_decl_type(var);
@@ -205,13 +223,7 @@ static bool ssa_emit_local_var_decl(ssa_function_emitter* self, tree_decl* var)
         ssa_value* val;
         tree_storage_duration sd = tree_get_decl_storage_duration(var);
         if (sd == TSD_STATIC || sd == TSD_THREAD)
-        {
-                if (!(val = ssa_new_global_var(self->context, var, NULL)))
-                        return false;
-
-                ssa_set_def(self, var, val);
-                return true;
-        }
+                return ssa_emit_static_var_decl(self, var);
 
         if (!(val = ssa_emit_alloca(self, tree_get_decl_type(var))))
                 return false;
