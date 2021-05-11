@@ -653,7 +653,9 @@ static bool ssa_emit_record_initializer(ssa_function_emitter* self, ssa_value* r
                 tree_designator* fd = tree_get_designation_designators_begin(des)[0];
                 tree_decl* field = tree_get_designator_field(fd);
                 assert(field);
-                ssa_value* ssa_field = ssa_build_getfieldaddr(&self->builder, record, field);
+                tree_type* field_addr = tree_new_pointer_type(
+                        ssa_get_tree(self->context), tree_get_decl_type(field));
+                ssa_value* ssa_field = ssa_build_cast(&self->builder, field_addr, record);
                 if (!ssa_emit_local_var_initializer(self, ssa_field, tree_get_designation_init(des)))
                         return false;
                 remove_value_opt(ssa_field);
