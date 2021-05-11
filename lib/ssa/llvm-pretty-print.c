@@ -79,15 +79,19 @@ static void _ssa_print_type(ssa_printer* self, const tree_type* type, int print_
                         ssa_printc(self, '*');
                         return;
                 case TTK_ARRAY:
+                {
                         unsigned size = tree_array_is(type, TAK_CONSTANT)
                                 ? tree_get_array_size(type) : 0;
                         ssa_printf(self, "[%u x ", size);
                         ssa_print_type(self, tree_get_array_eltype(type));
                         ssa_printc(self, ']');
                         return;
+                }
                 default:
                         if (tree_declared_type_is(type, TDK_RECORD))
                                 ssa_print_record_name(self, tree_get_decl_type_entity(type));
+                        if (tree_declared_type_is(type, TDK_ENUM))
+                                ssa_prints(self, llvm_builtin_type_table[TBTK_INT32]);
         }
 }
 
@@ -682,6 +686,12 @@ static void ssa_print_union_fields(ssa_printer* self, const tree_decl* rec)
 
 static void ssa_print_record_fields(ssa_printer* self, const tree_decl* rec)
 {
+        if (!tree_tag_decl_is_complete(rec))
+        {
+                ssa_prints(self, "opaque");
+                return;
+        }
+
         ssa_prints(self, "<{ ");
         if (tree_record_is_union(rec))
                 ssa_print_union_fields(self, rec);
@@ -811,6 +821,7 @@ static void ssa_print_const(ssa_printer* self, ssa_const* cst, bool print_type)
                         ssa_print_value(self, ssa_get_const_addr(cst), false);
                         break;
                 case SCK_CAST:
+                {
                         ssa_const* operand = ssa_get_const_expr_operand(cst, 0);
                         tree_type* to = ssa_get_const_type(cst);
                         llvm_cast_kind kind = ssa_get_llvm_cast_kind(
@@ -823,6 +834,7 @@ static void ssa_print_const(ssa_printer* self, ssa_const* cst, bool print_type)
                         ssa_print_type(self, to);
                         ssa_prints(self, ")");
                         break;
+                }
                 case SCK_PTRADD:
                 {
                         ssa_const* op0 = ssa_get_const_expr_operand(cst, 0);

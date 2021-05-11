@@ -8,7 +8,6 @@
 #include <stdio.h>
 
 #include <Windows.h>
-#include <FileApi.h>
 #include <Shlwapi.h>
 #include <string.h>
 

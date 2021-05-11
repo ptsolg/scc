@@ -34,7 +34,7 @@ void init_buf_writer(struct buf_writer* self, FILE* f)
 
 void init_custom_buf_writer(struct buf_writer* self, write_fn w)
 {
-        init_writer(self, 0, w);
+        init_writer(self, 0, (void*)w);
 }
 
 void drop_buf_writer(struct buf_writer* self)
@@ -87,7 +87,6 @@ int flush_buf_writer(struct buf_writer* self)
         return 0;
 }
 
-
 static void init_reader(struct buf_reader* self, int is_file, void* f)
 {
         self->buf = alloc(BUF_SIZE);
@@ -104,7 +103,7 @@ void init_buf_reader(struct buf_reader* self, FILE* f)
 
 void init_custom_buf_reader(struct buf_reader* self, read_fn r)
 {
-        init_reader(self, 0, r);
+        init_reader(self, 0, (void*)r);
 }
 
 static size_t read_none(void* self, void* buf, size_t n)
