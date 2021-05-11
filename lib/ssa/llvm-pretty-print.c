@@ -721,7 +721,7 @@ static void ssa_print_string_value(ssa_printer* self, const ssa_value* val)
         for (size_t i = 0; i < entry->size; i++)
         {
                 int c = entry->data[i];
-                ssa_printf(self, (isprint(c) ? "%c" : "\\%02X"), c);
+                ssa_printf(self, (isprint(c) && c != '"' ? "%c" : "\\%02X"), c);
 
         }
         ssa_printc(self, '"');
