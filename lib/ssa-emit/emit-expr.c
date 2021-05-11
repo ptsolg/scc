@@ -374,16 +374,6 @@ extern ssa_value* ssa_emit_call_expr(ssa_function_emitter* self, const tree_expr
 
         ssa_value* call = ssa_build_call_n(&self->builder, func, (ssa_value**)args.data, args.size);
         ssa_dispose_array(self->context, &args);
-
-        tree_type* t = tree_get_expr_type(expr);
-        if (tree_expr_is_rvalue(expr) && tree_type_is_record(t))
-        {
-                ssa_value* result = ssa_emit_alloca(self, t);
-                if (!result || !ssa_emit_store(self, call, result))
-                        return NULL;
-                call = result;
-        }
-
         return call;
 }
 
@@ -520,9 +510,25 @@ extern ssa_value* ssa_emit_decl_expr(ssa_function_emitter* self, const tree_expr
                 : ssa_emit_load(self, def);
 }
 
+static ssa_value* ssa_emit_member_expr_lhs(ssa_function_emitter* self, const tree_expr* lhs)
+{
+        ssa_value* lhs_val = ssa_emit_expr(self, lhs);
+        if (!lhs_val)
+                return NULL;
+
+        tree_type* t = tree_get_expr_type(lhs);
+        if (tree_expr_is_rvalue(lhs) && tree_type_is_record(t))
+        {
+                ssa_value* result = ssa_emit_alloca(self, t);
+                return result && ssa_emit_store(self, lhs_val, result)
+                        ? result : NULL;
+        }
+        return lhs_val;
+}
+
 extern ssa_value* ssa_emit_member_expr(ssa_function_emitter* self, const tree_expr* expr)
 {
-        ssa_value* lhs = ssa_emit_expr(self, tree_get_member_expr_lhs(expr));
+        ssa_value* lhs = ssa_emit_member_expr_lhs(self, tree_get_member_expr_lhs(expr));
         if (!lhs)
                 return NULL;
 
