@@ -635,6 +635,12 @@ static void remove_value_opt(ssa_value* val)
 
 static bool ssa_emit_record_initializer(ssa_function_emitter* self, ssa_value* record, const tree_expr* init)
 {
+        if (!tree_expr_is(init, TEK_INIT_LIST))
+        {
+                ssa_value* val = ssa_emit_expr(self, init);
+                return val && ssa_emit_store(self, val, record);
+        }
+
         assert(tree_get_init_list_exprs_size(init));
         tree_decl* rec = tree_get_decl_type_entity(
                 tree_desugar_type(tree_get_pointer_target(ssa_get_value_type(record))));
