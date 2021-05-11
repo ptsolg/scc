@@ -885,6 +885,7 @@ static void c_print_decl_scope(c_printer* self, const tree_decl_scope* scope, bo
                 }
         if (braces)
                 c_print_rbrace(self, true);
+        c_print_endl(self);
 }
 
 static void c_print_typedef(c_printer* self, const tree_decl* decl, int opts)
