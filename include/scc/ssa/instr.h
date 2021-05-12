@@ -25,6 +25,7 @@ typedef enum
         SIK_ATOMIC_RMW,
         SIK_FENCE,
         SIK_ATOMIC_CMPXCHG,
+        SIK_VA_START,
         SIK_SIZE,
 } ssa_instr_kind;
 
@@ -459,6 +460,13 @@ static inline void ssa_set_atomic_cmpxchg_instr_failure_ordering(ssa_instr* self
         _ssa_atomic_cmpxchg_instr(self)->_failure_ordering = ordering;
 }
 
+struct _ssa_va_start
+{
+        struct _ssa_instr_base _base;
+};
+
+extern ssa_instr* ssa_new_va_start_instr(ssa_context* context, ssa_value* arglist);
+
 typedef struct _ssa_instr
 {
         union
@@ -475,6 +483,7 @@ typedef struct _ssa_instr
                 struct _ssa_atomic_rmw_instr _atomic_rmw;
                 struct _ssa_fence_instr _fence;
                 struct _ssa_atomic_cmpxchg_instr _atomic_cmpxchg;
+                struct _ssa_va_start _va_start;
         };
 } ssa_instr;
 

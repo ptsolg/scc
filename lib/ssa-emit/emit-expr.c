@@ -336,6 +336,9 @@ static ssa_value* ssa_emit_intrin_call_expr(
                 case TFBK_ATOMIC_FENCE_ST_ACQ_REL:
                         return ssa_build_fence_instr(&self->builder, SSK_SINGLE_THREAD, SMK_ACQ_REL);
 
+                case TFBK_VA_START:
+                        return ssa_build_va_start_instr(&self->builder, args[0]);
+
                 default:
                         assert(0 && "unknown intrin");
                         return NULL;

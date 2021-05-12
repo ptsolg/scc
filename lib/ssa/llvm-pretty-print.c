@@ -400,6 +400,21 @@ static void ssa_print_cc(ssa_printer* self, const tree_type* func)
                 ssa_prints(self, "x86_stdcallcc ");
 }
 
+static void ssa_print_call_instr_params(
+        ssa_printer* self,
+        const ssa_value_use* params_begin,
+        const ssa_value_use* params_end)
+{
+        ssa_printc(self, '(');
+        for (const ssa_value_use* it = params_begin; it != params_end; it++)
+        {
+                ssa_print_value(self, ssa_get_value_use_value(it), true);
+                if (it + 1 != params_end)
+                        ssa_prints(self, ", ");
+        }
+        ssa_printc(self, ')');
+}
+
 static void ssa_print_call_instr(ssa_printer* self, const ssa_instr* instr)
 {
         if (ssa_instr_has_var(instr))
@@ -418,16 +433,9 @@ static void ssa_print_call_instr(ssa_printer* self, const ssa_instr* instr)
         ssa_printc(self, ' ');
         ssa_print_value(self, ssa_get_called_func(instr), false);
 
-        ssa_printc(self, '(');
-        for (ssa_value_use* it = ssa_get_instr_operands_begin(instr) + 1,
-                *end = ssa_get_instr_operands_end(instr);
-                it != end; it++)
-        {
-                ssa_print_value(self, ssa_get_value_use_value(it), true);
-                if (it + 1 != end)
-                        ssa_prints(self, ", ");
-        }
-        ssa_printc(self, ')');
+        ssa_print_call_instr_params(self,
+                ssa_get_instr_operands_begin(instr) + 1,
+                ssa_get_instr_operands_end(instr));
 }
 
 static void ssa_print_phi_instr(ssa_printer* self, const ssa_instr* instr)
@@ -606,6 +614,14 @@ static void ssa_print_cmpxchg_instr(ssa_printer* self, const ssa_instr* instr)
         ssa_printf(self, " = zext i1 %s to i32", loaded);
 }
 
+static void ssa_print_va_start_instr(ssa_printer* self, const ssa_instr* instr)
+{
+        ssa_prints(self, "call void @llvm.va_start");
+        ssa_print_call_instr_params(self,
+                ssa_get_instr_operands_begin(instr),
+                ssa_get_instr_operands_end(instr));
+}
+
 extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
 {
         ssa_instr_kind k = ssa_get_instr_kind(instr);
@@ -633,6 +649,8 @@ extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
                 ssa_print_fence_instr(self, instr);
         else if (k == SIK_ATOMIC_CMPXCHG)
                 ssa_print_cmpxchg_instr(self, instr);
+        else if (k == SIK_VA_START)
+                ssa_print_va_start_instr(self, instr);
 }
 
 extern void ssa_print_block(ssa_printer* self, const ssa_block* block)
@@ -899,11 +917,18 @@ static void ssa_print_global_value(ssa_printer* self, const ssa_value* val)
         }
 }
 
+static void ssa_declare_llvm_intrinsics(ssa_printer* self)
+{
+        ssa_prints(self, "declare void @llvm.va_start(i8*)\n");
+}
+
 extern void ssa_pretty_print_module_llvm(
         FILE* fout, ssa_context* context, const ssa_module* module)
 {
         ssa_printer p;
         ssa_init_printer(&p, context, fout);
+
+        ssa_declare_llvm_intrinsics(&p);
         SSA_FOREACH_MODULE_TYPE_DECL(module, it, end)
                 if (tree_decl_is(*it, TDK_RECORD))
                 {

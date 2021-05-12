@@ -198,6 +198,10 @@ static void init_builtin_functions(c_sema* self)
         init_builtin_function(self,
                 TFBK_ATOMIC_FENCE_ST_ACQ_REL, "__atomic_fence_st_acq_rel",
                 "static void __atomic_fence_st_acq_rel();");
+
+        init_builtin_function(self,
+                TFBK_VA_START, "__va_start",
+                "static void __va_start(char* args);");
 }
 
 extern tree_module* c_parse_source(
