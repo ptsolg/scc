@@ -91,6 +91,7 @@ extern void c_error_too_many_arguments(c_context* self, const tree_expr* call);
 extern void c_error_too_few_arguments(c_context* self, const tree_expr* call);
 extern void c_error_operand_of_sizeof_is_function(c_context* self, tree_location loc);
 extern void c_error_operand_of_sizeof_is_bitfield(c_context* self, tree_location loc);
+extern void c_error_offsetof_requires_record(c_context* self, tree_location loc);
 extern void c_error_invalid_binop_operands(c_context* self, tree_location loc, int opcode);
 extern void c_error_cmp_of_distinct_pointers(c_context* self, tree_location loc);
 extern void c_error_assignment_discards_quals(c_context* self, tree_location loc, int quals);

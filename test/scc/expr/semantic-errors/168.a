@@ -1,0 +1,1 @@
+168.t:3:5: error: 'offsetof' requires struct or union type

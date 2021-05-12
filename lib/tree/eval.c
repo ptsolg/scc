@@ -283,6 +283,16 @@ static bool tree_eval_sizeof(tree_context* context, const tree_expr* expr, tree_
         return true;
 }
 
+static bool tree_eval_offsetof(tree_context* context, const tree_expr* expr, tree_eval_result* result)
+{
+        result->kind = TERK_INTEGER;
+        init_uint(
+                &result->value,
+                tree_get_offsetof(context->target, tree_get_offsetof_field(expr)),
+                tree_get_pointer_size(context->target) * 8);
+        return true;
+}
+
 static bool tree_eval_decl(
         tree_context* context, const tree_decl* decl, tree_eval_result* result, bool addressof_operand)
 {
@@ -372,6 +382,8 @@ static bool _tree_eval_expr(
                         return tree_eval_cast(context, expr, result, addressof_operand);
                 case TEK_SIZEOF:
                         return tree_eval_sizeof(context, expr, result);
+                case TEK_OFFSETOF:
+                        return tree_eval_offsetof(context, expr, result);
                 case TEK_PAREN:
                         return _tree_eval_expr(context,
                                 tree_get_paren_expr(expr), result, addressof_operand);

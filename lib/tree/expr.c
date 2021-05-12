@@ -255,6 +255,23 @@ extern tree_expr* tree_new_sizeof_expr(
         return e;
 }
 
+extern tree_expr* tree_new_offsetof_expr(
+        tree_context* context,
+        tree_type* type,
+        tree_location loc,
+        tree_type* record,
+        tree_decl* field)
+{
+        tree_expr* e = tree_new_expr(context,
+                TEK_OFFSETOF, TVK_RVALUE, type, loc, sizeof(struct _tree_offsetof_expr));
+        if (!e)
+                return NULL;
+
+        tree_set_offsetof_record(e, record);
+        tree_set_offsetof_field(e, field);
+        return e;
+}
+
 extern tree_expr* tree_new_paren_expr(
         tree_context* context,
         tree_value_kind value_kind,

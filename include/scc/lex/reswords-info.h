@@ -4,7 +4,7 @@
 #include "scc/core/common.h"
 #include "scc/lex/token-kind.h"
 
-static_assert(CTK_TOTAL_SIZE == 114, "Should update _c_resword_infos table.");
+static_assert(CTK_TOTAL_SIZE == 115, "Should update _c_resword_infos table.");
 
 typedef struct _c_resword_info
 {
@@ -66,6 +66,7 @@ static const c_resword_info _c_resword_infos[CTK_TOTAL_SIZE] =
         C_RESWORD("restrict", "'restrict'", CRK_TOKEN),
 
         C_RESWORD("sizeof", "'sizeof'", CRK_TOKEN),
+        C_RESWORD("__offsetof", "'__offsetof'", CRK_TOKEN),
         C_RESWORD("typedef", "'typedef'", CRK_TOKEN),
         C_RESWORD("", "identifier", CRK_EMPTY), // CTK_ID
 

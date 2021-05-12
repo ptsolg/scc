@@ -534,6 +534,16 @@ static void c_print_sizeof_expr(c_printer* self, const tree_expr* expr)
         }
 }
 
+static void c_print_offsetof_expr(c_printer* self, const tree_expr* expr)
+{
+        c_printrw(self, CTK_OFFSETOF);
+        c_print_lbracket(self);
+        c_print_type_name(self, tree_get_offsetof_record(expr), CPRINT_OPTS_NONE);
+        c_print_comma(self);
+        c_print_id(self, tree_get_decl_name(tree_get_offsetof_field(expr)));
+        c_print_rbracket(self);
+}
+
 static void c_print_paren_expr(c_printer* self, const tree_expr* expr)
 {
         c_print_lbracket(self);
@@ -603,6 +613,7 @@ static void _c_print_expr(c_printer* self, const tree_expr* e, bool print_bracke
                 case TEK_MEMBER: c_print_member_expr(self, e); break;
                 case TEK_CAST: c_print_cast_expr(self, e); break;
                 case TEK_SIZEOF: c_print_sizeof_expr(self, e); break;
+                case TEK_OFFSETOF: c_print_offsetof_expr(self, e); break;
                 case TEK_PAREN: c_print_paren_expr(self, e); break;
                 case TEK_INIT_LIST: c_print_initializer(self, e); break;
                 case TEK_DESIGNATION: c_print_designation(self, e); break;

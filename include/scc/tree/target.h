@@ -34,5 +34,6 @@ extern size_t tree_get_builtin_type_align(const tree_target_info* self, tree_bui
 
 extern size_t tree_get_sizeof(const tree_target_info* info, const tree_type* t);
 extern size_t tree_get_alignof(const tree_target_info* info, const tree_type* t);
+extern size_t tree_get_offsetof(const tree_target_info* info, const tree_decl* field);
 
 #endif // !TREE_TARGET_H

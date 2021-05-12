@@ -1,0 +1,4 @@
+void test()
+{
+    __offsetof ;
+}

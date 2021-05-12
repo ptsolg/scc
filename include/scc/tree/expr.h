@@ -25,6 +25,7 @@ typedef enum
         TEK_MEMBER,
         TEK_CAST,
         TEK_SIZEOF,
+        TEK_OFFSETOF,
         TEK_PAREN,
         TEK_DESIGNATION,
         TEK_INIT_LIST,
@@ -244,6 +245,13 @@ struct _tree_sizeof_expr
         };
 };
 
+struct _tree_offsetof_expr
+{
+        struct _tree_expr_base base;
+        tree_type* record;
+        tree_decl* field;
+};
+
 typedef struct _tree_expr
 {
         union
@@ -262,6 +270,7 @@ typedef struct _tree_expr
                 struct _tree_decl_expr decl;
                 struct _tree_member_expr member;
                 struct _tree_sizeof_expr sizeof_expr;
+                struct _tree_offsetof_expr offsetof_expr;
                 struct _tree_paren_expr paren;
                 struct _tree_designation designation;
                 struct _tree_init_list_expr init_list;
@@ -725,6 +734,33 @@ static TREE_INLINE void tree_set_sizeof_type(tree_expr* self, tree_type* type)
 static TREE_INLINE void tree_set_sizeof_contains_type(tree_expr* self, bool val)
 {
         self->sizeof_expr.contains_type = val;
+}
+
+extern tree_expr* tree_new_offsetof_expr(
+        tree_context* context,
+        tree_type* type,
+        tree_location loc,
+        tree_type* record,
+        tree_decl* field);
+
+static TREE_INLINE tree_type* tree_get_offsetof_record(const tree_expr* self)
+{
+        return self->offsetof_expr.record;
+}
+
+static TREE_INLINE tree_decl* tree_get_offsetof_field(const tree_expr* self)
+{
+        return self->offsetof_expr.field;
+}
+
+static TREE_INLINE void tree_set_offsetof_record(tree_expr* self, tree_type* record)
+{
+        self->offsetof_expr.record = record;
+}
+
+static TREE_INLINE void tree_set_offsetof_field(tree_expr* self, tree_decl* field)
+{
+        self->offsetof_expr.field = field;
 }
 
 extern tree_expr* tree_new_paren_expr(

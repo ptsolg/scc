@@ -578,6 +578,12 @@ extern ssa_value* ssa_emit_sizeof_expr(ssa_function_emitter* self, const tree_ex
         return ssa_build_int_constant(&self->builder, tree_get_expr_type(expr), size);
 }
 
+extern ssa_value* ssa_emit_offsetof_expr(ssa_function_emitter* self, const tree_expr* expr)
+{
+        size_t offset = tree_get_offsetof(self->context->target, tree_get_offsetof_field(expr));
+        return ssa_build_int_constant(&self->builder, tree_get_expr_type(expr), offset);
+}
+
 extern ssa_value* ssa_emit_expr(ssa_function_emitter* self, const tree_expr* expr)
 {
         assert(expr);
@@ -597,6 +603,7 @@ extern ssa_value* ssa_emit_expr(ssa_function_emitter* self, const tree_expr* exp
                 case TEK_MEMBER:            return ssa_emit_member_expr(self, expr);
                 case TEK_CAST:              return ssa_emit_cast_expr(self, expr);
                 case TEK_SIZEOF:            return ssa_emit_sizeof_expr(self, expr);
+                case TEK_OFFSETOF:          return ssa_emit_offsetof_expr(self, expr);
                 case TEK_PAREN:             return ssa_emit_expr(self, tree_get_paren_expr(expr));
 
                 case TEK_INIT_LIST:

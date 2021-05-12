@@ -180,3 +180,41 @@ extern size_t tree_get_alignof(const tree_target_info* info, const tree_type* t)
         // probably function type
         return 0;
 }
+
+static size_t tree_get_offsetof_field(const tree_target_info* info, const tree_decl* field)
+{
+        assert(tree_decl_is(field, TDK_FIELD));
+        tree_decl* record = tree_get_field_record(field);
+        if (tree_record_is_union(record))
+                return 0;
+
+        size_t offset = 0;
+        const tree_decl_scope* scope = tree_get_record_cfields(record);
+        TREE_FOREACH_DECL_IN_SCOPE(scope, it)
+        {
+                if (!tree_decl_is(it, TDK_FIELD))
+                        continue;
+                if (it == field)
+                        break;
+                offset += tree_get_sizeof(info, tree_get_decl_type(it));
+        }
+
+        return offset;
+}
+
+extern size_t tree_get_offsetof(const tree_target_info* info, const tree_decl* field)
+{
+        assert(tree_decl_is(field, TDK_FIELD) || tree_decl_is(field, TDK_INDIRECT_FIELD));
+
+        size_t offset = 0;
+        while (tree_decl_is(field, TDK_INDIRECT_FIELD))
+        {
+                tree_decl* anon_field = tree_get_indirect_field_anon_record(field);
+                offset += tree_get_offsetof_field(info, anon_field);
+                tree_decl* anon_rec = tree_get_decl_type_entity(tree_get_decl_type(anon_field));
+                field = tree_decl_scope_lookup(tree_get_record_fields(anon_rec),
+                        TLK_DECL, tree_get_decl_name(field), false);
+        }
+
+        return offset + tree_get_offsetof_field(info, field);
+}

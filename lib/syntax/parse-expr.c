@@ -168,6 +168,26 @@ static tree_expr* c_parse_sizeof_expr(c_parser* self)
         return c_sema_new_sizeof_expr(self->sema, loc, operand, contains_type);
 }
 
+static tree_expr* c_parse_offsetof_expr(c_parser* self)
+{
+        tree_location kw_loc = c_token_get_loc(c_parser_get_prev(self));
+        if (!c_parser_require(self, CTK_LBRACKET))
+                return NULL;
+        
+        tree_type* record = c_parse_type_name(self);
+        if (!record || !c_parser_require(self, CTK_COMMA))
+                return NULL;
+
+        tree_location field_loc = c_parser_get_loc(self);
+        tree_id field = c_parse_identifier(self);
+        if (field == TREE_INVALID_LOC)
+                return NULL;
+        
+        return c_parser_require(self, CTK_RBRACKET)
+                ? c_sema_new_offsetof_expr(self->sema, kw_loc, record, field_loc, field)
+                : NULL;
+}
+
 static tree_unop_kind c_token_to_prefix_unary_operator(const c_token* self)
 {
         switch (c_token_get_kind(self))
@@ -191,6 +211,11 @@ extern tree_expr* c_parse_unary_expr(c_parser* self)
         {
                 c_parser_consume_token(self);
                 return c_parse_sizeof_expr(self);
+        }
+        else if (c_parser_at(self, CTK_OFFSETOF))
+        {
+                c_parser_consume_token(self);
+                return c_parse_offsetof_expr(self);
         }
 
         tree_unop_kind op = c_token_to_prefix_unary_operator(c_parser_get_token(self));

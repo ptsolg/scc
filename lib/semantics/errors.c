@@ -489,6 +489,11 @@ extern void c_error_operand_of_sizeof_is_bitfield(c_context* self, tree_location
         c_error(self, CES_ERROR, loc, "operand of sizeof may not be a bitfield");
 }
 
+extern void c_error_offsetof_requires_record(c_context* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "'offsetof' requires struct or union type");
+}
+
 static const char* binop2str[] = {
         "",    // TBK_UNKNOWN
         "*",   // TBK_MUL

@@ -2,6 +2,7 @@
 #define C_SEMA_H
 
 #include "scc/c-common/context.h"
+#include "scc/tree/common.h"
 #include "scc/tree/type.h"
 #include "scc/tree/expr.h"
 
@@ -349,6 +350,9 @@ extern tree_expr* c_sema_new_unary_expr(
 
 extern tree_expr* c_sema_new_sizeof_expr(
         c_sema* self, tree_location loc, void* operand, bool contains_type);
+
+extern tree_expr* c_sema_new_offsetof_expr(
+        c_sema* self, tree_location kw_loc, tree_type* record, tree_location field_loc, tree_id field);
 
 extern tree_expr* c_sema_new_cast_expr(
         c_sema* self, tree_location loc, tree_type* type, tree_expr* expr);

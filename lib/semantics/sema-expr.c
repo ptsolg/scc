@@ -565,6 +565,29 @@ extern tree_expr* c_sema_new_sizeof_expr(
                 c_sema_get_size_t_type(self), loc, operand, contains_type);
 }
 
+extern tree_expr* c_sema_new_offsetof_expr(
+        c_sema* self, tree_location kw_loc, tree_type* record, tree_location field_loc, tree_id field)
+{
+        if (!record)
+                return NULL;
+        
+        if (!tree_type_is_record(record))
+        {
+                c_error_offsetof_requires_record(self->ccontext, kw_loc);
+                return NULL;
+        }
+        if (!c_sema_require_complete_type(self, kw_loc, record))
+                return NULL;
+        
+        tree_decl* rec_decl = tree_get_decl_type_entity(tree_desugar_type(record));
+        tree_decl* field_decl = c_sema_require_field_decl(self, rec_decl, field_loc, field);
+        if (!field_decl)
+                return NULL;
+
+        return tree_new_offsetof_expr(self->context,
+                c_sema_get_size_t_type(self), kw_loc, record, field_decl);
+}
+
 // c99 6.5.4 cast operators
 // Unless the type name specifies a void type, the type name shall specify qualified or
 // unqualified scalar type and the operand shall have scalar type.
