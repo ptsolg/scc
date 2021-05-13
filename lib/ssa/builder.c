@@ -4,6 +4,7 @@
 #include "scc/ssa/instr.h"
 #include "scc/ssa/context.h"
 #include "scc/tree/context.h"
+#include <stdint.h>
 
 extern void ssa_init_builder(ssa_builder* self, ssa_context* context, ssa_instr* pos)
 {
@@ -427,7 +428,7 @@ extern ssa_value* ssa_build_not(ssa_builder* self, ssa_value* operand)
         assert(t && tree_type_is_integer(t));
       
         uint64_t bits = 8ULL * tree_get_sizeof(ssa_get_target(self->context), t);
-        ssa_value* ones = ssa_build_int_constant(self, t, (1ULL << bits) - 1);
+        ssa_value* ones = ssa_build_int_constant(self, t, UINT64_MAX);
         if (!ones)
                 return NULL;
 

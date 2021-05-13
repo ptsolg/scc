@@ -1,0 +1,5 @@
+; Definition for test
+@0:
+    $1 = cast 1
+    $2 = xor $1, 18446744073709551615
+    ret $2
