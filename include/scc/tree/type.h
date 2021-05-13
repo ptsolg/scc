@@ -52,6 +52,7 @@ static TREE_INLINE const struct _tree_modified_type* _tree_modified_type_c(const
 
 static TREE_INLINE const tree_type* tree_get_modified_type_c(const tree_type* self)
 {
+        assert(self);
         return tree_type_is_modified(self) ? _tree_modified_type_c(self)->type : self;
 }
 
