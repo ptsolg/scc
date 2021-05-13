@@ -182,23 +182,29 @@ static void assignment_conversion_error(
                 c_error_invalid_initializer(self->ccontext, e);
 }
 
-static bool find_compatible_subobject(c_sema* self, struct compound_object* co, tree_expr** e)
+static tree_expr* get_string_literal_semantic_initalizer(
+        c_sema* self, tree_type* object, tree_expr** str);
+
+static tree_expr* find_compatible_subobject(c_sema* self, struct compound_object* co, tree_expr** e)
 {
         tree_type* et = tree_get_expr_type(*e);
         while (1)
         {
                 tree_type* subtype = get_subobject_type(co);
                 c_assignment_conversion_result acr;
+                bool array_with_string_lit = tree_type_is_char_array(subtype)
+                        && tree_expr_is(tree_desugar_expr(*e), TEK_STRING_LITERAL);
                 if (c_sema_assignment_conversion(self, subtype, e, &acr)
-                        || tree_type_is_char_array(subtype) 
-                        && tree_expr_is(tree_desugar_expr(*e), TEK_STRING_LITERAL))
+                        || array_with_string_lit)
                 {
-                        return true;
+                        return array_with_string_lit
+                                ? get_string_literal_semantic_initalizer(self, subtype, e)
+                                : *e;
                 }
                 if (!can_enter_subobject(co))
                 {
                         assignment_conversion_error(self, &acr, *e);
-                        return false;
+                        return NULL;
                 }
                 enter_subobject(co);
         }
@@ -289,12 +295,8 @@ static tree_expr* get_init_list_semantic_initializer(
                 if (tree_expr_is(item, TEK_INIT_LIST))
                         sem_init = get_init_list_semantic_initializer(
                                 self, get_subobject_type(&co), object_sc, item, false);
-                else
-                {
-                        if (!find_compatible_subobject(self, &co, item_ptr))
+                else if (!(sem_init = find_compatible_subobject(self, &co, item_ptr)))
                                 return NULL;
-                        sem_init = *item_ptr;
-                }
                 
                 if (!sem_init)
                         return NULL;
@@ -368,10 +370,22 @@ static tree_expr* get_string_literal_semantic_initalizer(
                 return NULL;
         }
 
-        if (tree_type_is(object, TTK_ARRAY) && tree_array_is(object, TAK_INCOMPLETE))
-                c_sema_set_incomplete_array_size(self, object, entry->size);
+        tree_expr* result = *str;
+        if (tree_type_is(object, TTK_ARRAY))
+        {
+                if (tree_array_is(object, TAK_INCOMPLETE))
+                        c_sema_set_incomplete_array_size(self, object, entry->size);
+                
+                result = tree_new_init_list_expr(self->context, TREE_INVALID_LOC);
+                for (unsigned i = 0; i < tree_get_array_size(object); i++)
+                {
+                        tree_expr* char_lit = c_sema_new_character_literal(self, TREE_INVALID_LOC, entry->data[i]);
+                        tree_add_init_list_expr(result, self->context, char_lit);
+                }
+                tree_set_expr_type(result, object);
+        }
 
-        return *str;
+        return result;
 }
 
 static tree_expr* get_ordinary_semantic_initalizer(
