@@ -50,7 +50,7 @@ extern tree_stmt* c_sema_start_case_stmt(
                 return NULL;
 
         tree_eval_result r;
-        if (!tree_eval_expr_as_integer(self->context, expr, &r))
+        if (!tree_eval_expr_as_integer(self->target, expr, &r))
         {
                 c_error_case_stmt_isnt_constant(self->ccontext, kw_loc);
                 return NULL;

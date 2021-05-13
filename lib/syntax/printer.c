@@ -1204,7 +1204,7 @@ static void c_print_expr_stmt(c_printer* self, const tree_stmt* s)
         if (print_eval_result)
         {
                 tree_eval_result r;
-                tree_eval_expr(self->context, expr, &r);
+                tree_eval_expr(self->context->target, expr, &r);
                 if (r.kind == TERK_INVALID)
                         c_prints(self, "not-a-constant ");
                 else if (r.kind == TERK_ADDRESS_CONSTANT)

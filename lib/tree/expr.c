@@ -476,7 +476,7 @@ extern bool tree_expr_is_null_pointer_constant(tree_context* context, const tree
                 return false;
 
         tree_eval_result result;
-        if (!tree_eval_expr_as_integer(context, expr, &result))
+        if (!tree_eval_expr_as_integer(context->target, expr, &result))
                 return false;
 
         return num_is_zero(&result.value);

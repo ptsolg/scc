@@ -130,7 +130,7 @@ extern tree_type* c_sema_new_array_type(
 
         tree_eval_result result;
         // we'll check size-value later
-        tree_eval_expr(self->context, size, &result);
+        tree_eval_expr(self->target, size, &result);
         
         struct num size_value;
         init_int(&size_value, 0, 32);
@@ -155,7 +155,7 @@ extern void c_sema_set_incomplete_array_size(c_sema* sema, tree_type* arr, uint 
 
         struct num size_value;
         init_int(&size_value, size,
-                8 * tree_get_sizeof(sema->context->target, c_sema_get_size_t_type(sema)));
+                8 * tree_get_sizeof(sema->target, c_sema_get_size_t_type(sema)));
         tree_init_constant_array_type(arr, tree_get_array_eltype(arr), NULL, &size_value);
 }
 

@@ -2,15 +2,14 @@
 #include "scc/core/num.h"
 #include "scc/tree/expr.h"
 #include "scc/tree/target.h"
-#include "scc/tree/context.h"
 #include "scc/tree/type.h"
 
-static bool tree_eval_binop(tree_context* context, const tree_expr* expr, tree_eval_result* result)
+static bool tree_eval_binop(const tree_target_info* target, const tree_expr* expr, tree_eval_result* result)
 {
         tree_eval_result rr;
-        if (!tree_eval_expr(context, tree_get_binop_rhs(expr), &rr))
+        if (!tree_eval_expr(target, tree_get_binop_rhs(expr), &rr))
                 return false;
-        if (!tree_eval_expr(context, tree_get_binop_lhs(expr), result))
+        if (!tree_eval_expr(target, tree_get_binop_lhs(expr), result))
                 return false;
 
         if (result->kind == TERK_ADDRESS_CONSTANT)
@@ -104,30 +103,30 @@ static bool tree_eval_binop(tree_context* context, const tree_expr* expr, tree_e
         }
 }
 
-static bool _tree_eval_expr(tree_context*, const tree_expr*, tree_eval_result*, bool);
+static bool _tree_eval_expr(const tree_target_info*, const tree_expr*, tree_eval_result*, bool);
 
-static bool tree_eval_address(tree_context* context, const tree_expr* expr, tree_eval_result* result)
+static bool tree_eval_address(const tree_target_info* target, const tree_expr* expr, tree_eval_result* result)
 {
-        if (!_tree_eval_expr(context, tree_get_unop_operand(expr), result, true))
+        if (!_tree_eval_expr(target, tree_get_unop_operand(expr), result, true))
                 return false;
         result->kind = TERK_ADDRESS_CONSTANT;
         return true;
 }
 
 static bool tree_eval_unop(
-        tree_context* context, const tree_expr* expr, tree_eval_result* result, bool addresof_operand)
+        const tree_target_info* target, const tree_expr* expr, tree_eval_result* result, bool addresof_operand)
 {
         tree_unop_kind k = tree_get_unop_kind(expr);
         if (k == TUK_ADDRESS)
-                return tree_eval_address(context, expr, result);
+                return tree_eval_address(target, expr, result);
         if (k == TUK_DEREFERENCE)
         {
                 return addresof_operand 
-                        ? tree_eval_expr(context, tree_get_unop_operand(expr), result)
+                        ? tree_eval_expr(target, tree_get_unop_operand(expr), result)
                         : false;
         }
 
-        if (!tree_eval_expr_as_arithmetic(context, tree_get_unop_operand(expr), result))
+        if (!tree_eval_expr_as_arithmetic(target, tree_get_unop_operand(expr), result))
                 return false;
         
         switch (tree_get_unop_kind(expr))
@@ -157,19 +156,19 @@ static bool tree_eval_unop(
 }
 
 static bool tree_eval_conditional(
-        tree_context* context, const tree_expr* expr, tree_eval_result* result)
+        const tree_target_info* target, const tree_expr* expr, tree_eval_result* result)
 {
         tree_eval_result cond;
-        if (!tree_eval_expr_as_arithmetic(context, tree_get_conditional_condition(expr), &cond))
+        if (!tree_eval_expr_as_arithmetic(target, tree_get_conditional_condition(expr), &cond))
                 return false;
         
         return num_is_zero(&cond.value)
-                ? tree_eval_expr(context, tree_get_conditional_rhs(expr), result)
-                : tree_eval_expr(context, tree_get_conditional_lhs(expr), result);
+                ? tree_eval_expr(target, tree_get_conditional_rhs(expr), result)
+                : tree_eval_expr(target, tree_get_conditional_lhs(expr), result);
 }
 
 static bool tree_eval_integer_literal(
-        tree_context* context, const tree_expr* expr, tree_eval_result* result)
+        const tree_target_info* target, const tree_expr* expr, tree_eval_result* result)
 {
         tree_type* t = tree_get_expr_type(expr);
         bool ext = tree_builtin_type_is(t, TBTK_INT64)
@@ -186,7 +185,7 @@ static bool tree_eval_integer_literal(
 }
 
 static bool tree_eval_character_literal(
-        tree_context* context, const tree_expr* expr, tree_eval_result* result)
+        const tree_target_info* target, const tree_expr* expr, tree_eval_result* result)
 {
         result->kind = TERK_INTEGER;
         init_int(&result->value, tree_get_character_literal(expr), 8);
@@ -194,7 +193,7 @@ static bool tree_eval_character_literal(
 }
 
 static bool tree_eval_floating_literal(
-        tree_context* context, const tree_expr* expr, tree_eval_result* result)
+        const tree_target_info* target, const tree_expr* expr, tree_eval_result* result)
 {
         result->kind = TERK_FLOATING;
 
@@ -208,9 +207,9 @@ static bool tree_eval_floating_literal(
 }
 
 static bool tree_eval_cast(
-        tree_context* context, const tree_expr* expr, tree_eval_result* result, bool addressof_operand)
+        const tree_target_info* target, const tree_expr* expr, tree_eval_result* result, bool addressof_operand)
 {
-        if (!_tree_eval_expr(context, tree_get_cast_operand(expr), result, addressof_operand))
+        if (!_tree_eval_expr(target, tree_get_cast_operand(expr), result, addressof_operand))
                 return false;
 
         tree_type* cast_type = tree_desugar_type(tree_get_expr_type(expr));
@@ -246,7 +245,7 @@ static bool tree_eval_cast(
                 }
 
                 result->kind = TERK_INTEGER;
-                uint bits = 8 * tree_get_builtin_type_size(context->target, builtin);
+                uint bits = 8 * tree_get_builtin_type_size(target, builtin);
                 if (is_signed)
                         num_to_int(&result->value, bits);
                 else
@@ -268,7 +267,7 @@ static bool tree_eval_cast(
         return true;
 }
 
-static bool tree_eval_sizeof(tree_context* context, const tree_expr* expr, tree_eval_result* result)
+static bool tree_eval_sizeof(const tree_target_info* target, const tree_expr* expr, tree_eval_result* result)
 {
         tree_type* t = tree_sizeof_contains_type(expr)
                 ? tree_get_sizeof_type(expr)
@@ -277,24 +276,24 @@ static bool tree_eval_sizeof(tree_context* context, const tree_expr* expr, tree_
         result->kind = TERK_INTEGER;
         init_uint(
                 &result->value,
-                tree_get_sizeof(context->target, t),
-                tree_get_pointer_size(context->target) * 8);
+                tree_get_sizeof(target, t),
+                tree_get_pointer_size(target) * 8);
 
         return true;
 }
 
-static bool tree_eval_offsetof(tree_context* context, const tree_expr* expr, tree_eval_result* result)
+static bool tree_eval_offsetof(const tree_target_info* target, const tree_expr* expr, tree_eval_result* result)
 {
         result->kind = TERK_INTEGER;
         init_uint(
                 &result->value,
-                tree_get_offsetof(context->target, tree_get_offsetof_field(expr)),
-                tree_get_pointer_size(context->target) * 8);
+                tree_get_offsetof(target, tree_get_offsetof_field(expr)),
+                tree_get_pointer_size(target) * 8);
         return true;
 }
 
 static bool tree_eval_decl(
-        tree_context* context, const tree_decl* decl, tree_eval_result* result, bool addressof_operand)
+        const tree_target_info* target, const tree_decl* decl, tree_eval_result* result, bool addressof_operand)
 {
         tree_decl_kind k = tree_get_decl_kind(decl);
         if (k == TDK_VAR || k == TDK_FIELD || k == TDK_INDIRECT_FIELD)
@@ -316,39 +315,39 @@ static bool tree_eval_decl(
         result->kind = TERK_INTEGER;
         init_int(&result->value,
                 num_i64(tree_get_enumerator_cvalue(decl)),
-                8 * tree_get_builtin_type_size(context->target, TBTK_INT32));
+                8 * tree_get_builtin_type_size(target, TBTK_INT32));
 
         return true;
 }
 
 static bool tree_eval_member(
-        tree_context* context, const tree_expr* expr, tree_eval_result* result, bool addressof_operand)
+        const tree_target_info* target, const tree_expr* expr, tree_eval_result* result, bool addressof_operand)
 {
         if (tree_member_expr_is_arrow(expr))
                 return false;
-        if (!_tree_eval_expr(context, tree_get_member_expr_lhs(expr), result, true))
+        if (!_tree_eval_expr(target, tree_get_member_expr_lhs(expr), result, true))
                 return false;
-        if (!tree_eval_decl(context, tree_get_member_expr_decl(expr), result, addressof_operand))
+        if (!tree_eval_decl(target, tree_get_member_expr_decl(expr), result, addressof_operand))
                 return false;
         result->kind = TERK_ADDRESS_CONSTANT;
         return true;
 }
 
 static bool tree_eval_subscript(
-        tree_context* context, const tree_expr* expr, tree_eval_result* result, bool addressof_operand)
+        const tree_target_info* target, const tree_expr* expr, tree_eval_result* result, bool addressof_operand)
 {
         if (!addressof_operand)
                 return false;
-        if (!_tree_eval_expr(context, tree_get_subscript_lhs(expr), result, true))
+        if (!_tree_eval_expr(target, tree_get_subscript_lhs(expr), result, true))
                 return false;
-        if (!tree_eval_expr_as_integer(context, tree_get_subscript_rhs(expr), result))
+        if (!tree_eval_expr_as_integer(target, tree_get_subscript_rhs(expr), result))
                 return false;
         result->kind = TERK_ADDRESS_CONSTANT;
         return true;
 }
 
 static bool _tree_eval_expr(
-        tree_context* context, const tree_expr* expr, tree_eval_result* result, bool addressof_operand)
+        const tree_target_info* target, const tree_expr* expr, tree_eval_result* result, bool addressof_operand)
 {
         assert(result);
 
@@ -362,39 +361,39 @@ static bool _tree_eval_expr(
         switch (tree_get_expr_kind(expr))
         {
                 case TEK_BINARY:
-                        return tree_eval_binop(context, expr, result);
+                        return tree_eval_binop(target, expr, result);
                 case TEK_UNARY:
-                        return tree_eval_unop(context, expr, result, addressof_operand);
+                        return tree_eval_unop(target, expr, result, addressof_operand);
                 case TEK_CONDITIONAL:
-                        return tree_eval_conditional(context, expr, result);
+                        return tree_eval_conditional(target, expr, result);
                 case TEK_INTEGER_LITERAL:
-                        return tree_eval_integer_literal(context, expr, result);
+                        return tree_eval_integer_literal(target, expr, result);
                 case TEK_CHARACTER_LITERAL:
-                        return tree_eval_character_literal(context, expr, result);
+                        return tree_eval_character_literal(target, expr, result);
                 case TEK_FLOATING_LITERAL:
-                        return tree_eval_floating_literal(context, expr, result);
+                        return tree_eval_floating_literal(target, expr, result);
                 case TEK_DECL:
-                        return tree_eval_decl(context,
+                        return tree_eval_decl(target,
                                 tree_get_decl_expr_entity(expr), result, addressof_operand);
                 case TEK_MEMBER:
-                        return tree_eval_member(context, expr, result, addressof_operand);
+                        return tree_eval_member(target, expr, result, addressof_operand);
                 case TEK_CAST:
-                        return tree_eval_cast(context, expr, result, addressof_operand);
+                        return tree_eval_cast(target, expr, result, addressof_operand);
                 case TEK_SIZEOF:
-                        return tree_eval_sizeof(context, expr, result);
+                        return tree_eval_sizeof(target, expr, result);
                 case TEK_OFFSETOF:
-                        return tree_eval_offsetof(context, expr, result);
+                        return tree_eval_offsetof(target, expr, result);
                 case TEK_PAREN:
-                        return _tree_eval_expr(context,
+                        return _tree_eval_expr(target,
                                 tree_get_paren_expr(expr), result, addressof_operand);
                 case TEK_IMPL_INIT:
-                        return _tree_eval_expr(context,
+                        return _tree_eval_expr(target,
                                 tree_get_impl_init_expr(expr), result, addressof_operand);
                 case TEK_STRING_LITERAL:
                         result->kind = TERK_ADDRESS_CONSTANT;
                         return true;
                 case TEK_SUBSCRIPT:
-                        return tree_eval_subscript(context, expr, result, addressof_operand);
+                        return tree_eval_subscript(target, expr, result, addressof_operand);
 
                 default:
                         assert(0 && "Invalid expression");
@@ -407,24 +406,24 @@ static bool _tree_eval_expr(
 }
 
 extern bool tree_eval_expr(
-        tree_context* context, const tree_expr* expr, tree_eval_result* result)
+        const tree_target_info* target, const tree_expr* expr, tree_eval_result* result)
 {
-        return _tree_eval_expr(context, expr, result, false);
+        return _tree_eval_expr(target, expr, result, false);
 }
 
 extern bool tree_eval_expr_as_integer(
-        tree_context* context, const tree_expr* expr, tree_eval_result* result)
+        const tree_target_info* target, const tree_expr* expr, tree_eval_result* result)
 {
-        if (!tree_eval_expr(context, expr, result))
+        if (!tree_eval_expr(target, expr, result))
                 return false;
 
         return result->kind == TERK_INTEGER;
 }
 
 extern bool tree_eval_expr_as_arithmetic(
-        tree_context* context, const tree_expr* expr, tree_eval_result* result)
+        const tree_target_info* target, const tree_expr* expr, tree_eval_result* result)
 {
-        if (!tree_eval_expr(context, expr, result))
+        if (!tree_eval_expr(target, expr, result))
                 return false;
 
         return result->kind == TERK_INTEGER || result->kind == TERK_FLOATING;

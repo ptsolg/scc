@@ -532,7 +532,7 @@ static bool c_sema_compute_enumerator_value(
         if (init)
         {
                 tree_eval_result r;
-                if (!tree_eval_expr_as_integer(self->context, init, &r))
+                if (!tree_eval_expr_as_integer(self->target, init, &r))
                 {
                         c_error_enumerator_value_isnt_constant(self->ccontext, name_loc, name);
                         return false;
@@ -700,7 +700,7 @@ static bool c_sema_check_field_bitwidth(const c_sema* self, const tree_decl* fie
         }
 
         tree_eval_result r;
-        if (!tree_eval_expr_as_integer(self->context, bit_width, &r))
+        if (!tree_eval_expr_as_integer(self->target, bit_width, &r))
         {
                 c_error_bitfield_width_isnt_constant(self->ccontext, field);
                 return false;

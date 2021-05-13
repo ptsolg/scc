@@ -86,7 +86,7 @@ static bool walk_array_designator(
 
         tree_expr* index = tree_get_designator_index(designator);
         tree_eval_result eval_result;
-        if (!tree_eval_expr_as_integer(self->context, index, &eval_result))
+        if (!tree_eval_expr_as_integer(self->target, index, &eval_result))
         {
                 if (eval_result.kind == TERK_FLOATING)
                         c_error_array_index_in_initializer_not_of_integer_type(self->ccontext, index);
@@ -399,7 +399,7 @@ static tree_expr* get_ordinary_semantic_initalizer(
         }
 
         tree_eval_result er;
-        if (c_sema_at_file_scope(self) && !tree_eval_expr(self->context, *init, &er))
+        if (c_sema_at_file_scope(self) && !tree_eval_expr(self->target, *init, &er))
         {
                 c_error_initializer_element_isnt_constant(self->ccontext, *init);
                 return false;
