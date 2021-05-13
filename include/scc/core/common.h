@@ -6,6 +6,14 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#ifdef __SCC__
+#define ___scc_concat(x, y) x ## y
+#define __scc_concat(x, y) ___scc_concat(x, y)
+#define static_assert(x, y) static char __scc_concat(static_assert_, __LINE__)[(x) && y]
+#else
+#define static_assert(x, y) _Static_assert(x, y)
+#endif
+
 #define UNREACHABLE() \
         do { \
                 volatile int unreachable = 0; \
