@@ -56,8 +56,13 @@ struct HTAB_ENTRY
 struct HTAB
 {
         struct HTAB_ENTRY* entries;
+#ifdef __SCC__
+        unsigned size;
+        unsigned epoch;
+#else
         unsigned size : 27;
         unsigned char epoch : 5;
+#endif
 };
 
 struct HTAB_ITER
