@@ -258,19 +258,19 @@ extern ssa_value* ssa_build_call_n_ex(
         return ssa_insert_instr(pos, call, insert_after);
 }
 
-extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type)
+extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type, unsigned align)
 {
-        return ssa_build_alloca_ex(self, self->pos, type, false);
+        return ssa_build_alloca_ex(self, self->pos, type, align, false);
 }
 
 extern ssa_value* ssa_build_alloca_ex(
-        ssa_builder* self, ssa_instr* pos, tree_type* type, bool insert_after)
+        ssa_builder* self, ssa_instr* pos, tree_type* type, unsigned align, bool insert_after)
 {
         tree_type* p = tree_new_pointer_type(ssa_get_tree(self->context), type);
         if (!p)
                 return NULL;
 
-        ssa_instr* i = ssa_new_alloca(self->context, p);
+        ssa_instr* i = ssa_new_alloca(self->context, p, align);
         if (!i)
                 return NULL;
 

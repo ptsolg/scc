@@ -125,10 +125,13 @@ static inline void ssa_set_instr_kind(ssa_instr* self, ssa_instr_kind kind);
 struct _ssa_alloca
 {
         struct _ssa_instr_base _base;
+        unsigned align;
 };
 
-extern ssa_instr* ssa_new_alloca(ssa_context* context, tree_type* type);
+extern ssa_instr* ssa_new_alloca(ssa_context* context, tree_type* type, unsigned align);
 extern tree_type* ssa_get_allocated_type(const ssa_instr* self);
+static inline unsigned ssa_get_alloca_align(const ssa_instr* self);
+static inline void ssa_set_alloca_align(ssa_instr* self, unsigned align);
 
 struct _ssa_load
 {
@@ -547,6 +550,29 @@ static inline void ssa_set_instr_kind(ssa_instr* self, ssa_instr_kind kind)
 }
 
 #define SSA_ASSERT_INSTR(P, K) assert((P) && ssa_get_instr_kind(P) == (K))
+
+static inline struct _ssa_alloca* _ssa_alloca(ssa_instr* self)
+{
+        SSA_ASSERT_INSTR(self, SIK_ALLOCA);
+        return &self->_alloca;
+}
+
+static inline const struct _ssa_alloca* _ssa_calloca(const ssa_instr* self)
+{
+        SSA_ASSERT_INSTR(self, SIK_ALLOCA);
+        return &self->_alloca;
+}
+
+static inline unsigned ssa_get_alloca_align(const ssa_instr* self)
+{
+        return _ssa_calloca(self)->align;
+}
+
+static inline void ssa_set_alloca_align(ssa_instr* self, unsigned align)
+{
+        assert(align);
+        _ssa_alloca(self)->align = align;
+}
 
 static inline struct _ssa_binop* _ssa_binop(ssa_instr* self)
 {

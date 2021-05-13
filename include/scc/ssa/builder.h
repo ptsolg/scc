@@ -51,9 +51,9 @@ extern ssa_value* ssa_build_call_n(ssa_builder* self, ssa_value* func, ssa_value
 extern ssa_value* ssa_build_call_n_ex(
         ssa_builder* self, ssa_instr* pos, ssa_value* func, ssa_value** args, size_t n, bool insert_after);
 
-extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type);
+extern ssa_value* ssa_build_alloca(ssa_builder* self, tree_type* type, unsigned align);
 extern ssa_value* ssa_build_alloca_ex(
-        ssa_builder* self, ssa_instr* pos, tree_type* type, bool insert_after);
+        ssa_builder* self, ssa_instr* pos, tree_type* type, unsigned align, bool insert_after);
 
 extern ssa_value* ssa_build_load(ssa_builder* self, ssa_value* what);
 extern ssa_value* ssa_build_store(ssa_builder* self, ssa_value* what, ssa_value* where);

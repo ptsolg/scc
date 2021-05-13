@@ -198,9 +198,13 @@ extern void ssa_set_instr_operand_value(ssa_instr* self, size_t i, ssa_value* va
         ssa_set_value_use_value(ssa_get_instr_operand(self, i), val);
 }
 
-extern ssa_instr* ssa_new_alloca(ssa_context* context, tree_type* type)
+extern ssa_instr* ssa_new_alloca(ssa_context* context, tree_type* type, unsigned align)
 {
-        return ssa_new_instr(context, SIK_ALLOCA, type, 0, sizeof(struct _ssa_alloca));
+        ssa_instr* i = ssa_new_instr(context, SIK_ALLOCA, type, 0, sizeof(struct _ssa_alloca));
+        if (!i)
+                return NULL;
+        ssa_set_alloca_align(i, align);
+        return i;
 }
 
 extern tree_type* ssa_get_allocated_type(const ssa_instr* self)

@@ -272,7 +272,7 @@ static void ssa_print_alloca_instr(ssa_printer* self, const ssa_instr* instr)
         ssa_print_value(self, var, false);
         ssa_prints(self, " = alloca ");
         ssa_print_type(self, ssa_get_allocated_type(instr));
-        ssa_prints(self, ", align 4");
+        ssa_printf(self, ", align %u", ssa_get_alloca_align(instr));
 }
 
 static void ssa_print_volatile(ssa_printer* self, const tree_type* type)

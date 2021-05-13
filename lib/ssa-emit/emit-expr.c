@@ -6,7 +6,11 @@
 
 extern ssa_value* ssa_emit_alloca(ssa_function_emitter* self, tree_type* type)
 {
-        ssa_value* v = ssa_build_alloca_ex(&self->builder, self->alloca_insertion_pos, type, true);
+        ssa_value* v = ssa_build_alloca_ex(&self->builder,
+                self->alloca_insertion_pos,
+                type,
+                tree_get_alignof(self->context->target, type),
+                true);
         if (v)
                 self->alloca_insertion_pos = ssa_get_var_instr(v);
         return v;

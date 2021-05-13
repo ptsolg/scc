@@ -147,6 +147,8 @@ extern size_t tree_get_alignof_record(const tree_target_info* info, const tree_d
 
         TREE_FOREACH_DECL_IN_SCOPE(scope, member)
         {
+                if (!tree_decl_is(member, TDK_FIELD))
+                        continue;
                 size_t member_align = tree_get_alignof(info, tree_get_decl_type(member));
                 if (member_align > max_align)
                         max_align = member_align;
