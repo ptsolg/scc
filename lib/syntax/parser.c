@@ -201,7 +201,11 @@ static void init_builtin_functions(c_sema* self)
 
         init_builtin_function(self,
                 TFBK_VA_START, "__va_start",
-                "static void __va_start(char* args);");
+                "void __va_start(char* args);");
+
+        init_builtin_function(self,
+                TFBK_FRAME_ADDRESS, "__frame_address",
+                "void* __frame_address(int level);");
 }
 
 extern tree_module* c_parse_source(

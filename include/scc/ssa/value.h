@@ -162,6 +162,7 @@ typedef enum
 {
         SSA_INTRIN_NONE,
         SSA_INTRIN_VA_START,
+        SSA_INTRIN_FRAME_ADDRESS,
 
         SSA_INTRIN_SIZE,
 } ssa_intrin_kind;

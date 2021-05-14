@@ -351,7 +351,7 @@ static bool is_intrin_instr(const tree_decl* d)
         if (!tree_decl_is(d, TDK_FUNCTION) || !tree_func_is_builtin(d))
                 return false;
         tree_function_builtin_kind k = tree_get_func_builtin_kind(d);
-        return k != TFBK_VA_START;
+        return k != TFBK_VA_START && k != TFBK_FRAME_ADDRESS;
 }
 
 extern ssa_value* ssa_emit_call_expr(ssa_function_emitter* self, const tree_expr* expr)

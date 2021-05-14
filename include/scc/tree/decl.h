@@ -186,6 +186,7 @@ typedef enum
         TFBK_ATOMIC_FENCE_ST_REL,
         TFBK_ATOMIC_FENCE_ST_ACQ_REL,
         TFBK_VA_START,
+        TFBK_FRAME_ADDRESS,
 } tree_function_builtin_kind;
 
 struct _tree_function_decl

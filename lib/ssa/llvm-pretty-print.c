@@ -133,9 +133,10 @@ static void ssa_print_constant_value(ssa_printer* self, tree_type* type, const s
 static const char* llvm_intrin_function_table[] = {
         "", // SSA_INTRIN_NONE
         "llvm.va_start",
+        "llvm.frameaddress",
 };
 
-static_assert(SSA_INTRIN_SIZE == 2, "Update llvm_intrin_function_table");
+static_assert(SSA_INTRIN_SIZE == 3, "Update llvm_intrin_function_table");
 
 static void ssa_print_value(ssa_printer* self, const ssa_value* value, bool print_type)
 {
