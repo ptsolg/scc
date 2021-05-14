@@ -230,9 +230,9 @@ extern tree_decl* c_sema_declare_enum_decl(c_sema* self, tree_location kw_loc, t
 extern tree_decl* c_sema_complete_enum_decl(c_sema* self, tree_decl* enum_, tree_location end);
 
 extern tree_decl* c_sema_define_record_decl(
-        c_sema* self, tree_location kw_loc, tree_id name, bool is_union);
+        c_sema* self, tree_location kw_loc, tree_id name, tree_expr* alignment, bool is_union);
 extern tree_decl* c_sema_declare_record_decl(
-        c_sema* self, tree_location kw_loc, tree_id name, bool is_union);
+        c_sema* self, tree_location kw_loc, tree_id name, tree_expr* alignment, bool is_union);
 extern tree_decl* c_sema_complete_record_decl(c_sema* self, tree_decl* rec, tree_location end);
 
 extern tree_decl* c_sema_define_field_decl(c_sema* self, c_decl_specs* ds, c_declarator* d, tree_expr* bit_width);

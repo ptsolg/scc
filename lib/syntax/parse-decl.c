@@ -440,6 +440,17 @@ static bool c_parse_struct_declaration_list(c_parser* self, tree_decl* record)
         return res;
 }
 
+static tree_expr* c_parse_alignment_specifier(c_parser* self)
+{
+        assert(c_parser_at(self, CTK_ALIGNED));
+        c_parser_consume_token(self);
+        if (!c_parser_require(self, CTK_LBRACKET))
+                return NULL;
+        tree_expr* alignment = c_parse_const_expr(self);
+        return alignment && c_parser_require(self, CTK_RBRACKET)
+                ? alignment : NULL;
+}
+
 static const c_token_kind ctk_struct_or_union[] =
 {
         CTK_STRUCT,
@@ -460,6 +471,13 @@ extern tree_decl* c_parse_struct_or_union_specifier(c_parser* self, bool* refere
         else if (!c_parser_require_ex(self, CTK_STRUCT, ctk_struct_or_union))
                 return NULL;
 
+        tree_expr* alignment = NULL;
+        if (c_parser_at(self, CTK_ALIGNED)
+                && !(alignment = c_parse_alignment_specifier(self)))
+        {
+                return NULL;
+        }
+
         tree_id name = TREE_EMPTY_ID;
         if (c_parser_at(self, CTK_ID))
         {
@@ -471,10 +489,10 @@ extern tree_decl* c_parse_struct_or_union_specifier(c_parser* self, bool* refere
         {
                 if (referenced)
                         *referenced = true;
-                return c_sema_declare_record_decl(self->sema, kw_loc, name, is_union);
+                return c_sema_declare_record_decl(self->sema, kw_loc, name, alignment, is_union);
         }
 
-        tree_decl* record = c_sema_define_record_decl(self->sema, kw_loc, name, is_union);
+        tree_decl* record = c_sema_define_record_decl(self->sema, kw_loc, name, alignment, is_union);
         if (!record)
                 return NULL;
 

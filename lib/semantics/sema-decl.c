@@ -642,33 +642,69 @@ extern tree_decl* c_sema_complete_enum_decl(c_sema* self, tree_decl* enum_, tree
         return enum_;
 }
 
-static tree_decl* c_sema_lookup_or_create_record_decl(
-        c_sema* self, tree_location kw_loc, tree_id name, bool is_union, bool parent_lookup)
+static tree_decl* c_sema_create_record_decl(
+        c_sema* self,
+        tree_location kw_loc,
+        tree_id name,
+        tree_expr* alignment,
+        bool is_union,
+        bool parent_lookup)
 {
+        tree_decl_scope* scope = parent_lookup
+                ? self->scope ? tree_get_scope_decls(self->scope) : self->globals
+                : self->locals;
+        tree_xlocation xloc = tree_create_xloc(kw_loc, kw_loc);
+        tree_decl* d = tree_new_record_decl(self->context, scope, xloc, name, alignment, is_union);
+        tree_set_decl_implicit(d, true);
+        return csema_add_decl_to_scope(self, scope, d) ? d : NULL;
+}
+
+static tree_decl* c_sema_lookup_or_create_record_decl(
+        c_sema* self,
+        tree_location kw_loc,
+        tree_id name,
+        tree_expr* alignment,
+        bool is_union,
+        bool parent_lookup)
+{
+        tree_eval_result er;
+        if (alignment)
+        {
+                if (!tree_eval_expr_as_integer(self->target, alignment, &er))
+                {
+                        c_error_alignment_isnt_constant(self->ccontext, alignment);
+                        return NULL;
+                }
+                if (num_is_zero(&er.value))
+                {
+                        c_error_alignment_is_zero(self->ccontext, alignment);
+                        return NULL;
+                }
+        }
+
         tree_decl* d = tree_decl_scope_lookup(self->locals, TLK_TAG, name, parent_lookup);
         if (!d)
-        {
-                tree_decl_scope* scope = parent_lookup
-                        ? self->scope ? tree_get_scope_decls(self->scope) : self->globals
-                        : self->locals;
-                tree_xlocation xloc = tree_create_xloc(kw_loc, kw_loc);
-                d = tree_new_record_decl(self->context, scope, xloc, name, is_union);
-                tree_set_decl_implicit(d, true);
-                if (!csema_add_decl_to_scope(self, scope, d))
-                        return NULL;
-        }
-        else if (!tree_decl_is(d, TDK_RECORD) || tree_record_is_union(d) != is_union)
+                return c_sema_create_record_decl(self, kw_loc, name, alignment, is_union, parent_lookup);
+
+        if (!tree_decl_is(d, TDK_RECORD) || tree_record_is_union(d) != is_union)
         {
                 c_error_wrong_kind_of_tag(self->ccontext, kw_loc, name);
                 return NULL;
         }
+
+        if (alignment && tree_get_record_alignment(d))
+        {
+                c_error_multiple_alignment_specifiers(self->ccontext, kw_loc);
+                return NULL;
+        }
+
         return d;
 }
 
 extern tree_decl* c_sema_define_record_decl(
-        c_sema* self, tree_location kw_loc, tree_id name, bool is_union)
+        c_sema* self, tree_location kw_loc, tree_id name, tree_expr* alignment, bool is_union)
 {
-        tree_decl* r = c_sema_lookup_or_create_record_decl(self, kw_loc, name, is_union, false);
+        tree_decl* r = c_sema_lookup_or_create_record_decl(self, kw_loc, name, alignment, is_union, false);
         if (!r)
                 return NULL;
 
@@ -681,9 +717,9 @@ extern tree_decl* c_sema_define_record_decl(
 }
 
 extern tree_decl* c_sema_declare_record_decl(
-        c_sema* self, tree_location kw_loc, tree_id name, bool is_union)
+        c_sema* self, tree_location kw_loc, tree_id name, tree_expr* alignment, bool is_union)
 {
-        return c_sema_lookup_or_create_record_decl(self, kw_loc, name, is_union, true);
+        return c_sema_lookup_or_create_record_decl(self, kw_loc, name, alignment, is_union, true);
 }
 
 static bool c_sema_check_field_bitwidth(const c_sema* self, const tree_decl* field)

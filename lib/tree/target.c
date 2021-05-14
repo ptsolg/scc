@@ -141,6 +141,15 @@ extern size_t tree_get_sizeof(const tree_target_info* info, const tree_type* t)
 
 extern size_t tree_get_alignof_record(const tree_target_info* info, const tree_decl* d)
 {
+        tree_expr* alignment = tree_get_record_alignment(d);
+        if (alignment)
+        {
+                tree_eval_result er;
+                bool ok = tree_eval_expr_as_integer(info, alignment, &er);
+                assert(ok);
+                return num_as_u64(&er.value);
+        }
+
         bool is_union = tree_record_is_union(d);
         const tree_decl_scope* scope = tree_get_record_cfields(d);
         size_t max_align = 0;

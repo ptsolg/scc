@@ -193,6 +193,22 @@ extern void c_error_enumerator_value_isnt_constant(c_context* self, tree_locatio
                 c_context_get_id_string(self, name));
 }
 
+extern void c_error_alignment_isnt_constant(c_context* self, const tree_expr* alignment)
+{
+        c_error(self, CES_ERROR, tree_get_expr_loc_begin(alignment),
+                "alignment is not an integer constant");
+}
+
+extern void c_error_alignment_is_zero(c_context* self, const tree_expr* alignment)
+{
+        c_error(self, CES_ERROR, tree_get_expr_loc_begin(alignment), "alignment is zero");
+}
+
+extern void c_error_multiple_alignment_specifiers(c_context* self, tree_location loc)
+{
+        c_error(self, CES_ERROR, loc, "multiple alignment specifiers");
+}
+
 extern void c_error_wrong_kind_of_tag(c_context* self, tree_location loc, tree_id name)
 {
         c_error(self, CES_ERROR, loc, "'%s' defined as wrong kind of tag",

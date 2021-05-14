@@ -126,12 +126,15 @@ extern int c_parse_type_qualifier_list_opt(c_parser* self);
 extern tree_type* c_parse_specifier_qualifier_list(c_parser* self);
 
 // c99 6.7.2.1 struct-or-union specifier
-//      struct-or-union identifier-opt { struct-declaration-list }
-//      struct-or-union identifier
+//      struct-or-union alignment-specifier-opt identifier-opt { struct-declaration-list }
+//      struct-or-union alignment-specifier-opt identifier
 //
 // struct-or-union:
 //      struct
 //      union
+//
+// alignment-specifier:
+//      _Aligned ( constant-expression )
 //
 // struct-declaration-list:
 //      struct-declaration

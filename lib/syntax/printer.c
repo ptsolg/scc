@@ -923,8 +923,19 @@ static void c_print_struct_or_union_specifier(c_printer* self, const tree_decl* 
 {
         c_printrw(self, (tree_record_is_union(record) ? CTK_UNION : CTK_STRUCT));
         c_print_space(self);
+        tree_expr* alignment = tree_get_record_alignment(record);
+        bool is_ref = opts & CPRINT_DECL_NAME;
+
+        if (alignment && !is_ref)
+        {
+                c_printrw(self, CTK_ALIGNED);
+                c_printrw(self, CTK_LBRACKET);
+                c_print_expr(self, alignment);
+                c_printrw(self, CTK_RBRACKET);
+                c_print_space(self);
+        }
         c_print_decl_name(self, record);
-        if (opts & CPRINT_DECL_NAME)
+        if (is_ref)
                 return;
 
         c_print_decl_scope(self, tree_get_record_cfields(record), true, CPRINT_OPTS_NONE);

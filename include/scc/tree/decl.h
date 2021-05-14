@@ -166,6 +166,7 @@ struct _tree_record_decl
 {
         struct _tree_tag_decl base;
         tree_decl_scope fields;
+        tree_expr* alignment;
         bool is_union;
 };
 
@@ -487,6 +488,7 @@ extern tree_decl* tree_new_record_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
+        tree_expr* alignment,
         bool is_union);
 
 extern size_t tree_count_record_fields(const tree_decl* record);
@@ -527,6 +529,16 @@ static TREE_INLINE tree_decl* tree_get_first_union_field(tree_decl* self)
                 it = tree_get_next_decl(it);
         }
         return it;
+}
+
+static TREE_INLINE tree_expr* tree_get_record_alignment(const tree_decl* self)
+{
+        return self->record.alignment;
+}
+
+static TREE_INLINE void tree_set_record_alignment(tree_decl* self, tree_expr* alignment)
+{
+        self->record.alignment = alignment;
 }
 
 static TREE_INLINE bool tree_record_is_union(const tree_decl* self)

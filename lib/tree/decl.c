@@ -194,6 +194,7 @@ extern tree_decl* tree_new_record_decl(
         tree_decl_scope* scope,
         tree_xlocation loc,
         tree_id name,
+        tree_expr* alignment,
         bool is_union)
 {
         tree_decl* d = tree_new_tag_decl(context,
@@ -203,6 +204,7 @@ extern tree_decl* tree_new_record_decl(
 
         tree_set_record_union(d, is_union);
         tree_init_decl_scope(tree_get_record_fields(d), context, scope);
+        tree_set_record_alignment(d, alignment);
         return d;
 }
 

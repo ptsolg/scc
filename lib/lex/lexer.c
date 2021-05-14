@@ -6,7 +6,7 @@
 #include "errors.h"
 #include "numeric-literal.h"
 
-static_assert(CTK_TOTAL_SIZE == 115, "lexer reswords initialization needs an update");
+static_assert(CTK_TOTAL_SIZE == 116, "lexer reswords initialization needs an update");
 
 static void c_lexer_add_token(c_lexer* self, c_token_kind k, bool pp)
 {
