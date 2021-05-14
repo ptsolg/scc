@@ -366,9 +366,9 @@ static inline tree_expr* c_parse_rhs_of_binary_expr(c_parser* self, tree_expr* l
                         return NULL;
 
                 int next_prec = get_operator_precedence(c_parser_get_token(self));
-                bool next_right_assoc = next_prec == PRECEDENCE_ASSIGN || next_prec == PRECEDENCE_CONDITIONAL;
-                if ((next_prec > this_prec) || (next_right_assoc && next_prec == this_prec))
-                        rhs = c_parse_rhs_of_binary_expr(self, rhs, this_prec + !next_right_assoc);
+                bool is_right_assoc = this_prec == PRECEDENCE_ASSIGN || this_prec == PRECEDENCE_CONDITIONAL;
+                if ((next_prec > this_prec) || (is_right_assoc && next_prec == this_prec))
+                        rhs = c_parse_rhs_of_binary_expr(self, rhs, this_prec + !is_right_assoc);
 
                 lhs = c_token_is(optoken, CTK_QUESTION)
                         ? c_sema_new_conditional_expr(self->sema, oploc, lhs, ternary_middle, rhs)
