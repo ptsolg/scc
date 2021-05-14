@@ -195,7 +195,7 @@ extern ssa_const* ssa_emit_const_expr(ssa_module_emitter* self, const tree_expr*
                 return emit_addr_constant(self, expr);
 
         tree_eval_result er;
-        bool result = tree_eval_expr(self->context->tree, expr, &er);
+        bool result = tree_eval_expr(self->context->target, expr, &er);
         assert(result && er.kind != TERK_ADDRESS_CONSTANT);
         return ssa_new_const_literal(self->context, t, er.value);
 }
