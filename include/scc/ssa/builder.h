@@ -106,6 +106,4 @@ extern ssa_value* ssa_build_atomic_cmpxchg(
         ssa_memorder_kind success_ordering,
         ssa_memorder_kind failure_ordering);
 
-extern ssa_value* ssa_build_va_start_instr(ssa_builder* self, ssa_value* arglist);
-
 #endif

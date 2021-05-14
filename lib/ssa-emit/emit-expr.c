@@ -310,7 +310,7 @@ static ssa_value* ssa_emit_intrin_call_expr(
 {
         ssa_value* args[32];
         size_t num_args = tree_get_call_args_size(expr);
-        assert(num_args< 32 && "update args size");
+        assert(num_args < 32 && "update args size");
 
         for (size_t i = 0; i < num_args; i++)
                 if (!(args[i] = ssa_emit_expr(self, tree_get_call_arg(expr, i))))
@@ -340,13 +340,18 @@ static ssa_value* ssa_emit_intrin_call_expr(
                 case TFBK_ATOMIC_FENCE_ST_ACQ_REL:
                         return ssa_build_fence_instr(&self->builder, SSK_SINGLE_THREAD, SMK_ACQ_REL);
 
-                case TFBK_VA_START:
-                        return ssa_build_va_start_instr(&self->builder, args[0]);
-
                 default:
-                        assert(0 && "unknown intrin");
+                        assert(0 && "Unknown intrinsic instruction");
                         return NULL;
         }
+}
+
+static bool is_intrin_instr(const tree_decl* d)
+{
+        if (!tree_decl_is(d, TDK_FUNCTION) || !tree_func_is_builtin(d))
+                return false;
+        tree_function_builtin_kind k = tree_get_func_builtin_kind(d);
+        return k != TFBK_VA_START;
 }
 
 extern ssa_value* ssa_emit_call_expr(ssa_function_emitter* self, const tree_expr* expr)
@@ -356,7 +361,7 @@ extern ssa_value* ssa_emit_call_expr(ssa_function_emitter* self, const tree_expr
         if (tree_expr_is(lhs_base, TEK_DECL))
         {
                 tree_decl* func = tree_get_decl_expr_entity(lhs_base);
-                if (tree_decl_is(func, TDK_FUNCTION) && tree_func_is_builtin(func))
+                if (is_intrin_instr(func))
                         return ssa_emit_intrin_call_expr(self, expr, func);
         }
 

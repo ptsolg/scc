@@ -130,6 +130,13 @@ static void ssa_print_constant_value(ssa_printer* self, tree_type* type, const s
         ssa_prints(self, num);
 }
 
+static const char* llvm_intrin_function_table[] = {
+        "", // SSA_INTRIN_NONE
+        "llvm.va_start",
+};
+
+static_assert(SSA_INTRIN_SIZE == 2, "Update llvm_intrin_function_table");
+
 static void ssa_print_value(ssa_printer* self, const ssa_value* value, bool print_type)
 {
         if (print_type)
@@ -144,6 +151,11 @@ static void ssa_print_value(ssa_printer* self, const ssa_value* value, bool prin
         else if (k == SVK_CONSTANT)
                 ssa_print_constant_value(self, 
                         ssa_get_value_type(value), ssa_get_constant_cvalue(value));
+        else if (k == SVK_FUNCTION && ssa_get_function_intrin_kind(value) != SSA_INTRIN_NONE)
+        {
+                ssa_printc(self, '@');
+                ssa_prints(self, llvm_intrin_function_table[ssa_get_function_intrin_kind(value)]);
+        }
         else if (k == SVK_GLOBAL_VAR || k == SVK_FUNCTION)
         {
                 tree_decl* entity = k == SVK_FUNCTION
@@ -614,14 +626,6 @@ static void ssa_print_cmpxchg_instr(ssa_printer* self, const ssa_instr* instr)
         ssa_printf(self, " = zext i1 %s to i32", loaded);
 }
 
-static void ssa_print_va_start_instr(ssa_printer* self, const ssa_instr* instr)
-{
-        ssa_prints(self, "call void @llvm.va_start");
-        ssa_print_call_instr_params(self,
-                ssa_get_instr_operands_begin(instr),
-                ssa_get_instr_operands_end(instr));
-}
-
 extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
 {
         ssa_instr_kind k = ssa_get_instr_kind(instr);
@@ -649,8 +653,6 @@ extern void ssa_print_instr(ssa_printer* self, const ssa_instr* instr)
                 ssa_print_fence_instr(self, instr);
         else if (k == SIK_ATOMIC_CMPXCHG)
                 ssa_print_cmpxchg_instr(self, instr);
-        else if (k == SIK_VA_START)
-                ssa_print_va_start_instr(self, instr);
 }
 
 extern void ssa_print_block(ssa_printer* self, const ssa_block* block)
@@ -775,13 +777,14 @@ static void ssa_print_function(ssa_printer* self, const ssa_value* val)
 
         tree_decl* func = ssa_get_function_entity(val);
         tree_type* func_type = tree_get_decl_type(func);
+        
         ssa_prints(self, defined ? "define " : "declare ");
         ssa_print_linkage(self, func);
         ssa_print_dll_storage_class(self, func);
         ssa_print_cc(self, func_type);
         _ssa_print_type(self, tree_get_func_type_result(func_type), 1);
-        ssa_prints(self, " @");
-        ssa_print_tree_id(self, tree_get_decl_name(func));
+        ssa_printc(self, ' ');
+        ssa_print_value(self, val, false);
         ssa_print_func_type_params(self, func_type);
 
         if (!defined)
@@ -917,18 +920,12 @@ static void ssa_print_global_value(ssa_printer* self, const ssa_value* val)
         }
 }
 
-static void ssa_declare_llvm_intrinsics(ssa_printer* self)
-{
-        ssa_prints(self, "declare void @llvm.va_start(i8*)\n");
-}
-
 extern void ssa_pretty_print_module_llvm(
         FILE* fout, ssa_context* context, const ssa_module* module)
 {
         ssa_printer p;
         ssa_init_printer(&p, context, fout);
 
-        ssa_declare_llvm_intrinsics(&p);
         SSA_FOREACH_MODULE_TYPE_DECL(module, it, end)
                 if (tree_decl_is(*it, TDK_RECORD))
                 {

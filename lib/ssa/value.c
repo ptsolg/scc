@@ -119,7 +119,8 @@ extern ssa_value* ssa_new_param(ssa_context* context, tree_type* type)
         return ssa_new_value(context, SVK_PARAM, type, sizeof(struct _ssa_param));
 }
 
-extern ssa_value* ssa_new_function(ssa_context* context, tree_decl* func)
+extern ssa_value* ssa_new_function(
+        ssa_context* context, tree_decl* func, ssa_intrin_kind intrin_kind)
 {
         assert(func);
         tree_type* t = tree_desugar_type(tree_get_decl_type(func));
@@ -132,6 +133,7 @@ extern ssa_value* ssa_new_function(ssa_context* context, tree_decl* func)
 
         struct _ssa_function* f = _ssa_function(val);
         f->entity = func;
+        f->intrin_kind = intrin_kind;
         init_list(&f->blocks);
         ssa_init_array(&f->params);
 
@@ -140,7 +142,7 @@ extern ssa_value* ssa_new_function(ssa_context* context, tree_decl* func)
 
 extern void ssa_add_function_block(ssa_value* self, ssa_block* block)
 {
-        assert(block);
+        assert(block && ssa_get_function_intrin_kind(self) == SSA_INTRIN_NONE);
         list_push(&_ssa_function(self)->blocks, &block->node);
 }
 

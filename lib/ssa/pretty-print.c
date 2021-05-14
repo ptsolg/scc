@@ -139,7 +139,6 @@ static const char* ssa_instr_table[] =
         "",  // atomic rmw
         "fence",
         "cmpxchg",
-        "va_start",
 };
 
 static_assert(ARRAY_SIZE(ssa_instr_table) == SIK_SIZE,

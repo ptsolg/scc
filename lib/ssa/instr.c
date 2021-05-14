@@ -118,7 +118,6 @@ extern bool ssa_instr_has_var(const ssa_instr* self)
                 case SIK_STORE:
                 case SIK_TERMINATOR:
                 case SIK_FENCE:
-                case SIK_VA_START:
                         return false;
 
                 case SIK_CALL:
@@ -461,10 +460,4 @@ extern ssa_instr* ssa_new_atomic_cmpxchg_instr(
         ssa_set_atomic_cmpxchg_instr_success_ordering(i, success_ordering);
         ssa_set_atomic_cmpxchg_instr_failure_ordering(i, failure_ordering);
         return i;
-}
-
-extern ssa_instr* ssa_new_va_start_instr(ssa_context* context, ssa_value* arglist)
-{
-        return ssa_new_unary_instr(context,
-                SIK_VA_START, NULL, arglist, sizeof(struct _ssa_va_start));
 }

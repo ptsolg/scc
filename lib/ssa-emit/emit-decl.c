@@ -113,15 +113,27 @@ cleanup:
         return result;
 }
 
+static_assert(SSA_INTRIN_SIZE == 2, "Update tfbk_to_ssa_intrin");
+static ssa_intrin_kind tfbk_to_ssa_intrin(tree_function_builtin_kind k)
+{
+        if (k == TFBK_ORDINARY)
+                return SSA_INTRIN_NONE;
+        if (k == TFBK_VA_START)
+                return SSA_INTRIN_VA_START;
+        assert(0 && "Unknown intrin");
+        return -1;
+}
+
 static bool ssa_emit_function_decl(ssa_module_emitter* self, tree_decl* func)
 {
-        if (tree_get_func_builtin_kind(func) != TFBK_ORDINARY)
+        tree_function_builtin_kind fbk = tree_get_func_builtin_kind(func);
+        if (fbk != TFBK_ORDINARY && fbk != TFBK_VA_START)
                 return true;
 
         ssa_value* val = ssa_get_global_decl(self, func);
         if (!val)
         {
-                val = ssa_new_function(self->context, func);
+                val = ssa_new_function(self->context, func, tfbk_to_ssa_intrin(fbk));
                 ssa_add_module_global(self->module, val);
                 ssa_set_global_decl(self, func, val);
         }

@@ -158,15 +158,25 @@ static inline tree_id ssa_get_string_value(const ssa_value* self);
 
 static inline void ssa_set_string_value(ssa_value* self, tree_id id);
 
+typedef enum
+{
+        SSA_INTRIN_NONE,
+        SSA_INTRIN_VA_START,
+
+        SSA_INTRIN_SIZE,
+} ssa_intrin_kind;
+
 struct _ssa_function
 {
         struct _ssa_value_base base;
+        ssa_intrin_kind intrin_kind;
         tree_decl* entity;
         struct list blocks;
         ssa_array params;
 };
 
-extern ssa_value* ssa_new_function(ssa_context* context, tree_decl* func);
+extern ssa_value* ssa_new_function(
+        ssa_context* context, tree_decl* func, ssa_intrin_kind intrin_kind);
 extern void ssa_add_function_block(ssa_value* self, ssa_block* block);
 extern void ssa_add_function_param(ssa_value* self, ssa_context* context, ssa_value* param);
 extern bool ssa_function_returns_void(const ssa_value* self);
@@ -184,6 +194,9 @@ static inline ssa_block* ssa_get_function_blocks_cend(const ssa_value* self);
 static inline ssa_value** ssa_get_function_params_begin(const ssa_value* self);
 static inline ssa_value** ssa_get_function_params_end(const ssa_value* self);
 static inline bool ssa_function_has_body(const ssa_value* self);
+
+static inline ssa_intrin_kind ssa_get_function_intrin_kind(const ssa_value* self);
+static inline void ssa_set_function_intrin_kind(ssa_value* self, ssa_intrin_kind kind);
 
 static inline void ssa_set_function_entity(ssa_value* self, tree_decl* func);
 
@@ -450,6 +463,16 @@ static inline ssa_value** ssa_get_function_params_end(const ssa_value* self)
 static inline bool ssa_function_has_body(const ssa_value* self)
 {
         return !is_list_empty(&_ssa_cfunction(self)->blocks);
+}
+
+static inline ssa_intrin_kind ssa_get_function_intrin_kind(const ssa_value* self)
+{
+        return _ssa_cfunction(self)->intrin_kind;
+}
+
+static inline void ssa_set_function_intrin_kind(ssa_value* self, ssa_intrin_kind kind)
+{
+        _ssa_function(self)->intrin_kind = kind;
 }
 
 static inline void ssa_set_function_entity(ssa_value* self, tree_decl* func)

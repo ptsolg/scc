@@ -600,12 +600,3 @@ extern ssa_value* ssa_build_atomic_cmpxchg(
 
         return ssa_insert_instr(self->pos, i, false);
 }
-
-extern ssa_value* ssa_build_va_start_instr(ssa_builder* self, ssa_value* arglist)
-{
-        ssa_instr* i = ssa_new_va_start_instr(self->context, arglist);
-        if (!i)
-                return NULL;
-
-        return ssa_insert_instr(self->pos, i, false);
-}
