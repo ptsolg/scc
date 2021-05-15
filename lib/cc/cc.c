@@ -13,6 +13,7 @@ extern void cc_init(cc_instance* self, FILE* message)
         vec_init(&self->input.sources);
         vec_init(&self->input.builtin_sources);
         vec_init(&self->input.libs);
+        vec_init(&self->input.obj_files);
         flookup_init(&self->input.source_lookup);
         flookup_init(&self->input.lib_lookup);
 
@@ -45,6 +46,7 @@ extern void cc_dispose(cc_instance* self)
         vec_drop(&self->input.libs);
         vec_drop(&self->input.sources);
         vec_drop(&self->input.builtin_sources);
+        vec_drop(&self->input.obj_files);
 }
 
 extern void cc_set_output_stream(cc_instance* self, FILE* out)
@@ -104,6 +106,19 @@ extern errcode cc_add_source_file(cc_instance* self, const char* file, bool buil
         return EC_NO_ERROR;
 }
 
+extern errcode cc_add_obj_file(cc_instance* self, const char* file)
+{
+        file_entry* obj = file_get(&self->input.source_lookup, file);
+        if (!obj)
+        {
+                cc_file_doesnt_exit(self, file);
+                return EC_ERROR;
+        }
+
+        vec_push(&self->input.obj_files, obj);
+        return EC_NO_ERROR;
+}
+
 extern errcode cc_emulate_source_file(
         cc_instance* self, const char* file, const char* content, bool builtin, bool add_to_input)
 {
@@ -121,7 +136,7 @@ extern errcode cc_run(cc_instance* self)
 {
         assert(self->opts.ext.enable_tm == (bool)self->input.tm_decls);
 
-        if (!self->input.sources.size)
+        if (!self->input.sources.size && !self->input.obj_files.size)
         {
                 cc_error(self, "no input files");
                 return EC_ERROR;

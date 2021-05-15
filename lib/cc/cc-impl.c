@@ -120,6 +120,20 @@ static file_entry** cc_libs_end(cc_instance* self)
         for(file_entry** ITNAME = cc_libs_begin(PCC),\
                 **ENDNAME = cc_libs_end(PCC); ITNAME != ENDNAME; ITNAME++)
 
+static file_entry** cc_obj_files_begin(cc_instance* self)
+{
+        return (file_entry**)vec_begin(&self->input.obj_files);
+}
+
+static file_entry** cc_obj_files_end(cc_instance* self)
+{
+        return (file_entry**)vec_end(&self->input.obj_files);
+}
+
+#define CC_FOREACH_OBJ_FILE(PCC, ITNAME, ENDNAME) \
+        for(file_entry** ITNAME = cc_obj_files_begin(PCC),\
+                **ENDNAME = cc_obj_files_end(PCC); ITNAME != ENDNAME; ITNAME++)
+
 extern void cc_error(cc_instance* self, const char* format, ...)
 {
         fprintf(self->output.message, "%s: error: ", self->opts.name);
@@ -514,6 +528,9 @@ static errcode cc_link(cc_instance* self, llvm_linker* lld)
                 get_file_as(&obj_file, *it, OBJ_EXT);
                 llvm_linker_add_file(lld, obj_file.buf);
         }
+
+        CC_FOREACH_OBJ_FILE(self, it, end)
+                llvm_linker_add_file(lld, (*it)->path);
 
         CC_FOREACH_LIB(self, it, end)
                 llvm_linker_add_file(lld, (*it)->path);

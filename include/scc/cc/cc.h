@@ -27,6 +27,7 @@ typedef struct
         struct vec sources;
         struct vec builtin_sources;
         struct vec libs;
+        struct vec obj_files;
         file_lookup source_lookup;
         file_lookup lib_lookup;
         file_entry* tm_decls;
@@ -89,6 +90,7 @@ extern void cc_add_lib_dir(cc_instance* self, const char* dir);
 extern errcode cc_add_lib(cc_instance* self, const char* lib);
 extern void cc_add_source_dir(cc_instance* self, const char* dir);
 extern errcode cc_add_source_file(cc_instance* self, const char* file, bool builtin);
+extern errcode cc_add_obj_file(cc_instance* self, const char* file);
 extern errcode cc_emulate_source_file(
         cc_instance* self, const char* file, const char* content, bool builtin, bool add_to_input);
 

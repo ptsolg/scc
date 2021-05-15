@@ -226,10 +226,17 @@ static void scc_O3(struct parser* p)
         p->env->cc.opts.optimization.level = 3;
 }
 
-static void scc_source_file(struct parser* p)
+static void scc_file(struct parser* p)
 {
         const char* file = arg_parser_next_str(&p->p);
-        if (!file || EC_FAILED(cc_add_source_file(&p->env->cc, file, false)))
+        if (!file)
+                return;
+
+        const char* ext = pathext(file);
+        bool ok = strcmp(ext, "o") == 0 || strcmp(ext, "obj") == 0
+                ? EC_SUCCEEDED(cc_add_obj_file(&p->env->cc, file))
+                : EC_SUCCEEDED(cc_add_source_file(&p->env->cc, file, false));
+        if (!ok)
                 return;
 
         struct pathbuf dir = pathbuf_from_str(file);
@@ -269,7 +276,7 @@ extern void scc_parse_opts(scc_env* self, int argc, const char** argv)
                 ARG_HANDLER("-m64", &scc_m64),
                 ARG_HANDLER("-O3", &scc_O3),
         };
-        struct arg_handler src = ARG_HANDLER("", &scc_source_file);
+        struct arg_handler src = ARG_HANDLER("", &scc_file);
         struct parser p;
         init_arg_parser(&p.p, argc, argv);
         p.env = self;
