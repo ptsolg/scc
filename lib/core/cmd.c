@@ -8,6 +8,7 @@ void init_arg_parser(struct arg_parser* self, int argc, const char** argv)
         self->argc = argc;
         self->pos = 1;
         self->argv = argv;
+        self->merged_arg = NULL;
 }
 
 static int remaining(const struct arg_parser* self)
@@ -18,6 +19,12 @@ static int remaining(const struct arg_parser* self)
 
 const char* arg_parser_next_str(struct arg_parser* self)
 {
+        if (self->merged_arg)
+        {
+                const char* s = self->merged_arg;
+                self->merged_arg = NULL;
+                return s;
+        }
         return remaining(self) ? self->argv[self->pos++] : NULL;
 }
 
@@ -38,13 +45,19 @@ void run_arg_parser(struct arg_parser* self,
         while (self->pos < self->argc)
         {
                 const char* arg = self->argv[self->pos++];
+                size_t arg_len = strlen(arg);
                 const struct arg_handler* handler = NULL;
+
                 for (unsigned i = 0; i < num_handlers; i++)
                 {
                         const char* prefix = handlers[i].prefix;
-                        if (*prefix && strncmp(arg, prefix, strlen(prefix)) == 0)
+                        size_t prefix_len = strlen(prefix);
+
+                        if (*prefix && strncmp(arg, prefix, prefix_len) == 0)
                         {
                                 handler = handlers + i;
+                                if (prefix_len != arg_len)
+                                        self->merged_arg = arg + prefix_len;
                                 break;
                         }
                 }

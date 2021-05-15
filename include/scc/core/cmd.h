@@ -16,6 +16,7 @@ struct arg_parser
         int pos;
         int argc;
         const char** argv;
+        const char* merged_arg;
 };
 
 void init_arg_parser(struct arg_parser* self, int argc, const char** argv);
