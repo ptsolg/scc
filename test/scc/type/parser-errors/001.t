@@ -1,0 +1,1 @@
+struct _Aligned(0 A
