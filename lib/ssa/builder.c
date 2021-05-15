@@ -426,8 +426,7 @@ extern ssa_value* ssa_build_not(ssa_builder* self, ssa_value* operand)
 {
         tree_type* t = ssa_get_value_type(operand);
         assert(t && tree_type_is_integer(t));
-      
-        uint64_t bits = 8ULL * tree_get_sizeof(ssa_get_target(self->context), t);
+
         ssa_value* ones = ssa_build_int_constant(self, t, UINT64_MAX);
         if (!ones)
                 return NULL;

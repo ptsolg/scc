@@ -306,7 +306,7 @@ extern ssa_value* ssa_emit_unary_expr(ssa_function_emitter* self, const tree_exp
 static ssa_value* ssa_emit_intrin_call_expr(
         ssa_function_emitter* self, const tree_expr* expr, const tree_decl* intrin)
 {
-        ssa_value* args[32];
+        ssa_value* args[32] = { 0 };
         size_t num_args = tree_get_call_args_size(expr);
         assert(num_args < 32 && "update args size");
 
