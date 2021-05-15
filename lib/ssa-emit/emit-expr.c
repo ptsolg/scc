@@ -186,50 +186,48 @@ static void ssa_init_cond_expr_exit(ssa_cond_expr_exit* self, ssa_function_emitt
         self->phi = ssa_get_var_instr(v);
 }
 
-static inline ssa_value* ssa_emit_log_expr_lhs(
-        ssa_function_emitter* self, ssa_cond_expr_exit* exit, const tree_expr* expr)
+static inline bool _ssa_emit_log_expr(
+        ssa_function_emitter* self,
+        ssa_block* on_true,
+        ssa_block* on_false,
+        ssa_block* global_exit,
+        const tree_expr* expr)
 {
         if (!tree_expr_is(expr, TEK_BINARY)
                 || (!tree_binop_is(expr, TBK_LOG_AND) && !tree_binop_is(expr, TBK_LOG_OR)))
         {
-                return ssa_emit_expr_as_condition(self, expr);
+                ssa_value* cond = ssa_emit_expr_as_condition(self, expr);
+                ssa_value* label = ssa_get_block_label(self->block);
+                if (!cond)
+                        return false;
+                if (on_true == global_exit || on_false == global_exit)
+                        ssa_add_phi_operand(ssa_block_get_first_phi(global_exit), self->context, cond, label);
+                return on_true == on_false
+                        ? ssa_emit_jmp(self, on_true)
+                        : ssa_emit_cond_jmp(self, cond, on_true, on_false);
         }
 
-        ssa_value* lhs_cond = ssa_emit_log_expr_lhs(self, exit, tree_get_binop_lhs(expr));
-        ssa_value* lhs_label = ssa_get_block_label(self->block);
-        if (!lhs_cond)
-                return NULL;
+        const tree_expr* lhs = tree_get_binop_lhs(expr);
+        ssa_block* rhs_block = ssa_new_function_block(self);
+        bool lhs_ok = tree_binop_is(expr, TBK_LOG_OR)
+                ? _ssa_emit_log_expr(self, on_true, rhs_block, global_exit, lhs)
+                : _ssa_emit_log_expr(self, rhs_block, on_false, global_exit, lhs);
 
-        ssa_block* current = ssa_new_function_block(self);
-
-        // finish prev block
-        ssa_block* on_true = tree_binop_is(expr, TBK_LOG_OR) ? exit->block : current;
-        ssa_block* on_false = tree_binop_is(expr, TBK_LOG_OR) ? current : exit->block;
-        if (!ssa_emit_cond_jmp(self, lhs_cond, on_true, on_false))
-                return false;
-
-        ssa_add_phi_operand(exit->phi, self->context, lhs_cond, lhs_label);
-        ssa_enter_block(self, current);
-        return ssa_emit_expr_as_condition(self, tree_get_binop_rhs(expr));;
+        ssa_enter_block(self, rhs_block);
+        ssa_emit_block(self, rhs_block);
+        return lhs_ok && _ssa_emit_log_expr(self, on_true, on_false, global_exit, tree_get_binop_rhs(expr));
 }
 
 static ssa_value* ssa_emit_log_expr(ssa_function_emitter* self, const tree_expr* expr)
 {
-        ssa_cond_expr_exit exit;
-        ssa_init_cond_expr_exit(&exit, self, tree_get_expr_type(expr));
-
-        ssa_value* last_cond = ssa_emit_log_expr_lhs(self, &exit, expr);
-        ssa_value* last_label = ssa_get_block_label(self->block);
-        if (!last_cond)
+        ssa_block* exit = ssa_new_function_block(self);
+        ssa_value* phi_var = ssa_build_phi_ex(&self->builder,
+                ssa_get_block_instrs_end(exit), tree_get_expr_type(expr), false);
+        if (!_ssa_emit_log_expr(self, exit, exit, exit, expr))
                 return NULL;
-
-        if (!ssa_emit_jmp(self, exit.block))
-                return false;
-
-        ssa_add_phi_operand(exit.phi, self->context, last_cond, last_label);
-        ssa_enter_block(self, exit.block);
-        ssa_emit_block(self, exit.block);
-        return ssa_get_instr_var(exit.phi);
+        ssa_enter_block(self, exit);
+        ssa_emit_block(self, exit);
+        return phi_var;
 }
 
 extern ssa_value* ssa_emit_binary_expr(ssa_function_emitter* self, const tree_expr* expr)

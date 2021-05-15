@@ -1,0 +1,30 @@
+; Definition for test
+@0:
+    $1 = cmp neq 1, 0
+    br $1, @14, @2
+
+@2:
+    $3 = cmp neq 2, 0
+    br $3, @4, @11
+
+@4:
+    $5 = cmp neq 3, 0
+    br $5, @8, @6
+
+@6:
+    $7 = cmp neq 4, 0
+    br @8
+
+@8:
+    $9 = phi $5, $7
+    $10 = cmp neq $9, 0
+    br @11
+
+@11:
+    $12 = phi $3, $10
+    $13 = cmp neq $12, 0
+    br @14
+
+@14:
+    $15 = phi $1, $13
+    ret
