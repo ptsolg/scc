@@ -21,4 +21,10 @@ extern void srand(unsigned seed);
 extern int atoi(const char* string);
 extern double atof(const char* string);
 
+extern float strtof(const char* str, char** endptr);
+extern double strtod(const char* str, char** endptr);
+extern unsigned long long strtoull(const char* str, char** endptr, int base);
+
+extern int system(const char* cmd);
+
 #endif
