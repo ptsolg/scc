@@ -572,7 +572,9 @@ extern ssa_value* ssa_emit_cast_expr(ssa_function_emitter* self, const tree_expr
 
         tree_type* t = tree_get_expr_type(expr);
         ssa_emit_type(self->module_emitter, t);
-        return ssa_build_cast(&self->builder, t, operand);
+        return tree_type_is_void(t) 
+                ? operand
+                : ssa_build_cast(&self->builder, t, operand);
 }
 
 extern ssa_value* ssa_emit_sizeof_expr(ssa_function_emitter* self, const tree_expr* expr)
