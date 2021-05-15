@@ -198,6 +198,11 @@ static void scc_L(struct parser* p)
         cc_add_lib_dir(&p->env->cc, dir);
 }
 
+static void scc_D(struct parser* p)
+{
+        // Todo
+}
+
 static void scc_m32(struct parser* p)
 {
         p->env->cc.opts.target = CTK_X86_32;
@@ -272,6 +277,7 @@ extern void scc_parse_opts(scc_env* self, int argc, const char** argv)
                 ARG_HANDLER("-I", &scc_I),
                 ARG_HANDLER("-l", &scc_l),
                 ARG_HANDLER("-L", &scc_L),
+                ARG_HANDLER("-D", &scc_D),
                 ARG_HANDLER("-m32", &scc_m32),
                 ARG_HANDLER("-m64", &scc_m64),
                 ARG_HANDLER("-O3", &scc_O3),
