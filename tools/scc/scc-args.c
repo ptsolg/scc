@@ -182,8 +182,7 @@ static void scc_l(struct parser* p)
                 scc_missing_argument(p->env, "-l");
                 return;
         }
-
-        cc_add_lib(&p->env->cc, lib);
+        cc_add_lib(&p->env->cc, lib, false);
 }
 
 static void scc_L(struct parser* p)
@@ -231,6 +230,16 @@ static void scc_O3(struct parser* p)
         p->env->cc.opts.optimization.level = 3;
 }
 
+static bool is_obj(const char* ext)
+{
+        return strcmp(ext, "o") == 0 || strcmp(ext, "obj") == 0;
+}
+
+static bool is_lib(const char* ext)
+{
+        return strcmp(ext, "a") == 0 || strcmp(ext, "lib") == 0;
+}
+
 static void scc_file(struct parser* p)
 {
         const char* file = arg_parser_next_str(&p->p);
@@ -238,10 +247,18 @@ static void scc_file(struct parser* p)
                 return;
 
         const char* ext = pathext(file);
-        bool ok = strcmp(ext, "o") == 0 || strcmp(ext, "obj") == 0
-                ? EC_SUCCEEDED(cc_add_obj_file(&p->env->cc, file))
-                : EC_SUCCEEDED(cc_add_source_file(&p->env->cc, file, false));
-        if (!ok)
+        if (is_obj(ext))
+        {
+                cc_add_obj_file(&p->env->cc, file);
+                return;
+        }
+        else if (is_lib(ext))
+        {
+                cc_add_lib(&p->env->cc, file, false);
+                return;
+        }
+
+        if (EC_FAILED(cc_add_source_file(&p->env->cc, file, false)))
                 return;
 
         struct pathbuf dir = pathbuf_from_str(file);

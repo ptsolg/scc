@@ -22,7 +22,7 @@
 
 static errcode cc_handle_pragma_link(void* cc, const char* lib)
 {
-        return cc_add_lib(cc, lib);
+        return cc_add_lib(cc, lib, true);
 }
 
 typedef struct
@@ -106,18 +106,32 @@ static file_entry** cc_builtin_sources_end(cc_instance* self)
         for(file_entry** ITNAME = cc_builtin_sources_begin(PCC),\
                 **ENDNAME = cc_builtin_sources_end(PCC); ITNAME != ENDNAME; ITNAME++)
 
-static file_entry** cc_libs_begin(cc_instance* self)
+static const char** cc_implicit_libs_begin(cc_instance* self)
 {
-        return (file_entry**)vec_begin(&self->input.libs);
+        return (const char**)vec_begin(&self->input.implicit_libs);
 }
 
-static file_entry** cc_libs_end(cc_instance* self)
+static const char** cc_implicit_libs_end(cc_instance* self)
 {
-        return (file_entry**)vec_end(&self->input.libs);
+        return (const char**)vec_end(&self->input.implicit_libs);
+}
+
+#define CC_FOREACH_IMPLICIT_LIB(PCC, ITNAME, ENDNAME) \
+        for(const char** ITNAME = cc_implicit_libs_begin(PCC),\
+                **ENDNAME = cc_implicit_libs_end(PCC); ITNAME != ENDNAME; ITNAME++)
+
+static const char** cc_libs_begin(cc_instance* self)
+{
+        return (const char**)vec_begin(&self->input.libs);
+}
+
+static const char** cc_libs_end(cc_instance* self)
+{
+        return (const char**)vec_end(&self->input.libs);
 }
 
 #define CC_FOREACH_LIB(PCC, ITNAME, ENDNAME) \
-        for(file_entry** ITNAME = cc_libs_begin(PCC),\
+        for(const char** ITNAME = cc_libs_begin(PCC),\
                 **ENDNAME = cc_libs_end(PCC); ITNAME != ENDNAME; ITNAME++)
 
 static file_entry** cc_obj_files_begin(cc_instance* self)
@@ -533,7 +547,9 @@ static errcode cc_link(cc_instance* self, llvm_linker* lld)
                 llvm_linker_add_file(lld, (*it)->path);
 
         CC_FOREACH_LIB(self, it, end)
-                llvm_linker_add_file(lld, (*it)->path);
+                llvm_linker_add_file(lld, *it);
+        CC_FOREACH_IMPLICIT_LIB(self, it, end)
+                llvm_linker_add_file(lld, *it);
 
         FLOOKUP_FOREACH_DIR(&self->input.lib_lookup, it, end)
                 llvm_linker_add_dir(lld, *it);

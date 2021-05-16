@@ -1,6 +1,7 @@
 #include "scc/cc/cc.h"
 #include "cc-impl.h"
 #include "scc/core/common.h"
+#include <string.h>
 
 extern void cc_init(cc_instance* self, FILE* message)
 {
@@ -13,6 +14,7 @@ extern void cc_init(cc_instance* self, FILE* message)
         vec_init(&self->input.sources);
         vec_init(&self->input.builtin_sources);
         vec_init(&self->input.libs);
+        vec_init(&self->input.implicit_libs);
         vec_init(&self->input.obj_files);
         flookup_init(&self->input.source_lookup);
         flookup_init(&self->input.lib_lookup);
@@ -43,7 +45,14 @@ extern void cc_dispose(cc_instance* self)
 
         flookup_dispose(&self->input.lib_lookup);
         flookup_dispose(&self->input.source_lookup);
+
+        for (int i = 0; i < self->input.libs.size; i++)
+                dealloc(self->input.libs.items[i]);
+        for (int i = 0; i < self->input.implicit_libs.size; i++)
+                dealloc(self->input.implicit_libs.items[i]);
         vec_drop(&self->input.libs);
+        vec_drop(&self->input.implicit_libs);
+
         vec_drop(&self->input.sources);
         vec_drop(&self->input.builtin_sources);
         vec_drop(&self->input.obj_files);
@@ -75,16 +84,15 @@ extern void cc_add_lib_dir(cc_instance* self, const char* dir)
         flookup_add(&self->input.lib_lookup, dir);
 }
 
-extern errcode cc_add_lib(cc_instance* self, const char* lib)
+extern errcode cc_add_lib(cc_instance* self, const char* lib, bool is_implicit)
 {
-        file_entry* file = file_get(&self->input.lib_lookup, lib);
-        if (!file)
-        {
-                cc_file_doesnt_exit(self, lib);
-                return EC_ERROR;
-        }
+        const char* default_ext = ".lib";
+        char* s = alloc(strlen(lib) + strlen(default_ext) + 1);
+        strcpy(s, lib);
+        if (!*pathext(lib))
+                strcat(s, default_ext);
 
-        vec_push(&self->input.libs, file);
+        vec_push(is_implicit ? &self->input.implicit_libs : &self->input.libs, s);
         return EC_NO_ERROR;
 }
 
@@ -136,7 +144,9 @@ extern errcode cc_run(cc_instance* self)
 {
         assert(self->opts.ext.enable_tm == (bool)self->input.tm_decls);
 
-        if (!self->input.sources.size && !self->input.obj_files.size)
+        if (!self->input.sources.size
+                && !self->input.obj_files.size
+                && !self->input.libs.size)
         {
                 cc_error(self, "no input files");
                 return EC_ERROR;
