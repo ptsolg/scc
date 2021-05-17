@@ -8,6 +8,7 @@
 !*.h
 !*.inc
 !*.py
+!*.ps1
 
 # bin
 bin/*

@@ -37,14 +37,14 @@ static void scc_add_cd_dir(scc_env* self)
 static void scc_add_stdlibc_dir(scc_env* self, const char* exec_path)
 {
         struct pathbuf dir = pathbuf_from_str(exec_path);
-        join(&dir, "\\..\\libstdc\\");
+        join(&dir, "\\..\\libstdc\\include\\");
         cc_add_source_dir(&self->cc, dir.buf);
 }
 
 static errcode scc_add_stdlibc_libs(scc_env* self, const char* exec_dir)
 {
         struct pathbuf dir = pathbuf_from_str(exec_dir);
-        join(&dir, self->cc.opts.target == CTK_X86_32 ? "win\\x86" : "win\\x64");
+        join(&dir, self->cc.opts.target == CTK_X86_32 ? "\\..\\libstdc\\lib\\x86" : "\\..\\libstdc\\lib\\x64");
         cc_add_lib_dir(&self->cc, dir.buf);
         if (EC_FAILED(cc_add_lib(&self->cc, "msvcrt.lib", true)))
                 return EC_ERROR;
