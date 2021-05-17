@@ -3,57 +3,58 @@
 
 #include "scc/core/common.h"
 #include "scc/core/vec.h"
+#include "scc/core/file.h"
 
-typedef enum
+enum
 {
-        LCOL_O0,
-        LCOL_O1,
-        LCOL_O2,
-        LCOL_O3,
-} llvm_compiler_opt_level;
+        LLC_O0,
+        LLC_O1,
+        LLC_O2,
+        LLC_O3,
+        LLC_OBJ,
+        LLC_ASM,
+        LLC_X86,
+        LLC_X64,
+};
 
-typedef enum
-{
-        LCOK_OBJ,
-        LCOK_ASM,
-} llvm_compiler_output_kind;
+#define LLC_NATIVE_NAME "llc.exe"
+#define LLC_MAX_OPTS 64
 
-typedef enum
+struct llc
 {
-        LCAK_X86,
-        LCAK_X86_64,
-} llvm_compiler_arch_kind;
-
-typedef struct
-{
-        const char* path;
-        llvm_compiler_opt_level opt_level;
-        llvm_compiler_output_kind output_kind;
-        llvm_compiler_arch_kind arch;
-        const char* file;
+        struct pathbuf path;
+        char opts[LLC_MAX_OPTS];
+        int num_opts;
+        const char* input;
         const char* output;
-} llvm_compiler;
+        int is_clang;
+};
 
-#define LLC_NAME "llc.exe"
+void llc_init(struct llc* self, const char* llc_path);
+bool llc_try_detect(struct llc* self);
+void llc_add_opt(struct llc* self, int opt);
+void llc_set_input(struct llc* self, const char* in);
+void llc_set_output(struct llc* self, const char* out);
+int llc_run(struct llc* self);
 
-extern void llvm_compiler_init(llvm_compiler* self, const char* path);
-extern errcode llvm_compile(llvm_compiler* self);
+#define LLD_NATIVE_NAME "lld-link.exe"
 
-typedef struct
+struct lld
 {
-        const char* path;
-        const char* output;
-        const char* entry;
+        struct pathbuf path;
         struct vec files;
         struct vec dirs;
-} llvm_linker;
+        const char* output;
+        const char* entry;
+};
 
-#define LLD_NAME "lld-link.exe"
-
-extern void llvm_linker_init(llvm_linker* self, const char* path);
-extern void llvm_linker_dispose(llvm_linker* self);
-extern void llvm_linker_add_dir(llvm_linker* self, const char* dir);
-extern void llvm_linker_add_file(llvm_linker* self, const char* file);
-extern int llvm_link(llvm_linker* self);
+void lld_init(struct lld* self, const char* lld_path);
+void lld_drop(struct lld* self);
+bool lld_try_detect(struct lld* self);
+void lld_add_dir(struct lld* self, const char* dir);
+void lld_add_file(struct lld* self, const char* file);
+void lld_set_entry(struct lld* self, const char* entry);
+void lld_set_output(struct lld* self, const char* out);
+int lld_run(struct lld* self);
 
 #endif

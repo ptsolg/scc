@@ -8,10 +8,6 @@
 extern void scc_init(scc_env* self)
 {
         cc_init(&self->cc, stdout);
-        self->llc_path.buf[0] = '\0';
-        self->lld_path.buf[0] = '\0';
-        self->cc.input.llc_path = self->llc_path.buf;
-        self->cc.input.lld_path = self->lld_path.buf;
         self->cc.opts.name = "scc";
         self->link_stdlib = true;
         self->mode = SRM_LINK;
@@ -71,14 +67,6 @@ static errcode scc_add_tm_sources(scc_env* self, const char* exec_dir)
         return cc_add_source_file(&self->cc, tmc.buf, true);
 }
 
-static void scc_setup_llc_lld(scc_env* self, const char* exec_dir)
-{
-        strncpy(self->llc_path.buf, exec_dir, MAX_PATH_LEN);
-        strncpy(self->lld_path.buf, exec_dir, MAX_PATH_LEN);
-        join(&self->llc_path, "win\\llc.exe");
-        join(&self->lld_path, "win\\lld-link.exe");
-}
-
 extern errcode scc_setup(scc_env* self, int argc, const char** argv)
 {
         extern void scc_parse_opts(scc_env*, int, const char**);
@@ -91,7 +79,6 @@ extern errcode scc_setup(scc_env* self, int argc, const char** argv)
 
         scc_add_cd_dir(self);
         scc_add_stdlibc_dir(self, exec_dir.buf);
-        scc_setup_llc_lld(self, exec_dir.buf);
         return (self->link_stdlib && EC_FAILED(scc_add_stdlibc_libs(self, exec_dir.buf)))
                 || (self->cc.opts.ext.enable_tm && EC_FAILED(scc_add_tm_sources(self, exec_dir.buf)))
                 ? EC_ERROR : EC_NO_ERROR;

@@ -406,7 +406,7 @@ static errcode cc_check_return_code(cc_instance* self, const char* tool, int cod
 }
 
 static errcode cc_compile_file(cc_instance* self,
-        file_entry* file, llvm_compiler_output_kind output_kind, const char* output)
+        file_entry* file, int llc_output_kind, const char* output)
 {
         if (EC_FAILED(cc_codegen_file(self, file, true)))
                 return EC_ERROR;
@@ -414,24 +414,26 @@ static errcode cc_compile_file(cc_instance* self,
         struct pathbuf ll_file;
         get_file_as(&ll_file, file, LL_EXT);
 
-        
-        llvm_compiler llc;
-        llvm_compiler_init(&llc, self->input.llc_path);
-        llc.opt_level = self->opts.optimization.level > LCOL_O3 
-                ? LCOL_O3 : self->opts.optimization.level;
-        llc.file = ll_file.buf;
-        llc.output_kind = output_kind;
-        llc.arch = self->opts.target == CTK_X86_32 ? LCAK_X86 : LCAK_X86_64;
-        llc.output = output;
+        struct llc llc;
+        if (!llc_try_detect(&llc))
+        {
+                cc_error(self, "cannot find %s", LLC_NATIVE_NAME);
+                return EC_ERROR;
+        }
 
-        int exit_code = llvm_compile(&llc);
+        llc_add_opt(&llc, LLC_O0 + self->opts.optimization.level);
+        llc_add_opt(&llc, llc_output_kind);
+        llc_add_opt(&llc, self->opts.target == CTK_X86_32 ? LLC_X86 : LLC_X64);
+        llc_set_input(&llc, ll_file.buf);
+        llc_set_output(&llc, output);
+        int exit_code = llc_run(&llc);
         fs_delfile(ll_file.buf);
-        return cc_check_return_code(self, "llc", exit_code);
+        return cc_check_return_code(self, LLC_NATIVE_NAME, exit_code);
 }
 
-static void cc_cleanup_compilation(cc_instance* self, llvm_compiler_output_kind output_kind)
+static void cc_cleanup_compilation(cc_instance* self, int llc_output_kind)
 {
-        const char* ext = output_kind == LCOK_ASM ? ASM_EXT : OBJ_EXT;
+        const char* ext = llc_output_kind == LLC_ASM ? ASM_EXT : OBJ_EXT;
         struct pathbuf file;
         CC_FOREACH_SOURCE(self, it, end)
         {
@@ -445,18 +447,18 @@ static void cc_cleanup_compilation(cc_instance* self, llvm_compiler_output_kind 
         }
 }
 
-static errcode cc_compile(cc_instance* self, llvm_compiler_output_kind output_kind)
+static errcode cc_compile(cc_instance* self, int llc_output_kind)
 {
         CC_FOREACH_SOURCE(self, it, end)
-                if (EC_FAILED(cc_compile_file(self, *it, output_kind, NULL)))
+                if (EC_FAILED(cc_compile_file(self, *it, llc_output_kind, NULL)))
                 {
-                        cc_cleanup_compilation(self, output_kind);
+                        cc_cleanup_compilation(self, llc_output_kind);
                         return EC_ERROR;
                 }
         CC_FOREACH_BUILTIN_SOURCE(self, it, end)
-                if (EC_FAILED(cc_compile_file(self, *it, output_kind, NULL)))
+                if (EC_FAILED(cc_compile_file(self, *it, llc_output_kind, NULL)))
                 {
-                        cc_cleanup_compilation(self, output_kind);
+                        cc_cleanup_compilation(self, llc_output_kind);
                         return EC_ERROR;
                 }
         return EC_NO_ERROR;
@@ -480,10 +482,10 @@ extern errcode cc_generate_obj(cc_instance* self)
 
                 cc_close_output_stream(self);
                 return cc_compile_file(self,
-                        *cc_sources_begin(self), LCOK_OBJ, self->output.file_path);
+                        *cc_sources_begin(self), LLC_OBJ, self->output.file_path);
         }
 
-        return cc_compile(self, LCOK_OBJ);
+        return cc_compile(self, LLC_OBJ);
 }
 
 extern errcode cc_generate_asm(cc_instance* self)
@@ -495,10 +497,10 @@ extern errcode cc_generate_asm(cc_instance* self)
 
                 cc_close_output_stream(self);
                 return cc_compile_file(self,
-                        *cc_sources_begin(self), LCOK_ASM, self->output.file_path);
+                        *cc_sources_begin(self), LLC_ASM, self->output.file_path);
         }
 
-        return cc_compile(self, LCOK_ASM);
+        return cc_compile(self, LLC_ASM);
 }
 
 extern errcode cc_generate_ssa(cc_instance* self)
@@ -529,47 +531,52 @@ extern errcode cc_generate_llvm_ir(cc_instance* self)
         return cc_codegen(self, true);
 }
 
-static errcode cc_link(cc_instance* self, llvm_linker* lld)
+static errcode cc_link(cc_instance* self, struct lld* lld)
 {
         struct pathbuf obj_file;
         CC_FOREACH_SOURCE(self, it, end)
         {
                 get_file_as(&obj_file, *it, OBJ_EXT);
-                llvm_linker_add_file(lld, obj_file.buf);
+                lld_add_file(lld, obj_file.buf);
         }
         CC_FOREACH_BUILTIN_SOURCE(self, it, end)
         {
                 get_file_as(&obj_file, *it, OBJ_EXT);
-                llvm_linker_add_file(lld, obj_file.buf);
+                lld_add_file(lld, obj_file.buf);
         }
 
         CC_FOREACH_OBJ_FILE(self, it, end)
-                llvm_linker_add_file(lld, (*it)->path);
+                lld_add_file(lld, (*it)->path);
 
         CC_FOREACH_LIB(self, it, end)
-                llvm_linker_add_file(lld, *it);
+                lld_add_file(lld, *it);
         CC_FOREACH_IMPLICIT_LIB(self, it, end)
-                llvm_linker_add_file(lld, *it);
+                lld_add_file(lld, *it);
 
         FLOOKUP_FOREACH_DIR(&self->input.lib_lookup, it, end)
-                llvm_linker_add_dir(lld, *it);
+                lld_add_dir(lld, *it);
 
-        int exit_code = llvm_link(lld);
+        int exit_code = lld_run(lld);
         return cc_check_return_code(self, "lld", exit_code);
 }
 
 extern errcode cc_generate_exec(cc_instance* self)
 {
         cc_close_output_stream(self);
-        if (EC_FAILED(cc_compile(self, LCOK_OBJ)))
+        if (EC_FAILED(cc_compile(self, LLC_OBJ)))
                 return EC_ERROR;
 
-        llvm_linker lld;
-        llvm_linker_init(&lld, self->input.lld_path);
-        lld.entry = self->input.entry;
-        lld.output = self->output.file_path;
-        errcode result = cc_link(self, &lld);
-        cc_cleanup_compilation(self, LCOK_OBJ);
-        llvm_linker_dispose(&lld);
-        return result;
+        struct lld lld;
+        if (!lld_try_detect(&lld))
+        {
+                cc_error(self, "cannot find %s", LLD_NATIVE_NAME);
+                return EC_ERROR;
+        }
+
+        lld_set_entry(&lld, self->input.entry);
+        lld_set_output(&lld, self->output.file_path);
+        errcode ec = cc_link(self, &lld);
+        lld_drop(&lld);
+        cc_cleanup_compilation(self, LLC_OBJ);
+        return ec;
 }

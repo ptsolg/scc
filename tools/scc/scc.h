@@ -20,8 +20,6 @@ typedef struct
 {
         cc_instance cc;
         bool link_stdlib;
-        struct pathbuf llc_path;
-        struct pathbuf lld_path;
         scc_run_mode mode;
 } scc_env;
 
