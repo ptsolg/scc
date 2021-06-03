@@ -35,6 +35,7 @@ extern void cc_init(cc_instance* self, FILE* message)
         self->opts.cprint.print_eval_result = false;
         self->opts.cprint.force_brackets = false;
         self->opts.cprint.print_semantic_init = false;
+        self->opts.linker.emit_debug_info = false;
         self->opts.ext.enable_tm = false;
 }
 

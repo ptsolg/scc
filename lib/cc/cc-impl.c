@@ -556,6 +556,8 @@ static errcode cc_link(cc_instance* self, struct lld* lld)
         FLOOKUP_FOREACH_DIR(&self->input.lib_lookup, it, end)
                 lld_add_dir(lld, *it);
 
+        if (self->opts.linker.emit_debug_info)
+                lld_add_opt(lld, LLD_DEBUG_FULL);
         int exit_code = lld_run(lld);
         return cc_check_return_code(self, "lld", exit_code);
 }

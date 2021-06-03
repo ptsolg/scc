@@ -117,7 +117,6 @@ static const char* llc_opts[] = {
         "-march=x86-64"
 };
 
-
 static const char* clang_opts[] = {
         "-O0", "-O1", "-O2", "-O3",
         "-c",
@@ -171,6 +170,7 @@ void lld_init(struct lld* self, const char* lld_path)
         vec_init(&self->dirs);
         self->output = NULL;
         self->entry = NULL;
+        self->num_opts = 0;
 }
 
 void lld_drop(struct lld* self)
@@ -191,6 +191,17 @@ bool lld_try_detect(struct lld* self)
         };
         lld_init(self, "");
         return try_detect(&self->path, ARRAY_SIZE(opts), opts);
+}
+
+void lld_add_opt(struct lld* self, int opt)
+{
+        if (self->num_opts + 1 >= LLD_MAX_OPTS)
+        {
+                assert(0 && "Too many options");
+                return;
+        }
+
+        self->opts[self->num_opts++] = opt; 
 }
 
 void lld_add_dir(struct lld* self, const char* dir)
@@ -218,6 +229,10 @@ void lld_set_output(struct lld* self, const char* out)
         self->output = out;
 }
 
+static const char* lld_opts[] = {
+        "/DEBUG:FULL",
+};
+
 int lld_run(struct lld* self)
 {
         struct args args;
@@ -240,6 +255,13 @@ int lld_run(struct lld* self)
         {
                 snprintf(entry, ARRAY_SIZE(entry), "/ENTRY:%s", self->entry);
                 add_arg(&args, entry);
+        }
+
+        for (int i = 0; i < self->num_opts; i++)
+        {
+                int opt = self->opts[i];
+                assert(opt < ARRAY_SIZE(lld_opts) && "Unknown option");
+                add_arg(&args, lld_opts[opt]);
         }
 
         // printf("lld >> %s\n", self->path.buf);

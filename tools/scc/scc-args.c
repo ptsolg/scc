@@ -230,6 +230,11 @@ static void scc_O3(struct parser* p)
         p->env->cc.opts.optimization.level = 3;
 }
 
+static void scc_g(struct parser* p)
+{
+        p->env->cc.opts.linker.emit_debug_info = true;
+}
+
 static bool is_obj(const char* ext)
 {
         return strcmp(ext, "o") == 0 || strcmp(ext, "obj") == 0;
@@ -298,6 +303,7 @@ extern void scc_parse_opts(scc_env* self, int argc, const char** argv)
                 ARG_HANDLER("-m32", &scc_m32),
                 ARG_HANDLER("-m64", &scc_m64),
                 ARG_HANDLER("-O3", &scc_O3),
+                ARG_HANDLER("-g", &scc_g),
         };
         struct arg_handler src = ARG_HANDLER("", &scc_file);
         struct parser p;

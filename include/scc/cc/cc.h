@@ -70,6 +70,11 @@ typedef struct
 
         struct
         {
+                bool emit_debug_info;
+        } linker;
+
+        struct
+        {
                 bool enable_tm;
         } ext;
 } cc_opts;

@@ -37,7 +37,13 @@ void llc_set_input(struct llc* self, const char* in);
 void llc_set_output(struct llc* self, const char* out);
 int llc_run(struct llc* self);
 
+enum
+{
+        LLD_DEBUG_FULL,
+};
+
 #define LLD_NATIVE_NAME "lld-link.exe"
+#define LLD_MAX_OPTS 64
 
 struct lld
 {
@@ -46,11 +52,14 @@ struct lld
         struct vec dirs;
         const char* output;
         const char* entry;
+        char opts[LLD_MAX_OPTS];
+        int num_opts;
 };
 
 void lld_init(struct lld* self, const char* lld_path);
 void lld_drop(struct lld* self);
 bool lld_try_detect(struct lld* self);
+void lld_add_opt(struct lld* self, int opt);
 void lld_add_dir(struct lld* self, const char* dir);
 void lld_add_file(struct lld* self, const char* file);
 void lld_set_entry(struct lld* self, const char* entry);
