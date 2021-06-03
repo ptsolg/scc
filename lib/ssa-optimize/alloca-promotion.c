@@ -146,9 +146,6 @@ static void ssa_merge_parent_defs(ssa_context* context, ssa_block* block, struct
 
         SSA_PARENT_DEFS_FOREACH(&parent_defs, it)
         {
-                if (it.pos->value.num_parents != num_parents)
-                        continue;
-
                 ssa_builder b;
                 ssa_init_builder(&b, context, ssa_get_block_instrs_begin(block));
                 ssa_value* phi = ssa_build_phi(&b, ssa_get_value_type(it.pos->value.def));
@@ -199,15 +196,13 @@ static void ssa_update_phi_operands(ssa_context* context, ssa_block* block)
                 assert(child_md);
                 SSA_SCOPE_FOREACH(&child_md->phis, it)
                 {
-                        struct ssa_scope_entry* e = ssa_scope_lookup(&md->defs, it.pos->key);
-                        if (!e)
-                                continue;
-
                         ssa_instr* instr = ssa_get_var_instr(it.pos->value);
-                        if (ssa_get_instr_kind(instr) != SIK_PHI)
-                                continue;
-
-                        ssa_add_phi_operand(instr, context, e->value, label);
+                        assert(ssa_get_instr_kind(instr) == SIK_PHI);
+                        struct ssa_scope_entry* e = ssa_scope_lookup(&md->defs, it.pos->key);
+                        ssa_value* operand = e
+                                ? e->value
+                                : ssa_new_undef(context, ssa_get_value_type(it.pos->value));
+                        ssa_add_phi_operand(instr, context, operand, label);
                 }
         }
 }
@@ -218,13 +213,30 @@ static void ssa_eliminate_unused_allocas_and_trivial_phis(ssa_block* block)
         {
                 ssa_instr_kind k = ssa_get_instr_kind(instr);
                 if ((k == SIK_ALLOCA || k == SIK_PHI) && !ssa_value_is_used(ssa_get_instr_var(instr)))
-                        ssa_remove_instr(instr);
-                else if (k == SIK_PHI && ssa_get_instr_operands_size(instr) == 2)
                 {
-                        ssa_value* operand = ssa_get_instr_operand_value(instr, 0);
-                        ssa_replace_value_with(ssa_get_instr_var(instr), operand);
                         ssa_remove_instr(instr);
+                        continue;
                 }
+                else if (k != SIK_PHI)
+                        continue;
+
+                bool all_same = true;
+                ssa_value* operand = NULL;
+                SSA_FOREACH_INSTR_OPERAND(instr, it, end) 
+                {
+                        if (!operand)
+                                operand = it->value;
+                        else if (it->value != operand)
+                        {
+                                all_same = false;
+                                break;
+                        }
+                        it++;
+                }
+                if (!all_same)
+                        continue;
+                ssa_replace_value_with(ssa_get_instr_var(instr), operand);
+                ssa_remove_instr(instr);
         }
 }
 
