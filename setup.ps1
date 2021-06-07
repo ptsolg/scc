@@ -15,9 +15,9 @@ $requiredWinSDKLibs = @(
     "ShLwApi.Lib";
 )
 
-$VCBase = (Get-ChildItem ((Get-VSSetupInstance).InstallationPath + "\VC\Tools\MSVC\*\lib")).FullName
+$VCBase = (Get-ChildItem ((Get-VSSetupInstance).InstallationPath + "\VC\Tools\MSVC\*\lib")).FullName | Select-Object -First 1
 $winSDKReg = "HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots"
-$winSDKVersion = Split-Path (Get-ChildItem $winSDKReg).Name -Leaf
+$winSDKVersion = Split-Path (Get-ChildItem $winSDKReg).Name -Leaf | Select-Object -First 1
 $winSDKLib = (Get-ItemProperty $winSDKReg).KitsRoot10 + "Lib\$winSDKVersion"
 
 foreach ($arch in @("x86"; "x64";)) {
