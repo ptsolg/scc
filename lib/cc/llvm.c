@@ -45,7 +45,7 @@ void llc_init(struct llc* self, const char* llc_path)
 static bool cmd_exists(const char* cmd)
 {
         char buf[128];
-        snprintf(buf, 128, "%s --version >NUL", cmd);
+        snprintf(buf, 128, "%s --version > nul 2> nul", cmd);
         return system(buf) == 0;
 }
 
