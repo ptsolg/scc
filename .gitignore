@@ -9,6 +9,8 @@
 !*.inc
 !*.py
 !*.ps1
+!*.yml
+!cmake/*
 
 # bin
 bin/*
