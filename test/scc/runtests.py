@@ -1,5 +1,8 @@
-import test_manager, presets, os, sys
+import test_manager, presets, os, sys, argparse
 
 if __name__ == '__main__':
-	dir = os.path.join(os.getcwd(), sys.argv[1] if len(sys.argv) > 1 else '')
-	test_manager.TestManager().run(dir)
+	parser = argparse.ArgumentParser(description='Run tests')
+	parser.add_argument('--hide-passed', action='store_true', help='Hide passed tests')
+	args, unknown = parser.parse_known_args()
+	dir = os.path.join(os.getcwd(), unknown[0] if len(unknown) > 0 else '')
+	exit(test_manager.TestManager(hide_passed=args.hide_passed).run(dir).failed)

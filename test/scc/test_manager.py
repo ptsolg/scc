@@ -13,7 +13,7 @@ class TestCase:
 
 class TestManager:
 
-	def __init__(self):
+	def __init__(self, hide_passed=False):
 		cd = os.getcwd()
 		self.test_output_dir = os.path.join(cd, '__tmp__')
 		self.test_output = os.path.join(self.test_output_dir, 'out.txt')
@@ -22,35 +22,37 @@ class TestManager:
 		self.total = 0
 		self.passed = 0
 		self.failed = 0
+		self.hide_passed = hide_passed
 		self.presets = __import__('presets')
 
-	def test_failed(self, msg):
+	def test_failed(self, test, msg):
 		self.failed += 1
-		print('FAILED\n' + msg)
+		print(f'Test {test}: FAILED\n{msg}\n')
 
-	def test_passed(self):
+	def test_passed(self, test):
 		self.passed += 1
-		print('PASSED')
+		if not self.hide_passed:
+			print(f'Test {test}: PASSED')
 
 	def check_test(self, test):
 		self.total += 1
-		print('Testing ' + os.path.basename(test.input) + ': ', end='')
+		test_name = os.path.basename(test.input)
 
 		if not test.ignore_exit_code and test.exit_code != 0:
-			self.test_failed('exit code = {}\n'.format(test.exit_code))
+			self.test_failed(test_name, f'exit code = {test.exit_code}')
 			return
 
 		if test.ignore:
-			self.test_passed()
+			self.test_passed(test_name)
 			return
 
 		result = open(self.test_output, 'r').read()
 		answer = open(test.answer, 'r').read()
 
 		if re.sub('\s+', '', result) != re.sub('\s+', '', answer):
-			self.test_failed('got:\n' + result + '\nexpected:\n' + answer + '\n')
+			self.test_failed(test_name, f'got:\n{result}\nexpected:\n{answer}')
 		else:
-			self.test_passed()
+			self.test_passed(test_name)
 
 	def print_stats(self):
 		print('\n\n-=====================================================================-')
