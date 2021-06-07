@@ -1,8 +1,27 @@
-# SOLG C Compiler
-This directory contains source for SOLG C Compiller.
+# SCC
 
-### Installation
- - git clone git://github.com/ptsolg/scc.git
- - cmake .
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/ptsolg/scc?svg=true)](https://ci.appveyor.com/project/ptsolg/scc)
 
-For compilation you will need external tools in /bin/ directory which can be downloaded here: https://www.dropbox.com/s/mx43c1pcfgpx1q2/bin.rar?dl=0
+SCC is a compiler for C99 that targets LLVM-IR.
+
+## Features
+* Transactional memory extension
+* Can compile itself
+* GCC-style command line arguments
+* Optimizations!
+
+## Dependencies
+* LLVM
+* Microsoft SDK
+* Visual Studio
+
+## Installation
+* Clone this repository
+* Run cmake
+* Run `setup.ps1` to copy static libraries (make sure you have Visual Studio and Microsoft SDK installed)
+
+## TODOs
+* `_Bool`
+* Global union initialization
+* Standard library
+* Support Unix
