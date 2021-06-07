@@ -1,0 +1,39 @@
+branches:
+  only:
+    - /^v(\d+\.)+\d+$/
+    - master
+
+skip_non_tags: true
+
+os: Visual Studio 2019
+
+cache:
+  - '%USERPROFILE%\Documents\WindowsPowerShell\Modules'
+  - build
+
+install:
+  - ps: .\setup.ps1
+  - cmake -S . -B build -G Ninja -DCMAKE_C_COMPILER="clang" -DCMAKE_C_FLAGS="-m64" -DCMAKE_BUILD_TYPE=Release
+
+build_script:
+  - ninja -C build
+
+after_build:
+  - 7z a scc-win64.zip bin\scc.exe libstdc libtm
+
+test_script:
+  - cd test\scc && C:\Python38\python.exe runtests.py --hide-passed
+
+artifacts:
+  - path: scc-win64.zip
+    name: scc
+
+deploy:
+  tag: $(APPVEYOR_REPO_TAG_NAME)
+  release: $(APPVEYOR_REPO_TAG_NAME)
+  provider: GitHub
+  auth_token: $(GITHUB_AUTH_TOKEN)
+  artifact: scc
+  force_update: true
+  on:
+    APPVEYOR_REPO_TAG: true
